@@ -379,4 +379,15 @@ public static class Descriptors
         DiagnosticSeverity.Info,
         isEnabledByDefault: true,
         helpLinkUri: HelpBase + "goldpath-campaign.md");
+
+    /// <summary>GP1801: two contexts generating DDL for the same shared tables.</summary>
+    public static readonly DiagnosticDescriptor SharedTablesDoubleOwnership = new(
+        "GP1801",
+        "Shared Goldpath tables mapped by a second context without excludeFromMigrations",
+        "'{0}' maps {1} while '{2}' in this assembly already owns it — one table set has ONE migration owner (migrations RFC D3); map the non-owner with excludeFromMigrations: true",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpBase + "goldpath-migrations.md",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
 }
