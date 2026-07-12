@@ -13,6 +13,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../packages/Goldpath.Jobs/Goldpath.Jobs.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Bulk/Goldpath.Bulk.csproj" />
   </ItemGroup>
 
 </Project>
