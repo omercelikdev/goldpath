@@ -105,6 +105,45 @@ public class TracingTests
         Assert.Empty(run.Links);
     }
 
+    /// <summary>Reports one repair item per chunk; every re-drive attempt keeps refusing.</summary>
+    private sealed class RefusingReplayJob : IGoldpathJob, IGoldpathItemReplay
+    {
+        public Task<GoldpathJobPlan> PlanAsync(GoldpathJobContext context, CancellationToken cancellationToken)
+            => Task.FromResult(GoldpathJobPlanner.ByRange(2, 2));
+
+        public Task ExecuteChunkAsync(GoldpathJobChunk chunk, GoldpathJobContext context, CancellationToken cancellationToken)
+        {
+            chunk.ReportItemFailure("item-1", "poisoned");
+            return Task.CompletedTask;
+        }
+
+        public Task ReplayItemAsync(string itemKey, GoldpathJobContext context, CancellationToken cancellationToken)
+            => throw new InvalidOperationException("still refused by core banking");
+    }
+
+    [Fact]
+    public async Task A_failed_replay_item_marks_its_span_error_never_green()
+    {
+        using var recorder = new SpanRecorder();
+        using var fixture = new RunnerFixture();
+        var job = new RefusingReplayJob();
+        await fixture.Runner.RunAsync(job, Define<RefusingReplayJob>(), fixture.Fire(), CancellationToken.None);
+        var runId = fixture.Query(db => db.Set<GoldpathJobRun>().Single().Id);
+
+        var cause = ActivityTraceId.CreateRandom();
+        var fire = fixture.Fire("fire-2") with { TraceParent = $"00-{cause}-{ActivitySpanId.CreateRandom()}-01" };
+        await Assert.ThrowsAsync<InvalidOperationException>(
+            () => fixture.Runner.ReplayAsync(job, runId, fire, CancellationToken.None));
+
+        var replay = Assert.Single(recorder.Spans, s => s.OperationName == "goldpath.job.replay" && Equals(s.GetTagItem("goldpath.run_id"), runId));
+        Assert.Equal(ActivityStatusCode.Error, replay.Status);
+        Assert.Equal(cause, Assert.Single(replay.Links).Context.TraceId);   // the operator's request stays reachable
+        var item = Assert.Single(recorder.Spans, s => s.OperationName == "goldpath.job.replay-item" && Equals(s.GetTagItem("goldpath.run_id"), runId));
+        Assert.Equal(ActivityStatusCode.Error, item.Status);
+        Assert.Contains("refused", item.StatusDescription);
+        Assert.Equal("item-1", item.GetTagItem("goldpath.item_key"));
+    }
+
     [Fact]
     public async Task A_permanently_failed_run_marks_run_and_chunk_spans_error()
     {

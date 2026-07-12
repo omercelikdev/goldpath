@@ -114,7 +114,20 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
             using var item = GoldpathJobsDiagnostics.Source.StartActivity("goldpath.job.replay-item");
             item?.SetTag("goldpath.run_id", runId);
             item?.SetTag("goldpath.item_key", failure.ItemKey);
-            await replayable.ReplayItemAsync(failure.ItemKey, context, cancellationToken);
+            try
+            {
+                await replayable.ReplayItemAsync(failure.ItemKey, context, cancellationToken);
+            }
+            catch (Exception exception) when (exception is not OperationCanceledException)
+            {
+                // A failed re-drive must not read as a green span — the repair path is
+                // exactly where per-instruction correlation earns its keep.
+                var message = exception.Message.Length > 200 ? exception.Message[..200] : exception.Message;
+                item?.SetStatus(ActivityStatusCode.Error, message);
+                activity?.SetStatus(ActivityStatusCode.Error, $"replay stopped at item '{failure.ItemKey}'");
+                throw;
+            }
+
             failure.RedrivenAt = _time.GetUtcNow();
             replayed++;
         }
