@@ -31,18 +31,10 @@ jobs:
       - name: license gate (free/OSS only)
         run: python3 scripts/license-gate.py
 
-  # The heavier proofs ride manual dispatch until runner minutes are budgeted:
-  # integration (Testcontainers), the golden-manifest matrix and the mutation gates
-  # all run locally today — scripts/validate-gm.sh, scripts/mutation-gate.sh.
-  mutation:
-    if: github.event_name == 'workflow_dispatch'
+  # Public repo: Actions minutes are free and ubuntu-latest ships Docker — the heavy
+  # proofs run HERE now (the GitLab-era "register a runner" item died with the move).
+  integration:
     runs-on: ubuntu-latest
-    strategy:
-      matrix:
-        package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,
-                  Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.Caching, Goldpath.MultiTenancy,
-                  Goldpath.Locking, Goldpath.Auth, Goldpath.Cli, Goldpath.Jobs, Goldpath.Archival,
-                  Goldpath.Bulk, Goldpath.Notification, Goldpath.Campaign]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -50,5 +42,9 @@ jobs:
           dotnet-version: |
             8.0.x
             10.0.x
-      - run: dotnet tool restore
-      - run: bash scripts/mutation-gate.sh "${{ matrix.package }}"
+      - name: integration proofs (real containers, benches excluded)
+        run: |
+          dotnet test tests/Goldpath.IntegrationTests/Goldpath.IntegrationTests.csproj \
+            --filter "Category!=Bench" --nologo
+        timeout-minutes: 45
+
