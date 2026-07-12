@@ -1,0 +1,11 @@
+bin/
+obj/
+*.user
+.DS_Store
+.vs/
+.idea/
+TestResults/
+artifacts/
+StrykerOutput/
+BenchmarkDotNet.Artifacts/
+test-results/

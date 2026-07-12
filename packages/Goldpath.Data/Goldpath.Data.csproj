@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.Data</PackageId>
+    <Description>Data-path floor of the Goldpath enterprise asset: keyset cursor-pagination executor, the save-contributor seam for Ring B modules, and model conventions (UTC temporal policy, precision/length defaults, TenantId conversion). Provider-neutral on EF Core Relational.</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <ProjectReference Include="../Goldpath.ApiDefaults/Goldpath.ApiDefaults.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,24 @@
+# Manifest ↔ repository wiring table for the WORKER kind (specdrift profile data). Rows are
+# workerType-gated: a consumer worker must reference the messaging floor and be inbox-guarded
+# (AddGoldpathOutbox wires consumer-side dedup); a batch worker referencing it is dead weight.
+# No openapi section: workers expose probes, not business contracts.
+version: 1
+manifest: .goldpath/manifest.yaml
+schemaVersion: 1
+wiring:
+  - feature: workerType
+    in: [consumer-rabbitmq, consumer-kafka]
+    package: Goldpath.Messaging
+    call: AddGoldpathMessaging
+  - feature: workerType
+    in: [consumer-rabbitmq, consumer-kafka]
+    package: Goldpath.Messaging
+    call: AddGoldpathOutbox
+  - feature: workerType
+    in: [scheduler-quartz]
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
+  - feature: workerType
+    in: [scheduler-quartz]
+    package: Goldpath.Jobs
+    call: MapGoldpathJobsAdmin

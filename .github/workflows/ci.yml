@@ -1,0 +1,54 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  gates:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: build
+        run: dotnet build Goldpath.sln --nologo
+      - name: unit tests
+        run: |
+          set -e
+          for p in tests/*/; do
+            n=$(basename "$p")
+            if [ "$n" != "Goldpath.IntegrationTests" ] && [ "$n" != "Goldpath.Jobs.TestHost" ] && [ -f "$p/$n.csproj" ]; then
+              dotnet test "$p/$n.csproj" --no-build --nologo
+            fi
+          done
+      - name: format
+        run: dotnet format Goldpath.sln --verify-no-changes
+      - name: license gate (free/OSS only)
+        run: python3 scripts/license-gate.py
+
+  # The heavier proofs ride manual dispatch until runner minutes are budgeted:
+  # integration (Testcontainers), the golden-manifest matrix and the mutation gates
+  # all run locally today — scripts/validate-gm.sh, scripts/mutation-gate.sh.
+  mutation:
+    if: github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,
+                  Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.Caching, Goldpath.MultiTenancy,
+                  Goldpath.Locking, Goldpath.Auth, Goldpath.Cli, Goldpath.Jobs, Goldpath.Archival,
+                  Goldpath.Bulk, Goldpath.Notification, Goldpath.Campaign]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - run: dotnet tool restore
+      - run: bash scripts/mutation-gate.sh "${{ matrix.package }}"

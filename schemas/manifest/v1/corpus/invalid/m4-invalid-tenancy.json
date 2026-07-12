@@ -1,0 +1,10 @@
+{
+  "schemaVersion": 1,
+  "kind": "solution",
+  "name": "TelcoPlatform",
+  "description": "Telco order transformation platform",
+  "owner": "team-telco",
+  "features": {
+    "multiTenancy": { "isolation": "db-per-tenant" }
+  }
+}

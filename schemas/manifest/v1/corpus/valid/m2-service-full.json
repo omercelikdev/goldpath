@@ -1,0 +1,51 @@
+{
+  "schemaVersion": 1,
+  "kind": "service",
+  "name": "ChequeService",
+  "description": "Cheque lifecycle (issue, clearing, protest)",
+  "owner": "team-cheque",
+  "boundedContext": "cheque-management",
+  "providers": {
+    "db": "oracle"
+  },
+  "features": {
+    "idempotency": true,
+    "auditTrail": {
+      "store": "database"
+    },
+    "dataProtection": {
+      "mode": "catalog",
+      "redactor": "erase",
+      "auditMasking": true
+    },
+    "archival": true,
+    "bulk": true,
+    "notification": true,
+    "campaign": true
+  },
+  "specs": {
+    "openapi": [
+      "specs/cheque-api.yaml"
+    ],
+    "asyncapi": [
+      "specs/cheque-events.yaml"
+    ]
+  },
+  "externalSystems": [
+    {
+      "name": "core-banking",
+      "kind": "soap",
+      "direction": "outbound",
+      "mock": {
+        "strategy": "record-replay",
+        "stubs": "mocks/core-banking/"
+      },
+      "criticality": "high"
+    }
+  ],
+  "nfr": {
+    "p95LatencyMs": 300,
+    "throughputRps": 200,
+    "availability": "99.95"
+  }
+}

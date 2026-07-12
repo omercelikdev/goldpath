@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.SoftDelete</PackageId>
+    <Description>Ring B soft delete for the Goldpath enterprise asset: deletes of ISoftDeletable entities become stamped updates, a global query filter hides them by default, and hard deletion is an explicit, reviewable Suppress() scope. Plays one consistent story with Goldpath.AuditTrail.</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <ProjectReference Include="../Goldpath.Data/Goldpath.Data.csproj" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

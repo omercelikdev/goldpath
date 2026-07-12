@@ -1,0 +1,24 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.Testing" />
+    <!--#if (UseQueue) -->
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <!--#endif -->
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../src/GoldpathWorker.AppHost/GoldpathWorker.AppHost.csproj" />
+    <ProjectReference Include="../../src/GoldpathWorker.Host/GoldpathWorker.Host.csproj" />
+  </ItemGroup>
+
+</Project>

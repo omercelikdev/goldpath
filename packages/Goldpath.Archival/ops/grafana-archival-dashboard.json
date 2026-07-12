@@ -1,0 +1,77 @@
+{
+  "__comment": "Goldpath.Archival lifecycle panel (archival RFC section 7). Datasource: Prometheus scraping the OTel collector. Run progress panels live on the goldpath-jobs dashboard (the archival runs are jobs).",
+  "title": "Goldpath Archival — lifecycle & integrity",
+  "uid": "goldpath-archival",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "archival"],
+  "time": { "from": "now-7d", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "definition",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(goldpath_archival_due_backlog, definition)",
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Due backlog (aggregates waiting to archive)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "goldpath_archival_due_backlog{definition=~\"$definition\"}", "legendFormat": "{{definition}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Verify failures — ANY value is an incident (runbook §4)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "red", "value": 1 } ] } } },
+      "targets": [{ "expr": "increase(goldpath_archival_verify_failures_total{definition=~\"$definition\"}[1h])", "legendFormat": "{{definition}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Appended vs purged (per hour)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "increase(goldpath_archival_entries_appended_total{definition=~\"$definition\"}[1h])", "legendFormat": "appended {{definition}}" },
+        { "expr": "increase(goldpath_archival_entries_purged_total{definition=~\"$definition\"}[1h])", "legendFormat": "purged {{definition}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retrieval p95 (s) — budget 5s (finance card)",
+      "gridPos": { "x": 12, "y": 8, "w": 6, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(goldpath_archival_retrieval_seconds_bucket{definition=~\"$definition\"}[10m])) by (le, definition))", "legendFormat": "{{definition}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Erasures (per day)",
+      "gridPos": { "x": 18, "y": 8, "w": 6, "h": 8 },
+      "targets": [{ "expr": "increase(goldpath_archival_erasures_total{definition=~\"$definition\"}[1d])", "legendFormat": "{{definition}}" }]
+    }
+  ],
+  "__alerts": [
+    {
+      "name": "GoldpathArchivalTamper",
+      "expr": "increase(goldpath_archival_verify_failures_total[15m]) > 0",
+      "for": "0m",
+      "summary": "Chain verification failed — tamper evidence; runbook section 4 (page security, preserve the database)"
+    },
+    {
+      "name": "GoldpathArchivalBacklogGrowing",
+      "expr": "goldpath_archival_due_backlog > 0 and delta(goldpath_archival_due_backlog[24h]) > 0",
+      "for": "24h",
+      "summary": "Due backlog grew across a full day of runs — runbook section 5"
+    },
+    {
+      "name": "GoldpathArchivalRetrievalBudget",
+      "expr": "histogram_quantile(0.95, sum(rate(goldpath_archival_retrieval_seconds_bucket[30m])) by (le)) > 5",
+      "for": "30m",
+      "summary": "Retrieval p95 over the 5s budget"
+    }
+  ]
+}

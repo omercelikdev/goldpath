@@ -1,0 +1,20 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <PackAsTool>true</PackAsTool>
+    <ToolCommandName>goldpath</ToolCommandName>
+    <PackageId>Goldpath.Cli</PackageId>
+    <Description>The goldpath golden-path CLI: goldpath new (manifest-aware dotnet new passthrough), goldpath add feature (anchor-driven textual transform, specdrift-verified with rollback), goldpath check (validate + drift + build in one verb). Thin and deterministic by design - no new semantics beyond the templates and the drift profile.</Description>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <!-- The CLI ships the SAME schema version it was built from: goldpath add/check validate
+         against it, so CLI version and manifest contract can never drift apart. -->
+    <EmbeddedResource Include="../../schemas/manifest/v1/goldpath-manifest.schema.json"
+                      Link="goldpath-manifest.schema.json"
+                      LogicalName="Goldpath.Cli.goldpath-manifest.schema.json" />
+  </ItemGroup>
+
+</Project>

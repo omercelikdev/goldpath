@@ -1,0 +1,24 @@
+# Goldpath worker-manifest invariants (specdrift profile data — the engine is generic, these
+# rules are ours). Every rule teaches its fix.
+version: 1
+rules:
+  - id: SPEC0111
+    description: A consumer names the queue it drains
+    when: { path: workerType, op: equals, value: consumer-rabbitmq }
+    require: { path: trigger.queue }
+    severity: error
+    message: "workerType is 'consumer-rabbitmq' but trigger.queue is not declared - name the endpoint this worker drains; operations and deployment reviews read it here."
+
+  - id: SPEC0112
+    description: A batch worker consumes nothing
+    when: { path: workerType, op: equals, value: batch }
+    forbid: { path: trigger.queue }
+    severity: error
+    message: "workerType is 'batch' but trigger.queue is declared - a batch worker drains no queue; either drop the trigger or make this a consumer workerType."
+
+  - id: SPEC0113
+    description: A quartz scheduler declares its cron
+    when: { path: workerType, op: equals, value: scheduler-quartz }
+    require: { path: trigger.cron }
+    severity: error
+    message: "workerType is 'scheduler-quartz' but trigger.cron is not declared - the schedule is the contract; runtime overrides go through the audited admin verb, the manifest states the default."

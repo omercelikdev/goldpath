@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.Locking</PackageId>
+    <Description>Ring B distributed locking for the Goldpath enterprise asset: Medallion DistributedLock composed (Redis / Postgres advisory locks / SQL Server sp_getapplock) behind manifest-driven provider selection, with tenant-scoped lock names and acquire metrics. SQL Server support ships in the optional Goldpath.Locking.SqlServer package (its dependency chain carries Microsoft proprietary-but-free SqlClient native bits — only SQL Server choosers pay that). Locks reduce duplicate work; correctness comes from idempotency — the modules compose.</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <PackageReference Include="DistributedLock.Redis" />
+    <PackageReference Include="DistributedLock.Postgres" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

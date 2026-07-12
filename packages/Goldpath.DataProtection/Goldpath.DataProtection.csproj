@@ -1,0 +1,25 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.DataProtection</PackageId>
+    <Description>Ring B data protection for the Goldpath enterprise asset: classify a property as personal/sensitive ONCE (attribute or code catalog) and every sink masks it consistently — audit change rows, redacted logging, Mediant audit patterns. Redaction composed from Microsoft.Extensions.Compliance (erasure default, HMAC pseudonymization opt-in). Masking, not encryption.</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <PackageReference Include="Microsoft.Extensions.Compliance.Redaction" />
+    <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <PackageReference Include="Microsoft.Extensions.Configuration.Binder" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

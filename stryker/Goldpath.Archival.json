@@ -1,0 +1,25 @@
+{
+  "stryker-config": {
+    "project": "Goldpath.Archival.csproj",
+    "test-projects": [
+      "tests/Goldpath.Archival.Tests/Goldpath.Archival.Tests.csproj"
+    ],
+    "target-framework": "net10.0",
+    "reporters": [
+      "progress",
+      "markdown"
+    ],
+    "thresholds": {
+      "high": 85,
+      "low": 75,
+      "break": 70
+    },
+    "mutation-level": "Standard",
+    "ignore-methods": ["Log*"],
+    "mutate": [
+      "!**/GoldpathArchivalExtensions.cs",
+      "!**/GoldpathArchivalAdminEndpoints.cs",
+      "!**/GoldpathArchivalMetrics.cs"
+    ]
+  }
+}

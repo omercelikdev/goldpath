@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.Archival</PackageId>
+    <Description>The data lifecycle after "hot" for the Goldpath enterprise asset: declarative retention per aggregate, archive runs that move whole GRAPHS into a tamper-evident same-database store (SHA-256 hash chain), row-retention purges for high-volume detail, legal hold, and erasure that composes with retention. Runs execute on Goldpath.Jobs - chunked, checkpointed, resumable, visible in the same console (archival RFC D1-D7).</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <ProjectReference Include="../Goldpath.Data/Goldpath.Data.csproj" />
+    <ProjectReference Include="../Goldpath.Jobs/Goldpath.Jobs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

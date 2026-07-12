@@ -1,0 +1,126 @@
+{
+  "$schema": "http://json.schemastore.org/template",
+  "author": "Omer Celik",
+  "classifications": [
+    "Goldpath",
+    "Enterprise",
+    "Worker",
+    "Aspire"
+  ],
+  "identity": "Goldpath.Worker.CSharp",
+  "name": "Goldpath worker (queue consumer or scheduled batch)",
+  "shortName": "goldpath-worker",
+  "sourceName": "GoldpathWorker",
+  "preferNameDirectory": true,
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
+  "symbols": {
+    "trigger": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "queue",
+          "description": "Queue consumer: MassTransit + inbox dedup (exactly-once processing)"
+        },
+        {
+          "choice": "schedule",
+          "description": "Scheduled batch: BCL PeriodicTimer skeleton (the Jobs module's landing pad)"
+        },
+        {
+          "choice": "jobs",
+          "description": "Clustered jobs: Goldpath.Jobs runs (chunk/checkpoint/resume) + the audited admin API"
+        }
+      ],
+      "defaultValue": "queue",
+      "description": "What drives this worker. Both choices are green golden-manifest combinations."
+    },
+    "db": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "postgresql",
+          "description": "PostgreSQL (golden-path default)"
+        },
+        {
+          "choice": "sqlserver",
+          "description": "SQL Server"
+        }
+      ],
+      "defaultValue": "postgresql",
+      "description": "Database holding the run store (queue: consumer inbox; jobs: clustered Quartz store + run model)."
+    },
+    "UseQueue": {
+      "type": "computed",
+      "value": "(trigger == \"queue\")"
+    },
+    "UseSchedule": {
+      "type": "computed",
+      "value": "(trigger == \"schedule\")"
+    },
+    "UsePostgres": {
+      "type": "computed",
+      "value": "((trigger == \"queue\" || trigger == \"jobs\") && db == \"postgresql\")"
+    },
+    "UseSqlServer": {
+      "type": "computed",
+      "value": "((trigger == \"queue\" || trigger == \"jobs\") && db == \"sqlserver\")"
+    },
+    "UseJobs": {
+      "type": "computed",
+      "value": "(trigger == \"jobs\")"
+    }
+  },
+  "sources": [
+    {
+      "modifiers": [
+        {
+          "condition": "(!UseQueue)",
+          "exclude": [
+            "src/GoldpathWorker.Host/WorkItems/**"
+          ]
+        },
+        {
+          "condition": "(!UseSchedule)",
+          "exclude": [
+            "src/GoldpathWorker.Host/Jobs/**"
+          ]
+        },
+        {
+          "condition": "(!UseJobs)",
+          "exclude": [
+            "src/GoldpathWorker.Host/Reports/**"
+          ]
+        }
+      ]
+    }
+  ],
+  "SpecialCustomOperations": {
+    "**/*.yaml": {
+      "operations": [
+        {
+          "type": "conditional",
+          "configuration": {
+            "if": [
+              "#if"
+            ],
+            "else": [
+              "#else"
+            ],
+            "elseif": [
+              "#elseif"
+            ],
+            "endif": [
+              "#endif"
+            ],
+            "trim": true,
+            "wholeLine": true
+          }
+        }
+      ]
+    }
+  }
+}

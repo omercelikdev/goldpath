@@ -1,0 +1,25 @@
+#nullable enable
+Goldpath.GoldpathConsumeFilter<T>
+Goldpath.GoldpathConsumeFilter<T>.GoldpathConsumeFilter(Goldpath.GoldpathMessageTenantContext! tenantContext) -> void
+Goldpath.GoldpathConsumeFilter<T>.Probe(MassTransit.ProbeContext! context) -> void
+Goldpath.GoldpathConsumeFilter<T>.Send(MassTransit.ConsumeContext<T!>! context, MassTransit.IPipe<MassTransit.ConsumeContext<T!>!>! next) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathMessageTenantContext
+Goldpath.GoldpathMessageTenantContext.Current.get -> Goldpath.TenantId?
+Goldpath.GoldpathMessageTenantContext.Current.set -> void
+Goldpath.GoldpathMessageTenantContext.GoldpathMessageTenantContext() -> void
+Goldpath.GoldpathMessagingExtensions
+Goldpath.GoldpathMessagingOptions
+Goldpath.GoldpathMessagingOptions.GoldpathMessagingOptions() -> void
+Goldpath.GoldpathMessagingOptions.Retry.get -> Goldpath.GoldpathMessagingOptions.RetryOptions!
+Goldpath.GoldpathMessagingOptions.RetryOptions
+Goldpath.GoldpathMessagingOptions.RetryOptions.ImmediateCount.get -> int
+Goldpath.GoldpathMessagingOptions.RetryOptions.ImmediateCount.set -> void
+Goldpath.GoldpathMessagingOptions.RetryOptions.RedeliveryIntervals.get -> System.Collections.Generic.IList<System.TimeSpan>!
+Goldpath.GoldpathMessagingOptions.RetryOptions.RetryOptions() -> void
+Goldpath.GoldpathPublishFilter<T>
+Goldpath.GoldpathPublishFilter<T>.GoldpathPublishFilter(System.IServiceProvider! serviceProvider) -> void
+Goldpath.GoldpathPublishFilter<T>.Probe(MassTransit.ProbeContext! context) -> void
+Goldpath.GoldpathPublishFilter<T>.Send(MassTransit.PublishContext<T!>! context, MassTransit.IPipe<MassTransit.PublishContext<T!>!>! next) -> System.Threading.Tasks.Task!
+static Goldpath.GoldpathMessagingExtensions.AddGoldpathMessaging<TBuilder>(this TBuilder builder, System.Action<MassTransit.IBusRegistrationConfigurator!>! configureBus, System.Action<Goldpath.GoldpathMessagingOptions!>? configureOptions = null) -> TBuilder
+static Goldpath.GoldpathMessagingExtensions.AddGoldpathOutbox<TContext>(this MassTransit.IBusRegistrationConfigurator! configurator, System.Action<MassTransit.IEntityFrameworkOutboxConfigurator!>? configure = null) -> void
+static Goldpath.GoldpathMessagingExtensions.ConfigureGoldpathEndpoints<TEndpoint>(this MassTransit.IBusFactoryConfigurator<TEndpoint>! configurator, MassTransit.IBusRegistrationContext! context) -> void

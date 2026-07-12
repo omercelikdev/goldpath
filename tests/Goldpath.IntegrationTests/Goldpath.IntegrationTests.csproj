@@ -1,0 +1,39 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.AspNetCore.TestHost" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <PackageReference Include="Testcontainers.Redis" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../packages/Goldpath.Data/Goldpath.Data.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Messaging/Goldpath.Messaging.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Caching/Goldpath.Caching.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.MultiTenancy/Goldpath.MultiTenancy.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Locking/Goldpath.Locking.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Jobs/Goldpath.Jobs.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Archival/Goldpath.Archival.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Bulk/Goldpath.Bulk.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Notification/Goldpath.Notification.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Campaign/Goldpath.Campaign.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.DataProtection/Goldpath.DataProtection.csproj" />
+    <ProjectReference Include="../Goldpath.Jobs.TestHost/Goldpath.Jobs.TestHost.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,0 +1,92 @@
+{
+  "__comment": "Goldpath.Jobs run console (jobs RFC section 7 - the module ships its panel). Datasource: Prometheus scraping the OTel collector; all metrics come from the Goldpath.Jobs meter. Import via Grafana > Dashboards > Import.",
+  "title": "Goldpath Jobs — runs & fleets",
+  "uid": "goldpath-jobs",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "jobs"],
+  "time": { "from": "now-6h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "scheduler",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(goldpath_jobs_run_progress_ratio, scheduler)",
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Run progress (ratio)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "max": 1, "min": 0, "unit": "percentunit" } },
+      "targets": [{ "expr": "goldpath_jobs_run_progress_ratio{scheduler=~\"$scheduler\"}", "legendFormat": "{{scheduler}}/{{job}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Deadline margin (s) — NEGATIVE = predicted overrun",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "s",
+          "thresholds": { "mode": "absolute", "steps": [ { "color": "red", "value": null }, { "color": "green", "value": 0 } ] }
+        }
+      },
+      "targets": [{ "expr": "goldpath_jobs_predicted_finish_seconds{scheduler=~\"$scheduler\"}", "legendFormat": "{{scheduler}}/{{job}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Items per second",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "targets": [{ "expr": "goldpath_jobs_items_per_second{scheduler=~\"$scheduler\"}", "legendFormat": "{{scheduler}}/{{job}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Checkpoint age (s) — growth = stuck run (runbook §1)",
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "goldpath_jobs_checkpoint_age_seconds{scheduler=~\"$scheduler\"}", "legendFormat": "{{scheduler}}/{{job}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Repair queue depth (runbook §2)",
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [{ "expr": "goldpath_jobs_repair_queue_depth{scheduler=~\"$scheduler\"}", "legendFormat": "{{scheduler}}/{{job}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Item failures / min",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "targets": [{ "expr": "rate(goldpath_jobs_item_failures_total{scheduler=~\"$scheduler\"}[5m]) * 60", "legendFormat": "{{scheduler}}/{{job}}" }]
+    },
+    {
+      "type": "heatmap",
+      "title": "Run duration (s)",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum(increase(goldpath_jobs_run_duration_seconds_bucket{scheduler=~\"$scheduler\"}[10m])) by (le)", "format": "heatmap" }]
+    }
+  ],
+  "__alerts": [
+    {
+      "name": "GoldpathJobsPredictedOverrun",
+      "expr": "goldpath_jobs_predicted_finish_seconds < 0",
+      "for": "5m",
+      "summary": "Run predicted to miss its deadline — fires BEFORE the deadline does (finance card)"
+    },
+    {
+      "name": "GoldpathJobsStuckRun",
+      "expr": "goldpath_jobs_checkpoint_age_seconds > 900",
+      "for": "5m",
+      "summary": "No checkpoint for 15m — runbook section 1 (dead node recovers alone; hung chunk needs you)"
+    },
+    {
+      "name": "GoldpathJobsRepairQueueGrowing",
+      "expr": "goldpath_jobs_repair_queue_depth > 0",
+      "for": "30m",
+      "summary": "Open repair items for 30m — runbook section 2 (fix cause, replay-items)"
+    }
+  ]
+}

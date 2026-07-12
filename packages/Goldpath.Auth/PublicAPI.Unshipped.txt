@@ -1,0 +1,38 @@
+#nullable enable
+const Goldpath.GoldpathApiKeyAuthenticationHandler.SchemeName = "GoldpathApiKey" -> string!
+Goldpath.GoldpathApiKeyAuthenticationHandler
+Goldpath.GoldpathApiKeyAuthenticationHandler.GoldpathApiKeyAuthenticationHandler(Microsoft.Extensions.Options.IOptionsMonitor<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions!>! options, Microsoft.Extensions.Logging.ILoggerFactory! logger, System.Text.Encodings.Web.UrlEncoder! encoder, Goldpath.GoldpathAuthOptions! authOptions) -> void
+Goldpath.GoldpathAuthExtensions
+Goldpath.GoldpathAuthOptions
+Goldpath.GoldpathAuthOptions.ApiKeyHeader.get -> string!
+Goldpath.GoldpathAuthOptions.ApiKeyHeader.set -> void
+Goldpath.GoldpathAuthOptions.ApiKeys.get -> System.Collections.Generic.Dictionary<string!, string!>!
+Goldpath.GoldpathAuthOptions.ApiKeys.set -> void
+Goldpath.GoldpathAuthOptions.Audience.get -> string?
+Goldpath.GoldpathAuthOptions.Audience.set -> void
+Goldpath.GoldpathAuthOptions.Authority.get -> string?
+Goldpath.GoldpathAuthOptions.Authority.set -> void
+Goldpath.GoldpathAuthOptions.BindTenant.get -> bool
+Goldpath.GoldpathAuthOptions.BindTenant.set -> void
+Goldpath.GoldpathAuthOptions.GoldpathAuthOptions() -> void
+Goldpath.GoldpathAuthOptions.RequireHttpsMetadata.get -> bool
+Goldpath.GoldpathAuthOptions.RequireHttpsMetadata.set -> void
+Goldpath.GoldpathAuthOptions.Strategy.get -> Goldpath.GoldpathAuthStrategy
+Goldpath.GoldpathAuthOptions.Strategy.set -> void
+Goldpath.GoldpathAuthOptions.TenantClaim.get -> string!
+Goldpath.GoldpathAuthOptions.TenantClaim.set -> void
+Goldpath.GoldpathAuthStrategy
+Goldpath.GoldpathAuthStrategy.ApiKey = 1 -> Goldpath.GoldpathAuthStrategy
+Goldpath.GoldpathAuthStrategy.None = 2 -> Goldpath.GoldpathAuthStrategy
+Goldpath.GoldpathAuthStrategy.OpenId = 0 -> Goldpath.GoldpathAuthStrategy
+Goldpath.GoldpathTenantBindingMiddleware
+Goldpath.GoldpathTenantBindingMiddleware.GoldpathTenantBindingMiddleware(Microsoft.AspNetCore.Http.RequestDelegate! next, Goldpath.GoldpathAuthOptions! options) -> void
+Goldpath.GoldpathTenantBindingMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext! context) -> System.Threading.Tasks.Task!
+Goldpath.HttpClaimsAuthorizationContext
+Goldpath.HttpClaimsAuthorizationContext.HasClaim(string! claimType, string! claimValue) -> bool
+Goldpath.HttpClaimsAuthorizationContext.HttpClaimsAuthorizationContext(Microsoft.AspNetCore.Http.IHttpContextAccessor! accessor) -> void
+Goldpath.HttpClaimsAuthorizationContext.IsAuthenticated.get -> bool
+Goldpath.HttpClaimsAuthorizationContext.Roles.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Goldpath.HttpClaimsAuthorizationContext.UserId.get -> string!
+static Goldpath.GoldpathAuthExtensions.AddGoldpathAuth<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathAuthOptions!>? configure = null) -> TBuilder
+static Goldpath.GoldpathAuthExtensions.UseGoldpathAuth(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!

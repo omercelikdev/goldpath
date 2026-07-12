@@ -1,0 +1,21 @@
+{
+  "stryker-config": {
+    "project": "Goldpath.AuditTrail.csproj",
+    "test-projects": [
+      "tests/Goldpath.AuditTrail.Tests/Goldpath.AuditTrail.Tests.csproj",
+      "tests/Goldpath.DataProtection.Tests/Goldpath.DataProtection.Tests.csproj",
+      "tests/Goldpath.SoftDelete.Tests/Goldpath.SoftDelete.Tests.csproj"
+    ],
+    "target-framework": "net10.0",
+    "reporters": [
+      "progress",
+      "markdown"
+    ],
+    "thresholds": {
+      "high": 85,
+      "low": 75,
+      "break": 70
+    },
+    "mutation-level": "Standard"
+  }
+}

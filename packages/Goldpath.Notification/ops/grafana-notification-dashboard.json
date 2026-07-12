@@ -1,0 +1,58 @@
+{
+  "__comment": "Goldpath.Notification panel (notification RFC section 7). Datasource: Prometheus scraping the OTel collector. The SEND RUN's progress lives on the goldpath-jobs dashboard (sending is a run); this board owns the message story and the stuck-channel alert.",
+  "title": "Goldpath Notification — send funnel & queue health",
+  "uid": "goldpath-notification",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "notification"],
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "template",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(goldpath_notification_queue, template)",
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Oldest-requested age (s) — a stuck channel pages BEFORE customers call (runbook §1)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 300 }, { "color": "red", "value": 1800 } ] } } },
+      "targets": [{ "expr": "goldpath_notification_oldest_requested_age_seconds{template=~\"$template\"}", "legendFormat": "{{template}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Queue by state",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "goldpath_notification_queue{template=~\"$template\"}", "legendFormat": "{{template}} {{state}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Sent / failed / suppressed (per hour)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "increase(goldpath_notification_sent_total{template=~\"$template\"}[1h])", "legendFormat": "sent {{template}} {{channel}}" },
+        { "expr": "increase(goldpath_notification_failed_total{template=~\"$template\"}[1h])", "legendFormat": "failed {{template}} {{channel}}" },
+        { "expr": "increase(goldpath_notification_suppressed_total{template=~\"$template\"}[1h])", "legendFormat": "suppressed {{template}} {{channel}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Send duration p95 (s) — includes in-attempt retries",
+      "gridPos": { "x": 12, "y": 8, "w": 6, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(goldpath_notification_send_duration_seconds_bucket{template=~\"$template\"}[10m])) by (le, template, channel))", "legendFormat": "{{template}} {{channel}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Dedup hits (per hour) — a spike is a retry storm",
+      "gridPos": { "x": 18, "y": 8, "w": 6, "h": 8 },
+      "targets": [{ "expr": "increase(goldpath_notification_dedup_hits_total{template=~\"$template\"}[1h])", "legendFormat": "{{template}}" }]
+    }
+  ]
+}

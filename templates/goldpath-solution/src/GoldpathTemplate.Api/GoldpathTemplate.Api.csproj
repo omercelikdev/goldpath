@@ -1,0 +1,76 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Build-time OpenAPI export: the deterministic artifact CI feeds to Spec Engine `drift`. -->
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Goldpath.Abstractions" />
+    <!--#if (UseAuth) -->
+    <PackageReference Include="Goldpath.Auth" />
+    <!--#endif -->
+    <!-- goldpath:features packages — the drift profile is the source of these rows -->
+    <!--#if (UseMultiTenancy) -->
+    <PackageReference Include="Goldpath.MultiTenancy" />
+    <!--#endif -->
+    <!--#if (UseAuditTrail) -->
+    <PackageReference Include="Goldpath.AuditTrail" />
+    <!--#endif -->
+    <!--#if (UseSoftDelete) -->
+    <PackageReference Include="Goldpath.SoftDelete" />
+    <!--#endif -->
+    <!--#if (UseIdempotency) -->
+    <PackageReference Include="Goldpath.Idempotency" />
+    <!--#endif -->
+    <!--#if (UseDataProtection) -->
+    <PackageReference Include="Goldpath.DataProtection" />
+    <!--#endif -->
+    <!--#if (UseCaching) -->
+    <PackageReference Include="Goldpath.Caching" />
+    <!--#endif -->
+    <!--#if (UseLocking && UsePostgres) -->
+    <PackageReference Include="Goldpath.Locking" />
+    <!--#endif -->
+    <!--#if (UseLocking && UseSqlServer) -->
+    <PackageReference Include="Goldpath.Locking.SqlServer" />
+    <!--#endif -->
+    <!--#if (UseArchival) -->
+    <PackageReference Include="Goldpath.Archival" />
+    <!--#endif -->
+    <!--#if (UseBulk) -->
+    <PackageReference Include="Goldpath.Bulk" />
+    <!--#endif -->
+    <!--#if (UseNotification) -->
+    <PackageReference Include="Goldpath.Notification" />
+    <!--#endif -->
+    <!--#if (UseCampaign) -->
+    <PackageReference Include="Goldpath.Campaign" />
+    <!--#endif -->
+    <!--#if (UseArchival || UseBulk || UseNotification || UseCampaign) -->
+    <PackageReference Include="Goldpath.Jobs" />
+    <!--#endif -->
+    <PackageReference Include="Goldpath.ApiDefaults" />
+    <PackageReference Include="Goldpath.Data" />
+    <!--#if (UseBroker) -->
+    <PackageReference Include="Goldpath.Messaging" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <!--#endif -->
+    <PackageReference Include="Goldpath.ServiceDefaults" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Goldpath.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Mediant" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" PrivateAssets="all" />
+    <PackageReference Include="Mediant.AspNetCore" />
+    <!--#if (UsePostgres) -->
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!--#endif -->
+    <!--#if (UseSqlServer) -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <!--#endif -->
+  </ItemGroup>
+
+</Project>

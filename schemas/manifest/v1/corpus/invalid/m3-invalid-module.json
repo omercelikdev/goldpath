@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "kind": "module",
+  "name": "Orders",
+  "description": "Orders module of the platform",
+  "owner": "team-orders",
+  "providers": { "db": "sqlserver" }
+}

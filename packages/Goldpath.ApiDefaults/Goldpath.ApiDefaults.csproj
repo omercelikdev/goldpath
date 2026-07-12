@@ -1,0 +1,34 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.ApiDefaults</PackageId>
+    <Description>API surface conventions of the Goldpath enterprise asset: URL-segment versioning, the keyset cursor-pagination primitive, JSON wire defaults, RFC 9457 validation error shape, and deterministic OpenAPI export (net10).</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <PackageReference Include="Asp.Versioning.Http" />
+  </ItemGroup>
+
+  <!-- OpenAPI pillar is net10-only: net8 L1 consumers keep their existing Swashbuckle setup (RFC §4). -->
+  <ItemGroup Condition="'$(TargetFramework)' == 'net10.0'">
+    <PackageReference Include="Microsoft.AspNetCore.OpenApi" />
+    <!-- Direct reference to lift the vulnerable transitive floor (NU1903, GHSA-v5pm-xwqc-g5wc). -->
+    <PackageReference Include="Microsoft.OpenApi" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

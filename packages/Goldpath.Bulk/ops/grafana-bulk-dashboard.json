@@ -1,0 +1,64 @@
+{
+  "__comment": "Goldpath.Bulk intake panel (bulk RFC section 7). Datasource: Prometheus scraping the OTel collector. EXECUTION progress panels live on the goldpath-jobs dashboard (a batch executes as a run) — this board owns the intake funnel and the human-in-the-loop gate.",
+  "title": "Goldpath Bulk — intake & gate",
+  "uid": "goldpath-bulk",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "bulk"],
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "definition",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(goldpath_bulk_batches, definition)",
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Batches by state (the intake funnel)",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "goldpath_bulk_batches{definition=~\"$definition\"}", "legendFormat": "{{definition}} {{state}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Awaiting-approval age (s) — page past the gate SLA (runbook §3)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s", "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 3600 }, { "color": "red", "value": 14400 } ] } } },
+      "targets": [{ "expr": "goldpath_bulk_awaiting_approval_age_seconds{definition=~\"$definition\"}", "legendFormat": "{{definition}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Invalid ratio (per hour) — the data-quality signal (runbook §2)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "percentunit", "max": 1 } },
+      "targets": [{ "expr": "increase(goldpath_bulk_rows_invalid_total{definition=~\"$definition\"}[1h]) / clamp_min(increase(goldpath_bulk_rows_validated_total{definition=~\"$definition\"}[1h]) + increase(goldpath_bulk_rows_invalid_total{definition=~\"$definition\"}[1h]), 1)", "legendFormat": "{{definition}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Rows executed vs failed (per hour) — failures ride the jobs repair queue",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "increase(goldpath_bulk_rows_executed_total{definition=~\"$definition\"}[1h])", "legendFormat": "executed {{definition}}" },
+        { "expr": "increase(goldpath_bulk_rows_failed_total{definition=~\"$definition\"}[1h])", "legendFormat": "failed {{definition}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Validate duration (s) — the card's 5-minute budget is the ceiling",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(goldpath_bulk_validate_duration_seconds_bucket{definition=~\"$definition\"}[30m])) by (le, definition))", "legendFormat": "p95 {{definition}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Dedup hits (per hour) — a spike is a client retry storm",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "targets": [{ "expr": "increase(goldpath_bulk_dedup_hits_total{definition=~\"$definition\"}[1h])", "legendFormat": "{{definition}}" }]
+    }
+  ]
+}

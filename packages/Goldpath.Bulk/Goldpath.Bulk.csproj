@@ -1,0 +1,28 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.Bulk</PackageId>
+    <Description>File/set intake for the Goldpath enterprise asset (L3 of the execution ladder): content-addressed same-database file store, CSV parsing behind a format seam, typed per-row validation with a value-free report, an audited approve/reject gate, and execution of approved batches as Goldpath.Jobs runs - chunked, checkpointed, resumable, with row failures isolated into the repair queue and claim-before-side-effect semantics (bulk RFC D1-D7).</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <ProjectReference Include="../Goldpath.Data/Goldpath.Data.csproj" />
+    <ProjectReference Include="../Goldpath.Jobs/Goldpath.Jobs.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>

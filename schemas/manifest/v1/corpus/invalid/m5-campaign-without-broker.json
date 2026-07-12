@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "solution",
+  "name": "RetailPlatform",
+  "description": "Retail winback platform without a broker",
+  "owner": "team-retail",
+  "providers": {
+    "db": "postgresql",
+    "broker": "none"
+  },
+  "features": {
+    "campaign": true
+  }
+}

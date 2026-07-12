@@ -1,0 +1,27 @@
+<Project>
+  <PropertyGroup>
+    <LangVersion>latest</LangVersion>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <Deterministic>true</Deterministic>
+    <ManagePackageVersionsCentrally>true</ManagePackageVersionsCentrally>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <VersionPrefix>0.1.0</VersionPrefix>
+    <VersionSuffix>preview.1</VersionSuffix>
+    <Authors>Omer Celik</Authors>
+    <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
+    <Company>Omer Celik</Company>
+    <Product>Goldpath Enterprise .NET Asset</Product>
+    <RepositoryUrl>https://github.com/omercelikdev/goldpath</RepositoryUrl>
+    <RepositoryType>git</RepositoryType>
+  </PropertyGroup>
+
+  <!-- Packable library projects only (tests override) -->
+  <PropertyGroup Condition="'$(IsPackable)' != 'false'">
+    <GenerateDocumentationFile>true</GenerateDocumentationFile>
+  </PropertyGroup>
+</Project>

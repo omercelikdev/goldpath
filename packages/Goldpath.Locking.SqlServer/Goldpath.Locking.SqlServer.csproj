@@ -1,0 +1,23 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
+    <PackageId>Goldpath.Locking.SqlServer</PackageId>
+    <Description>SQL Server provider (sp_getapplock) for Goldpath.Locking. Ships separately ON PURPOSE: its dependency chain carries Microsoft's proprietary-but-free SqlClient SNI runtime (Microsoft Software License Terms — closed source, free of charge). Only teams that explicitly choose SQL Server — and therefore already run commercially-licensed Microsoft data infrastructure — take that dependency; the core Goldpath.Locking graph stays fully open source.</Description>
+    <RootNamespace>Goldpath</RootNamespace>
+    <PackageReadmeFile>README.md</PackageReadmeFile>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../Goldpath.Locking/Goldpath.Locking.csproj" />
+    <PackageReference Include="DistributedLock.SqlServer" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Microsoft.CodeAnalysis.PublicApiAnalyzers" PrivateAssets="all" />
+    <AdditionalFiles Include="PublicAPI.Shipped.txt" />
+    <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
+    <None Include="README.md" Pack="true" PackagePath="/" />
+  </ItemGroup>
+
+</Project>
