@@ -45,10 +45,20 @@ public sealed class SharedTablesOwnershipAnalyzer : DiagnosticAnalyzer
                     return;
                 }
 
-                // excludeFromMigrations: true = a non-owner map — always fine.
+                // excludeFromMigrations: true = a non-owner map — always fine. Matched BY
+                // NAME (or as the lone positional argument of today's single-flag shape):
+                // "any true literal anywhere" would go blind the moment a contribution
+                // grows a second bool (review-agent finding on PR #1 — accepted).
                 foreach (var argument in invocation.ArgumentList.Arguments)
                 {
-                    if (argument.Expression.IsKind(SyntaxKind.TrueLiteralExpression))
+                    if (!argument.Expression.IsKind(SyntaxKind.TrueLiteralExpression))
+                    {
+                        continue;
+                    }
+
+                    var argumentName = argument.NameColon?.Name.Identifier.ValueText;
+                    if (argumentName == "excludeFromMigrations"
+                        || (argumentName is null && invocation.ArgumentList.Arguments.Count == 1))
                     {
                         return;
                     }
