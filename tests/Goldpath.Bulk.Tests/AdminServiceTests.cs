@@ -63,6 +63,32 @@ public class AdminServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task Take_is_clamped_at_the_ceiling_a_giant_ask_answers_exactly_500()
+    {
+        // H8 frozen contract, the D2 fix itself: take=1_000_000 must never become an
+        // unbounded query — AdminPaging.MaxTake caps the page at 500.
+        using (var scope = _fixture.Scope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BulkTestContext>();
+            for (var i = 0; i < 501; i++)
+            {
+                db.Set<GoldpathBulkBatch>().Add(new GoldpathBulkBatch
+                {
+                    Id = Guid.NewGuid(),
+                    Definition = "payments",
+                    FileId = Guid.NewGuid(),
+                    State = GoldpathBulkBatchState.Received,
+                    ReceivedAt = DateTimeOffset.UtcNow.AddSeconds(-i),
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        Assert.Equal(500, (await _admin.GetBatchesAsync(null, null, 1_000_000, CancellationToken.None)).Count);
+    }
+
+    [Fact]
     public async Task The_error_report_pages_by_row_number()
     {
         var batch = await _fixture.IngestValidatedAsync(BulkFixture.Csv(
