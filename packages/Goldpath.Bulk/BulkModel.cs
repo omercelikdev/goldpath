@@ -101,6 +101,13 @@ public class GoldpathBulkBatch
     /// <summary>Upload timestamp.</summary>
     public DateTimeOffset ReceivedAt { get; set; }
 
+    /// <summary>
+    /// W3C traceparent of the request that uploaded the file — every later span over this
+    /// batch (validate, execute, replay) links back to it, so ONE trace id follows an
+    /// instruction from the HTTP entry to its downstream effect (H4).
+    /// </summary>
+    public string? TraceParent { get; set; }
+
     /// <summary>Validation-report timestamp.</summary>
     public DateTimeOffset? ValidatedAt { get; set; }
 
@@ -197,6 +204,7 @@ public static class GoldpathBulkModel
             batch.HasKey(b => b.Id);
             batch.Property(b => b.Id).ValueGeneratedNever();
             batch.Property(b => b.Definition).HasMaxLength(128);
+            batch.Property(b => b.TraceParent).HasMaxLength(55);   // 00-<32>-<16>-00, W3C fixed shape
             batch.Property(b => b.Tenant).HasMaxLength(128);
             batch.Property(b => b.DecidedBy).HasMaxLength(256);
             batch.Property(b => b.DecisionNote).HasMaxLength(1024);

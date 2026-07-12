@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -31,6 +32,9 @@ public sealed class BulkTests : IAsyncLifetime
         public long Id { get; set; }
         public string EndToEndId { get; set; } = "";
         public int RowNumber { get; set; }
+
+        /// <summary>The ambient trace at execution — proves the handler ran INSIDE the run's spans (H4).</summary>
+        public string? TraceId { get; set; }
     }
 
     public sealed class BulkDb(DbContextOptions<BulkDb> options) : DbContext(options)
@@ -54,11 +58,17 @@ public sealed class BulkTests : IAsyncLifetime
                 throw new InvalidOperationException("core banking refused the instruction");
             }
 
-            db.Sink.Add(new PaymentSink { EndToEndId = row.EndToEndId, RowNumber = context.RowNumber });
+            db.Sink.Add(new PaymentSink
+            {
+                EndToEndId = row.EndToEndId,
+                RowNumber = context.RowNumber,
+                TraceId = Activity.Current?.TraceId.ToHexString(),
+            });
             await db.SaveChangesAsync(cancellationToken);
         }
     }
 
+    private readonly string _fleet = $"bulk-{Guid.NewGuid():N}"[..16];   // unique per test: Quartz's SchedulerRepository is process-global
     private readonly PostgreSqlContainer _postgres = new PostgreSqlBuilder("postgres:17-alpine").Build();
     private IHost _host = null!;
 
@@ -91,7 +101,7 @@ public sealed class BulkTests : IAsyncLifetime
         builder.AddGoldpathJobs<HostApplicationBuilder, BulkDb>(jobs =>
         {
             jobs.ConnectionName = "bulkdb";
-            jobs.SchedulerName = "bulk-it";
+            jobs.SchedulerName = _fleet;
             // Far-future crons: the test drives every run through the ADMIN verb, like an operator.
             jobs.AddGoldpathBulkJobs<BulkDb>(validateCron: "0 0 0 1 1 ? 2099", executeCron: "0 0 0 1 1 ? 2099");
         });
@@ -135,7 +145,7 @@ public sealed class BulkTests : IAsyncLifetime
     {
         while (true)
         {
-            var jobs = await Admin.GetJobsAsync("bulk-it", token);
+            var jobs = await Admin.GetJobsAsync(_fleet, token);
             if (jobs.Count >= 2)
             {
                 return;
@@ -186,7 +196,7 @@ public sealed class BulkTests : IAsyncLifetime
         // THE GATE (actor stamped), then EXECUTE as a real run.
         Assert.True((await BulkAdmin.ApproveAsync(batchId, "treasurer", "four-eyes done", timeout.Token)).Ok);
 
-        Assert.True((await Admin.TriggerAsync("bulk-it", "GoldpathBulkExecuteJob`1", dryRun: false, "it-operator", timeout.Token)).Ok);
+        Assert.True((await Admin.TriggerAsync(_fleet, "GoldpathBulkExecuteJob`1", dryRun: false, "it-operator", timeout.Token)).Ok);
         var partial = await WaitForStateAsync(batchId, GoldpathBulkBatchState.CompletedWithFailures, timeout.Token);
         Assert.Equal(8, partial.ExecutedRows);
         Assert.Equal(2, partial.FailedRows);
@@ -242,5 +252,131 @@ public sealed class BulkTests : IAsyncLifetime
         var rejected = Query(db => db.Set<GoldpathBulkBatch>().AsNoTracking().Single(b => b.Id == batchId));
         Assert.Equal(GoldpathBulkBatchState.Rejected, rejected.State);
         Assert.Equal("treasurer", rejected.DecidedBy);
+    }
+
+    /// <summary>Polls the recorder for a span matching <paramref name="match"/> (spans stop async to state flips).</summary>
+    private static async Task<Activity> WaitForSpanAsync(List<Activity> spans, Func<Activity, bool> match, CancellationToken token)
+    {
+        while (true)
+        {
+            lock (spans)
+            {
+                if (spans.FirstOrDefault(match) is { } span)
+                {
+                    return span;
+                }
+            }
+
+            await Task.Delay(TimeSpan.FromMilliseconds(250), token);
+        }
+    }
+
+    /// <summary>
+    /// H4: ONE trace id follows an instruction across every process boundary. The upload
+    /// request's trace is pinned on the batch and LINKED from the validate/execute spans;
+    /// an operator's trigger trace is carried over the Quartz store and LINKED from the
+    /// run span; the row handler executes INSIDE the run's trace (its downstream calls
+    /// inherit it); and the replay verb's trace reaches the replayed row, which still
+    /// links back to the original upload. No orphan spans, no broken chain.
+    /// </summary>
+    [Fact]
+    public async Task One_trace_id_walks_from_upload_through_execution_to_replay()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(3));
+        var spans = new List<Activity>();
+        using var entry = new ActivitySource("it-entry");
+        using var listener = new ActivityListener
+        {
+            ShouldListenTo = s => s.Name.StartsWith("Goldpath.", StringComparison.Ordinal) || s.Name == "it-entry",
+            Sample = (ref ActivityCreationOptions<ActivityContext> _) => ActivitySamplingResult.AllDataAndRecorded,
+            ActivityStopped = a =>
+            {
+                lock (spans)
+                {
+                    spans.Add(a);
+                }
+            },
+        };
+        ActivitySource.AddActivityListener(listener);
+        await WaitForFleetAsync(timeout.Token);
+
+        // The "HTTP entry" stand-in for ASP.NET's server span — the seam under proof is
+        // OURS: capture at ingest, pin on the batch, link from every later span.
+        ActivityTraceId uploadTrace;
+        Guid batchId;
+        using (var upload = entry.StartActivity("POST /goldpath/admin/bulk/upload"))
+        {
+            uploadTrace = upload!.TraceId;
+            batchId = (await BulkAdmin.UploadAsync("payments", Csv(4, 2), "trace.csv", null, "it-operator", timeout.Token)).Id;
+        }
+
+        // 1) The batch pinned the upload request's traceparent.
+        var stored = Query(db => db.Set<GoldpathBulkBatch>().AsNoTracking().Single(b => b.Id == batchId));
+        Assert.NotNull(stored.TraceParent);
+        Assert.Contains(uploadTrace.ToHexString(), stored.TraceParent);
+
+        // 2) The validate RUN — a Quartz fire caused by the upload verb — links the upload trace.
+        await WaitForStateAsync(batchId, GoldpathBulkBatchState.Validated, timeout.Token);
+        var validateRun = await WaitForSpanAsync(spans,
+            s => s.OperationName == "goldpath.job.run" && Equals(s.GetTagItem("goldpath.job"), "GoldpathBulkValidateJob`1"), timeout.Token);
+        Assert.Contains(validateRun.Links, l => l.Context.TraceId == uploadTrace);
+
+        Assert.True((await BulkAdmin.ApproveAsync(batchId, "treasurer", "four-eyes done", timeout.Token)).Ok);
+
+        // 3) EXECUTE under the operator's own trace: the run span links the TRIGGER trace,
+        //    the range spans link the UPLOAD trace — both causes stay reachable in Tempo.
+        ActivityTraceId triggerTrace;
+        using (var trigger = entry.StartActivity("POST /goldpath/admin/jobs/trigger"))
+        {
+            triggerTrace = trigger!.TraceId;
+            Assert.True((await Admin.TriggerAsync(_fleet, "GoldpathBulkExecuteJob`1", dryRun: false, "it-operator", timeout.Token)).Ok);
+        }
+
+        var partial = await WaitForStateAsync(batchId, GoldpathBulkBatchState.CompletedWithFailures, timeout.Token);
+        var executeRun = await WaitForSpanAsync(spans,
+            s => s.OperationName == "goldpath.job.run" && Equals(s.GetTagItem("goldpath.job"), "GoldpathBulkExecuteJob`1"), timeout.Token);
+        Assert.Contains(executeRun.Links, l => l.Context.TraceId == triggerTrace);
+
+        var range = await WaitForSpanAsync(spans, s => s.OperationName == "goldpath.bulk.execute-range", timeout.Token);
+        Assert.Equal(executeRun.TraceId, range.TraceId);   // run → chunk → range: ONE trace id
+        Assert.Contains(range.Links, l => l.Context.TraceId == uploadTrace);
+        var chunk = await WaitForSpanAsync(spans,
+            s => s.OperationName == "goldpath.job.chunk" && s.SpanId == range.ParentSpanId, timeout.Token);
+        Assert.Equal(executeRun.SpanId, chunk.ParentSpanId);
+
+        // 4) The HANDLER ran inside that same trace — its downstream calls inherit it.
+        var sinkTraces = Query(db => db.Sink.Select(s => s.TraceId).Distinct().ToList());
+        Assert.Equal([executeRun.TraceId.ToHexString()], sinkTraces);
+
+        // 5) REPLAY under a third trace: heal the poison, verb it, follow the chain again.
+        Query(db =>
+        {
+            foreach (var row in db.Set<GoldpathBulkRow>().Where(r => r.BatchId == batchId && r.FailedAt != null))
+            {
+                row.Payload = row.Payload.Replace("FAIL", "ok", StringComparison.Ordinal);
+            }
+
+            return db.SaveChanges();
+        });
+        ActivityTraceId replayTrace;
+        using (var replay = entry.StartActivity("POST /goldpath/admin/jobs/replay-items"))
+        {
+            replayTrace = replay!.TraceId;
+            Assert.True((await Admin.ReplayItemsAsync(partial.RunId!.Value, "it-operator", timeout.Token)).Ok);
+        }
+
+        await WaitForStateAsync(batchId, GoldpathBulkBatchState.Completed, timeout.Token);
+        var replayRun = await WaitForSpanAsync(spans, s => s.OperationName == "goldpath.job.replay", timeout.Token);
+        Assert.Contains(replayRun.Links, l => l.Context.TraceId == replayTrace);
+        var item = await WaitForSpanAsync(spans, s => s.OperationName == "goldpath.job.replay-item", timeout.Token);
+        Assert.Equal(replayRun.TraceId, item.TraceId);
+        Assert.NotNull(item.GetTagItem("goldpath.item_key"));
+        var replayRow = await WaitForSpanAsync(spans, s => s.OperationName == "goldpath.bulk.replay-row", timeout.Token);
+        Assert.Equal(replayRun.TraceId, replayRow.TraceId);
+        Assert.Contains(replayRow.Links, l => l.Context.TraceId == uploadTrace);   // still anchored to the upload
+
+        // The healed row's side effect carries the REPLAY trace — per-instruction correlation.
+        var healedSink = Query(db => db.Sink.Single(s => s.RowNumber == 2));
+        Assert.Equal(replayRun.TraceId.ToHexString(), healedSink.TraceId);
     }
 }

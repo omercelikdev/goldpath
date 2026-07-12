@@ -34,11 +34,17 @@ internal sealed class GoldpathQuartzAdapter<TJob> : IJob
     public async Task Execute(IJobExecutionContext context)
     {
         var definition = _options.Jobs.First(d => d.JobType == typeof(TJob));
+        // The trigger/replay verbs stamp the caller's traceparent into the data map —
+        // the only vehicle that crosses the Quartz store between request and fire.
+        var traceParent = context.MergedJobDataMap.TryGetValue(GoldpathJobsExtensions.TraceParentKey, out var stamped)
+            ? stamped?.ToString()
+            : null;
         var fire = new GoldpathFireFacts(
             context.Scheduler.SchedulerName,
             context.Scheduler.SchedulerInstanceId,
             context.FireInstanceId,
-            context.Recovering);
+            context.Recovering,
+            traceParent);
 
         try
         {
