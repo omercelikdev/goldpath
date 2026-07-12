@@ -43,7 +43,9 @@ public static class DbCommand
         return verb switch
         {
             "init" => Init(owners, appRoot, runner, output),
-            "add" => Add(name ?? throw new CliUsageException("goldpath db add needs a name: goldpath db add <migration-name>"), owners, appRoot, runner, output),
+            // EF derives a C# class from the name: kebab/lower input becomes an
+            // all-lowercase type (CS8981 is an error in generated apps) — normalize.
+            "add" => Add(AddWorkerCommand.Pascal(name ?? throw new CliUsageException("goldpath db add needs a name: goldpath db add <migration-name>")), owners, appRoot, runner, output),
             "status" => Status(owners, appRoot, runner, output, error),
             "bundle" => Bundle(name, owners, appRoot, runner, output),
             _ => throw new CliUsageException($"unknown db verb '{verb}' — one of: init, add, status, bundle"),

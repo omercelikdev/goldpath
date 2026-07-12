@@ -42,7 +42,9 @@ public class DbCommandTests
 
         var runner = new FakeProcessRunner();
         Assert.Equal(0, Db(app, runner, "add", "add-campaign"));
-        Assert.Contains(runner.Calls, c => c.Arguments.Contains("add-campaign"));
+        // Kebab input is normalized: EF would otherwise emit an all-lowercase class (CS8981).
+        Assert.Contains(runner.Calls, c => c.Arguments.Contains("AddCampaign"));
+        Assert.DoesNotContain(runner.Calls, c => c.Arguments.Contains("add-campaign"));
     }
 
     [Fact]
@@ -109,6 +111,6 @@ public class DbCommandTests
         using var app = new FakeApp(messagingWired: true, jobsWired: true);
         var output = new StringWriter();
         Assert.Equal(0, CliRunner.Run(["add", "feature", "campaign", "--path", app.Root], new FakeProcessRunner(), output, TextWriter.Null));
-        Assert.Contains("goldpath db add add-campaign", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("goldpath db add AddCampaign", output.ToString(), StringComparison.Ordinal);
     }
 }
