@@ -115,7 +115,7 @@ public static class AddWorkerCommand
         return fileName.EndsWith(".Api", StringComparison.Ordinal) ? fileName[..^4] : fileName;
     }
 
-    private static string Pascal(string name)
+    internal static string Pascal(string name)
     {
         var builder = new StringBuilder(name.Length);
         var upperNext = true;
@@ -303,9 +303,14 @@ public static class AddWorkerCommand
             var workDbConnection = builder.Configuration.GetConnectionString("{{connection}}");
             builder.AddGoldpathData<WebApplicationBuilder, WorkDbContext>(options =>
             {
+                // Design time (`dotnet ef`): the provider must BIND without a connection.
                 if (workDbConnection is not null)
                 {
                     options.{{useProvider}}(workDbConnection);
+                }
+                else
+                {
+                    options.{{useProvider}}();
                 }
             });
 
@@ -370,9 +375,14 @@ public static class AddWorkerCommand
             var reportsDbConnection = builder.Configuration.GetConnectionString("{{connection}}");
             builder.AddGoldpathData<WebApplicationBuilder, ReportsDbContext>(options =>
             {
+                // Design time (`dotnet ef`): the provider must BIND without a connection.
                 if (reportsDbConnection is not null)
                 {
                     options.{{useProvider}}(reportsDbConnection);
+                }
+                else
+                {
+                    options.{{useProvider}}();
                 }
             });
 

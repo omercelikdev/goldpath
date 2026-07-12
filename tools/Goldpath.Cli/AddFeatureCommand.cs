@@ -66,7 +66,7 @@ public static class AddFeatureCommand
 
         if (plan.ModelCalls.Count > 0)
         {
-            plan.NextSteps.Add($"the model grew: run `goldpath db add add-{feature}` and commit the migration (production applies the bundle — migrations RFC D5)");
+            plan.NextSteps.Add($"the model grew: run `goldpath db add Add{AddWorkerCommand.Pascal(feature)}` and commit the migration (production applies the bundle — migrations RFC D5)");
         }
 
         output.WriteLine($"goldpath: '{feature}' added — engine clean. Your decisions (goldpath never guesses domain opt-ins):");
