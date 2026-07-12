@@ -110,7 +110,7 @@ public sealed class GoldpathNotificationAdminService<TContext>
             query = query.Where(n => n.Tenant == tenant);
         }
 
-        var rows = await query.OrderByDescending(n => n.RequestedAt).Take(take).ToListAsync(ct);
+        var rows = await query.OrderByDescending(n => n.RequestedAt).Take(AdminPaging.Clamp(take)).ToListAsync(ct);
         return [.. rows.Select(ToInfo)];
     }
 

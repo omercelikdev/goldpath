@@ -41,6 +41,17 @@ public class AdminServiceTests
     }
 
     [Fact]
+    public async Task TakeIsClampedAZeroAskStillAnswersOneRow()
+    {
+        // H8 frozen contract: take rides AdminPaging.Clamp — the floor answers one row.
+        using var fixture = new CampaignFixture();
+        await fixture.CreateAsync(Fast);
+        await fixture.CreateAsync(Fast);
+
+        Assert.Single(await fixture.Admin().ListAsync(null, 0, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task PauseAndResumeFlipStatesWithEvidence()
     {
         using var fixture = new CampaignFixture();

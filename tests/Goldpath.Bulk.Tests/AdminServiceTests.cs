@@ -54,10 +54,38 @@ public class AdminServiceTests : IDisposable
         Assert.Equal(2, (await _admin.GetBatchesAsync(null, null, 10, CancellationToken.None)).Count);
         Assert.Single(await _admin.GetBatchesAsync("validated", null, 10, CancellationToken.None));
         Assert.Single(await _admin.GetBatchesAsync(null, "agency-1", 10, CancellationToken.None));
+        // H8 frozen contract: take rides AdminPaging.Clamp — the floor answers one row.
+        Assert.Single(await _admin.GetBatchesAsync(null, null, 0, CancellationToken.None));
 
         Assert.NotNull(await _admin.GetBatchAsync(mine.Id, "agency-1", CancellationToken.None));
         Assert.Null(await _admin.GetBatchAsync(mine.Id, "agency-2", CancellationToken.None));   // fail-closed
         Assert.Null(await _admin.GetBatchAsync(Guid.NewGuid(), null, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task Take_is_clamped_at_the_ceiling_a_giant_ask_answers_exactly_500()
+    {
+        // H8 frozen contract, the D2 fix itself: take=1_000_000 must never become an
+        // unbounded query — AdminPaging.MaxTake caps the page at 500.
+        using (var scope = _fixture.Scope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BulkTestContext>();
+            for (var i = 0; i < 501; i++)
+            {
+                db.Set<GoldpathBulkBatch>().Add(new GoldpathBulkBatch
+                {
+                    Id = Guid.NewGuid(),
+                    Definition = "payments",
+                    FileId = Guid.NewGuid(),
+                    State = GoldpathBulkBatchState.Received,
+                    ReceivedAt = DateTimeOffset.UtcNow.AddSeconds(-i),
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        Assert.Equal(500, (await _admin.GetBatchesAsync(null, null, 1_000_000, CancellationToken.None)).Count);
     }
 
     [Fact]

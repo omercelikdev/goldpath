@@ -84,7 +84,7 @@ public sealed class GoldpathJobsAdminService<TContext>
         return await db.Set<GoldpathJobRun>().AsNoTracking()
             .Where(r => r.SchedulerName == fleet && (job == null || r.JobName == job))
             .OrderByDescending(r => r.StartedAt)
-            .Take(Math.Clamp(take, 1, 500))
+            .Take(AdminPaging.Clamp(take))
             .ToListAsync(ct);
     }
 
@@ -397,7 +397,7 @@ public sealed class GoldpathJobsAdminService<TContext>
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
         return await db.Set<GoldpathJobAdminAudit>().AsNoTracking()
             .OrderByDescending(a => a.At)
-            .Take(Math.Clamp(take, 1, 500))
+            .Take(AdminPaging.Clamp(take))
             .ToListAsync(ct);
     }
 

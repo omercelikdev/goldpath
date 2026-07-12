@@ -19,6 +19,18 @@ public class AdminServiceTests : IDisposable
     public void Dispose() => _fixture.Dispose();
 
     [Fact]
+    public async Task Take_is_clamped_a_zero_or_negative_ask_still_answers_one_row()
+    {
+        // H8 frozen contract: take rides AdminPaging.Clamp — never an unbounded (or empty-
+        // by-accident) query. The floor is the observable edge: 0 and negative answer 1.
+        await _fixture.RequestAsync(NotificationFixture.Renewal("renewal:a"));
+        await _fixture.RequestAsync(NotificationFixture.Renewal("renewal:b"));
+
+        Assert.Single(await _admin.GetNotificationsAsync(null, null, null, 0, CancellationToken.None));
+        Assert.Single(await _admin.GetNotificationsAsync(null, null, null, -7, CancellationToken.None));
+    }
+
+    [Fact]
     public async Task Templates_view_reports_states_hash_retention_and_queue_age()
     {
         await _fixture.RequestAsync(NotificationFixture.Renewal("renewal:1"));
