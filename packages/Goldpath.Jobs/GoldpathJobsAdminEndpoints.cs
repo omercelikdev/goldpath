@@ -21,20 +21,7 @@ public static class GoldpathJobsAdminEndpoints
         where TContext : DbContext
     {
         var group = endpoints.MapGroup(prefix);
-
-        if (exposeUnsecured)
-        {
-            // The VISIBLE opt-out (hardening H2): legitimate for an internal service
-            // behind mTLS/a gateway — and it should read like the decision it is.
-            endpoints.ServiceProvider.GetRequiredService<ILoggerFactory>()
-                .CreateLogger("Goldpath.AdminSurface")
-                .LogWarning("{Prefix} is mapped WITHOUT the ops policy (exposeUnsecured: true) — acceptable only behind an authenticating boundary.", prefix);
-        }
-        else
-        {
-            group.RequireAuthorization(GoldpathPolicies.Ops);
-        }
-
+        AdminSurfaceGuard.Apply(endpoints, group, prefix, exposeUnsecured);
         group.MapGet("/fleets", ([FromServices] GoldpathJobsAdminService<TContext> admin, CancellationToken ct)
             => admin.GetFleetsAsync(ct));
 
