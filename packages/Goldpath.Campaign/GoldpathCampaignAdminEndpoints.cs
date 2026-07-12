@@ -38,7 +38,9 @@ public static class GoldpathCampaignAdminEndpoints
         group.MapGet("/{id:guid}", async (Guid id, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)
             => await admin.GetAsync(id, ct) is { } info ? Results.Ok(info) : Results.NotFound());
 
-        group.MapGet("/{id:guid}/failed-items", (Guid id, int? take, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)
+        // Contract freeze (H8 D1): execution failures answer to ONE noun across modules —
+        // `failures` (bulk's `/errors` is the VALIDATION report, a different concept).
+        group.MapGet("/{id:guid}/failures", (Guid id, int? take, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)
             => admin.GetFailedItemsAsync(id, take ?? 100, ct));
 
         group.MapGet("/{id:guid}/audit", (Guid id, int? take, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)

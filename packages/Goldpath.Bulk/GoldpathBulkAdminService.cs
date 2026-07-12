@@ -129,7 +129,7 @@ public sealed class GoldpathBulkAdminService<TContext>
             query = query.Where(b => b.Tenant == tenant);
         }
 
-        var batches = await query.OrderByDescending(b => b.ReceivedAt).Take(take).ToListAsync(ct);
+        var batches = await query.OrderByDescending(b => b.ReceivedAt).Take(AdminPaging.Clamp(take)).ToListAsync(ct);
         return [.. batches.Select(ToInfo)];
     }
 
@@ -151,7 +151,7 @@ public sealed class GoldpathBulkAdminService<TContext>
         return await db.Set<GoldpathBulkRowError>().AsNoTracking()
             .Where(e => e.BatchId == batchId && e.RowNumber > afterRowNumber)
             .OrderBy(e => e.RowNumber).ThenBy(e => e.Id)
-            .Take(take)
+            .Take(AdminPaging.Clamp(take))
             .ToListAsync(ct);
     }
 

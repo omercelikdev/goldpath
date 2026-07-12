@@ -115,7 +115,7 @@ public sealed class GoldpathArchiveAdminService<TContext>
         return await db.Set<GoldpathLegalHold>().AsNoTracking()
             .Where(h => includeLifted || h.LiftedAt == null)
             .OrderByDescending(h => h.PlacedAt)
-            .Take(Math.Clamp(take, 1, 500))
+            .Take(AdminPaging.Clamp(take))
             .ToListAsync(ct);
     }
 
@@ -192,7 +192,7 @@ public sealed class GoldpathArchiveAdminService<TContext>
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
         return await db.Set<GoldpathErasureRecord>().AsNoTracking()
             .OrderByDescending(e => e.RequestedAt)
-            .Take(Math.Clamp(take, 1, 500))
+            .Take(AdminPaging.Clamp(take))
             .ToListAsync(ct);
     }
 

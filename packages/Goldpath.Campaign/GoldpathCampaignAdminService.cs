@@ -107,7 +107,7 @@ public sealed class GoldpathCampaignAdminService<TContext>
             query = query.Where(c => c.State == parsed);
         }
 
-        var rows = await query.OrderByDescending(c => c.CreatedAt).Take(take).ToListAsync(ct);
+        var rows = await query.OrderByDescending(c => c.CreatedAt).Take(AdminPaging.Clamp(take)).ToListAsync(ct);
         return [.. rows.Select(Project)];
     }
 
@@ -128,7 +128,7 @@ public sealed class GoldpathCampaignAdminService<TContext>
         return await db.Set<GoldpathCampaignItem>().AsNoTracking()
             .Where(i => i.CampaignId == id && i.State == GoldpathCampaignItemState.Failed)
             .OrderBy(i => i.Seq)
-            .Take(take)
+            .Take(AdminPaging.Clamp(take))
             .Select(i => new GoldpathCampaignFailedItem(i.Seq, i.Error, i.CompletedAt))
             .ToListAsync(ct);
     }
@@ -141,7 +141,7 @@ public sealed class GoldpathCampaignAdminService<TContext>
         return await db.Set<GoldpathCampaignAudit>().AsNoTracking()
             .Where(a => a.CampaignId == id)
             .OrderByDescending(a => a.At)
-            .Take(take)
+            .Take(AdminPaging.Clamp(take))
             .ToListAsync(ct);
     }
 

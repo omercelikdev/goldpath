@@ -30,6 +30,7 @@
 
   <ItemGroup>
     <Compile Include="../shared/AdminSurfaceGuard.cs" Link="AdminSurfaceGuard.cs" />
+    <Compile Include="../shared/AdminPaging.cs" Link="AdminPaging.cs" />
     <Compile Include="../shared/TraceLink.cs" Link="TraceLink.cs" />
   </ItemGroup>
 

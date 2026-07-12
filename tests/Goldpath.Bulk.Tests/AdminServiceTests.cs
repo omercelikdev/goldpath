@@ -54,6 +54,8 @@ public class AdminServiceTests : IDisposable
         Assert.Equal(2, (await _admin.GetBatchesAsync(null, null, 10, CancellationToken.None)).Count);
         Assert.Single(await _admin.GetBatchesAsync("validated", null, 10, CancellationToken.None));
         Assert.Single(await _admin.GetBatchesAsync(null, "agency-1", 10, CancellationToken.None));
+        // H8 frozen contract: take rides AdminPaging.Clamp — the floor answers one row.
+        Assert.Single(await _admin.GetBatchesAsync(null, null, 0, CancellationToken.None));
 
         Assert.NotNull(await _admin.GetBatchAsync(mine.Id, "agency-1", CancellationToken.None));
         Assert.Null(await _admin.GetBatchAsync(mine.Id, "agency-2", CancellationToken.None));   // fail-closed

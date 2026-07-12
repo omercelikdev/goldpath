@@ -42,7 +42,7 @@ the pacer's run health lives on the goldpath-jobs dashboard. This board owns the
 
 ## 5. Failed items / poisoned targets
 
-- `GET /{id}/failed-items` — Seq + the handler's error text. The same items sit in the
+- `GET /{id}/failures` — Seq + the handler's error text. The same items sit in the
   JOBS repair queue (filed by the completing slice, or immediately when a claim went
   stale): replay from THERE (`replay-items`) — one repair discipline for the whole asset.
 - "interrupted mid-flight" errors are the claim-repair story: the consumer died between
