@@ -1,0 +1,78 @@
+# The heavy nightly proofs: the golden-manifest matrix + the full mutation gates.
+# Public repo = free minutes; each shape/package is its own parallel job.
+name: nightly
+
+on:
+  schedule:
+    - cron: "0 2 * * *"
+  workflow_dispatch:
+
+jobs:
+  gm:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: GmOneAuthDefault
+            args: ""
+          - name: GmOneOpenFlow
+            args: "--auth none"
+          - name: GmFourSimple
+            args: "--db sqlserver --broker none --auth none"
+          - name: GmEverything
+            args: "--features multitenancy --features audittrail --features softdelete --features idempotency --features dataprotection --features caching --features locking --features archival --features bulk --features notification --features campaign --auth none"
+          - name: GmWorkerQueue
+            args: ""
+            template: goldpath-worker
+          - name: GmWorkerSchedule
+            args: "--trigger schedule"
+            template: goldpath-worker
+          - name: GmWorkerJobs
+            args: "--trigger jobs"
+            template: goldpath-worker
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: ${{ matrix.name }}
+        env:
+          GOLDPATH_GM_TEMPLATE: ${{ matrix.template || 'goldpath-solution' }}
+        run: ./scripts/validate-gm.sh "${{ matrix.name }}" ${{ matrix.args }}
+
+  migrations-proofs:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: the three D7 proofs (H1 evidence, kept green forever)
+        run: ./scripts/validate-migrations.sh
+
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 300
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,
+                  Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.Caching, Goldpath.MultiTenancy,
+                  Goldpath.Locking, Goldpath.Auth, Goldpath.Cli, Goldpath.Jobs, Goldpath.Archival,
+                  Goldpath.Bulk, Goldpath.Notification, Goldpath.Campaign]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - run: dotnet tool restore
+      - run: bash scripts/mutation-gate.sh "${{ matrix.package }}"

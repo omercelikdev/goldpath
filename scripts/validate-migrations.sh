@@ -25,8 +25,11 @@ if [ -z "${GOLDPATH_SPECDRIFT:-}" ] && ! command -v specdrift >/dev/null; then
   if [ -d "$HOME/Repositories/specdrift/src/Specdrift" ]; then
     export GOLDPATH_SPECDRIFT="dotnet run --project $HOME/Repositories/specdrift/src/Specdrift --"
   else
-    echo "validate-migrations: specdrift not found — install it (dotnet tool install -g specdrift) or set GOLDPATH_SPECDRIFT." >&2
-    exit 1
+    # CI / fresh machine: the same pinned shallow clone validate-gm.sh uses.
+    SPECDRIFT_REF=v0.4.0
+    SPECDRIFT_SRC="${TMPDIR:-/tmp}/goldpath-specdrift-$SPECDRIFT_REF"
+    [ -d "$SPECDRIFT_SRC" ] || git clone --quiet --depth 1 --branch "$SPECDRIFT_REF" https://github.com/omercelikdev/specdrift "$SPECDRIFT_SRC"
+    export GOLDPATH_SPECDRIFT="dotnet run --project $SPECDRIFT_SRC/src/Specdrift --"
   fi
 fi
 
