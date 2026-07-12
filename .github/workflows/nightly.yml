@@ -75,4 +75,7 @@ jobs:
             8.0.x
             10.0.x
       - run: dotnet tool restore
-      - run: bash scripts/mutation-gate.sh "${{ matrix.package }}"
+      - name: mutation gate (concurrency capped — hosted runners are 4 vCPU / 16 GB)
+        env:
+          GOLDPATH_MUTATION_CONCURRENCY: "2"
+        run: bash scripts/mutation-gate.sh "${{ matrix.package }}"

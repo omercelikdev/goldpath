@@ -25,8 +25,12 @@ for cfg in stryker/*.json; do
     SINCE_FLAG="--since:${GOLDPATH_MUTATE_SINCE}"
     echo "   (diff mode: only changes since $GOLDPATH_MUTATE_SINCE — full run stays the authoritative score)"
   fi
-  # shellcheck disable=SC2086 — the flag is a single token by construction
-  if ! dotnet stryker -f "$cfg" $SINCE_FLAG 2>&1 | tail -4; then
+  CONCURRENCY_FLAG=""
+  if [ -n "${GOLDPATH_MUTATION_CONCURRENCY:-}" ]; then
+    CONCURRENCY_FLAG="--concurrency ${GOLDPATH_MUTATION_CONCURRENCY}"
+  fi
+  # shellcheck disable=SC2086 — each flag is a single token by construction
+  if ! dotnet stryker -f "$cfg" $SINCE_FLAG $CONCURRENCY_FLAG 2>&1 | tail -4; then
     FAILED+=("$name")
   fi
 done
