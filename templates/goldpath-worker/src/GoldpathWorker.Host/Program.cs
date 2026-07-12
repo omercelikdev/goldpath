@@ -142,7 +142,9 @@ app.MapGet("/api/v1/ticks", (IntervalJob job) => new { count = job.TickCount });
 #if (UseJobs)
 // The fleet's ops surface (§7.1): trigger/pause/reschedule/runs/audit — every verb audited.
 // Put it behind the auth floor before exposing beyond the cluster boundary.
-app.MapGoldpathJobsAdmin<ReportsDbContext>();
+// Workers are internal services (no auth strategy of their own): the opt-out is
+// WRITTEN HERE so the decision stays visible — keep the fleet behind the cluster boundary.
+app.MapGoldpathJobsAdmin<ReportsDbContext>(exposeUnsecured: true);
 
 // Skip schema work when no database is wired (e.g. tooling runs outside the AppHost).
 if (app.Environment.IsDevelopment() && reportsDbConnection is not null)

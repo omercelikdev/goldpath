@@ -17,6 +17,7 @@ public class RecipeGoldenTests
         CachingWired = false,
         JobsWired = false,
         MessagingWired = true,
+        AuthWired = true,
     };
 
     [Fact]
@@ -81,7 +82,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Idempotency_plan_with_caching_registers_only_the_behavior()
     {
-        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "db", CachingWired = true, JobsWired = false, MessagingWired = false };
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "db", CachingWired = true, JobsWired = false, MessagingWired = false, AuthWired = true };
         Assert.Equal(["builder.AddGoldpathIdempotency();"], FeatureRecipes.Build("idempotency", facts).Registrations);
     }
 
@@ -133,7 +134,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Locking_plan_on_sqlserver_is_exact()
     {
-        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false };
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
         var plan = FeatureRecipes.Build("locking", facts);
         Assert.Equal(["Goldpath.Locking.SqlServer"], plan.ApiPackages);
         Assert.Equal(["builder.AddGoldpathSqlServerLocking(o => o.ConnectionName = \"shopdb\");"], plan.Registrations);
@@ -143,10 +144,10 @@ public class RecipeGoldenTests
     [Fact]
     public void Locking_without_a_connection_name_or_provider_fails_with_teaching_messages()
     {
-        var noConnection = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = null, CachingWired = false, JobsWired = false, MessagingWired = false };
+        var noConnection = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = null, CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
         Assert.Contains("connection name", Assert.Throws<CliFailureException>(() => FeatureRecipes.Build("locking", noConnection)).Message, StringComparison.Ordinal);
 
-        var noProvider = new AppFacts { DbContextName = "X", DatabaseProvider = "none", ConnectionName = "db", CachingWired = false, JobsWired = false, MessagingWired = false };
+        var noProvider = new AppFacts { DbContextName = "X", DatabaseProvider = "none", ConnectionName = "db", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
         Assert.Contains("EF provider", Assert.Throws<CliFailureException>(() => FeatureRecipes.Build("locking", noProvider)).Message, StringComparison.Ordinal);
     }
 
@@ -192,7 +193,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Archival_plan_on_sqlserver_pins_the_store_provider()
     {
-        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false };
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
         var plan = FeatureRecipes.Build("archival", facts);
         Assert.Contains("    jobs.Provider = GoldpathJobStoreProvider.SqlServer;", plan.Registrations);
     }
@@ -200,7 +201,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Archival_without_a_connection_name_fails_with_a_teaching_message()
     {
-        var noConnection = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = null, CachingWired = false, JobsWired = false, MessagingWired = false };
+        var noConnection = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = null, CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
         Assert.Contains("connection name", Assert.Throws<CliFailureException>(() => FeatureRecipes.Build("archival", noConnection)).Message, StringComparison.Ordinal);
     }
 
@@ -242,7 +243,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Bulk_plan_on_a_jobs_wired_app_composes_into_the_existing_scheduler()
     {
-        var facts = new AppFacts { DbContextName = "ShopDbContext", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = true, MessagingWired = true };
+        var facts = new AppFacts { DbContextName = "ShopDbContext", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = true, MessagingWired = true, AuthWired = true };
         var plan = FeatureRecipes.Build("bulk", facts);
 
         Assert.Equal(["    jobs.AddGoldpathBulkJobs<ShopDbContext>();        // validate + execute runs (upload verb fires validate immediately)"], plan.JobsOptionsLines);
@@ -253,7 +254,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Bulk_on_sqlserver_pins_the_store_provider_when_it_opens_the_composition()
     {
-        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false };
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
         Assert.Contains("    jobs.Provider = GoldpathJobStoreProvider.SqlServer;", FeatureRecipes.Build("bulk", facts).Registrations);
     }
 
@@ -288,7 +289,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Notification_plan_on_a_jobs_wired_app_composes_into_the_existing_scheduler()
     {
-        var facts = new AppFacts { DbContextName = "ShopDbContext", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = true, MessagingWired = true };
+        var facts = new AppFacts { DbContextName = "ShopDbContext", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = true, MessagingWired = true, AuthWired = true };
         var plan = FeatureRecipes.Build("notification", facts);
         Assert.Equal(["    jobs.AddGoldpathNotificationJobs<ShopDbContext>();   // send (frequent) + body-retention (nightly)"], plan.JobsOptionsLines);
         Assert.DoesNotContain(plan.Registrations, line => line.Contains("AddGoldpathJobs<", StringComparison.Ordinal));   // ONE scheduler per app
@@ -328,7 +329,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Campaign_plan_on_a_jobs_wired_app_composes_into_the_existing_scheduler()
     {
-        var facts = new AppFacts { DbContextName = "ShopDbContext", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = true, MessagingWired = true };
+        var facts = new AppFacts { DbContextName = "ShopDbContext", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = true, MessagingWired = true, AuthWired = true };
         var plan = FeatureRecipes.Build("campaign", facts);
         Assert.Equal(["    jobs.AddGoldpathCampaignJobs<ShopDbContext>();       // pacer: the cron guarantees a LEADER exists; pacing is in-memory ticks"], plan.JobsOptionsLines);
         Assert.DoesNotContain(plan.Registrations, line => line.Contains("AddGoldpathJobs<", StringComparison.Ordinal));   // ONE scheduler per app
@@ -337,7 +338,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Campaign_without_messaging_is_refused_with_the_broker_rule()
     {
-        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false };
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
         var e = Assert.Throws<CliFailureException>(() => FeatureRecipes.Build("campaign", facts));
         Assert.Contains("REQUIRES a broker", e.Message, StringComparison.Ordinal);
         Assert.Contains("campaign RFC D8", e.Message, StringComparison.Ordinal);
@@ -346,7 +347,7 @@ public class RecipeGoldenTests
     [Fact]
     public void Campaign_on_sqlserver_pins_the_store_provider_when_it_opens_the_composition()
     {
-        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = true };
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "sqlserver", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = true, AuthWired = true };
         Assert.Contains("    jobs.Provider = GoldpathJobStoreProvider.SqlServer;", FeatureRecipes.Build("campaign", facts).Registrations);
     }
 

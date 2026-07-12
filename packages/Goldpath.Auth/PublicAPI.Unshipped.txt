@@ -36,3 +36,5 @@ Goldpath.HttpClaimsAuthorizationContext.Roles.get -> System.Collections.Generic.
 Goldpath.HttpClaimsAuthorizationContext.UserId.get -> string!
 static Goldpath.GoldpathAuthExtensions.AddGoldpathAuth<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathAuthOptions!>? configure = null) -> TBuilder
 static Goldpath.GoldpathAuthExtensions.UseGoldpathAuth(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+Goldpath.GoldpathAuthOptions.OpsRole.get -> string!
+Goldpath.GoldpathAuthOptions.OpsRole.set -> void

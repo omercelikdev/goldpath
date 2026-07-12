@@ -39,7 +39,7 @@ public sealed class FakeApp : IDisposable
     public string Root { get; }
 
     /// <summary>Creates the fixture; flags mirror common generation shapes.</summary>
-    public FakeApp(bool sqlServer = false, bool cachingWired = false, string kind = "solution", bool jobsWired = false, bool messagingWired = false)
+    public FakeApp(bool sqlServer = false, bool cachingWired = false, string kind = "solution", bool jobsWired = false, bool messagingWired = false, bool authWired = false)
     {
         Root = Path.Combine(Path.GetTempPath(), $"goldpath-cli-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(Path.Combine(Root, ".goldpath"));
@@ -88,6 +88,7 @@ public sealed class FakeApp : IDisposable
 
         File.WriteAllText(Path.Combine(Root, "Shop.sln"), "");
 
+        var auth = authWired ? "\nbuilder.AddGoldpathAuth();\n" : string.Empty;
         var caching = cachingWired ? "\nbuilder.AddGoldpathCaching();\n" : string.Empty;
         var messaging = messagingWired
             ? """
@@ -115,7 +116,7 @@ public sealed class FakeApp : IDisposable
             var builder = WebApplication.CreateBuilder(args);
             builder.AddGoldpathServiceDefaults();
             // goldpath:features registrations — the drift profile is the source of these rows
-            {caching}{jobs}{messaging}
+            {auth}{caching}{jobs}{messaging}
             var shopDbConnection = builder.Configuration.GetConnectionString("shopdb");
 
             var app = builder.Build();

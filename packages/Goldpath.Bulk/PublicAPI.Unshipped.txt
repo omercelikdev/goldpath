@@ -248,5 +248,5 @@ Goldpath.GoldpathBulkDefinitionStatus.Name.get -> string!
 Goldpath.GoldpathBulkDefinitionStatus.Name.init -> void
 Goldpath.GoldpathBulkDefinitionStatus.OldestAwaitingApprovalSeconds.get -> double?
 Goldpath.GoldpathBulkDefinitionStatus.OldestAwaitingApprovalSeconds.init -> void
-static Goldpath.GoldpathBulkAdminEndpoints.MapGoldpathBulkAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/bulk") -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static Goldpath.GoldpathBulkAdminEndpoints.MapGoldpathBulkAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/bulk", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 static Goldpath.GoldpathBulkMetrics.SetIntakeSnapshot(string! definition, System.Collections.Generic.IReadOnlyDictionary<string!, int>! batchesByState, double oldestAwaitingSeconds) -> void

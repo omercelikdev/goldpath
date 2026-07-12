@@ -326,7 +326,7 @@ static Goldpath.GoldpathCalendars.BusinessDays() -> Quartz.ICalendar!
 static Goldpath.GoldpathCalendars.BusinessDays(System.Collections.Generic.IEnumerable<System.DateTime>! holidays) -> Quartz.ICalendar!
 static Goldpath.GoldpathJobPlanner.ByRange(long totalItems, int chunkSize) -> Goldpath.GoldpathJobPlan!
 static Goldpath.GoldpathJobPlanner.ParseRange(string! payload) -> (long Start, long EndExclusive)
-static Goldpath.GoldpathJobsAdminEndpoints.MapGoldpathJobsAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/jobs") -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static Goldpath.GoldpathJobsAdminEndpoints.MapGoldpathJobsAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/jobs", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 static Goldpath.GoldpathJobsExtensions.AddGoldpathJobs<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathJobsOptions!>? configure = null) -> TBuilder
 static Goldpath.GoldpathJobsExtensions.AddGoldpathJobsManagement<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathJobsOptions!>? configure = null) -> TBuilder
 static Goldpath.GoldpathJobsModelExtensions.AddGoldpathJobs(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder, bool excludeFromMigrations = false) -> Microsoft.EntityFrameworkCore.ModelBuilder!

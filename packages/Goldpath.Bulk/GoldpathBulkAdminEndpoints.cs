@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Goldpath;
 
@@ -20,10 +22,23 @@ public sealed record GoldpathBulkDecisionRequest(string? Note);
 public static class GoldpathBulkAdminEndpoints
 {
     /// <summary>Maps the bulk admin API under <paramref name="prefix"/>.</summary>
-    public static IEndpointRouteBuilder MapGoldpathBulkAdmin<TContext>(this IEndpointRouteBuilder endpoints, string prefix = "/goldpath/admin/bulk")
+    public static IEndpointRouteBuilder MapGoldpathBulkAdmin<TContext>(this IEndpointRouteBuilder endpoints, string prefix = "/goldpath/admin/bulk", bool exposeUnsecured = false)
         where TContext : DbContext
     {
         var group = endpoints.MapGroup(prefix);
+
+        if (exposeUnsecured)
+        {
+            // The VISIBLE opt-out (hardening H2): legitimate for an internal service
+            // behind mTLS/a gateway — and it should read like the decision it is.
+            endpoints.ServiceProvider.GetRequiredService<ILoggerFactory>()
+                .CreateLogger("Goldpath.AdminSurface")
+                .LogWarning("{Prefix} is mapped WITHOUT the ops policy (exposeUnsecured: true) — acceptable only behind an authenticating boundary.", prefix);
+        }
+        else
+        {
+            group.RequireAuthorization(GoldpathPolicies.Ops);
+        }
 
         group.MapGet("/definitions", ([FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
             => admin.GetDefinitionsAsync(ct));

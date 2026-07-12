@@ -212,19 +212,49 @@ app.MapGoldpathDefaultEndpoints();
 app.MapMediantEndpoints(typeof(Program).Assembly);
 // goldpath:features endpoints — admin surfaces map here (put them behind the auth floor)
 //#if (UseArchival || UseBulk || UseNotification || UseCampaign)
-app.MapGoldpathJobsAdmin<OrdersDbContext>();        // run console API: trigger/pause/reschedule/audit
+#if (UseAuth)
+app.MapGoldpathJobsAdmin<OrdersDbContext>();        // run console API: trigger/pause/reschedule/audit — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathJobsAdmin<OrdersDbContext>(exposeUnsecured: true);        // run console API: trigger/pause/reschedule/audit
+#endif
 //#endif
 //#if (UseArchival)
-app.MapGoldpathArchivalAdmin<OrdersDbContext>();    // lifecycle verbs: retrieve/hold/erase/verify
+#if (UseAuth)
+app.MapGoldpathArchivalAdmin<OrdersDbContext>();    // lifecycle verbs: retrieve/hold/erase/verify — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathArchivalAdmin<OrdersDbContext>(exposeUnsecured: true);    // lifecycle verbs: retrieve/hold/erase/verify
+#endif
 //#endif
 //#if (UseBulk)
-app.MapGoldpathBulkAdmin<OrdersDbContext>();        // intake verbs: upload/report/approve/reject
+#if (UseAuth)
+app.MapGoldpathBulkAdmin<OrdersDbContext>();        // intake verbs: upload/report/approve/reject — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathBulkAdmin<OrdersDbContext>(exposeUnsecured: true);        // intake verbs: upload/report/approve/reject
+#endif
 //#endif
 //#if (UseNotification)
-app.MapGoldpathNotificationAdmin<OrdersDbContext>();   // read-only evidence views (recipients masked)
+#if (UseAuth)
+app.MapGoldpathNotificationAdmin<OrdersDbContext>();   // read-only evidence views (recipients masked) — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathNotificationAdmin<OrdersDbContext>(exposeUnsecured: true);   // read-only evidence views (recipients masked)
+#endif
 //#endif
 //#if (UseCampaign)
-app.MapGoldpathCampaignAdmin<OrdersDbContext>();       // audited verbs: create/pause/resume/abort/throttle
+#if (UseAuth)
+app.MapGoldpathCampaignAdmin<OrdersDbContext>();       // audited verbs: create/pause/resume/abort/throttle — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathCampaignAdmin<OrdersDbContext>(exposeUnsecured: true);       // audited verbs: create/pause/resume/abort/throttle
+#endif
 //#endif
 
 // Skip schema work under the build-time OpenAPI generator (no database there).
