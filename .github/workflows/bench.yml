@@ -1,0 +1,36 @@
+# Reference-profile benches (H6): the numbers in each module's ops/*-benchmarks.md are
+# re-measured on PINNED CI hardware (ubuntu-latest: 4 vCPU / 16 GB) so adopters compare
+# against a profile they can rent, not a dev laptop. Dispatch-only — re-run whenever an
+# engine path changes, then update the ops docs from the step summary.
+name: bench
+
+on:
+  workflow_dispatch:
+
+jobs:
+  bench:
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: benches (real containers, Category=Bench)
+        run: |
+          dotnet test tests/Goldpath.IntegrationTests/Goldpath.IntegrationTests.csproj \
+            --filter "Category=Bench" --nologo 2>&1 | tee bench.log
+      - name: reference numbers → job summary
+        if: always()
+        run: |
+          echo '## Reference profile (ubuntu-latest, 4 vCPU / 16 GB)' >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+          grep -a "BENCH-" bench.log >> "$GITHUB_STEP_SUMMARY" || echo "no BENCH- lines found" >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: bench-log
+          path: bench.log
