@@ -23,6 +23,12 @@ public static class GoldpathJobsExtensions
     public const string ReplayRunKey = "goldpath:replay-run";
 
     /// <summary>
+    /// Data-map key carrying the W3C traceparent of the request that caused a fire — the
+    /// run span links to it, tying the operator's trace to the run's trace.
+    /// </summary>
+    public const string TraceParentKey = "goldpath:traceparent";
+
+    /// <summary>
     /// Executor mode: registers the clustered scheduler, the run engine, the history
     /// listener and every configured job with its schedule.
     /// </summary>

@@ -27,7 +27,9 @@ Goldpath.GoldpathCalendarSpec.Type.get -> string!
 Goldpath.GoldpathCalendarSpec.Type.init -> void
 Goldpath.GoldpathCalendars
 Goldpath.GoldpathFireFacts
-Goldpath.GoldpathFireFacts.GoldpathFireFacts(string! SchedulerName, string! InstanceName, string! FireInstanceId, bool Recovering) -> void
+Goldpath.GoldpathFireFacts.GoldpathFireFacts(string! SchedulerName, string! InstanceName, string! FireInstanceId, bool Recovering, string? TraceParent = null) -> void
+Goldpath.GoldpathFireFacts.TraceParent.get -> string?
+Goldpath.GoldpathFireFacts.TraceParent.init -> void
 Goldpath.GoldpathFireFacts.FireInstanceId.get -> string!
 Goldpath.GoldpathFireFacts.FireInstanceId.init -> void
 Goldpath.GoldpathFireFacts.InstanceName.get -> string!
@@ -322,6 +324,7 @@ const Goldpath.GoldpathJobRunStatus.Failed = "Failed" -> string!
 const Goldpath.GoldpathJobRunStatus.Running = "Running" -> string!
 const Goldpath.GoldpathJobsExtensions.JobGroup = "goldpath" -> string!
 const Goldpath.GoldpathJobsExtensions.ReplayRunKey = "goldpath:replay-run" -> string!
+const Goldpath.GoldpathJobsExtensions.TraceParentKey = "goldpath:traceparent" -> string!
 static Goldpath.GoldpathCalendars.BusinessDays() -> Quartz.ICalendar!
 static Goldpath.GoldpathCalendars.BusinessDays(System.Collections.Generic.IEnumerable<System.DateTime>! holidays) -> Quartz.ICalendar!
 static Goldpath.GoldpathJobPlanner.ByRange(long totalItems, int chunkSize) -> Goldpath.GoldpathJobPlan!

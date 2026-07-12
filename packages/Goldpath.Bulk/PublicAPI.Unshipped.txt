@@ -27,6 +27,8 @@ Goldpath.GoldpathBulkBatch.RunId.get -> System.Guid?
 Goldpath.GoldpathBulkBatch.RunId.set -> void
 Goldpath.GoldpathBulkBatch.State.get -> Goldpath.GoldpathBulkBatchState
 Goldpath.GoldpathBulkBatch.State.set -> void
+Goldpath.GoldpathBulkBatch.TraceParent.get -> string?
+Goldpath.GoldpathBulkBatch.TraceParent.set -> void
 Goldpath.GoldpathBulkBatch.Tenant.get -> string?
 Goldpath.GoldpathBulkBatch.Tenant.set -> void
 Goldpath.GoldpathBulkBatch.TotalRows.get -> int

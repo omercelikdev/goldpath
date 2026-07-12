@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Globalization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
@@ -63,6 +64,8 @@ public sealed class GoldpathBulkEngine<TContext>
             State = GoldpathBulkBatchState.Received,
             Tenant = tenant,
             ReceivedAt = _time.GetUtcNow(),
+            // The upload request's trace — the anchor every later span links back to.
+            TraceParent = Activity.Current?.Id,
         };
         db.Set<GoldpathBulkBatch>().Add(batch);
         await db.SaveChangesAsync(cancellationToken);
@@ -83,6 +86,12 @@ public sealed class GoldpathBulkEngine<TContext>
         {
             return;   // decided elsewhere; a stale plan is not an error
         }
+
+        // Child of the validate run's chunk span, LINKED to the upload trace.
+        using var activity = GoldpathBulkDiagnostics.Source.StartActivity(
+            "goldpath.bulk.validate", ActivityKind.Internal, default(ActivityContext), links: TraceLink.To(batch.TraceParent));
+        activity?.SetTag("goldpath.batch_id", batch.Id);
+        activity?.SetTag("goldpath.definition", batch.Definition);
 
         var definition = _options.Definition(batch.Definition);
         if (batch.State == GoldpathBulkBatchState.Received)
@@ -353,6 +362,14 @@ public sealed class GoldpathBulkEngine<TContext>
             return;   // stale plan; the state machine moved on
         }
 
+        // Child of the execute run's chunk span, LINKED to the upload trace: the handler
+        // (and its downstream HttpClient calls) run under this span via Activity.Current.
+        using var activity = GoldpathBulkDiagnostics.Source.StartActivity(
+            "goldpath.bulk.execute-range", ActivityKind.Internal, default(ActivityContext), links: TraceLink.To(batch.TraceParent));
+        activity?.SetTag("goldpath.batch_id", batch.Id);
+        activity?.SetTag("goldpath.definition", batch.Definition);
+        activity?.SetTag("goldpath.range", $"{offset}:{endExclusive}");
+
         // The range is over ROW NUMBER VALUES (keyset over the PK, no offset paging):
         // invalid rows leave gaps, so chunks are bounded-above, not exactly equal — fine.
         var definition = _options.Definition(batch.Definition);
@@ -442,6 +459,14 @@ public sealed class GoldpathBulkEngine<TContext>
 
         var batch = await db.Set<GoldpathBulkBatch>().AsNoTracking().FirstAsync(b => b.Id == batchId, cancellationToken);
         var definition = _options.Definition(batch.Definition);
+
+        // Child of the replay-item span (operator's trace), LINKED to the upload trace —
+        // the repair path is where per-instruction correlation earns its keep.
+        using var activity = GoldpathBulkDiagnostics.Source.StartActivity(
+            "goldpath.bulk.replay-row", ActivityKind.Internal, default(ActivityContext), links: TraceLink.To(batch.TraceParent));
+        activity?.SetTag("goldpath.batch_id", batchId);
+        activity?.SetTag("goldpath.row", rowNumber);
+
         var context = new GoldpathBulkRowContext(batchId, rowNumber, batch.Tenant, replay: true, services);
         await definition.ExecuteRow(row.Payload, context, cancellationToken);
 

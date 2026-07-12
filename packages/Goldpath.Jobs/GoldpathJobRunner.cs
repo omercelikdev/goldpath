@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Logging;
@@ -14,8 +15,13 @@ public interface IGoldpathJobRunner
     Task<int> ReplayAsync(IGoldpathJob job, Guid runId, GoldpathFireFacts fire, CancellationToken cancellationToken);
 }
 
-/// <summary>What the runner needs to know about the Quartz fire hosting it.</summary>
-public sealed record GoldpathFireFacts(string SchedulerName, string InstanceName, string FireInstanceId, bool Recovering);
+/// <summary>
+/// What the runner needs to know about the Quartz fire hosting it. <paramref name="TraceParent"/>
+/// carries the W3C traceparent of whatever CAUSED the fire (an operator's trigger/replay
+/// request) across the Quartz boundary — the run span links to it, so one trace id walks
+/// from the HTTP entry to every chunk.
+/// </summary>
+public sealed record GoldpathFireFacts(string SchedulerName, string InstanceName, string FireInstanceId, bool Recovering, string? TraceParent = null);
 
 /// <summary>
 /// The run engine (jobs RFC §2): plans once, executes chunk by chunk with a persisted
@@ -41,7 +47,17 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
     /// <inheritdoc />
     public async Task<string> RunAsync(IGoldpathJob job, GoldpathJobDefinition definition, GoldpathFireFacts fire, CancellationToken cancellationToken)
     {
+        // A fire has no ambient Activity (Quartz thread) — the run span is a trace ROOT;
+        // the link is what ties it back to the operator's request when one caused the fire.
+        using var activity = GoldpathJobsDiagnostics.Source.StartActivity(
+            "goldpath.job.run", ActivityKind.Internal, default(ActivityContext), links: TraceLink.To(fire.TraceParent));
+        activity?.SetTag("goldpath.job", definition.Name);
+        activity?.SetTag("goldpath.fleet", fire.SchedulerName);
+        activity?.SetTag("goldpath.instance", fire.InstanceName);
+
         var run = await OpenOrResumeRunAsync(job, definition, fire, cancellationToken);
+        activity?.SetTag("goldpath.run_id", run.Id);
+        activity?.SetTag("goldpath.resumed", run.Executions > 1);
         GoldpathJobsMetrics.RunStarted(run, _time);
 
         var claimers = Enumerable.Range(0, Math.Max(1, definition.MaxParallelChunks))
@@ -55,6 +71,12 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
         if (status != GoldpathJobRunStatus.Running)
         {
             GoldpathJobsMetrics.RunFinished(run.Id, status, _time.GetUtcNow() - run.StartedAt);
+        }
+
+        activity?.SetTag("goldpath.status", status);
+        if (status == GoldpathJobRunStatus.Failed)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, "one or more chunks failed permanently");
         }
 
         return status;
@@ -78,10 +100,20 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
             .OrderBy(f => f.Id)
             .ToListAsync(cancellationToken);
 
+        using var activity = GoldpathJobsDiagnostics.Source.StartActivity(
+            "goldpath.job.replay", ActivityKind.Internal, default(ActivityContext), links: TraceLink.To(fire.TraceParent));
+        activity?.SetTag("goldpath.job", run.JobName);
+        activity?.SetTag("goldpath.run_id", runId);
+
         var context = new GoldpathJobContext(runId, run.SchedulerName, fire.InstanceName, run.JobName, resumed: false, run.InputVersion, scope.ServiceProvider);
         var replayed = 0;
         foreach (var failure in failures)
         {
+            // One span per repair item: the finance card's per-instruction correlation on
+            // the repair path — the item key IS the instruction's coordinate.
+            using var item = GoldpathJobsDiagnostics.Source.StartActivity("goldpath.job.replay-item");
+            item?.SetTag("goldpath.run_id", runId);
+            item?.SetTag("goldpath.item_key", failure.ItemKey);
             await replayable.ReplayItemAsync(failure.ItemKey, context, cancellationToken);
             failure.RedrivenAt = _time.GetUtcNow();
             replayed++;
@@ -208,6 +240,14 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
         IGoldpathJob job, GoldpathJobDefinition definition, GoldpathJobRun run, GoldpathJobRunChunk chunk,
         IServiceProvider services, TContext db, CancellationToken ct)
     {
+        // Child of the run span (same async flow). Everything the job's handler does —
+        // including its downstream HttpClient calls — lands under this span via
+        // Activity.Current, which is what makes per-chunk downstream correlation free.
+        using var activity = GoldpathJobsDiagnostics.Source.StartActivity("goldpath.job.chunk");
+        activity?.SetTag("goldpath.run_id", run.Id);
+        activity?.SetTag("goldpath.chunk", chunk.Index);
+        activity?.SetTag("goldpath.attempt", chunk.Attempts);
+
         var authored = new GoldpathJobChunk(chunk.Index, chunk.Payload);
         var context = new GoldpathJobContext(run.Id, run.SchedulerName, chunk.ClaimedBy ?? "", run.JobName, resumed: run.Executions > 1, run.InputVersion, services);
         try
@@ -246,6 +286,7 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
             var exhausted = chunk.Attempts >= definition.MaxChunkAttempts;
             var status = exhausted ? GoldpathJobChunkStatus.Failed : GoldpathJobChunkStatus.Pending;
             var message = exception.Message.Length > 200 ? exception.Message[..200] : exception.Message;
+            activity?.SetStatus(ActivityStatusCode.Error, message);
             using var retreat = _scopeFactory.CreateScope();
             var retreatDb = retreat.ServiceProvider.GetRequiredService<TContext>();
             await retreatDb.Set<GoldpathJobRunChunk>().Where(c => c.Id == chunk.Id)

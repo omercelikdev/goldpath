@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using System.Diagnostics.Metrics;
 using System.Net;
 using Microsoft.AspNetCore.Builder;
@@ -5,6 +6,7 @@ using Microsoft.AspNetCore.TestHost;
 using Microsoft.Extensions.DependencyInjection;
 using OpenTelemetry;
 using OpenTelemetry.Metrics;
+using OpenTelemetry.Trace;
 using Xunit;
 
 namespace Goldpath.Tests;
@@ -57,6 +59,35 @@ public class ServiceDefaultsTests
         Assert.Contains(exported, m => m.Name == "goldpath_proof_total");        // "Goldpath.*" wildcard
         Assert.Contains(exported, m => m.Name == "masstransit_proof_total");
         Assert.DoesNotContain(exported, m => m.Name == "stranger_total");   // no accidental firehose
+    }
+
+    [Fact]
+    public async Task Goldpath_module_spans_actually_leave_the_process()
+    {
+        // The tracing twin of the meter proof above: every module starts run/chunk/replay
+        // spans, but without the AddSource subscriptions each StartActivity is a silent
+        // no-op — the H4 correlation chain would never reach the collector.
+        var exported = new List<Activity>();
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Production" });
+        builder.WebHost.UseTestServer();
+        builder.AddGoldpathServiceDefaults(o => o.Observability.Profile = ObservabilityProfile.Full);   // AlwaysOn: no sampling noise
+        builder.Services.ConfigureOpenTelemetryTracerProvider(tracing => tracing.AddInMemoryExporter(exported));
+
+        await using var app = builder.Build();
+        await app.StartAsync();
+
+        using var goldpathSource = new ActivitySource("Goldpath.ProofOfExport");
+        goldpathSource.StartActivity("goldpath.proof")?.Dispose();
+        using var busSource = new ActivitySource("MassTransit");
+        busSource.StartActivity("bus.proof")?.Dispose();
+        using var strangerSource = new ActivitySource("SomeApp.Internal");
+        strangerSource.StartActivity("stranger.proof")?.Dispose();
+
+        app.Services.GetRequiredService<TracerProvider>().ForceFlush();
+
+        Assert.Contains(exported, s => s.OperationName == "goldpath.proof");   // "Goldpath.*" wildcard
+        Assert.Contains(exported, s => s.OperationName == "bus.proof");
+        Assert.DoesNotContain(exported, s => s.OperationName == "stranger.proof");   // no accidental firehose
     }
 
     [Fact]

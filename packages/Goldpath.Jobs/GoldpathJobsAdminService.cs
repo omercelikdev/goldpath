@@ -1,3 +1,4 @@
+using System.Diagnostics;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Quartz;
@@ -130,7 +131,7 @@ public sealed class GoldpathJobsAdminService<TContext>
                 : "dry-run: would fire now; no scheduled trigger (ad-hoc job)");
         }
 
-        await scheduler.TriggerJob(key, ct);
+        await scheduler.TriggerJob(key, StampTraceParent(new JobDataMap()), ct);
         await AuditAsync(actor, "trigger", fleet, job, null, ct);
         return new GoldpathAdminResult(true, "triggered");
     }
@@ -287,13 +288,27 @@ public sealed class GoldpathJobsAdminService<TContext>
         }
 
         var scheduler = await _registry.GetSchedulerAsync(run.SchedulerName, ct);
-        var data = new JobDataMap
+        var data = StampTraceParent(new JobDataMap
         {
             [GoldpathJobsExtensions.ReplayRunKey] = runId.ToString(),
-        };
+        });
         await scheduler.TriggerJob(new JobKey(run.JobName, GoldpathJobsExtensions.JobGroup), data, ct);
         await AuditAsync(actor, "replay-items", run.SchedulerName, run.JobName, $"{openItems.Count} items of run {runId}", ct);
         return new GoldpathAdminResult(true, $"replay fire queued for {openItems.Count} open items");
+    }
+
+    /// <summary>
+    /// Stamps the caller's W3C traceparent into the fire's data map — the only vehicle
+    /// that crosses the Quartz store, so the run span can link back to the request.
+    /// </summary>
+    private static JobDataMap StampTraceParent(JobDataMap data)
+    {
+        if (Activity.Current?.Id is { } traceParent)
+        {
+            data[GoldpathJobsExtensions.TraceParentKey] = traceParent;
+        }
+
+        return data;
     }
 
     /// <summary>The fleet's calendars with the triggers riding them.</summary>

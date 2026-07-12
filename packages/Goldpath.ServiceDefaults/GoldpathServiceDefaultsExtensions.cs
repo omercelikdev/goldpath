@@ -90,6 +90,12 @@ public static class GoldpathServiceDefaultsExtensions
                 tracing
                     .AddAspNetCoreInstrumentation()
                     .AddHttpClientInstrumentation()
+                    // The tracing twin of the meter subscriptions above: without these
+                    // sources every span a Goldpath module starts is a no-op — the
+                    // run/chunk/replay chain never reaches the collector. MassTransit
+                    // covers broker spans when messaging is wired (a no-op otherwise).
+                    .AddSource("Goldpath.*")
+                    .AddSource("MassTransit")
                     .SetSampler(CreateSampler(options, isDevelopment));
 
                 if (isDevelopment)
