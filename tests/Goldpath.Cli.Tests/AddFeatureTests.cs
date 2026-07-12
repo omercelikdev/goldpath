@@ -129,8 +129,8 @@ public class AddFeatureTests
 
         var lines = program.Split('\n');
         var anchor = Array.FindIndex(lines, l => l.Contains("goldpath:features endpoints", StringComparison.Ordinal));
-        Assert.StartsWith("app.MapGoldpathJobsAdmin<ShopDbContext>();", lines[anchor + 1].Trim(), StringComparison.Ordinal);
-        Assert.StartsWith("app.MapGoldpathArchivalAdmin<ShopDbContext>();", lines[anchor + 2].Trim(), StringComparison.Ordinal);
+        Assert.StartsWith("app.MapGoldpathJobsAdmin<ShopDbContext>(exposeUnsecured: true);", lines[anchor + 1].Trim(), StringComparison.Ordinal);
+        Assert.StartsWith("app.MapGoldpathArchivalAdmin<ShopDbContext>(exposeUnsecured: true);", lines[anchor + 2].Trim(), StringComparison.Ordinal);
 
         var model = app.Read(app.Model);
         Assert.Contains("modelBuilder.AddGoldpathArchiveModel();", model, StringComparison.Ordinal);
@@ -150,7 +150,7 @@ public class AddFeatureTests
         Assert.Contains("builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>", program, StringComparison.Ordinal);
         Assert.Contains("jobs.AddGoldpathBulkJobs<ShopDbContext>();", program, StringComparison.Ordinal);
         Assert.Contains("builder.AddGoldpathBulk<WebApplicationBuilder, ShopDbContext>(bulk =>", program, StringComparison.Ordinal);
-        Assert.Contains("app.MapGoldpathBulkAdmin<ShopDbContext>();", program, StringComparison.Ordinal);
+        Assert.Contains("app.MapGoldpathBulkAdmin<ShopDbContext>(exposeUnsecured: true);", program, StringComparison.Ordinal);
         Assert.Contains("modelBuilder.AddGoldpathBulk();", app.Read(app.Model), StringComparison.Ordinal);
         Assert.Contains("  bulk: true", app.Read(app.Manifest), StringComparison.Ordinal);
     }
@@ -182,7 +182,7 @@ public class AddFeatureTests
         var program = app.Read(app.Program);
         Assert.Equal(1, CountOf(program, "builder.AddGoldpathJobs<"));   // ONE scheduler, not two
         Assert.Contains("jobs.AddGoldpathNotificationJobs<ShopDbContext>();", program, StringComparison.Ordinal);
-        Assert.Contains("app.MapGoldpathNotificationAdmin<ShopDbContext>();", program, StringComparison.Ordinal);
+        Assert.Contains("app.MapGoldpathNotificationAdmin<ShopDbContext>(exposeUnsecured: true);", program, StringComparison.Ordinal);
         Assert.Contains("modelBuilder.AddGoldpathNotification();", app.Read(app.Model), StringComparison.Ordinal);
         Assert.Contains("  notification: true", app.Read(app.Manifest), StringComparison.Ordinal);
     }
@@ -198,7 +198,7 @@ public class AddFeatureTests
         Assert.Equal(1, CountOf(program, "builder.AddGoldpathMessaging("));   // ONE bus, not two
         Assert.Contains("jobs.AddGoldpathCampaignJobs<ShopDbContext>();", program, StringComparison.Ordinal);
         Assert.Contains("bus.AddGoldpathCampaignConsumers<ShopDbContext>();", program, StringComparison.Ordinal);
-        Assert.Contains("app.MapGoldpathCampaignAdmin<ShopDbContext>();", program, StringComparison.Ordinal);
+        Assert.Contains("app.MapGoldpathCampaignAdmin<ShopDbContext>(exposeUnsecured: true);", program, StringComparison.Ordinal);
         Assert.Contains("modelBuilder.AddGoldpathCampaign();", app.Read(app.Model), StringComparison.Ordinal);
         Assert.Contains("  campaign: true", app.Read(app.Manifest), StringComparison.Ordinal);
     }

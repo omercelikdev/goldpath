@@ -293,7 +293,7 @@ Goldpath.GoldpathCampaignTypeBuilder<TTarget>.MaxTargets(long maxTargets) -> Gol
 Goldpath.GoldpathCampaignTypeBuilder<TTarget>.Targets(System.Func<System.IServiceProvider!, System.Collections.Generic.IReadOnlyDictionary<string!, string!>!, System.Collections.Generic.IAsyncEnumerable<TTarget!>!>! targets) -> Goldpath.GoldpathCampaignTypeBuilder<TTarget!>!
 Goldpath.IGoldpathCampaignItemHandler<TTarget>
 Goldpath.IGoldpathCampaignItemHandler<TTarget>.ExecuteAsync(TTarget! target, Goldpath.GoldpathCampaignItemContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
-static Goldpath.GoldpathCampaignAdminEndpoints.MapGoldpathCampaignAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/campaign") -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static Goldpath.GoldpathCampaignAdminEndpoints.MapGoldpathCampaignAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/campaign", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 static Goldpath.GoldpathCampaignEngine<TContext>.PolicyOf(Goldpath.GoldpathCampaign! campaign) -> Goldpath.GoldpathCampaignPolicy!
 static Goldpath.GoldpathCampaignExtensions.AddGoldpathCampaign<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathCampaignOptions!>! configure) -> TBuilder
 static Goldpath.GoldpathCampaignExtensions.AddGoldpathCampaignConsumers<TContext>(this MassTransit.IBusRegistrationConfigurator! configurator) -> MassTransit.IBusRegistrationConfigurator!

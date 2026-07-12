@@ -404,7 +404,7 @@ public static class AddWorkerCommand
             var app = builder.Build();
 
             app.MapGoldpathDefaultEndpoints();
-            app.MapGoldpathJobsAdmin<ReportsDbContext>();       // run console API: trigger/pause/reschedule/audit
+            app.MapGoldpathJobsAdmin<ReportsDbContext>(exposeUnsecured: true);   // internal fleet console — keep it behind the cluster boundary (H2 opt-out, visible)
 
             app.Run();
 

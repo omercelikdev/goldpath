@@ -48,7 +48,7 @@ public class AddWorkerTests
         var program = File.ReadAllText(Path.Combine(projectDir, "Program.cs"));
         Assert.Contains("jobs.ConnectionName = \"shopdb\";", program, StringComparison.Ordinal);
         Assert.Contains("jobs.SchedulerName = \"shop-eodreportworker\";", program, StringComparison.Ordinal);   // its OWN fleet
-        Assert.Contains("app.MapGoldpathJobsAdmin<ReportsDbContext>();", program, StringComparison.Ordinal);
+        Assert.Contains("app.MapGoldpathJobsAdmin<ReportsDbContext>(exposeUnsecured: true);", program, StringComparison.Ordinal);   // the H2 opt-out is WRITTEN, not implied
         Assert.True(File.Exists(Path.Combine(projectDir, "Reports", "NightlyReportJob.cs")));
 
         var appHost = app.Read(app.AppHost);

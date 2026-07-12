@@ -75,6 +75,9 @@ public sealed class AppFacts
     /// <summary>Whether AddGoldpathMessaging is already wired (campaign requires the broker seam, RFC D8).</summary>
     public required bool MessagingWired { get; init; }
 
+    /// <summary>Whether AddGoldpathAuth is wired (admin surfaces: policy by default, VISIBLE opt-out without).</summary>
+    public required bool AuthWired { get; init; }
+
     /// <summary>Reads the context facts from the located files.</summary>
     public static AppFacts Read(AppFiles files)
     {
@@ -102,6 +105,7 @@ public sealed class AppFacts
             CachingWired = program.Contains("AddGoldpathCaching(", StringComparison.Ordinal),
             JobsWired = program.Contains("builder.AddGoldpathJobs<", StringComparison.Ordinal),
             MessagingWired = program.Contains("builder.AddGoldpathMessaging(", StringComparison.Ordinal),
+            AuthWired = program.Contains("builder.AddGoldpathAuth(", StringComparison.Ordinal),
         };
     }
 }
@@ -250,8 +254,8 @@ public static class FeatureRecipes
                     plan.Registrations.Add("    //     .DueWhen(o => o.Status == OrderStatus.Confirmed, o => o.CreatedAt)");
                     plan.Registrations.Add("    //     .ArchiveAfter(TimeSpan.FromDays(365)).RetainFor(years: 10).DeleteHotRowsAfterArchive());");
                     plan.Registrations.Add("});");
-                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>();        // run console API: trigger/pause/reschedule/audit");
-                    plan.Endpoints.Add($"app.MapGoldpathArchivalAdmin<{app.DbContextName}>();    // lifecycle verbs: retrieve/hold/erase/verify");
+                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // run console API: trigger/pause/reschedule/audit");
+                    plan.Endpoints.Add($"app.MapGoldpathArchivalAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});    // lifecycle verbs: retrieve/hold/erase/verify");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathArchiveModel();   // archive entries + chain state + holds + erasure evidence");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)");
                     plan.ManifestLines.Add("  archival: true");
@@ -294,8 +298,8 @@ public static class FeatureRecipes
                     plan.Registrations.Add("    //     .RowKey(r => r.Reference)");
                     plan.Registrations.Add("    //     .Validate((row, ctx) => { /* ctx.Fail(field, message) — value-free */ }));");
                     plan.Registrations.Add("});");
-                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>();        // run console API: trigger/pause/reschedule/audit");
-                    plan.Endpoints.Add($"app.MapGoldpathBulkAdmin<{app.DbContextName}>();        // intake verbs: upload/report/approve/reject");
+                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // run console API: trigger/pause/reschedule/audit");
+                    plan.Endpoints.Add($"app.MapGoldpathBulkAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // intake verbs: upload/report/approve/reject");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathBulk();           // files + batches + rows + value-free report");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)");
                     plan.ManifestLines.Add("  bulk: true");
@@ -338,8 +342,8 @@ public static class FeatureRecipes
                     plan.Registrations.Add("    //     .Channel(\"email\", c => c.Subject(\"\", \"...\").Body(\"\", \"... {{Token}} ...\"))");
                     plan.Registrations.Add("    //     .DeleteBodyAfter(TimeSpan.FromDays(90)));");
                     plan.Registrations.Add("});");
-                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>();        // run console API: trigger/pause/reschedule/audit");
-                    plan.Endpoints.Add($"app.MapGoldpathNotificationAdmin<{app.DbContextName}>();   // read-only evidence views (recipients masked)");
+                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // run console API: trigger/pause/reschedule/audit");
+                    plan.Endpoints.Add($"app.MapGoldpathNotificationAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});   // read-only evidence views (recipients masked)");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathNotification();   // evidence rows + attachments");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)");
                     plan.ManifestLines.Add("  notification: true");
@@ -391,8 +395,8 @@ public static class FeatureRecipes
                     plan.Registrations.Add("    //     .DefaultPolicy(p => p with { Tps = 50, MaxInFlight = 1_000 }));");
                     plan.Registrations.Add("});");
                     plan.BusLines.Add($"    bus.AddGoldpathCampaignConsumers<{app.DbContextName}>();    // claim-before-execute item consumer + batching outcome sink");
-                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>();        // run console API: trigger/pause/reschedule/audit");
-                    plan.Endpoints.Add($"app.MapGoldpathCampaignAdmin<{app.DbContextName}>();       // audited verbs: create/pause/resume/abort/throttle");
+                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // run console API: trigger/pause/reschedule/audit");
+                    plan.Endpoints.Add($"app.MapGoldpathCampaignAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});       // audited verbs: create/pause/resume/abort/throttle");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathCampaign();       // campaigns + items (the 30M-row table) + verb audit");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)");
                     plan.ManifestLines.Add("  campaign: true");

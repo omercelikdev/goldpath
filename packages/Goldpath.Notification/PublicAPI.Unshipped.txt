@@ -241,6 +241,6 @@ Goldpath.GoldpathNotificationTemplateStatus.Key.get -> string!
 Goldpath.GoldpathNotificationTemplateStatus.Key.init -> void
 Goldpath.GoldpathNotificationTemplateStatus.OldestRequestedSeconds.get -> double?
 Goldpath.GoldpathNotificationTemplateStatus.OldestRequestedSeconds.init -> void
-static Goldpath.GoldpathNotificationAdminEndpoints.MapGoldpathNotificationAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/notification") -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static Goldpath.GoldpathNotificationAdminEndpoints.MapGoldpathNotificationAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/notification", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 static Goldpath.GoldpathNotificationAdminService<TContext>.MaskRecipient(string! recipient) -> string!
 static Goldpath.GoldpathNotificationMetrics.SetQueueSnapshot(string! template, System.Collections.Generic.IReadOnlyDictionary<string!, int>! byState, double oldestRequestedSeconds) -> void

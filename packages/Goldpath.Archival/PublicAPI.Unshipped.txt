@@ -187,7 +187,7 @@ Goldpath.GoldpathRowRetentionDefinition.Name.get -> string!
 Goldpath.GoldpathRowRetentionDefinition.PurgeBatchAsync(Microsoft.EntityFrameworkCore.DbContext! db, System.DateTimeOffset now, int batchSize, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
 Goldpath.GoldpathRowRetentionDefinition.RowType.get -> System.Type!
 const Goldpath.GoldpathArchiveEnvelope.SchemaVersion = 1 -> int
-static Goldpath.GoldpathArchivalAdminEndpoints.MapGoldpathArchivalAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/archival") -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static Goldpath.GoldpathArchivalAdminEndpoints.MapGoldpathArchivalAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/archival", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 static Goldpath.GoldpathArchivalExtensions.AddGoldpathArchival<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathArchivalOptions!>! configure) -> TBuilder
 static Goldpath.GoldpathArchivalExtensions.AddGoldpathArchivalJobs<TContext>(this Goldpath.GoldpathJobsOptions! jobs, string! archiveCron = "0 0 2 * * ?", string! verifyCron = "0 0 5 ? * SUN", System.TimeSpan? deadline = null) -> Goldpath.GoldpathJobsOptions!
 static Goldpath.GoldpathArchiveEnvelope.ChainHash(string! contentHashAtAppend, string! previousChainHash, long chainIndex) -> string!

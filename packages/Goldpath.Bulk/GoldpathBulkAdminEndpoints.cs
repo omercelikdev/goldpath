@@ -1,8 +1,10 @@
 using Microsoft.AspNetCore.Builder;
+using Microsoft.Extensions.DependencyInjection;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 
 namespace Goldpath;
 
@@ -20,11 +22,11 @@ public sealed record GoldpathBulkDecisionRequest(string? Note);
 public static class GoldpathBulkAdminEndpoints
 {
     /// <summary>Maps the bulk admin API under <paramref name="prefix"/>.</summary>
-    public static IEndpointRouteBuilder MapGoldpathBulkAdmin<TContext>(this IEndpointRouteBuilder endpoints, string prefix = "/goldpath/admin/bulk")
+    public static IEndpointRouteBuilder MapGoldpathBulkAdmin<TContext>(this IEndpointRouteBuilder endpoints, string prefix = "/goldpath/admin/bulk", bool exposeUnsecured = false)
         where TContext : DbContext
     {
         var group = endpoints.MapGroup(prefix);
-
+        AdminSurfaceGuard.Apply(endpoints, group, prefix, exposeUnsecured);
         group.MapGet("/definitions", ([FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
             => admin.GetDefinitionsAsync(ct));
 

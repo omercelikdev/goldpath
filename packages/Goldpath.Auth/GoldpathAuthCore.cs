@@ -27,6 +27,9 @@ public enum GoldpathAuthStrategy
 /// <summary>Tuning surface — bound from <c>Goldpath:Auth</c>.</summary>
 public sealed class GoldpathAuthOptions
 {
+    /// <summary>The role the admin surfaces' ops policy requires (mapped to your IdP's group/role claim).</summary>
+    public string OpsRole { get; set; } = "goldpath-ops";
+
     /// <summary>Active strategy.</summary>
     public GoldpathAuthStrategy Strategy { get; set; } = GoldpathAuthStrategy.OpenId;
 

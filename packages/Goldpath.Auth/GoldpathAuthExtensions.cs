@@ -33,9 +33,14 @@ public static class GoldpathAuthExtensions
             return builder;
         }
 
-        // Secure by default: every endpoint demands a principal unless it explicitly opts out.
-        builder.Services.AddAuthorization(authz => authz.FallbackPolicy =
-            new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build());
+        // Secure by default: every endpoint demands a principal unless it explicitly opts out,
+        // and the admin surfaces additionally demand the ops role (hardening H2 — the
+        // /goldpath/admin/* mappers require this policy OUT OF THE BOX).
+        builder.Services.AddAuthorization(authz =>
+        {
+            authz.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
+            authz.AddPolicy(GoldpathPolicies.Ops, policy => policy.RequireRole(options.OpsRole));
+        });
 
         if (options.Strategy == GoldpathAuthStrategy.OpenId)
         {
