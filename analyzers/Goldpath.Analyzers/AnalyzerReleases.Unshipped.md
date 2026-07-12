@@ -42,3 +42,4 @@ GP1602 | Goldpath | Info | Notification template without a DeleteBodyAfter windo
 GP1701 | Goldpath | Error | Campaign type without a MaxTargets ceiling
 GP1702 | Goldpath | Warning | Campaign item handler calls SaveChanges directly
 GP1703 | Goldpath | Info | Campaign item handler messages humans without the notification seam
+GP1801 | Goldpath | Warning | Shared Goldpath tables mapped by a second context without excludeFromMigrations
