@@ -7,14 +7,15 @@ using Xunit;
 namespace CorPay.SmokeTests;
 
 /// <summary>
-/// The "runs with one click" proof: the REAL AppHost starts (containers included), an order is
-/// created over HTTP, the integration event round-trips the broker through the outbox, and the
-/// keyset-paginated list shows the confirmed order. No mocks on the happy path.
+/// The "runs with one click" proof for the AUTHED shape: the REAL AppHost starts
+/// (containers included), probes go green, and the auth floor holds — business endpoints
+/// answer 401 without a token. The full order flow needs your IdP (Goldpath.Auth README);
+/// this smoke deliberately claims exactly what it asserts.
 /// </summary>
 public class SmokeTests
 {
     [Fact]
-    public async Task Order_flow_end_to_end()
+    public async Task Secure_by_default_probes_green_and_the_auth_floor_holds()
     {
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 

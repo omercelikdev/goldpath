@@ -22,4 +22,4 @@ clean `spec_validate` + `spec_drift` is not done.
 
 ## Run
 `dotnet run --project src/CorPay.AppHost` → containers start, dashboard opens.
-`dotnet test` → smoke: POST an order, the event round-trips the broker, the paginated list confirms.
+`dotnet test` → smoke: probes green + the auth floor holds (full order flow needs your IdP).

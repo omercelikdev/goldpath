@@ -22,4 +22,4 @@ clean `spec_validate` + `spec_drift` is not done.
 
 ## Run
 `dotnet run --project src/GoldpathTemplate.AppHost` → containers start, dashboard opens.
-`dotnet test` → smoke: POST an order, the event round-trips the broker, the paginated list confirms.
+`dotnet test` → smoke: the shape's first-click contract (open shapes drive the full order flow; authed shapes prove probes green + the 401 auth floor).

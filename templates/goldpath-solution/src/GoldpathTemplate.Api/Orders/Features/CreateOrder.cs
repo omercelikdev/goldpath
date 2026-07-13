@@ -16,9 +16,15 @@ public class CreateOrderHandler(OrdersDbContext db, IPublishEndpoint publisher)
         var order = new Order { Reference = request.Reference, Amount = request.Amount };
         db.Orders.Add(order);
 
-        await db.SaveChangesAsync(cancellationToken);           // order row + outbox row, atomically
+        // ONE transaction around both saves: the identity id needs the first save, the
+        // outbox row lands with the second — without the explicit transaction a crash in
+        // between commits the order and LOSES the event (the exact failure the outbox
+        // pattern exists to prevent).
+        await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
+        await db.SaveChangesAsync(cancellationToken);           // order row (id materializes)
         await publisher.Publish(new OrderPlaced(order.Id), cancellationToken);
-        await db.SaveChangesAsync(cancellationToken);           // flush the bus outbox
+        await db.SaveChangesAsync(cancellationToken);           // outbox row — same transaction
+        await transaction.CommitAsync(cancellationToken);       // order + event commit together
 
         return Result.Success(order.Id);
     }
