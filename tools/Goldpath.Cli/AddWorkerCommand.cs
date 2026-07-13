@@ -219,6 +219,31 @@ public static class AddWorkerCommand
         File.WriteAllText(Path.Combine(projectDir, $"{projectName}.csproj"), Csproj(trigger, provider.Item1));
         File.WriteAllText(Path.Combine(projectDir, "GlobalUsings.cs"), "global using Goldpath;\n");
         File.WriteAllText(Path.Combine(projectDir, "Program.cs"), Program(projectName, trigger, facts.ConnectionName, provider.Item2));
+
+        // Aspire infers the worker's HTTP endpoint FROM launchSettings — without this file
+        // the AppHost's WithHttpHealthCheck finds no endpoint and the whole app refuses to
+        // start (found composing the CorPay sample). Port: deterministic per project name,
+        // clear of the template's own 5241.
+        var port = 5300 + Math.Abs(projectName.Sum(c => c * 31)) % 200;
+        Directory.CreateDirectory(Path.Combine(projectDir, "Properties"));
+        File.WriteAllText(Path.Combine(projectDir, "Properties", "launchSettings.json"),
+            $$"""
+            {
+              "$schema": "https://json.schemastore.org/launchsettings.json",
+              "profiles": {
+                "http": {
+                  "commandName": "Project",
+                  "dotnetRunMessages": true,
+                  "launchBrowser": false,
+                  "applicationUrl": "http://localhost:{{port}}",
+                  "environmentVariables": {
+                    "ASPNETCORE_ENVIRONMENT": "Development"
+                  }
+                }
+              }
+            }
+
+            """);
         switch (trigger)
         {
             case "queue":

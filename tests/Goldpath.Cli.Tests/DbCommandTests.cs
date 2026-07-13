@@ -133,4 +133,30 @@ public class DbCommandTests
         Assert.Equal(0, CliRunner.Run(["add", "feature", "campaign", "--path", app.Root], new FakeProcessRunner(), output, TextWriter.Null));
         Assert.Contains("goldpath db add AddCampaign", output.ToString(), StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void Db_verbs_survive_a_relative_appRoot_from_another_directory()
+    {
+        // goldpath new -o <dir> runs db init with a RELATIVE appRoot while ef's process
+        // gets appRoot as its working directory — owner paths must be absolute or the
+        // prefix doubles (found generating the CorPay sample).
+        using var app = new FakeApp();
+        var runner = new FakeProcessRunner();
+        var previous = Environment.CurrentDirectory;
+        Environment.CurrentDirectory = Path.GetDirectoryName(app.Root.TrimEnd(Path.DirectorySeparatorChar))!;
+        try
+        {
+            var relative = Path.GetFileName(app.Root.TrimEnd(Path.DirectorySeparatorChar));
+            Assert.Equal(0, CliRunner.Run(["db", "init", "--path", relative], runner, TextWriter.Null, TextWriter.Null));
+        }
+        finally
+        {
+            Environment.CurrentDirectory = previous;
+        }
+
+        var ef = runner.Calls.Single(c => c.Arguments.Contains("Initial"));
+        var project = ef.Arguments[ef.Arguments.ToList().IndexOf("--project") + 1];
+        Assert.True(Path.IsPathRooted(project), $"owner path must be absolute, got '{project}'");
+        Assert.True(Path.IsPathRooted(ef.WorkingDirectory), "ef working directory must be absolute");
+    }
 }

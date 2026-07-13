@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <Sdk Name="Aspire.AppHost.Sdk" Version="13.4.6" />
+
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsAspireHost>true</IsAspireHost>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Aspire.Hosting.AppHost" />
+    <!-- goldpath:features packages — the drift profile is the source of these rows -->
+    <PackageReference Include="Aspire.Hosting.PostgreSQL" />
+    <PackageReference Include="Aspire.Hosting.Redis" />
+    <PackageReference Include="Aspire.Hosting.RabbitMQ" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../CorPay.Api/CorPay.Api.csproj" />
+    <!-- goldpath:workers references — worker projects chain here (goldpath add worker) -->
+    <ProjectReference Include="../CorPay.EodWorker/CorPay.EodWorker.csproj" />
+    <ProjectReference Include="../CorPay.PaymentsWorker/CorPay.PaymentsWorker.csproj" />
+  </ItemGroup>
+
+</Project>

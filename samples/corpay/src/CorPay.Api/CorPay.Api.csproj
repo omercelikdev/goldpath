@@ -1,0 +1,38 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <!-- Build-time OpenAPI export: the deterministic artifact CI feeds to Spec Engine `drift`. -->
+    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/openapi</OpenApiDocumentsDirectory>
+    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
+    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Goldpath.Abstractions" />
+    <PackageReference Include="Goldpath.Auth" />
+    <!-- goldpath:features packages — the drift profile is the source of these rows -->
+    <PackageReference Include="Goldpath.MultiTenancy" />
+    <PackageReference Include="Goldpath.AuditTrail" />
+    <PackageReference Include="Goldpath.SoftDelete" />
+    <PackageReference Include="Goldpath.Idempotency" />
+    <PackageReference Include="Goldpath.DataProtection" />
+    <PackageReference Include="Goldpath.Caching" />
+    <PackageReference Include="Goldpath.Locking" />
+    <PackageReference Include="Goldpath.Archival" />
+    <PackageReference Include="Goldpath.Bulk" />
+    <PackageReference Include="Goldpath.Jobs" />
+    <PackageReference Include="Goldpath.ApiDefaults" />
+    <PackageReference Include="Goldpath.Data" />
+    <PackageReference Include="Goldpath.Messaging" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="Goldpath.ServiceDefaults" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Goldpath.Analyzers" PrivateAssets="all" />
+    <PackageReference Include="Mediant" />
+    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" PrivateAssets="all" />
+    <PackageReference Include="Mediant.AspNetCore" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+  </ItemGroup>
+
+</Project>

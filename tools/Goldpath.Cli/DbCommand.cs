@@ -13,6 +13,10 @@ public static class DbCommand
     /// <summary>Dispatches one db verb.</summary>
     public static int Run(string verb, string? name, string appRoot, IProcessRunner runner, TextWriter output, TextWriter error)
     {
+        // Absolute from the door: owner paths are handed to `dotnet ef` whose process runs
+        // WITH appRoot as its working directory — a relative appRoot (goldpath new -o dir)
+        // would otherwise double the prefix and ef reports "unable to retrieve metadata".
+        appRoot = Path.GetFullPath(appRoot);
         var owners = FindMigrationOwners(appRoot);
         if (owners.Count == 0)
         {

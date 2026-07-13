@@ -1,0 +1,82 @@
+# Manifest ↔ repository wiring table (specdrift profile data). One STATIC file serves every
+# template shape: a feature that is off with its package absent is silent; on+wired is
+# silent; every other combination is a finding. Value-gated rows use `in`.
+version: 1
+manifest: .goldpath/manifest.yaml
+schemaVersion: 1
+wiring:
+  - feature: features.outbox
+    package: Goldpath.Messaging
+    call: AddGoldpathOutbox
+  - feature: providers.auth
+    in: [openid, apikey]
+    package: Goldpath.Auth
+    call: AddGoldpathAuth
+  - feature: features.idempotency
+    package: Goldpath.Idempotency
+    call: AddGoldpathIdempotency
+  - feature: features.auditTrail
+    package: Goldpath.AuditTrail
+    call: AddGoldpathAuditTrail
+  - feature: features.softDelete
+    package: Goldpath.SoftDelete
+    call: AddGoldpathSoftDelete
+  - feature: features.dataProtection
+    package: Goldpath.DataProtection
+    call: AddGoldpathDataProtection
+  - feature: features.multiTenancy
+    package: Goldpath.MultiTenancy
+    call: AddGoldpathMultiTenancy
+  - feature: features.distributedCaching
+    package: Goldpath.Caching
+    call: AddGoldpathCaching
+  # Locking rows are PROVIDER-gated: the sqlserver strategy lives in its own optional
+  # package with its own registration call, so a single toggle row would false-positive.
+  # Toggle-form manifests (distributedLocking: true) default to redis per the schema but
+  # do not materialize the value — declare the provider explicitly to get drift coverage.
+  - feature: features.distributedLocking.provider
+    in: [redis, postgres]
+    package: Goldpath.Locking
+    call: AddGoldpathLocking
+  - feature: features.distributedLocking.provider
+    in: [sqlserver]
+    package: Goldpath.Locking.SqlServer
+    call: AddGoldpathSqlServerLocking
+  # Archival runs ON the jobs module (archival RFC D3): two rows guard both halves, so a
+  # manifest that claims archival without the jobs runtime (or vice versa) is a finding.
+  - feature: features.archival
+    package: Goldpath.Archival
+    call: AddGoldpathArchival
+  - feature: features.archival
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
+  # Bulk runs ON the jobs module too (bulk RFC D4): the same two-row guard.
+  - feature: features.bulk
+    package: Goldpath.Bulk
+    call: AddGoldpathBulk
+  - feature: features.bulk
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
+  # Notification runs ON the jobs module too (notification RFC D3): the same guard pair.
+  - feature: features.notification
+    package: Goldpath.Notification
+    call: AddGoldpathNotification
+  - feature: features.notification
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
+  # Campaign runs ON the jobs module (campaign RFC D2): the same guard pair. The broker
+  # requirement (D8) is NOT a drift row on purpose — specdrift evaluates rows per-feature
+  # both ways, so a messaging row here would flag every broker-enabled app that has no
+  # campaign. D8 is already said three times: the schema rejects it, the template #errors
+  # at build, the CLI refuses with teaching text.
+  - feature: features.campaign
+    package: Goldpath.Campaign
+    call: AddGoldpathCampaign
+  - feature: features.campaign
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
+# The build exports the OpenAPI document next to the Api project (OpenApiDocumentsDirectory);
+# the committed contract lives in specs/ so reviews see it change.
+openapi:
+  - committed: specs/CorPay.Api.json
+    built: src/CorPay.Api/openapi/CorPay.Api.json

@@ -1,0 +1,67 @@
+{
+  "__comment": "The generated app's day-one board: HTTP health + every Ring B cross-cutting signal (auth, tenancy, locking, bus). Datasource: Prometheus scraping the OTel collector. MODULE boards (jobs, archival, bulk, notification, campaign) live with their packages under packages/Goldpath.<Module>/ops/ — import the ones your manifest enables. Panels stay green-empty until the matching feature is wired: an empty panel names the capability you have not enabled yet.",
+  "title": "Goldpath App — service & cross-cutting features",
+  "uid": "goldpath-app",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "app"],
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "HTTP p95 (s) by route — the user's experience, before anything else",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket[5m])) by (le, http_route))", "legendFormat": "{{http_route}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "HTTP 5xx rate — errors per second by route",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum(rate(http_server_request_duration_seconds_count{http_response_status_code=~\"5..\"}[5m])) by (http_route)", "legendFormat": "{{http_route}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Auth failures (per 5m) — a spike is an attack or a broken client secret",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "sum(increase(goldpath_auth_failures_total[5m]))", "legendFormat": "auth failures" },
+        { "expr": "sum(increase(goldpath_auth_tenant_binding_rejects_total[5m]))", "legendFormat": "tenant-binding rejects" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Tenancy guard (per 5m) — unresolved tenants and write-guard trips are BUGS, not noise",
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "sum(increase(goldpath_tenant_unresolved_total[5m]))", "legendFormat": "unresolved tenant" },
+        { "expr": "sum(increase(goldpath_tenant_write_guard_trips_total[5m]))", "legendFormat": "write-guard trips" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Distributed locks — timeouts climbing means contention (or a leaked hold)",
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "sum(increase(goldpath_lock_acquire_total{outcome=\"acquired\"}[5m]))", "legendFormat": "acquired" },
+        { "expr": "sum(increase(goldpath_lock_acquire_total{outcome=\"timeout\"}[5m]))", "legendFormat": "timeout" },
+        { "expr": "histogram_quantile(0.95, sum(rate(goldpath_lock_wait_seconds_bucket[5m])) by (le))", "legendFormat": "wait p95 (s)" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Bus consume & faults (MassTransit meter) — faults land in the broker's error queue",
+      "gridPos": { "x": 0, "y": 16, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(rate(masstransit_consume[5m]))", "legendFormat": "consume/s" },
+        { "expr": "sum(rate(masstransit_consume_fault[5m]))", "legendFormat": "faults/s" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Consume duration p95 (MassTransit meter)",
+      "gridPos": { "x": 12, "y": 16, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(masstransit_consume_duration_bucket[5m])) by (le))", "legendFormat": "consume p95" }]
+    }
+  ]
+}

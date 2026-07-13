@@ -1,11 +1,11 @@
-# CLAUDE.md — GoldpathTemplate
+# CLAUDE.md — CorPay
 
 Golden-path Goldpath solution. The manifest (`.goldpath/manifest.yaml`) is the single source of truth;
 a disabled feature does not exist in this codebase (compile-time composition).
 
 ## Rules
 - Conventions: `.claude/conventions.md`. Constitution and rationale: the Goldpath repo (`docs/adr`).
-- Vertical slice: one file per feature under `src/GoldpathTemplate.Api/Orders/Features/`.
+- Vertical slice: one file per feature under `src/CorPay.Api/Orders/Features/`.
 - Broker-bound events implement `IIntegrationEvent`; in-process events are Mediant
   notifications — never both (GP0401/0402).
 - Lists are keyset-paginated (`ToPageAsync`); `Skip/Take` is analyzer-flagged.
@@ -21,5 +21,5 @@ The deterministic engine is registered in `.mcp.json` (`specdrift mcp`); "done" 
 clean `spec_validate` + `spec_drift` is not done.
 
 ## Run
-`dotnet run --project src/GoldpathTemplate.AppHost` → containers start, dashboard opens.
-`dotnet test` → smoke: the shape's first-click contract (open shapes drive the full order flow; authed shapes prove probes green + the 401 auth floor).
+`dotnet run --project src/CorPay.AppHost` → containers start, dashboard opens.
+`dotnet test` → smoke: probes green + the auth floor holds (full order flow needs your IdP).
