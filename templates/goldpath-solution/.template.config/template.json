@@ -1,20 +1,34 @@
 {
   "$schema": "http://json.schemastore.org/template",
   "author": "Omer Celik",
-  "classifications": ["Goldpath", "Enterprise", "Web", "Aspire"],
+  "classifications": [
+    "Goldpath",
+    "Enterprise",
+    "Web",
+    "Aspire"
+  ],
   "identity": "Goldpath.Solution.CSharp",
   "name": "Goldpath enterprise solution (golden path)",
   "shortName": "goldpath-solution",
   "sourceName": "GoldpathTemplate",
   "preferNameDirectory": true,
-  "tags": { "language": "C#", "type": "solution" },
+  "tags": {
+    "language": "C#",
+    "type": "solution"
+  },
   "symbols": {
     "db": {
       "type": "parameter",
       "datatype": "choice",
       "choices": [
-        { "choice": "postgresql", "description": "PostgreSQL (golden-path default)" },
-        { "choice": "sqlserver", "description": "SQL Server" }
+        {
+          "choice": "postgresql",
+          "description": "PostgreSQL (golden-path default)"
+        },
+        {
+          "choice": "sqlserver",
+          "description": "SQL Server"
+        }
       ],
       "defaultValue": "postgresql",
       "replaces": "GOLDPATH-DB",
@@ -24,8 +38,14 @@
       "type": "parameter",
       "datatype": "choice",
       "choices": [
-        { "choice": "rabbitmq", "description": "RabbitMQ (golden-path default)" },
-        { "choice": "none", "description": "No broker (simple internal services — GM-4 shape)" }
+        {
+          "choice": "rabbitmq",
+          "description": "RabbitMQ (golden-path default)"
+        },
+        {
+          "choice": "none",
+          "description": "No broker (simple internal services \u2014 GM-4 shape)"
+        }
       ],
       "defaultValue": "rabbitmq",
       "replaces": "GOLDPATH-BROKER",
@@ -35,9 +55,18 @@
       "type": "parameter",
       "datatype": "choice",
       "choices": [
-        { "choice": "openid", "description": "OIDC/JWT bearer against your IdP (secure-by-default)" },
-        { "choice": "apikey", "description": "Minimal API-key auth for internal/legacy callers" },
-        { "choice": "none", "description": "No auth wiring (internal services behind mTLS/gateway)" }
+        {
+          "choice": "openid",
+          "description": "OIDC/JWT bearer against your IdP (secure-by-default)"
+        },
+        {
+          "choice": "apikey",
+          "description": "Minimal API-key auth for internal/legacy callers"
+        },
+        {
+          "choice": "none",
+          "description": "No auth wiring (internal services behind mTLS/gateway)"
+        }
       ],
       "defaultValue": "openid",
       "replaces": "GOLDPATH-AUTH",
@@ -48,72 +77,183 @@
       "datatype": "choice",
       "allowMultipleValues": true,
       "choices": [
-        { "choice": "multitenancy", "description": "Tenant resolution + EF isolation + write guard (fail-closed)" },
-        { "choice": "audittrail", "description": "Same-transaction change rows + command audit" },
-        { "choice": "softdelete", "description": "Deletes become stamped updates behind a global filter" },
-        { "choice": "idempotency", "description": "Idempotency-Key middleware + [Idempotent] commands" },
-        { "choice": "dataprotection", "description": "Classify once, every sink masks (audit rows, logs)" },
-        { "choice": "caching", "description": "HybridCache L1+L2 (adds a Redis resource) + [Cacheable] queries" },
-        { "choice": "locking", "description": "Distributed locks in the app database (Medallion)" },
-        { "choice": "archival", "description": "Compliance archive with hash chain, retention, legal hold + erasure (runs on jobs)" },
-        { "choice": "bulk", "description": "File intake: validate + approve gate + execution as jobs runs (repair queue)" },
-        { "choice": "notification", "description": "Transactional notifications: evidence rows, code templates, email/webhook channels (runs on jobs)" },
-        { "choice": "campaign", "description": "Governed mass-execution (L4): paced broker fan-out under a live policy (runs on jobs; REQUIRES a broker)" }
+        {
+          "choice": "multitenancy",
+          "description": "Tenant resolution + EF isolation + write guard (fail-closed)"
+        },
+        {
+          "choice": "audittrail",
+          "description": "Same-transaction change rows + command audit"
+        },
+        {
+          "choice": "softdelete",
+          "description": "Deletes become stamped updates behind a global filter"
+        },
+        {
+          "choice": "idempotency",
+          "description": "Idempotency-Key middleware + [Idempotent] commands"
+        },
+        {
+          "choice": "dataprotection",
+          "description": "Classify once, every sink masks (audit rows, logs)"
+        },
+        {
+          "choice": "caching",
+          "description": "HybridCache L1+L2 (adds a Redis resource) + [Cacheable] queries"
+        },
+        {
+          "choice": "locking",
+          "description": "Distributed locks in the app database (Medallion)"
+        },
+        {
+          "choice": "archival",
+          "description": "Compliance archive with hash chain, retention, legal hold + erasure (runs on jobs)"
+        },
+        {
+          "choice": "bulk",
+          "description": "File intake: validate + approve gate + execution as jobs runs (repair queue)"
+        },
+        {
+          "choice": "notification",
+          "description": "Transactional notifications: evidence rows, code templates, email/webhook channels (runs on jobs)"
+        },
+        {
+          "choice": "campaign",
+          "description": "Governed mass-execution (L4): paced broker fan-out under a live policy (runs on jobs; REQUIRES a broker)"
+        }
       ],
       "defaultValue": "",
-      "description": "Ring B features to enable (comma-separated). Each generates its manifest line, package and wiring — specdrift-clean by construction."
+      "description": "Ring B features to enable (comma-separated). Each generates its manifest line, package and wiring \u2014 specdrift-clean by construction."
     },
-    "UseMultiTenancy": { "type": "computed", "value": "(features == \"multitenancy\")" },
-    "UseAuditTrail": { "type": "computed", "value": "(features == \"audittrail\")" },
-    "UseSoftDelete": { "type": "computed", "value": "(features == \"softdelete\")" },
-    "UseIdempotency": { "type": "computed", "value": "(features == \"idempotency\")" },
-    "UseDataProtection": { "type": "computed", "value": "(features == \"dataprotection\")" },
-    "UseCaching": { "type": "computed", "value": "(features == \"caching\")" },
-    "UseLocking": { "type": "computed", "value": "(features == \"locking\")" },
-    "UseArchival": { "type": "computed", "value": "(features == \"archival\")" },
-    "UseBulk": { "type": "computed", "value": "(features == \"bulk\")" },
-    "UseNotification": { "type": "computed", "value": "(features == \"notification\")" },
-    "UseCampaign": { "type": "computed", "value": "(features == \"campaign\")" },
-    "UseAuth": { "type": "computed", "value": "(auth != \"none\")" },
-    "UseApiKey": { "type": "computed", "value": "(auth == \"apikey\")" },
-    "UsePostgres": { "type": "computed", "value": "(db == \"postgresql\")" },
-    "UseSqlServer": { "type": "computed", "value": "(db == \"sqlserver\")" },
-    "UseBroker": { "type": "computed", "value": "(broker == \"rabbitmq\")" }
+    "UseMultiTenancy": {
+      "type": "computed",
+      "value": "(features == \"multitenancy\")"
+    },
+    "UseAuditTrail": {
+      "type": "computed",
+      "value": "(features == \"audittrail\")"
+    },
+    "UseSoftDelete": {
+      "type": "computed",
+      "value": "(features == \"softdelete\")"
+    },
+    "UseIdempotency": {
+      "type": "computed",
+      "value": "(features == \"idempotency\")"
+    },
+    "UseDataProtection": {
+      "type": "computed",
+      "value": "(features == \"dataprotection\")"
+    },
+    "UseCaching": {
+      "type": "computed",
+      "value": "(features == \"caching\")"
+    },
+    "UseLocking": {
+      "type": "computed",
+      "value": "(features == \"locking\")"
+    },
+    "UseArchival": {
+      "type": "computed",
+      "value": "(features == \"archival\")"
+    },
+    "UseBulk": {
+      "type": "computed",
+      "value": "(features == \"bulk\")"
+    },
+    "UseNotification": {
+      "type": "computed",
+      "value": "(features == \"notification\")"
+    },
+    "UseCampaign": {
+      "type": "computed",
+      "value": "(features == \"campaign\")"
+    },
+    "UseAuth": {
+      "type": "computed",
+      "value": "(auth != \"none\")"
+    },
+    "UseApiKey": {
+      "type": "computed",
+      "value": "(auth == \"apikey\")"
+    },
+    "UsePostgres": {
+      "type": "computed",
+      "value": "(db == \"postgresql\")"
+    },
+    "UseSqlServer": {
+      "type": "computed",
+      "value": "(db == \"sqlserver\")"
+    },
+    "UseBroker": {
+      "type": "computed",
+      "value": "(broker == \"rabbitmq\")"
+    },
+    "nameSafe": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "safe_id",
+      "replaces": "GoldpathTplSafe",
+      "description": "The solution name as a C# identifier (dots/dashes -> underscores) - Aspire's Projects.* classes mangle the same way."
+    },
+    "ownerSlug": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "owner_slug",
+      "replaces": "GoldpathTplOwner",
+      "description": "The solution name as an owner slug (dots -> dashes, lowercased) - the manifest owner pattern is kebab."
+    }
   },
   "sources": [
     {
       "modifiers": [
         {
           "condition": "(!UseBroker)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/OrderConfirmed.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/OrderConfirmed.cs"
+          ]
         },
         {
           "condition": "(!UseMultiTenancy)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/Order.MultiTenancy.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/Order.MultiTenancy.cs"
+          ]
         },
         {
           "condition": "(!UseAuditTrail)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/Order.AuditTrail.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/Order.AuditTrail.cs"
+          ]
         },
         {
           "condition": "(!UseSoftDelete)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/Order.SoftDelete.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/Order.SoftDelete.cs"
+          ]
         },
         {
           "condition": "(!UseDataProtection)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/Order.DataProtection.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/Order.DataProtection.cs"
+          ]
         },
         {
           "condition": "(!UseBulk)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/Import/OrderImport.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/Import/OrderImport.cs"
+          ]
         },
         {
           "condition": "(!UseNotification)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/Notifications/OrderNotifications.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/Notifications/OrderNotifications.cs"
+          ]
         },
         {
           "condition": "(!UseCampaign)",
-          "exclude": ["src/GoldpathTemplate.Api/Orders/Campaigns/OrderCampaigns.cs"]
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/Campaigns/OrderCampaigns.cs"
+          ]
         }
       ]
     }
@@ -124,14 +264,44 @@
         {
           "type": "conditional",
           "configuration": {
-            "if": ["#if"],
-            "else": ["#else"],
-            "elseif": ["#elseif"],
-            "endif": ["#endif"],
+            "if": [
+              "#if"
+            ],
+            "else": [
+              "#else"
+            ],
+            "elseif": [
+              "#elseif"
+            ],
+            "endif": [
+              "#endif"
+            ],
             "trim": true,
             "wholeLine": true
           }
         }
+      ]
+    }
+  },
+  "forms": {
+    "safe_id": {
+      "identifier": "replace",
+      "pattern": "[^a-zA-Z0-9_]",
+      "replacement": "_"
+    },
+    "dash_safe": {
+      "identifier": "replace",
+      "pattern": "[^a-zA-Z0-9-]",
+      "replacement": "-"
+    },
+    "lc": {
+      "identifier": "lowerCase"
+    },
+    "owner_slug": {
+      "identifier": "chain",
+      "steps": [
+        "dash_safe",
+        "lc"
       ]
     }
   }

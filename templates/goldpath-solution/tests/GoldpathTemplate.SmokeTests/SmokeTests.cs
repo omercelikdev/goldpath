@@ -21,7 +21,7 @@ public class SmokeTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
         var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.GoldpathTemplate_AppHost>(timeout.Token);
+            .CreateAsync<Projects.GoldpathTplSafe_AppHost>(timeout.Token);
         await using var app = await appHost.BuildAsync(timeout.Token);
         await app.StartAsync(timeout.Token);
 

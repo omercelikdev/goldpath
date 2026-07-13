@@ -14,7 +14,7 @@ var messaging = builder.AddRabbitMQ("messaging");
 var cache = builder.AddRedis("redis");
 #endif
 
-builder.AddProject<Projects.GoldpathTemplate_Api>("api")
+builder.AddProject<Projects.GoldpathTplSafe_Api>("api")
     .WithReference(database).WaitFor(database)
 #if (UseBroker)
     .WithReference(messaging).WaitFor(messaging)
