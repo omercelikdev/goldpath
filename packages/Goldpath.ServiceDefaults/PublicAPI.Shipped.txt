@@ -1,1 +1,33 @@
 #nullable enable
+const Goldpath.CorrelationMiddleware.ItemKey = "Goldpath.CorrelationId" -> string!
+Goldpath.CorrelationMiddleware
+Goldpath.CorrelationMiddleware.CorrelationMiddleware(Microsoft.AspNetCore.Http.RequestDelegate! next, Goldpath.GoldpathServiceDefaultsOptions! options, Microsoft.Extensions.Logging.ILogger<Goldpath.CorrelationMiddleware!>! logger) -> void
+Goldpath.CorrelationMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext! context) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathServiceDefaultsExtensions
+Goldpath.GoldpathServiceDefaultsOptions
+Goldpath.GoldpathServiceDefaultsOptions.Correlation.get -> Goldpath.GoldpathServiceDefaultsOptions.CorrelationOptions!
+Goldpath.GoldpathServiceDefaultsOptions.CorrelationOptions
+Goldpath.GoldpathServiceDefaultsOptions.CorrelationOptions.AcceptInbound.get -> bool
+Goldpath.GoldpathServiceDefaultsOptions.CorrelationOptions.AcceptInbound.set -> void
+Goldpath.GoldpathServiceDefaultsOptions.CorrelationOptions.CorrelationOptions() -> void
+Goldpath.GoldpathServiceDefaultsOptions.GoldpathServiceDefaultsOptions() -> void
+Goldpath.GoldpathServiceDefaultsOptions.Observability.get -> Goldpath.GoldpathServiceDefaultsOptions.ObservabilityOptions!
+Goldpath.GoldpathServiceDefaultsOptions.ObservabilityOptions
+Goldpath.GoldpathServiceDefaultsOptions.ObservabilityOptions.ObservabilityOptions() -> void
+Goldpath.GoldpathServiceDefaultsOptions.ObservabilityOptions.Profile.get -> Goldpath.ObservabilityProfile
+Goldpath.GoldpathServiceDefaultsOptions.ObservabilityOptions.Profile.set -> void
+Goldpath.GoldpathServiceDefaultsOptions.ObservabilityOptions.SamplingRatio.get -> double?
+Goldpath.GoldpathServiceDefaultsOptions.ObservabilityOptions.SamplingRatio.set -> void
+Goldpath.GoldpathServiceDefaultsOptions.RateLimiting.get -> Goldpath.GoldpathServiceDefaultsOptions.RateLimitingOptions!
+Goldpath.GoldpathServiceDefaultsOptions.RateLimitingOptions
+Goldpath.GoldpathServiceDefaultsOptions.RateLimitingOptions.ConcurrencyLimit.get -> int
+Goldpath.GoldpathServiceDefaultsOptions.RateLimitingOptions.ConcurrencyLimit.set -> void
+Goldpath.GoldpathServiceDefaultsOptions.RateLimitingOptions.QueueLimit.get -> int
+Goldpath.GoldpathServiceDefaultsOptions.RateLimitingOptions.QueueLimit.set -> void
+Goldpath.GoldpathServiceDefaultsOptions.RateLimitingOptions.RateLimitingOptions() -> void
+Goldpath.ObservabilityProfile
+Goldpath.ObservabilityProfile.Full = 2 -> Goldpath.ObservabilityProfile
+Goldpath.ObservabilityProfile.Minimal = 0 -> Goldpath.ObservabilityProfile
+Goldpath.ObservabilityProfile.Standard = 1 -> Goldpath.ObservabilityProfile
+static Goldpath.GoldpathServiceDefaultsExtensions.AddGoldpathServiceDefaults<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathServiceDefaultsOptions!>? configure = null) -> TBuilder
+static Goldpath.GoldpathServiceDefaultsExtensions.MapGoldpathDefaultEndpoints(this Microsoft.AspNetCore.Builder.WebApplication! app) -> Microsoft.AspNetCore.Builder.WebApplication!

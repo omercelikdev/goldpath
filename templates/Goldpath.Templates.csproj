@@ -11,12 +11,16 @@
     <EnableDefaultItems>false</EnableDefaultItems>
     <!-- Template package: no lib/, no dependencies group by design. -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!-- Template content REQUIRES dotfiles (.template.config, .goldpath, .gitignore, .github,
+         .claude, .mcp.json) — default excludes would strip them all. The switch is package-wide,
+         so the Content items below explicitly exclude build/editor junk instead. -->
+    <NoDefaultExcludes>true</NoDefaultExcludes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="goldpath-solution/**/*" Exclude="goldpath-solution/**/bin/**;goldpath-solution/**/obj/**" />
-    <Content Include="goldpath-worker/**/*" Exclude="goldpath-worker/**/bin/**;goldpath-worker/**/obj/**" />
+    <Content Include="goldpath-solution/**/*" Exclude="goldpath-solution/**/bin/**;goldpath-solution/**/obj/**;goldpath-solution/**/.vs/**;goldpath-solution/**/.DS_Store;goldpath-solution/**/*.nupkg" />
+    <Content Include="goldpath-worker/**/*" Exclude="goldpath-worker/**/bin/**;goldpath-worker/**/obj/**;goldpath-worker/**/.vs/**;goldpath-worker/**/.DS_Store;goldpath-worker/**/*.nupkg" />
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 

@@ -1,0 +1,61 @@
+# The publish half of the D4 release gate (docs/ops/release-checklist.md): tagging
+# v<version> on a merged, green release PR packs the whole train (packages + CLI tool +
+# template pack) and pushes to nuget.org via TRUSTED PUBLISHING — no stored secret: the
+# workflow exchanges its GitHub OIDC token for a ~1h single-use key against the
+# repository's Trusted Publishing policy on nuget.org.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # the GitHub release
+      id-token: write   # the OIDC token Trusted Publishing exchanges
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: sanity build
+        run: dotnet build Goldpath.sln --nologo -c Release
+      - name: pack the train
+        run: |
+          set -e
+          mkdir -p out
+          # No --no-build: the template pack is content-only (never in the sln build) and
+          # pack re-verifies each project's own Release output deterministically.
+          for p in packages/*/*.csproj analyzers/Goldpath.Analyzers/Goldpath.Analyzers.csproj \
+                   tools/Goldpath.Cli/Goldpath.Cli.csproj templates/Goldpath.Templates.csproj; do
+            dotnet pack "$p" --nologo -c Release -o out
+          done
+          ls out
+      # Login LAST-MINUTE: the exchanged key lives ~1 hour, so it must be born next to
+      # the push, never before the pack.
+      - name: trusted-publishing login (OIDC -> temp key)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: omercelikdev   # the nuget.org PROFILE name the policy belongs to
+      - name: push to nuget.org
+        run: |
+          dotnet nuget push "out/*.nupkg" \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+      - name: GitHub release from the changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # The tag's CHANGELOG section: EXACT bracketed-version match on the heading
+          # (substring matching would let 0.1.0 also capture [0.1.0-preview.1]).
+          awk -v v="$version" '/^## \[/{h = substr($0, index($0, "[") + 1); h = substr(h, 1, index(h, "]") - 1); p = (h == v)} p' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "Goldpath $version" \
+            --notes-file notes.md $(case "$version" in *-*) echo --prerelease;; esac)

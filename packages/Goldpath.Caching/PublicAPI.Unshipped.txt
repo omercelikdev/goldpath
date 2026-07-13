@@ -1,15 +1,1 @@
 #nullable enable
-Goldpath.GoldpathCacheKeys
-Goldpath.GoldpathCacheKeys.GoldpathCacheKeys(Goldpath.ITenantContext? tenant = null) -> void
-Goldpath.GoldpathCacheKeys.For(string! area, string! key) -> string!
-Goldpath.GoldpathCachingExtensions
-Goldpath.GoldpathCachingOptions
-Goldpath.GoldpathCachingOptions.DefaultTtlSeconds.get -> int
-Goldpath.GoldpathCachingOptions.DefaultTtlSeconds.set -> void
-Goldpath.GoldpathCachingOptions.GoldpathCachingOptions() -> void
-Goldpath.GoldpathCachingOptions.Levels.get -> string![]?
-Goldpath.GoldpathCachingOptions.Levels.set -> void
-Goldpath.GoldpathCachingOptions.RedisConnectionName.get -> string!
-Goldpath.GoldpathCachingOptions.RedisConnectionName.set -> void
-static Goldpath.GoldpathCacheKeys.Compose(string? tenant, string! area, string! key) -> string!
-static Goldpath.GoldpathCachingExtensions.AddGoldpathCaching<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathCachingOptions!>? configure = null) -> TBuilder

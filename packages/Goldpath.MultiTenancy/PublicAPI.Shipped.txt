@@ -1,1 +1,37 @@
 #nullable enable
+Goldpath.AmbientTenantContext
+Goldpath.AmbientTenantContext.AmbientTenantContext() -> void
+Goldpath.AmbientTenantContext.Current.get -> Goldpath.TenantId?
+Goldpath.GoldpathCrossTenantWriteException
+Goldpath.GoldpathCrossTenantWriteException.GoldpathCrossTenantWriteException(string! message) -> void
+Goldpath.GoldpathMultiTenancyExtensions
+Goldpath.GoldpathMultiTenancyMiddleware
+Goldpath.GoldpathMultiTenancyMiddleware.GoldpathMultiTenancyMiddleware(Microsoft.AspNetCore.Http.RequestDelegate! next, Goldpath.GoldpathMultiTenancyOptions! options) -> void
+Goldpath.GoldpathMultiTenancyMiddleware.InvokeAsync(Microsoft.AspNetCore.Http.HttpContext! context) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathMultiTenancyOptions
+Goldpath.GoldpathMultiTenancyOptions.GoldpathMultiTenancyOptions() -> void
+Goldpath.GoldpathMultiTenancyOptions.ExemptPaths.get -> string![]?
+Goldpath.GoldpathMultiTenancyOptions.ExemptPaths.set -> void
+Goldpath.GoldpathMultiTenancyOptions.Strategy.get -> Goldpath.GoldpathTenantStrategy
+Goldpath.GoldpathMultiTenancyOptions.Strategy.set -> void
+Goldpath.GoldpathMultiTenancyOptions.Strict.get -> bool
+Goldpath.GoldpathMultiTenancyOptions.Strict.set -> void
+Goldpath.GoldpathTenant
+Goldpath.GoldpathTenantStrategy
+Goldpath.GoldpathTenantStrategy.Header = 0 -> Goldpath.GoldpathTenantStrategy
+Goldpath.GoldpathTenantStrategy.Subdomain = 1 -> Goldpath.GoldpathTenantStrategy
+Goldpath.TenantStampContributor
+Goldpath.TenantStampContributor.OnSaving(Microsoft.EntityFrameworkCore.ChangeTracking.EntityEntry! entry, Goldpath.GoldpathSaveContext! context) -> void
+Goldpath.TenantStampContributor.Order.get -> int
+Goldpath.TenantStampContributor.TenantStampContributor() -> void
+static Goldpath.GoldpathMultiTenancyExtensions.AddGoldpathMultiTenancy<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathMultiTenancyOptions!>? configure = null) -> TBuilder
+static Goldpath.GoldpathMultiTenancyExtensions.ApplyGoldpathMultiTenancy(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder, Microsoft.EntityFrameworkCore.DbContext! context) -> Microsoft.EntityFrameworkCore.ModelBuilder!
+static Goldpath.GoldpathMultiTenancyExtensions.UseGoldpathMultiTenancy(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
+static Goldpath.GoldpathTenant.Bypass() -> System.IDisposable!
+static Goldpath.GoldpathTenant.IsBypassed.get -> bool
+static Goldpath.GoldpathTenant.Use(Goldpath.TenantId tenant) -> System.IDisposable!
+static Goldpath.GoldpathTenant.Use(string! tenant) -> System.IDisposable!
+Goldpath.GoldpathTenantDbContextExtensions
+static Goldpath.GoldpathTenantDbContextExtensions.GoldpathAmbientTenantValue(this Microsoft.EntityFrameworkCore.DbContext! context) -> Goldpath.TenantId
+static Goldpath.GoldpathTenantDbContextExtensions.GoldpathHasAmbientTenant(this Microsoft.EntityFrameworkCore.DbContext! context) -> bool
+static Goldpath.GoldpathTenantDbContextExtensions.GoldpathTenantBypassed(this Microsoft.EntityFrameworkCore.DbContext! context) -> bool

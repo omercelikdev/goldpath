@@ -1,0 +1,253 @@
+Goldpath.GoldpathBulkBatch
+Goldpath.GoldpathBulkBatch.CompletedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkBatch.CompletedAt.set -> void
+Goldpath.GoldpathBulkBatch.DecidedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkBatch.DecidedAt.set -> void
+Goldpath.GoldpathBulkBatch.DecidedBy.get -> string?
+Goldpath.GoldpathBulkBatch.DecidedBy.set -> void
+Goldpath.GoldpathBulkBatch.DecisionNote.get -> string?
+Goldpath.GoldpathBulkBatch.DecisionNote.set -> void
+Goldpath.GoldpathBulkBatch.Definition.get -> string!
+Goldpath.GoldpathBulkBatch.Definition.set -> void
+Goldpath.GoldpathBulkBatch.GoldpathBulkBatch() -> void
+Goldpath.GoldpathBulkBatch.ExecutedRows.get -> int
+Goldpath.GoldpathBulkBatch.ExecutedRows.set -> void
+Goldpath.GoldpathBulkBatch.FailedRows.get -> int
+Goldpath.GoldpathBulkBatch.FailedRows.set -> void
+Goldpath.GoldpathBulkBatch.FileId.get -> System.Guid
+Goldpath.GoldpathBulkBatch.FileId.set -> void
+Goldpath.GoldpathBulkBatch.Id.get -> System.Guid
+Goldpath.GoldpathBulkBatch.Id.set -> void
+Goldpath.GoldpathBulkBatch.InvalidRows.get -> int
+Goldpath.GoldpathBulkBatch.InvalidRows.set -> void
+Goldpath.GoldpathBulkBatch.ReceivedAt.get -> System.DateTimeOffset
+Goldpath.GoldpathBulkBatch.ReceivedAt.set -> void
+Goldpath.GoldpathBulkBatch.RunId.get -> System.Guid?
+Goldpath.GoldpathBulkBatch.RunId.set -> void
+Goldpath.GoldpathBulkBatch.State.get -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatch.State.set -> void
+Goldpath.GoldpathBulkBatch.TraceParent.get -> string?
+Goldpath.GoldpathBulkBatch.TraceParent.set -> void
+Goldpath.GoldpathBulkBatch.Tenant.get -> string?
+Goldpath.GoldpathBulkBatch.Tenant.set -> void
+Goldpath.GoldpathBulkBatch.TotalRows.get -> int
+Goldpath.GoldpathBulkBatch.TotalRows.set -> void
+Goldpath.GoldpathBulkBatch.ValidatedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkBatch.ValidatedAt.set -> void
+Goldpath.GoldpathBulkBatch.ValidRows.get -> int
+Goldpath.GoldpathBulkBatch.ValidRows.set -> void
+Goldpath.GoldpathBulkBatchBuilder<TRow>
+Goldpath.GoldpathBulkBatchBuilder<TRow>.AutoApprove() -> Goldpath.GoldpathBulkBatchBuilder<TRow!>!
+Goldpath.GoldpathBulkBatchBuilder<TRow>.Csv(System.Action<Goldpath.GoldpathCsvOptions!>? configure = null) -> Goldpath.GoldpathBulkBatchBuilder<TRow!>!
+Goldpath.GoldpathBulkBatchBuilder<TRow>.DeleteFileAfter(System.TimeSpan period) -> Goldpath.GoldpathBulkBatchBuilder<TRow!>!
+Goldpath.GoldpathBulkBatchBuilder<TRow>.MaxRows(int maxRows) -> Goldpath.GoldpathBulkBatchBuilder<TRow!>!
+Goldpath.GoldpathBulkBatchBuilder<TRow>.RowKey(System.Func<TRow!, string?>! key) -> Goldpath.GoldpathBulkBatchBuilder<TRow!>!
+Goldpath.GoldpathBulkBatchBuilder<TRow>.TolerateInvalidRows() -> Goldpath.GoldpathBulkBatchBuilder<TRow!>!
+Goldpath.GoldpathBulkBatchBuilder<TRow>.Validate(System.Action<TRow!, Goldpath.GoldpathBulkRowValidationContext!>! validate) -> Goldpath.GoldpathBulkBatchBuilder<TRow!>!
+Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.Approved = 3 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.Completed = 6 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.CompletedWithFailures = 7 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.Executing = 5 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.Received = 0 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.Rejected = 4 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.Validated = 2 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkBatchState.Validating = 1 -> Goldpath.GoldpathBulkBatchState
+Goldpath.GoldpathBulkDefinition
+Goldpath.GoldpathBulkDefinition.AutoApprove.get -> bool
+Goldpath.GoldpathBulkDefinition.DeleteFileAfter.get -> System.TimeSpan?
+Goldpath.GoldpathBulkDefinition.Format.get -> Goldpath.IGoldpathBulkFormat!
+Goldpath.GoldpathBulkDefinition.MaxRows.get -> int
+Goldpath.GoldpathBulkDefinition.Name.get -> string!
+Goldpath.GoldpathBulkDefinition.Validate(Goldpath.GoldpathBulkRawRow! raw, System.IServiceProvider! services) -> Goldpath.GoldpathBulkRowResult!
+Goldpath.GoldpathBulkDefinition.TolerateInvalidRows.get -> bool
+Goldpath.GoldpathBulkEngine<TContext>
+Goldpath.GoldpathBulkEngine<TContext>.AdoptForExecutionAsync(System.IServiceProvider! services, System.Guid runId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkBatch!>!>!
+Goldpath.GoldpathBulkEngine<TContext>.ApproveAsync(System.IServiceProvider! services, System.Guid batchId, string! actor, string? note, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathBulkEngine<TContext>.GoldpathBulkEngine(Goldpath.GoldpathBulkOptions! options, Goldpath.GoldpathBulkFileStore<TContext!>! store, System.TimeProvider! time, Microsoft.Extensions.Logging.ILogger<Goldpath.GoldpathBulkEngine<TContext!>!>! logger) -> void
+Goldpath.GoldpathBulkEngine<TContext>.ExecuteRangeAsync(System.IServiceProvider! services, Goldpath.GoldpathJobChunk! chunk, System.Guid batchId, long offset, long endExclusive, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathBulkEngine<TContext>.IngestAsync(System.IServiceProvider! services, string! definitionName, System.IO.Stream! content, string! fileName, string? tenant, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<(Goldpath.GoldpathBulkBatch! Batch, bool Created)>!
+Goldpath.GoldpathBulkEngine<TContext>.PurgeExpiredFilesAsync(System.IServiceProvider! services, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathBulkEngine<TContext>.RejectAsync(System.IServiceProvider! services, System.Guid batchId, string! actor, string? note, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathBulkEngine<TContext>.ReplayRowAsync(System.IServiceProvider! services, string! itemKey, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+static Goldpath.GoldpathBulkEngine<TContext>.ItemKey(System.Guid batchId, int rowNumber) -> string!
+static Goldpath.GoldpathBulkEngine<TContext>.ParseItemKey(string! itemKey) -> (System.Guid BatchId, int RowNumber)
+Goldpath.GoldpathBulkEngine<TContext>.ValidateBatchAsync(System.IServiceProvider! services, System.Guid batchId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathBulkExecuteJob<TContext>
+Goldpath.GoldpathBulkExecuteJob<TContext>.GoldpathBulkExecuteJob(Goldpath.GoldpathBulkEngine<TContext!>! engine, Goldpath.GoldpathBulkOptions! options) -> void
+Goldpath.GoldpathBulkExecuteJob<TContext>.ExecuteChunkAsync(Goldpath.GoldpathJobChunk! chunk, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathBulkExecuteJob<TContext>.PlanAsync(Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathJobPlan!>!
+Goldpath.GoldpathBulkExecuteJob<TContext>.ReplayItemAsync(string! itemKey, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathBulkExtensions
+Goldpath.GoldpathBulkFile
+Goldpath.GoldpathBulkFile.GoldpathBulkFile() -> void
+Goldpath.GoldpathBulkFile.FileName.get -> string!
+Goldpath.GoldpathBulkFile.FileName.set -> void
+Goldpath.GoldpathBulkFile.Id.get -> System.Guid
+Goldpath.GoldpathBulkFile.Id.set -> void
+Goldpath.GoldpathBulkFile.Length.get -> long
+Goldpath.GoldpathBulkFile.Length.set -> void
+Goldpath.GoldpathBulkFile.Sha256.get -> string!
+Goldpath.GoldpathBulkFile.Sha256.set -> void
+Goldpath.GoldpathBulkFile.UploadedAt.get -> System.DateTimeOffset
+Goldpath.GoldpathBulkFile.UploadedAt.set -> void
+Goldpath.GoldpathBulkFileChunk
+Goldpath.GoldpathBulkFileChunk.Data.get -> byte[]!
+Goldpath.GoldpathBulkFileChunk.Data.set -> void
+Goldpath.GoldpathBulkFileChunk.GoldpathBulkFileChunk() -> void
+Goldpath.GoldpathBulkFileChunk.FileId.get -> System.Guid
+Goldpath.GoldpathBulkFileChunk.FileId.set -> void
+Goldpath.GoldpathBulkFileChunk.Index.get -> int
+Goldpath.GoldpathBulkFileChunk.Index.set -> void
+Goldpath.GoldpathBulkFileStore<TContext>
+Goldpath.GoldpathBulkFileStore<TContext>.DeleteAsync(TContext! db, System.Guid fileId, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathBulkFileStore<TContext>.GoldpathBulkFileStore(System.TimeProvider! time) -> void
+Goldpath.GoldpathBulkFileStore<TContext>.OpenRead(TContext! db, System.Guid fileId) -> System.IO.Stream!
+Goldpath.GoldpathBulkFileStore<TContext>.SaveAsync(TContext! db, System.IO.Stream! stream, string! fileName, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<(Goldpath.GoldpathBulkFile! File, bool Created)>!
+Goldpath.GoldpathBulkMetrics
+Goldpath.GoldpathBulkModel
+Goldpath.GoldpathBulkOptions
+Goldpath.GoldpathBulkOptions.AddBatch<TRow>(string! name, System.Action<Goldpath.GoldpathBulkBatchBuilder<TRow!>!>! configure) -> Goldpath.GoldpathBulkOptions!
+Goldpath.GoldpathBulkOptions.Batches.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkDefinition!>!
+Goldpath.GoldpathBulkOptions.ChunkSize.get -> int
+Goldpath.GoldpathBulkOptions.ChunkSize.set -> void
+Goldpath.GoldpathBulkOptions.Definition(string! name) -> Goldpath.GoldpathBulkDefinition!
+Goldpath.GoldpathBulkOptions.GoldpathBulkOptions() -> void
+Goldpath.GoldpathBulkOptions.InsertBatchSize.get -> int
+Goldpath.GoldpathBulkOptions.InsertBatchSize.set -> void
+Goldpath.GoldpathBulkRawError
+Goldpath.GoldpathBulkRawError.GoldpathBulkRawError(int RowNumber, string! Message) -> void
+Goldpath.GoldpathBulkRawError.Message.get -> string!
+Goldpath.GoldpathBulkRawError.Message.init -> void
+Goldpath.GoldpathBulkRawError.RowNumber.get -> int
+Goldpath.GoldpathBulkRawError.RowNumber.init -> void
+Goldpath.GoldpathBulkRawRow
+Goldpath.GoldpathBulkRawRow.GoldpathBulkRawRow(int RowNumber, System.Collections.Generic.IReadOnlyDictionary<string!, string!>! Fields) -> void
+Goldpath.GoldpathBulkRawRow.Fields.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>!
+Goldpath.GoldpathBulkRawRow.Fields.init -> void
+Goldpath.GoldpathBulkRawRow.RowNumber.get -> int
+Goldpath.GoldpathBulkRawRow.RowNumber.init -> void
+Goldpath.GoldpathBulkRow
+Goldpath.GoldpathBulkRow.BatchId.get -> System.Guid
+Goldpath.GoldpathBulkRow.BatchId.set -> void
+Goldpath.GoldpathBulkRow.ClaimedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkRow.ClaimedAt.set -> void
+Goldpath.GoldpathBulkRow.GoldpathBulkRow() -> void
+Goldpath.GoldpathBulkRow.ExecutedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkRow.ExecutedAt.set -> void
+Goldpath.GoldpathBulkRow.FailedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkRow.FailedAt.set -> void
+Goldpath.GoldpathBulkRow.Payload.get -> string!
+Goldpath.GoldpathBulkRow.Payload.set -> void
+Goldpath.GoldpathBulkRow.RowNumber.get -> int
+Goldpath.GoldpathBulkRow.RowNumber.set -> void
+Goldpath.GoldpathBulkRowContext
+Goldpath.GoldpathBulkRowContext.BatchId.get -> System.Guid
+Goldpath.GoldpathBulkRowContext.Replay.get -> bool
+Goldpath.GoldpathBulkRowContext.RowNumber.get -> int
+Goldpath.GoldpathBulkRowContext.Services.get -> System.IServiceProvider!
+Goldpath.GoldpathBulkRowContext.Tenant.get -> string?
+Goldpath.GoldpathBulkRowError
+Goldpath.GoldpathBulkRowError.BatchId.get -> System.Guid
+Goldpath.GoldpathBulkRowError.BatchId.set -> void
+Goldpath.GoldpathBulkRowError.GoldpathBulkRowError() -> void
+Goldpath.GoldpathBulkRowError.Field.get -> string!
+Goldpath.GoldpathBulkRowError.Field.set -> void
+Goldpath.GoldpathBulkRowError.Id.get -> long
+Goldpath.GoldpathBulkRowError.Id.set -> void
+Goldpath.GoldpathBulkRowError.Message.get -> string!
+Goldpath.GoldpathBulkRowError.Message.set -> void
+Goldpath.GoldpathBulkRowError.RowNumber.get -> int
+Goldpath.GoldpathBulkRowError.RowNumber.set -> void
+Goldpath.GoldpathBulkRowResult
+Goldpath.GoldpathBulkRowResult.GoldpathBulkRowResult() -> void
+Goldpath.GoldpathBulkRowResult.Errors.get -> System.Collections.Generic.IReadOnlyList<(string! Field, string! Message)>!
+Goldpath.GoldpathBulkRowResult.Errors.init -> void
+Goldpath.GoldpathBulkRowResult.Payload.get -> string?
+Goldpath.GoldpathBulkRowResult.Payload.init -> void
+Goldpath.GoldpathBulkRowResult.RowKey.get -> string?
+Goldpath.GoldpathBulkRowResult.RowKey.init -> void
+Goldpath.GoldpathBulkRowValidationContext
+Goldpath.GoldpathBulkRowValidationContext.Fail(string! field, string! message) -> void
+Goldpath.GoldpathBulkRowValidationContext.Services.get -> System.IServiceProvider!
+Goldpath.GoldpathBulkValidateJob<TContext>
+Goldpath.GoldpathBulkValidateJob<TContext>.GoldpathBulkValidateJob(Goldpath.GoldpathBulkEngine<TContext!>! engine, Goldpath.GoldpathBulkOptions! options, System.TimeProvider! time) -> void
+Goldpath.GoldpathBulkValidateJob<TContext>.ExecuteChunkAsync(Goldpath.GoldpathJobChunk! chunk, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathBulkValidateJob<TContext>.PlanAsync(Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathJobPlan!>!
+static Goldpath.GoldpathBulkExtensions.AddGoldpathBulk<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathBulkOptions!>! configure) -> TBuilder
+static Goldpath.GoldpathBulkExtensions.AddGoldpathBulkJobs<TContext>(this Goldpath.GoldpathJobsOptions! jobs, string! validateCron = "0 * * * * ?", string! executeCron = "30 * * * * ?", System.TimeSpan? deadline = null) -> Goldpath.GoldpathJobsOptions!
+static Goldpath.GoldpathBulkModel.AddGoldpathBulk(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder) -> Microsoft.EntityFrameworkCore.ModelBuilder!
+Goldpath.GoldpathCsvFormat
+Goldpath.GoldpathCsvFormat.GoldpathCsvFormat(Goldpath.GoldpathCsvOptions! options) -> void
+Goldpath.GoldpathCsvFormat.ReadAsync(System.IO.Stream! stream, System.Func<Goldpath.GoldpathBulkRawRow!, System.Threading.Tasks.Task!>! onRow, System.Func<Goldpath.GoldpathBulkRawError!, System.Threading.Tasks.Task!>! onError, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathCsvOptions
+Goldpath.GoldpathCsvOptions.Culture.get -> string!
+Goldpath.GoldpathCsvOptions.Culture.set -> void
+Goldpath.GoldpathCsvOptions.Delimiter.get -> char
+Goldpath.GoldpathCsvOptions.Delimiter.set -> void
+Goldpath.GoldpathCsvOptions.GoldpathCsvOptions() -> void
+Goldpath.GoldpathCsvOptions.ResolveCulture() -> System.Globalization.CultureInfo!
+Goldpath.IGoldpathBulkFormat
+Goldpath.IGoldpathBulkFormat.ReadAsync(System.IO.Stream! stream, System.Func<Goldpath.GoldpathBulkRawRow!, System.Threading.Tasks.Task!>! onRow, System.Func<Goldpath.GoldpathBulkRawError!, System.Threading.Tasks.Task!>! onError, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+Goldpath.IGoldpathBulkRowHandler<TRow>
+Goldpath.IGoldpathBulkRowHandler<TRow>.ExecuteAsync(TRow! row, Goldpath.GoldpathBulkRowContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathBulkAdminEndpoints
+Goldpath.GoldpathBulkAdminService<TContext>
+Goldpath.GoldpathBulkAdminService<TContext>.ApproveAsync(System.Guid batchId, string! actor, string? note, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathBulkAdminService<TContext>.GoldpathBulkAdminService(Goldpath.GoldpathBulkEngine<TContext!>! engine, Goldpath.GoldpathBulkOptions! options, Microsoft.Extensions.DependencyInjection.IServiceScopeFactory! scopeFactory, System.TimeProvider! time) -> void
+Goldpath.GoldpathBulkAdminService<TContext>.GetBatchAsync(System.Guid batchId, string? tenant, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathBulkBatchInfo?>!
+Goldpath.GoldpathBulkAdminService<TContext>.GetBatchesAsync(string? state, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkBatchInfo!>!>!
+Goldpath.GoldpathBulkAdminService<TContext>.GetDefinitionsAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkDefinitionStatus!>!>!
+Goldpath.GoldpathBulkAdminService<TContext>.GetErrorsAsync(System.Guid batchId, int afterRowNumber, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkRowError!>!>!
+Goldpath.GoldpathBulkAdminService<TContext>.RejectAsync(System.Guid batchId, string! actor, string? note, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathBulkAdminService<TContext>.UploadAsync(string! definition, System.IO.Stream! content, string! fileName, string? tenant, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathBulkBatchInfo!>!
+Goldpath.GoldpathBulkBatchInfo
+Goldpath.GoldpathBulkBatchInfo.CompletedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkBatchInfo.CompletedAt.init -> void
+Goldpath.GoldpathBulkBatchInfo.DecidedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkBatchInfo.DecidedAt.init -> void
+Goldpath.GoldpathBulkBatchInfo.DecidedBy.get -> string?
+Goldpath.GoldpathBulkBatchInfo.DecidedBy.init -> void
+Goldpath.GoldpathBulkBatchInfo.DecisionNote.get -> string?
+Goldpath.GoldpathBulkBatchInfo.DecisionNote.init -> void
+Goldpath.GoldpathBulkBatchInfo.Definition.get -> string!
+Goldpath.GoldpathBulkBatchInfo.Definition.init -> void
+Goldpath.GoldpathBulkBatchInfo.GoldpathBulkBatchInfo(System.Guid Id, string! Definition, string! State, string? Tenant, int TotalRows, int ValidRows, int InvalidRows, int ExecutedRows, int FailedRows, System.Guid? RunId, System.DateTimeOffset ReceivedAt, System.DateTimeOffset? ValidatedAt, System.DateTimeOffset? DecidedAt, string? DecidedBy, string? DecisionNote, System.DateTimeOffset? CompletedAt) -> void
+Goldpath.GoldpathBulkBatchInfo.ExecutedRows.get -> int
+Goldpath.GoldpathBulkBatchInfo.ExecutedRows.init -> void
+Goldpath.GoldpathBulkBatchInfo.FailedRows.get -> int
+Goldpath.GoldpathBulkBatchInfo.FailedRows.init -> void
+Goldpath.GoldpathBulkBatchInfo.Id.get -> System.Guid
+Goldpath.GoldpathBulkBatchInfo.Id.init -> void
+Goldpath.GoldpathBulkBatchInfo.InvalidRows.get -> int
+Goldpath.GoldpathBulkBatchInfo.InvalidRows.init -> void
+Goldpath.GoldpathBulkBatchInfo.ReceivedAt.get -> System.DateTimeOffset
+Goldpath.GoldpathBulkBatchInfo.ReceivedAt.init -> void
+Goldpath.GoldpathBulkBatchInfo.RunId.get -> System.Guid?
+Goldpath.GoldpathBulkBatchInfo.RunId.init -> void
+Goldpath.GoldpathBulkBatchInfo.State.get -> string!
+Goldpath.GoldpathBulkBatchInfo.State.init -> void
+Goldpath.GoldpathBulkBatchInfo.Tenant.get -> string?
+Goldpath.GoldpathBulkBatchInfo.Tenant.init -> void
+Goldpath.GoldpathBulkBatchInfo.TotalRows.get -> int
+Goldpath.GoldpathBulkBatchInfo.TotalRows.init -> void
+Goldpath.GoldpathBulkBatchInfo.ValidatedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathBulkBatchInfo.ValidatedAt.init -> void
+Goldpath.GoldpathBulkBatchInfo.ValidRows.get -> int
+Goldpath.GoldpathBulkBatchInfo.ValidRows.init -> void
+Goldpath.GoldpathBulkDecisionRequest
+Goldpath.GoldpathBulkDecisionRequest.GoldpathBulkDecisionRequest(string? Note) -> void
+Goldpath.GoldpathBulkDecisionRequest.Note.get -> string?
+Goldpath.GoldpathBulkDecisionRequest.Note.init -> void
+Goldpath.GoldpathBulkDefinitionStatus
+Goldpath.GoldpathBulkDefinitionStatus.AwaitingApproval.get -> int
+Goldpath.GoldpathBulkDefinitionStatus.AwaitingApproval.init -> void
+Goldpath.GoldpathBulkDefinitionStatus.BatchesByState.get -> System.Collections.Generic.IReadOnlyDictionary<string!, int>!
+Goldpath.GoldpathBulkDefinitionStatus.BatchesByState.init -> void
+Goldpath.GoldpathBulkDefinitionStatus.GoldpathBulkDefinitionStatus(string! Name, System.Collections.Generic.IReadOnlyDictionary<string!, int>! BatchesByState, int AwaitingApproval, double? OldestAwaitingApprovalSeconds) -> void
+Goldpath.GoldpathBulkDefinitionStatus.Name.get -> string!
+Goldpath.GoldpathBulkDefinitionStatus.Name.init -> void
+Goldpath.GoldpathBulkDefinitionStatus.OldestAwaitingApprovalSeconds.get -> double?
+Goldpath.GoldpathBulkDefinitionStatus.OldestAwaitingApprovalSeconds.init -> void
+static Goldpath.GoldpathBulkAdminEndpoints.MapGoldpathBulkAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/bulk", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static Goldpath.GoldpathBulkMetrics.SetIntakeSnapshot(string! definition, System.Collections.Generic.IReadOnlyDictionary<string!, int>! batchesByState, double oldestAwaitingSeconds) -> void

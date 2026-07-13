@@ -1,1 +1,20 @@
 #nullable enable
+Goldpath.GoldpathLockingExtensions
+Goldpath.GoldpathLockingOptions
+Goldpath.GoldpathLockingOptions.ConnectionName.get -> string!
+Goldpath.GoldpathLockingOptions.ConnectionName.set -> void
+Goldpath.GoldpathLockingOptions.GoldpathLockingOptions() -> void
+Goldpath.GoldpathLockingOptions.Provider.get -> Goldpath.GoldpathLockProvider
+Goldpath.GoldpathLockingOptions.Provider.set -> void
+Goldpath.GoldpathLockNames
+Goldpath.GoldpathLockNames.GoldpathLockNames(Goldpath.ITenantContext? tenant = null) -> void
+Goldpath.GoldpathLockNames.For(string! name) -> string!
+Goldpath.GoldpathLockProvider
+Goldpath.GoldpathLockProvider.Postgres = 1 -> Goldpath.GoldpathLockProvider
+Goldpath.GoldpathLockProvider.Redis = 0 -> Goldpath.GoldpathLockProvider
+Goldpath.GoldpathLockProvider.SqlServer = 2 -> Goldpath.GoldpathLockProvider
+Goldpath.GoldpathMeteredLockProvider
+Goldpath.GoldpathMeteredLockProvider.CreateLock(string! name) -> Medallion.Threading.IDistributedLock!
+Goldpath.GoldpathMeteredLockProvider.GoldpathMeteredLockProvider(Medallion.Threading.IDistributedLockProvider! inner) -> void
+static Goldpath.GoldpathLockingExtensions.AddGoldpathLocking<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathLockingOptions!>? configure = null) -> TBuilder
+static Goldpath.GoldpathLockNames.Global(string! name) -> string!
