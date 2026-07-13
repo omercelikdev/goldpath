@@ -20,3 +20,14 @@ Re-run and update this file whenever the render or send path changes.
 - **Send throughput is the floor:** 4,070 rows/s is the engine's honesty cost (persisted
   claim before the wire, per-row stamps, one checkpoint per 500). A real SMTP/gateway
   call dominates in production; the module's own overhead is ~0.25 ms/row.
+
+## Reference profile (CI): ubuntu-latest, 4 vCPU / 16 GB — 2026-07-13
+
+The PINNED profile adopters can rent and budget against (`bench.yml` dispatch,
+run 29228081113; the dev-machine numbers above/below are the fast point, not the promise).
+
+| Proof | Budget | CI measured | Verdict |
+|---|---|---|---|
+| Template render | < 1 ms | **0.7 µs** | ~1400× headroom |
+| The insurance night: 10k requests | nightly window | **142.3 s** (~14 ms/request) | one durable roundtrip per request; a 100k night ≈ 24 min on 4 vCPU |
+| 10k send pass, no-op channel (chunk 500) | — (baseline) | **7.4 s ≈ 1,343 rows/s** | claim+stamp overhead on 4 vCPU |

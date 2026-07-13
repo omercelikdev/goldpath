@@ -20,3 +20,13 @@ update this file whenever the intake or execution path changes.
   call will dominate; the module's own overhead is ~0.17 ms/row.
 - Upload streams and hashes in 256 KB chunks — the file never materializes as one array;
   memory stays flat regardless of file size.
+
+## Reference profile (CI): ubuntu-latest, 4 vCPU / 16 GB — 2026-07-13
+
+The PINNED profile adopters can rent and budget against (`bench.yml` dispatch,
+run 29228081113; the dev-machine numbers above/below are the fast point, not the promise).
+
+| Proof | Budget | CI measured | Verdict |
+|---|---|---|---|
+| 10k-row CSV: upload → parse → validate → report | < 5 min | **0.85 s** (upload 0.03 s) | ~350× headroom |
+| 100k-row execute, no-op handler (chunk 500) | — (baseline) | **69.0 s ≈ 1,450 rows/s** | ~0.7 ms/row module overhead on 4 vCPU |

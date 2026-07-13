@@ -24,3 +24,15 @@ Re-run and update this file whenever the enumeration, release or sink path chang
 - **Sink throughput is the honesty floor:** 57k outcomes/s of durable terminal evidence
   (two set-based item updates + relative counters per 200-batch). The consumers' real
   external calls dominate in production; the module's own write cost is ~17 µs/outcome.
+
+## Reference profile (CI): ubuntu-latest, 4 vCPU / 16 GB — 2026-07-13
+
+The PINNED profile adopters can rent and budget against (`bench.yml` dispatch,
+run 29228081113; the dev-machine numbers above/below are the fast point, not the promise).
+
+| Proof | Budget | CI measured | Verdict |
+|---|---|---|---|
+| Enumeration: 1M targets materialized | minutes not hours | **70.0 s = 14,277 rows/s** | a 30M campaign enumerates in ~35 min on 4 vCPU |
+| Pacer precision: configured 200 TPS over 15 s | ±5% steady-state | **140.0 released/s** | CPU/IO-bound below target on 4 vCPU — the governor UNDERSHOOTS, never over-releases; size TPS to the hardware |
+| LIVE throttle: → 50 TPS, next 15 s | within one tick | **50.8 released/s** | exact on CI too — D6 holds everywhere |
+| Outcome sink: 100k outcomes (batches of 200) | set-based writes | **5.5 s = 18,119 outcomes/s** | holds |

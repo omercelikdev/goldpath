@@ -27,3 +27,17 @@ Notes:
 - The interactive proof measures at the DATABASE layer (where the contention actually
   lives): point-read p95 against the shared store with a `MaxParallelChunks = 4`
   write-heavy run at full tilt. Measured with S3 (`Bench_interactive_reads_under_a_full_tilt_job`).
+
+## Reference profile (CI): ubuntu-latest, 4 vCPU / 16 GB — 2026-07-13
+
+The PINNED profile adopters can rent and budget against (`bench.yml` dispatch,
+run 29228081113; the dev-machine numbers above/below are the fast point, not the promise).
+
+| Proof | Budget (§6) | CI measured |
+|---|---|---|
+| Interactive point-read p95 under a full-tilt write-heavy job (telco card) | interactive stays interactive | **2.4 ms → 10.0 ms under load** |
+
+On 4 shared vCPUs the RELATIVE degradation is CPU contention by construction; what the
+telco card actually asks — the operator's point-read staying interactive while a bulk
+job runs full-tilt — holds with p95 ≈ 10 ms. The plan/checkpoint proofs assert their
+budgets inside the same green run without printing a measurement line.
