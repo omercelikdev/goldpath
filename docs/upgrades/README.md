@@ -1,7 +1,9 @@
 # Upgrade guides
 
-One file per released train version (`<version>.md`, e.g. `0.2.md`), created by the
-release PR — the D4 gate in `docs/rfc/goldpath-versioning.md` makes it mandatory.
+One file per release, named with the FULL train version (`<version>.md`, e.g.
+`0.2.0.md`, `0.2.1.md`, `0.1.0-preview.md`), created by the release PR — the D4 gate
+in `docs/rfc/goldpath-versioning.md` makes it mandatory for every release, patches
+included (a patch file is normally the single no-breaking-changes line).
 
 Format per file:
 
