@@ -1,6 +1,8 @@
 # The publish half of the D4 release gate (docs/ops/release-checklist.md): tagging
 # v<version> on a merged, green release PR packs the whole train (packages + CLI tool +
-# template pack) and pushes to nuget.org. Needs the NUGET_API_KEY repo secret.
+# template pack) and pushes to nuget.org via TRUSTED PUBLISHING — no stored secret: the
+# workflow exchanges its GitHub OIDC token for a ~1h single-use key against the
+# repository's Trusted Publishing policy on nuget.org.
 name: release
 
 on:
@@ -13,6 +15,7 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write   # the GitHub release
+      id-token: write   # the OIDC token Trusted Publishing exchanges
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -33,10 +36,17 @@ jobs:
             dotnet pack "$p" --nologo -c Release -o out
           done
           ls out
+      # Login LAST-MINUTE: the exchanged key lives ~1 hour, so it must be born next to
+      # the push, never before the pack.
+      - name: trusted-publishing login (OIDC -> temp key)
+        id: nuget-login
+        uses: NuGet/login@v1
+        with:
+          user: omercelikdev   # the nuget.org PROFILE name the policy belongs to
       - name: push to nuget.org
         run: |
           dotnet nuget push "out/*.nupkg" \
-            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --api-key "${{ steps.nuget-login.outputs.NUGET_API_KEY }}" \
             --source https://api.nuget.org/v3/index.json \
             --skip-duplicate
       - name: GitHub release from the changelog
