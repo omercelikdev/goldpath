@@ -8,6 +8,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 Upgrade guide: `docs/upgrades/0.1.0-preview.2.md` (no breaking changes).
 
 ### Fixed
+- **The bulk ledger survives a kill between stamp and counter** — a process dying
+  between a chunk's row-stamp save and its counter increment left
+  `ExecutedRows + FailedRows` one short forever (money right, books wrong). The
+  terminal flip now rewrites the counters from the row stamps — the rows are the
+  truth, the counters their cache. Found by the two-executor kill-9 proof on CI
+  hardware; pinned by an engine unit test.
 - **Dotted solution names work end to end** (#24) — `dotnet new goldpath-solution -n
   Acme.Orders` now builds: `Projects.*` identifiers ride a derived safe-name symbol,
   the manifest schema accepts dotted PascalCase segments, and the owner slug derives

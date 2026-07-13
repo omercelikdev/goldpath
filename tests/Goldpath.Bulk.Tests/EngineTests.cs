@@ -278,4 +278,41 @@ public class EngineTests : IDisposable
         Assert.Equal(0, fixture.Query(db => db.Set<GoldpathBulkFileChunk>().Count()));
         Assert.Equal(0, fixture.Query(db => db.Set<GoldpathBulkFile>().Count()));
     }
+
+    [Fact]
+    public async Task Terminal_flip_recounts_the_ledger_from_row_stamps()
+    {
+        // The CI kill-9 finding: a kill landing between a chunk's stamp save and its
+        // counter increment left ExecutedRows one short FOREVER while the money was
+        // right. The terminal flip must treat the row stamps as truth and rewrite the
+        // cached counters.
+        var batch = await _fixture.IngestValidatedAsync(BulkFixture.Csv(("E1", "T", "1", null), ("E2", "T", "2", null), ("E3", "T", "3", null)));
+        _fixture.Mutate(db =>
+        {
+            var b = db.Set<GoldpathBulkBatch>().Single(x => x.Id == batch.Id);
+            b.State = GoldpathBulkBatchState.Approved;   // adoption re-enters execution
+            foreach (var row in db.Set<GoldpathBulkRow>().Where(r => r.BatchId == batch.Id))
+            {
+                row.ClaimedAt = DateTimeOffset.UtcNow;
+                if (row.RowNumber == 3)
+                {
+                    row.FailedAt = DateTimeOffset.UtcNow;    // stamped failed by the killed executor...
+                }
+                else
+                {
+                    row.ExecutedAt = DateTimeOffset.UtcNow;  // ...or stamped paid...
+                }
+            }
+
+            b.ExecutedRows = 1;   // ...but BOTH counter increments never landed: each one short
+            b.FailedRows = 0;
+        });
+
+        await _fixture.ExecuteAllAsync(Guid.NewGuid());   // every range skips (all stamped) -> terminal flip
+
+        var healed = _fixture.Query(db => db.Set<GoldpathBulkBatch>().Single(x => x.Id == batch.Id));
+        Assert.Equal(GoldpathBulkBatchState.CompletedWithFailures, healed.State);
+        Assert.Equal(2, healed.ExecutedRows);   // BOTH counters recounted from the stamps
+        Assert.Equal(1, healed.FailedRows);
+    }
 }
