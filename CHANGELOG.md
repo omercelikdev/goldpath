@@ -3,6 +3,20 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [0.1.0-preview.2] - 2026-07-13
+
+Upgrade guide: `docs/upgrades/0.1.0-preview.2.md` (no breaking changes).
+
+### Fixed
+- **Dotted solution names work end to end** (#24) — `dotnet new goldpath-solution -n
+  Acme.Orders` now builds: `Projects.*` identifiers ride a derived safe-name symbol,
+  the manifest schema accepts dotted PascalCase segments, and the owner slug derives
+  kebab-clean. Proven by two new golden-manifest shapes (solution + worker) and pinned
+  by the nightly matrix.
+- **The first OpenAPI contract ships with generation** (#12) — `goldpath new`'s
+  post-step commits the build-time export into `specs/`, so the first
+  `goldpath add feature` passes its engine round-trip out of the box.
+
 ## [0.1.0-preview.1] - 2026-07-13
 
 Upgrade guide: `docs/upgrades/0.1.0-preview.1.md` (first release — nothing to upgrade from).
