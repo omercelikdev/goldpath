@@ -20,8 +20,10 @@ jobs:
             10.0.x
       - name: benches (real containers, Category=Bench)
         run: |
+          # detailed console logger: without it VSTest swallows the tests' BENCH- lines
+          # (the local bench-*.sh scripts run with the same flag).
           dotnet test tests/Goldpath.IntegrationTests/Goldpath.IntegrationTests.csproj \
-            --filter "Category=Bench" --nologo 2>&1 | tee bench.log
+            --filter "Category=Bench" --nologo --logger "console;verbosity=detailed" 2>&1 | tee bench.log
       - name: reference numbers → job summary
         if: always()
         run: |
