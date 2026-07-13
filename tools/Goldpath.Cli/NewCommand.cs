@@ -31,6 +31,12 @@ public static class NewCommand
         try
         {
             DbCommand.Run("init", null, appRoot, runner, output, error);
+
+            // The first contract commit (SPEC0211): db init just built the app, so the
+            // build-time OpenAPI export exists — copy it into specs/ so the very first
+            // `goldpath add feature` passes its engine round-trip. The template cannot
+            // carry this file statically: the document varies by feature combination.
+            CommitFirstContract(appRoot, output);
         }
         catch (CliFailureException exception)
         {
@@ -39,6 +45,32 @@ public static class NewCommand
         }
 
         return 0;
+    }
+
+    private static void CommitFirstContract(string appRoot, TextWriter output)
+    {
+        var src = Path.Combine(appRoot, "src");
+        if (!Directory.Exists(src))
+        {
+            return;   // worker apps carry no HTTP contract
+        }
+
+        var specs = Path.Combine(appRoot, "specs");
+        foreach (var document in Directory.GetDirectories(src)
+                     .Select(project => Path.Combine(project, "openapi"))
+                     .Where(Directory.Exists)
+                     .SelectMany(dir => Directory.GetFiles(dir, "*.json")))
+        {
+            var target = Path.Combine(specs, Path.GetFileName(document));
+            if (File.Exists(target))
+            {
+                continue;   // never clobber a deliberately edited contract
+            }
+
+            Directory.CreateDirectory(specs);
+            File.Copy(document, target);
+            output.WriteLine($"goldpath: first OpenAPI contract committed to specs/{Path.GetFileName(document)}");
+        }
     }
 
     private static string OutputDirectory(IReadOnlyList<string> rest)

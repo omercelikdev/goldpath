@@ -72,6 +72,20 @@
     "UseJobs": {
       "type": "computed",
       "value": "(trigger == \"jobs\")"
+    },
+    "nameSafe": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "safe_id",
+      "replaces": "GoldpathWkrSafe",
+      "description": "The solution name as a C# identifier (dots/dashes -> underscores) - Aspire's Projects.* classes mangle the same way."
+    },
+    "ownerSlug": {
+      "type": "derived",
+      "valueSource": "name",
+      "valueTransform": "owner_slug",
+      "replaces": "GoldpathWkrOwner",
+      "description": "The solution name as an owner slug (dots -> dashes, lowercased) - the manifest owner pattern is kebab."
     }
   },
   "sources": [
@@ -120,6 +134,28 @@
             "wholeLine": true
           }
         }
+      ]
+    }
+  },
+  "forms": {
+    "safe_id": {
+      "identifier": "replace",
+      "pattern": "[^a-zA-Z0-9_]",
+      "replacement": "_"
+    },
+    "dash_safe": {
+      "identifier": "replace",
+      "pattern": "[^a-zA-Z0-9-]",
+      "replacement": "-"
+    },
+    "lc": {
+      "identifier": "lowerCase"
+    },
+    "owner_slug": {
+      "identifier": "chain",
+      "steps": [
+        "dash_safe",
+        "lc"
       ]
     }
   }

@@ -21,6 +21,9 @@ jobs:
             args: "--auth none"
           - name: GmFourSimple
             args: "--db sqlserver --broker none --auth none"
+          # Dotted solution names are the .NET norm (Company.Product) — issue #24's regression shape.
+          - name: Gm.Dotted
+            args: "--broker none --auth none"
           - name: GmEverything
             args: "--features multitenancy --features audittrail --features softdelete --features idempotency --features dataprotection --features caching --features locking --features archival --features bulk --features notification --features campaign --auth none"
           - name: GmWorkerQueue

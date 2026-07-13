@@ -1,0 +1,7 @@
+{
+  "schemaVersion": 1,
+  "kind": "solution",
+  "name": "Acme.Orders",
+  "description": "Dotted solution names are the .NET norm (issue #24 regression)",
+  "owner": "team-acme-orders"
+}

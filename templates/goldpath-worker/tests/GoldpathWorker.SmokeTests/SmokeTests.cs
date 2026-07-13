@@ -30,7 +30,7 @@ public class SmokeTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
         var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.GoldpathWorker_AppHost>(timeout.Token);
+            .CreateAsync<Projects.GoldpathWkrSafe_AppHost>(timeout.Token);
         await using var app = await appHost.BuildAsync(timeout.Token);
         await app.StartAsync(timeout.Token);
 
@@ -78,7 +78,7 @@ public class SmokeTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
         var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.GoldpathWorker_AppHost>(timeout.Token);
+            .CreateAsync<Projects.GoldpathWkrSafe_AppHost>(timeout.Token);
         await using var app = await appHost.BuildAsync(timeout.Token);
         await app.StartAsync(timeout.Token);
 
@@ -121,7 +121,7 @@ public class SmokeTests
         using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
 
         var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.GoldpathWorker_AppHost>(timeout.Token);
+            .CreateAsync<Projects.GoldpathWkrSafe_AppHost>(timeout.Token);
         await using var app = await appHost.BuildAsync(timeout.Token);
         await app.StartAsync(timeout.Token);
 

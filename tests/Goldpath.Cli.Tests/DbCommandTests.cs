@@ -106,6 +106,26 @@ public class DbCommandTests
     }
 
     [Fact]
+    public void New_commits_the_first_OpenAPI_contract_into_specs()
+    {
+        // Issue #12: SPEC0211 demands a committed contract, but generation left specs/
+        // empty — the post-step copies the build-time export the db init just produced.
+        using var app = new FakeApp();
+        var openapi = Path.Combine(app.Root, "src/Shop.Api/openapi");
+        Directory.CreateDirectory(openapi);
+        File.WriteAllText(Path.Combine(openapi, "Shop.Api.json"), "{}");
+        Directory.CreateDirectory(Path.Combine(app.Root, "specs"));
+        File.WriteAllText(Path.Combine(app.Root, "specs", "Existing.json"), "keep");
+        var output = new StringWriter();
+
+        Assert.Equal(0, CliRunner.Run(["new", "solution", "-n", "Shop", "-o", app.Root], new FakeProcessRunner(), output, TextWriter.Null));
+
+        Assert.Equal("{}", File.ReadAllText(Path.Combine(app.Root, "specs", "Shop.Api.json")));
+        Assert.Equal("keep", File.ReadAllText(Path.Combine(app.Root, "specs", "Existing.json")));   // never clobbered
+        Assert.Contains("first OpenAPI contract committed", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
     public void Add_feature_with_model_calls_ends_with_the_db_add_step()
     {
         using var app = new FakeApp(messagingWired: true, jobsWired: true);
