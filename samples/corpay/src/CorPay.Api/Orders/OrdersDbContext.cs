@@ -7,6 +7,10 @@ public class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : DbCont
 {
     public DbSet<Order> Orders => Set<Order>();
 
+    public DbSet<Payments.PaymentInstruction> PaymentInstructions => Set<Payments.PaymentInstruction>();
+
+    public DbSet<Payments.LedgerFeedEntry> LedgerFeed => Set<Payments.LedgerFeedEntry>();
+
     protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
         => configurationBuilder.ApplyGoldpathConventions();
 

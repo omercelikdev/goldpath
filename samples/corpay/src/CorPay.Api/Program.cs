@@ -73,10 +73,14 @@ builder.AddGoldpathData<WebApplicationBuilder, OrdersDbContext>(options =>
     }
 });
 
+// The core-banking seam (slice 1): dev pays instantly; production plugs the bank's adapter.
+builder.Services.AddSingleton<CorPay.Api.Payments.ICoreBankingClient, CorPay.Api.Payments.DevCoreBankingClient>();
+
 builder.AddGoldpathMessaging(bus =>
 {
     // goldpath:features consumers — bus-riding features register here
     bus.AddConsumer<OrderPlacedConsumer>();
+    bus.AddConsumer<CorPay.Api.Payments.PaymentExecutedConsumer>();
     bus.AddGoldpathOutbox<OrdersDbContext>(outbox =>
     {
         outbox.UsePostgres();
