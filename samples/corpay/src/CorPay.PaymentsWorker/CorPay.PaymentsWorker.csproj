@@ -1,0 +1,18 @@
+<Project Sdk="Microsoft.NET.Sdk.Web">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Goldpath.Abstractions" />
+    <PackageReference Include="Goldpath.ServiceDefaults" />
+    <PackageReference Include="Goldpath.Data" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
+    <PackageReference Include="Goldpath.Messaging" />
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="Goldpath.Analyzers" PrivateAssets="all" />
+  </ItemGroup>
+
+</Project>

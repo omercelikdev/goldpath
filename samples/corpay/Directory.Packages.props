@@ -1,0 +1,39 @@
+<Project>
+  <!-- Every version pinned (Goldpath rule: "latest" is forbidden). Renovate keeps these fresh. -->
+  <ItemGroup>
+    <PackageVersion Include="Microsoft.EntityFrameworkCore.Design" Version="10.0.0" />
+    <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.4.6" />
+    <PackageVersion Include="Aspire.Hosting.PostgreSQL" Version="13.4.6" />
+    <PackageVersion Include="Npgsql.EntityFrameworkCore.PostgreSQL" Version="10.0.2" />
+    <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.4.6" />
+    <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.10" />
+    <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
+    <PackageVersion Include="Goldpath.Abstractions" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Auth" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.MultiTenancy" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.AuditTrail" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.SoftDelete" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Idempotency" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.DataProtection" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Caching" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Locking" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Locking.SqlServer" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Archival" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Bulk" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Notification" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Campaign" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Jobs" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Aspire.Hosting.Redis" Version="13.4.6" />
+    <PackageVersion Include="Goldpath.Analyzers" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.ApiDefaults" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Data" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.Messaging" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Goldpath.ServiceDefaults" Version="0.1.0-preview.1" />
+    <PackageVersion Include="Mediant" Version="1.2.0" />
+    <PackageVersion Include="Microsoft.Extensions.ApiDescription.Server" Version="10.0.9" />
+    <PackageVersion Include="Mediant.AspNetCore" Version="1.2.0" />
+    <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
+    <PackageVersion Include="xunit" Version="2.9.2" />
+    <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
+  </ItemGroup>
+</Project>

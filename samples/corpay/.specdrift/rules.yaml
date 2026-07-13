@@ -1,0 +1,39 @@
+# Goldpath manifest invariants (specdrift profile data — the engine is generic, these rules are
+# ours). Every rule teaches its fix; severities follow the house style: cross-tenant and
+# broker-integrity problems gate, advisory pairings warn.
+version: 1
+rules:
+  - id: SPEC0101
+    description: The outbox rides a broker (schema rule V1)
+    when: { path: features.outbox, op: exists }
+    deny: { path: providers.broker, value: none }
+    severity: error
+    message: "features.outbox is enabled but providers.broker is 'none' - the outbox publishes THROUGH a broker; pick one or drop the outbox."
+
+  - id: SPEC0102
+    description: L2 caching implies a cache provider
+    when: { path: features.distributedCaching.levels, op: contains, value: l2 }
+    require: { path: providers.cache }
+    severity: error
+    message: "distributedCaching includes 'l2' but providers.cache is not declared - name the cache infrastructure the L2 tier lives on."
+
+  - id: SPEC0103
+    description: Redis-backed locking reuses the cache connection
+    when: { path: features.distributedLocking.provider, op: equals, value: redis }
+    require: { path: providers.cache }
+    severity: error
+    message: "distributedLocking.provider is 'redis' but providers.cache is not declared - the lock store reuses the caching L2 connection; declare it."
+
+  - id: SPEC0104
+    description: Subdomain tenancy pairs poorly with api-key auth
+    when: { path: features.multiTenancy.strategy, op: equals, value: subdomain }
+    deny: { path: providers.auth, value: apikey }
+    severity: warning
+    message: "subdomain tenancy with apikey auth leaves no token claim to bind the tenant to - a leaked key works for every tenant; prefer openid, or accept the risk knowingly."
+
+  - id: SPEC0105
+    description: HMAC redaction implies secret-store discipline
+    when: { path: features.dataProtection.redactor, op: equals, value: hmac }
+    require: { path: features.dataProtection }
+    severity: warning
+    message: "hmac redaction is selected - the key MUST come from the secret store (never files/source; analyzer GP1202 enforces the source side) and rotation follows the DataProtection runbook."
