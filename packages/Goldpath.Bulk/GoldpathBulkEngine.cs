@@ -532,6 +532,16 @@ public sealed class GoldpathBulkEngine<TContext>
 
         batch.State = target;
         batch.CompletedAt ??= _time.GetUtcNow();
+
+        // The terminal flip writes AUTHORITATIVE counters from the row stamps: a kill-9
+        // landing between a chunk's stamp save and its counter increment would otherwise
+        // leave the ledger permanently one short (Executed+Failed != ValidRows) — the
+        // money right, the books wrong. The rows are the truth; the counters its cache.
+        // (Found by the two-executor kill-9 proof on CI hardware.)
+        batch.ExecutedRows = await db.Set<GoldpathBulkRow>()
+            .CountAsync(r => r.BatchId == batchId && r.ExecutedAt != null, cancellationToken);
+        batch.FailedRows = failures;
+
         try
         {
             await db.SaveChangesAsync(cancellationToken);
