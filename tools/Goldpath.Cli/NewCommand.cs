@@ -52,8 +52,11 @@ public static class NewCommand
         var src = Path.Combine(appRoot, "src");
         if (!Directory.Exists(src))
         {
-            return;   // worker apps carry no HTTP contract
+            return;   // not an app layout at all (bare CWD generation)
         }
+
+        // Worker apps pass this point too — they no-op naturally below, because no
+        // project of theirs has an openapi/ export directory (no HTTP contract).
 
         var specs = Path.Combine(appRoot, "specs");
         foreach (var document in Directory.GetDirectories(src)
