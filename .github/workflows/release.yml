@@ -44,7 +44,8 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           version="${GITHUB_REF_NAME#v}"
-          # The tag's CHANGELOG section: from its heading to the next heading.
-          awk -v v="$version" '/^## /{p = index($0, v) > 0} p' CHANGELOG.md > notes.md
+          # The tag's CHANGELOG section: EXACT bracketed-version match on the heading
+          # (substring matching would let 0.1.0 also capture [0.1.0-preview.1]).
+          awk -v v="$version" '/^## \[/{h = substr($0, index($0, "[") + 1); h = substr(h, 1, index(h, "]") - 1); p = (h == v)} p' CHANGELOG.md > notes.md
           gh release create "$GITHUB_REF_NAME" --title "Goldpath $version" \
             --notes-file notes.md $(case "$version" in *-*) echo --prerelease;; esac)
