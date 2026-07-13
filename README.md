@@ -23,16 +23,14 @@ templates + AI skills + guardrails + living documentation. Not a framework — a
 ## Quickstart
 
 ```bash
-dotnet new install Goldpath.Templates@0.1.0-preview.1    # preview: pin the version
+dotnet new install Goldpath.Templates@0.1.0-preview.2    # preview: pin the version
 dotnet tool install -g Goldpath.Cli --prerelease
 
-dotnet new goldpath-solution -n AcmeOrders --db postgresql --broker rabbitmq --features bulk
-cd AcmeOrders && goldpath check           # spec validate + drift + build, one verb
-dotnet run --project src/AcmeOrders.AppHost
+dotnet new goldpath-solution -n Acme.Orders --db postgresql --broker rabbitmq --features bulk
+cd Acme.Orders && goldpath check           # spec validate + drift + build, one verb
+dotnet run --project src/Acme.Orders.AppHost
 ```
 
-> Use an undotted solution name for now — dotted names hit
-> [#24](https://github.com/omercelikdev/goldpath/issues/24) until the template fix ships.
 
 Grow it feature by feature: `goldpath add feature notification`, `goldpath add worker`,
 `goldpath db add AddInvoices`. Every admin surface (`/goldpath/admin/*`) is fail-closed,
