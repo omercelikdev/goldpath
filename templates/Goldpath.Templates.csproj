@@ -11,6 +11,8 @@
     <EnableDefaultItems>false</EnableDefaultItems>
     <!-- Template package: no lib/, no dependencies group by design. -->
     <NoWarn>$(NoWarn);NU5128</NoWarn>
+    <!-- Generated apps NEED their dotfiles (.gitignore); default excludes would strip them. -->
+    <NoDefaultExcludes>true</NoDefaultExcludes>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
 

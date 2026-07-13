@@ -1,5 +1,10 @@
 # Goldpath — Enterprise .NET Asset
 
+[![ci](https://github.com/omercelikdev/goldpath/actions/workflows/ci.yml/badge.svg)](https://github.com/omercelikdev/goldpath/actions/workflows/ci.yml)
+[![nightly](https://github.com/omercelikdev/goldpath/actions/workflows/nightly.yml/badge.svg)](https://github.com/omercelikdev/goldpath/actions/workflows/nightly.yml)
+[![license](https://img.shields.io/badge/license-Apache--2.0-blue.svg)](LICENSE)
+[![NuGet](https://img.shields.io/nuget/vpre/Goldpath.Abstractions.svg?label=nuget)](https://www.nuget.org/packages?q=Goldpath)
+
 AI-native, spec-driven enterprise .NET accelerator: composable NuGet libraries +
 templates + AI skills + guardrails + living documentation. Not a framework — a
 **golden path**: a road paved with enterprise opinion on top of Microsoft (Aspire, Extensions.*).
@@ -12,22 +17,46 @@ templates + AI skills + guardrails + living documentation. Not a framework — a
 - ✔ Composable packages — added to an existing project in 5 minutes (L1) or scaffolded from scratch (L3)
 - ✔ Spec-driven: `.goldpath/manifest.yaml` + OpenAPI/AsyncAPI as the single source of truth
 - ✔ AI in the development layer: skills generate, guardrails verify, humans approve
+- ✔ Proof-driven: every claim below is a test/bench that runs in CI (nightly 7-shape matrix, real containers)
 - ✘ Not a framework (imposes no structure), no custom DSL, no wrappers around Microsoft
+
+## Quickstart
+
+```bash
+dotnet new install Goldpath.Templates
+dotnet tool install -g Goldpath.Cli
+
+dotnet new goldpath-solution -n Acme.Orders --db postgresql --broker rabbitmq --features bulk
+cd Acme.Orders && goldpath check          # spec validate + drift + build, one verb
+dotnet run --project src/Acme.Orders.AppHost
+```
+
+Grow it feature by feature: `goldpath add feature notification`, `goldpath add worker`,
+`goldpath db add AddInvoices`. Every admin surface (`/goldpath/admin/*`) is fail-closed,
+audited and [contract-frozen](docs/rfc/goldpath-admin-contract.md); every module ships
+its Grafana board, runbooks and [measured performance](docs/ops/release-checklist.md)
+on a pinned CI profile.
+
+## What's in the train
+
+| Layer | Packages |
+|---|---|
+| Floor (Ring A) | Abstractions · ServiceDefaults · ApiDefaults · Data · Messaging |
+| Cross-cutting (Ring B) | Auth · Idempotency · AuditTrail · MultiTenancy · SoftDelete · Locking (+SqlServer) · Caching · DataProtection |
+| Execution ladder (L2→L4) | Jobs (clustered, checkpointed, kill-9-recoverable) · Archival · Bulk (finance-grade intake→gate→execute→repair) · Notification · Campaign (paced fan-out, live throttle) |
+| Tooling | Analyzers (GP#### executable standards) · `goldpath` CLI · `Goldpath.Templates` |
 
 ## Monorepo Layout
 
-| Directory | Contents | Status |
-|---|---|---|
-| `docs/strategy/` | Strategy documents (foundation, manifest, testing, telemetry…) | ✔ v1 |
-| `docs/adr/` | Constitution — 10 ADRs | ✔ accepted |
-| `docs/rfc/` | Module RFCs (template + Idempotency reference example) | ✔ template |
-| `schemas/manifest/v1/` | Manifest JSON Schema + valid/invalid corpus | ✔ ajv-validated |
-| `packages/` | Goldpath NuGet packages (Phase 1: Abstractions → ServiceDefaults → …) | empty — [plan](docs/strategy/module-plan-v1.md) |
-| `templates/` | `dotnet new` template pack + AppHost | empty |
-| `skills/` | AI skill definitions (authoring, new-service, add-feature…) | empty |
-| `analyzers/` | GOLDPATH Roslyn rules | empty |
-| `rulesets/` | Enterprise Spec Engine ruleset package (private content) | empty |
-| `samples/` | OrderPlatform reference application (dogfood) | empty |
+| Directory | Contents |
+|---|---|
+| `docs/strategy/` · `docs/adr/` · `docs/rfc/` | Strategy, the 10-ADR constitution, module RFCs + frozen contracts |
+| `docs/ops/` · `docs/upgrades/` | Migrations/trace/release runbooks · per-release upgrade guides |
+| `schemas/manifest/v1/` | Manifest JSON Schema + valid/invalid corpus (ajv-validated) |
+| `packages/` · `analyzers/` | The NuGet train (19 packages) · GP#### Roslyn rules |
+| `templates/` · `tools/` | `dotnet new` pack (solution + worker) · the `goldpath` CLI |
+| `tests/` | 586 unit + 34 integration proofs (Testcontainers) + bench suite |
+| `skills/` · `rulesets/` · `samples/` | AI skill layer · Spec Engine rulesets · reference app (Phase D) |
 
 ## Language Policy
 

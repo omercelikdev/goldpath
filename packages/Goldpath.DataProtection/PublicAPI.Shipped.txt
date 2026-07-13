@@ -1,1 +1,30 @@
 #nullable enable
+const Goldpath.GoldpathErasingRedactor.Token = "***" -> string!
+Goldpath.GoldpathClassificationCatalog
+Goldpath.GoldpathClassificationCatalog.Classify<T>(System.Linq.Expressions.Expression<System.Func<T, object?>!>! property, Goldpath.GoldpathDataClass dataClass) -> Goldpath.GoldpathClassificationCatalog!
+Goldpath.GoldpathClassificationCatalog.GoldpathClassificationCatalog() -> void
+Goldpath.GoldpathDataProtectionExtensions
+Goldpath.GoldpathDataProtectionOptions
+Goldpath.GoldpathDataProtectionOptions.Catalog(System.Action<Goldpath.GoldpathClassificationCatalog!>! configure) -> Goldpath.GoldpathDataProtectionOptions!
+Goldpath.GoldpathDataProtectionOptions.GoldpathDataProtectionOptions() -> void
+Goldpath.GoldpathDataProtectionOptions.HmacKey.get -> string?
+Goldpath.GoldpathDataProtectionOptions.HmacKey.set -> void
+Goldpath.GoldpathDataProtectionOptions.HmacKeyId.get -> int
+Goldpath.GoldpathDataProtectionOptions.HmacKeyId.set -> void
+Goldpath.GoldpathDataProtectionOptions.Redactor.get -> Goldpath.GoldpathRedactionMode
+Goldpath.GoldpathDataProtectionOptions.Redactor.set -> void
+Goldpath.GoldpathDataProtectionOptions.UseHmacRedaction(string! base64Key, int keyId = 1) -> Goldpath.GoldpathDataProtectionOptions!
+Goldpath.GoldpathDataProtector
+Goldpath.GoldpathDataProtector.CatalogedPropertyNames.get -> System.Collections.Generic.IReadOnlyCollection<string!>!
+Goldpath.GoldpathDataProtector.Classify(System.Type! declaringType, string! propertyName) -> Goldpath.GoldpathDataClass?
+Goldpath.GoldpathDataProtector.GoldpathDataProtector(Goldpath.GoldpathDataProtectionOptions! options, Microsoft.Extensions.Compliance.Redaction.IRedactorProvider! redactors) -> void
+Goldpath.GoldpathDataProtector.IsClassified(System.Type! declaringType, string! propertyName) -> bool
+Goldpath.GoldpathDataProtector.Redact(System.Type! declaringType, string! propertyName, string? value) -> string?
+Goldpath.GoldpathErasingRedactor
+Goldpath.GoldpathErasingRedactor.GoldpathErasingRedactor() -> void
+Goldpath.GoldpathRedactionMode
+Goldpath.GoldpathRedactionMode.Erase = 0 -> Goldpath.GoldpathRedactionMode
+Goldpath.GoldpathRedactionMode.Hmac = 1 -> Goldpath.GoldpathRedactionMode
+override Goldpath.GoldpathErasingRedactor.GetRedactedLength(System.ReadOnlySpan<char> input) -> int
+override Goldpath.GoldpathErasingRedactor.Redact(System.ReadOnlySpan<char> source, System.Span<char> destination) -> int
+static Goldpath.GoldpathDataProtectionExtensions.AddGoldpathDataProtection<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathDataProtectionOptions!>? configure = null) -> TBuilder

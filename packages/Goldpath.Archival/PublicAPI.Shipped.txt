@@ -1,1 +1,196 @@
 #nullable enable
+Goldpath.GoldpathArchivalAdminEndpoints
+Goldpath.GoldpathArchivalExtensions
+Goldpath.GoldpathArchivalOptions
+Goldpath.GoldpathArchivalOptions.AddArchive<TRoot>(System.Action<Goldpath.GoldpathArchiveBuilder<TRoot!>!>! configure) -> Goldpath.GoldpathArchivalOptions!
+Goldpath.GoldpathArchivalOptions.AddRowRetention<TRow>(System.Action<Goldpath.GoldpathRowRetentionBuilder<TRow!>!>! configure) -> Goldpath.GoldpathArchivalOptions!
+Goldpath.GoldpathArchivalOptions.Archives.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathArchiveDefinition!>!
+Goldpath.GoldpathArchivalOptions.BatchSize.get -> int
+Goldpath.GoldpathArchivalOptions.BatchSize.set -> void
+Goldpath.GoldpathArchivalOptions.GoldpathArchivalOptions() -> void
+Goldpath.GoldpathArchivalOptions.RowRetentions.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathRowRetentionDefinition!>!
+Goldpath.GoldpathArchiveAdminService<TContext>
+Goldpath.GoldpathArchiveAdminService<TContext>.GoldpathArchiveAdminService(Goldpath.GoldpathArchiveEngine<TContext!>! engine, Goldpath.GoldpathArchivalOptions! options, Microsoft.Extensions.DependencyInjection.IServiceScopeFactory! scopeFactory, System.TimeProvider! time) -> void
+Goldpath.GoldpathArchiveAdminService<TContext>.EraseAsync(string! definition, string! aggregateKey, string! subjectKey, string! actor, string? detail, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathArchiveAdminService<TContext>.GetDefinitionsAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathArchiveDefinitionStatus!>!>!
+Goldpath.GoldpathArchiveAdminService<TContext>.GetErasuresAsync(int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathErasureRecord!>!>!
+Goldpath.GoldpathArchiveAdminService<TContext>.GetHoldsAsync(bool includeLifted, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathLegalHold!>!>!
+Goldpath.GoldpathArchiveAdminService<TContext>.LiftHoldAsync(string! definition, string! aggregateKey, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathArchiveAdminService<TContext>.PlaceHoldAsync(string! definition, string! aggregateKey, string! caseReference, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathArchiveAdminService<TContext>.RetrieveAsync(string! definition, string! aggregateKey, string? tenant, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathArchiveEntry?>!
+Goldpath.GoldpathArchiveAdminService<TContext>.VerifyAsync(string! definition, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathChainFinding!>!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>
+Goldpath.GoldpathArchiveBuilder<TRoot>.ArchiveAfter(System.TimeSpan period) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.DeleteHotRowsAfterArchive() -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.GoldpathArchiveBuilder() -> void
+Goldpath.GoldpathArchiveBuilder<TRoot>.DueWhen(System.Linq.Expressions.Expression<System.Func<TRoot!, bool>!>! due, System.Linq.Expressions.Expression<System.Func<TRoot!, System.DateTimeOffset>!>! dueAt) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.Graph(params System.Linq.Expressions.Expression<System.Func<TRoot!, object?>!>![]! navigations) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.GraphPath(params string![]! paths) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.Key<TKey>(System.Linq.Expressions.Expression<System.Func<TRoot!, TKey>!>! key) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.Named(string! name) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.RetainFor(int years) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveBuilder<TRoot>.Tenant(System.Func<TRoot!, string?>! tenant) -> Goldpath.GoldpathArchiveBuilder<TRoot!>!
+Goldpath.GoldpathArchiveCandidate
+Goldpath.GoldpathArchiveCandidate.GoldpathArchiveCandidate(string! Key, object! Root, System.DateTimeOffset DueAt, string? Tenant) -> void
+Goldpath.GoldpathArchiveCandidate.DueAt.get -> System.DateTimeOffset
+Goldpath.GoldpathArchiveCandidate.DueAt.init -> void
+Goldpath.GoldpathArchiveCandidate.Key.get -> string!
+Goldpath.GoldpathArchiveCandidate.Key.init -> void
+Goldpath.GoldpathArchiveCandidate.Root.get -> object!
+Goldpath.GoldpathArchiveCandidate.Root.init -> void
+Goldpath.GoldpathArchiveCandidate.Tenant.get -> string?
+Goldpath.GoldpathArchiveCandidate.Tenant.init -> void
+Goldpath.GoldpathArchiveChainState
+Goldpath.GoldpathArchiveChainState.Definition.get -> string!
+Goldpath.GoldpathArchiveChainState.Definition.set -> void
+Goldpath.GoldpathArchiveChainState.GoldpathArchiveChainState() -> void
+Goldpath.GoldpathArchiveChainState.LastHash.get -> string!
+Goldpath.GoldpathArchiveChainState.LastHash.set -> void
+Goldpath.GoldpathArchiveChainState.LastIndex.get -> long
+Goldpath.GoldpathArchiveChainState.LastIndex.set -> void
+Goldpath.GoldpathArchiveChainState.PurgedHeadHash.get -> string!
+Goldpath.GoldpathArchiveChainState.PurgedHeadHash.set -> void
+Goldpath.GoldpathArchiveChainState.PurgedThroughIndex.get -> long
+Goldpath.GoldpathArchiveChainState.PurgedThroughIndex.set -> void
+Goldpath.GoldpathArchiveDefinition
+Goldpath.GoldpathArchiveDefinition.ArchiveAfter.get -> System.TimeSpan
+Goldpath.GoldpathArchiveDefinition.DeleteHotRows.get -> bool
+Goldpath.GoldpathArchiveDefinition.GraphPaths.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Goldpath.GoldpathArchiveDefinition.Name.get -> string!
+Goldpath.GoldpathArchiveDefinition.RetainFor.get -> System.TimeSpan?
+Goldpath.GoldpathArchiveDefinition.RootType.get -> System.Type!
+Goldpath.GoldpathArchiveDefinitionStatus
+Goldpath.GoldpathArchiveDefinitionStatus.ActiveHolds.get -> int
+Goldpath.GoldpathArchiveDefinitionStatus.ActiveHolds.init -> void
+Goldpath.GoldpathArchiveDefinitionStatus.ChainHead.get -> long
+Goldpath.GoldpathArchiveDefinitionStatus.ChainHead.init -> void
+Goldpath.GoldpathArchiveDefinitionStatus.GoldpathArchiveDefinitionStatus(string! Name, long Entries, int DueBacklog, int ActiveHolds, long ChainHead, long PurgedThrough) -> void
+Goldpath.GoldpathArchiveDefinitionStatus.DueBacklog.get -> int
+Goldpath.GoldpathArchiveDefinitionStatus.DueBacklog.init -> void
+Goldpath.GoldpathArchiveDefinitionStatus.Entries.get -> long
+Goldpath.GoldpathArchiveDefinitionStatus.Entries.init -> void
+Goldpath.GoldpathArchiveDefinitionStatus.Name.get -> string!
+Goldpath.GoldpathArchiveDefinitionStatus.Name.init -> void
+Goldpath.GoldpathArchiveDefinitionStatus.PurgedThrough.get -> long
+Goldpath.GoldpathArchiveDefinitionStatus.PurgedThrough.init -> void
+Goldpath.GoldpathArchiveEngine<TContext>
+Goldpath.GoldpathArchiveEngine<TContext>.ArchiveNextBatchAsync(System.IServiceProvider! services, Goldpath.GoldpathArchiveDefinition! definition, int batchSize, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathArchiveEngine<TContext>.CountDueAsync(TContext! db, Goldpath.GoldpathArchiveDefinition! definition, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathArchiveEngine<TContext>.GoldpathArchiveEngine(System.TimeProvider! time, Microsoft.Extensions.Logging.ILogger<Goldpath.GoldpathArchiveEngine<TContext!>!>! logger) -> void
+Goldpath.GoldpathArchiveEngine<TContext>.PurgeExpiredEntriesAsync(System.IServiceProvider! services, Goldpath.GoldpathArchiveDefinition! definition, int batchSize, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathArchiveEngine<TContext>.RetrieveAsync(System.IServiceProvider! services, string! definition, string! aggregateKey, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathArchiveEntry?>!
+Goldpath.GoldpathArchiveEngine<TContext>.VerifySliceAsync(System.IServiceProvider! services, Goldpath.GoldpathArchiveDefinition! definition, long fromIndex, long toIndex, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.List<Goldpath.GoldpathChainFinding!>!>!
+Goldpath.GoldpathArchiveEntry
+Goldpath.GoldpathArchiveEntry.AggregateKey.get -> string!
+Goldpath.GoldpathArchiveEntry.AggregateKey.set -> void
+Goldpath.GoldpathArchiveEntry.ArchivedAt.get -> System.DateTimeOffset
+Goldpath.GoldpathArchiveEntry.ArchivedAt.set -> void
+Goldpath.GoldpathArchiveEntry.ChainHash.get -> string!
+Goldpath.GoldpathArchiveEntry.ChainHash.set -> void
+Goldpath.GoldpathArchiveEntry.ChainIndex.get -> long
+Goldpath.GoldpathArchiveEntry.ChainIndex.set -> void
+Goldpath.GoldpathArchiveEntry.ContentHash.get -> string!
+Goldpath.GoldpathArchiveEntry.ContentHash.set -> void
+Goldpath.GoldpathArchiveEntry.Definition.get -> string!
+Goldpath.GoldpathArchiveEntry.Definition.set -> void
+Goldpath.GoldpathArchiveEntry.GoldpathArchiveEntry() -> void
+Goldpath.GoldpathArchiveEntry.Document.get -> string!
+Goldpath.GoldpathArchiveEntry.Document.set -> void
+Goldpath.GoldpathArchiveEntry.DueAt.get -> System.DateTimeOffset
+Goldpath.GoldpathArchiveEntry.DueAt.set -> void
+Goldpath.GoldpathArchiveEntry.ErasedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathArchiveEntry.ErasedAt.set -> void
+Goldpath.GoldpathArchiveEntry.Id.get -> long
+Goldpath.GoldpathArchiveEntry.Id.set -> void
+Goldpath.GoldpathArchiveEntry.PreviousHash.get -> string!
+Goldpath.GoldpathArchiveEntry.PreviousHash.set -> void
+Goldpath.GoldpathArchiveEntry.SchemaVersion.get -> int
+Goldpath.GoldpathArchiveEntry.SchemaVersion.set -> void
+Goldpath.GoldpathArchiveEntry.Tenant.get -> string?
+Goldpath.GoldpathArchiveEntry.Tenant.set -> void
+Goldpath.GoldpathArchiveEnvelope
+Goldpath.GoldpathArchiveJob<TContext>
+Goldpath.GoldpathArchiveJob<TContext>.GoldpathArchiveJob(Goldpath.GoldpathArchiveEngine<TContext!>! engine, Goldpath.GoldpathArchivalOptions! options) -> void
+Goldpath.GoldpathArchiveJob<TContext>.ExecuteChunkAsync(Goldpath.GoldpathJobChunk! chunk, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathArchiveJob<TContext>.PlanAsync(Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathJobPlan!>!
+Goldpath.GoldpathArchiveModelExtensions
+Goldpath.GoldpathArchiveVerifyJob<TContext>
+Goldpath.GoldpathArchiveVerifyJob<TContext>.GoldpathArchiveVerifyJob(Goldpath.GoldpathArchiveEngine<TContext!>! engine, Goldpath.GoldpathArchivalOptions! options) -> void
+Goldpath.GoldpathArchiveVerifyJob<TContext>.ExecuteChunkAsync(Goldpath.GoldpathJobChunk! chunk, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathArchiveVerifyJob<TContext>.PlanAsync(Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathJobPlan!>!
+Goldpath.GoldpathChainFinding
+Goldpath.GoldpathChainFinding.AggregateKey.get -> string!
+Goldpath.GoldpathChainFinding.AggregateKey.init -> void
+Goldpath.GoldpathChainFinding.ChainIndex.get -> long
+Goldpath.GoldpathChainFinding.ChainIndex.init -> void
+Goldpath.GoldpathChainFinding.Definition.get -> string!
+Goldpath.GoldpathChainFinding.Definition.init -> void
+Goldpath.GoldpathChainFinding.GoldpathChainFinding(string! Definition, long ChainIndex, string! AggregateKey, string! Problem) -> void
+Goldpath.GoldpathChainFinding.Problem.get -> string!
+Goldpath.GoldpathChainFinding.Problem.init -> void
+Goldpath.GoldpathDocumentRedactor
+Goldpath.GoldpathErasureRecord
+Goldpath.GoldpathErasureRecord.Detail.get -> string?
+Goldpath.GoldpathErasureRecord.Detail.set -> void
+Goldpath.GoldpathErasureRecord.GoldpathErasureRecord() -> void
+Goldpath.GoldpathErasureRecord.EntriesAffected.get -> int
+Goldpath.GoldpathErasureRecord.EntriesAffected.set -> void
+Goldpath.GoldpathErasureRecord.Id.get -> long
+Goldpath.GoldpathErasureRecord.Id.set -> void
+Goldpath.GoldpathErasureRecord.RequestedAt.get -> System.DateTimeOffset
+Goldpath.GoldpathErasureRecord.RequestedAt.set -> void
+Goldpath.GoldpathErasureRecord.RequestedBy.get -> string!
+Goldpath.GoldpathErasureRecord.RequestedBy.set -> void
+Goldpath.GoldpathErasureRecord.SubjectKey.get -> string!
+Goldpath.GoldpathErasureRecord.SubjectKey.set -> void
+Goldpath.GoldpathErasureRequest
+Goldpath.GoldpathErasureRequest.Detail.get -> string?
+Goldpath.GoldpathErasureRequest.Detail.init -> void
+Goldpath.GoldpathErasureRequest.GoldpathErasureRequest(string! SubjectKey, string? Detail) -> void
+Goldpath.GoldpathErasureRequest.SubjectKey.get -> string!
+Goldpath.GoldpathErasureRequest.SubjectKey.init -> void
+Goldpath.GoldpathHoldRequest
+Goldpath.GoldpathHoldRequest.CaseReference.get -> string!
+Goldpath.GoldpathHoldRequest.CaseReference.init -> void
+Goldpath.GoldpathHoldRequest.GoldpathHoldRequest(string! CaseReference) -> void
+Goldpath.GoldpathLegalHold
+Goldpath.GoldpathLegalHold.AggregateKey.get -> string!
+Goldpath.GoldpathLegalHold.AggregateKey.set -> void
+Goldpath.GoldpathLegalHold.CaseReference.get -> string!
+Goldpath.GoldpathLegalHold.CaseReference.set -> void
+Goldpath.GoldpathLegalHold.Definition.get -> string!
+Goldpath.GoldpathLegalHold.Definition.set -> void
+Goldpath.GoldpathLegalHold.GoldpathLegalHold() -> void
+Goldpath.GoldpathLegalHold.Id.get -> long
+Goldpath.GoldpathLegalHold.Id.set -> void
+Goldpath.GoldpathLegalHold.LiftedAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathLegalHold.LiftedAt.set -> void
+Goldpath.GoldpathLegalHold.LiftedBy.get -> string?
+Goldpath.GoldpathLegalHold.LiftedBy.set -> void
+Goldpath.GoldpathLegalHold.PlacedAt.get -> System.DateTimeOffset
+Goldpath.GoldpathLegalHold.PlacedAt.set -> void
+Goldpath.GoldpathLegalHold.PlacedBy.get -> string!
+Goldpath.GoldpathLegalHold.PlacedBy.set -> void
+Goldpath.GoldpathRetentionPurgeJob<TContext>
+Goldpath.GoldpathRetentionPurgeJob<TContext>.GoldpathRetentionPurgeJob(Goldpath.GoldpathArchiveEngine<TContext!>! engine, Goldpath.GoldpathArchivalOptions! options, System.TimeProvider! time) -> void
+Goldpath.GoldpathRetentionPurgeJob<TContext>.ExecuteChunkAsync(Goldpath.GoldpathJobChunk! chunk, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathRetentionPurgeJob<TContext>.PlanAsync(Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathJobPlan!>!
+Goldpath.GoldpathRowRetentionBuilder<TRow>
+Goldpath.GoldpathRowRetentionBuilder<TRow>.After(System.TimeSpan period, System.Linq.Expressions.Expression<System.Func<TRow!, System.DateTimeOffset>!>! age) -> Goldpath.GoldpathRowRetentionBuilder<TRow!>!
+Goldpath.GoldpathRowRetentionBuilder<TRow>.GoldpathRowRetentionBuilder() -> void
+Goldpath.GoldpathRowRetentionBuilder<TRow>.Where(System.Linq.Expressions.Expression<System.Func<TRow!, bool>!>! guard) -> Goldpath.GoldpathRowRetentionBuilder<TRow!>!
+Goldpath.GoldpathRowRetentionDefinition
+Goldpath.GoldpathRowRetentionDefinition.After.get -> System.TimeSpan
+Goldpath.GoldpathRowRetentionDefinition.CountDueAsync(Microsoft.EntityFrameworkCore.DbContext! db, System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathRowRetentionDefinition.HasGuard.get -> bool
+Goldpath.GoldpathRowRetentionDefinition.Name.get -> string!
+Goldpath.GoldpathRowRetentionDefinition.PurgeBatchAsync(Microsoft.EntityFrameworkCore.DbContext! db, System.DateTimeOffset now, int batchSize, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathRowRetentionDefinition.RowType.get -> System.Type!
+const Goldpath.GoldpathArchiveEnvelope.SchemaVersion = 1 -> int
+static Goldpath.GoldpathArchivalAdminEndpoints.MapGoldpathArchivalAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/archival", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+static Goldpath.GoldpathArchivalExtensions.AddGoldpathArchival<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathArchivalOptions!>! configure) -> TBuilder
+static Goldpath.GoldpathArchivalExtensions.AddGoldpathArchivalJobs<TContext>(this Goldpath.GoldpathJobsOptions! jobs, string! archiveCron = "0 0 2 * * ?", string! verifyCron = "0 0 5 ? * SUN", System.TimeSpan? deadline = null) -> Goldpath.GoldpathJobsOptions!
+static Goldpath.GoldpathArchiveEnvelope.ChainHash(string! contentHashAtAppend, string! previousChainHash, long chainIndex) -> string!
+static Goldpath.GoldpathArchiveEnvelope.ContentHash(int schemaVersion, string! definition, string! key, string? tenant, System.DateTimeOffset dueAt, string! document) -> string!
+static Goldpath.GoldpathArchiveModelExtensions.AddGoldpathArchiveModel(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder) -> Microsoft.EntityFrameworkCore.ModelBuilder!
+static Goldpath.GoldpathDocumentRedactor.Redact(object! root, Goldpath.IGoldpathDataProtector! protector) -> int

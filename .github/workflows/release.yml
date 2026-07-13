@@ -1,0 +1,50 @@
+# The publish half of the D4 release gate (docs/ops/release-checklist.md): tagging
+# v<version> on a merged, green release PR packs the whole train (packages + CLI tool +
+# template pack) and pushes to nuget.org. Needs the NUGET_API_KEY repo secret.
+name: release
+
+on:
+  push:
+    tags: ["v*"]
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write   # the GitHub release
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: sanity build
+        run: dotnet build Goldpath.sln --nologo -c Release
+      - name: pack the train
+        run: |
+          set -e
+          mkdir -p out
+          # No --no-build: the template pack is content-only (never in the sln build) and
+          # pack re-verifies each project's own Release output deterministically.
+          for p in packages/*/*.csproj analyzers/Goldpath.Analyzers/Goldpath.Analyzers.csproj \
+                   tools/Goldpath.Cli/Goldpath.Cli.csproj templates/Goldpath.Templates.csproj; do
+            dotnet pack "$p" --nologo -c Release -o out
+          done
+          ls out
+      - name: push to nuget.org
+        run: |
+          dotnet nuget push "out/*.nupkg" \
+            --api-key "${{ secrets.NUGET_API_KEY }}" \
+            --source https://api.nuget.org/v3/index.json \
+            --skip-duplicate
+      - name: GitHub release from the changelog
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          version="${GITHUB_REF_NAME#v}"
+          # The tag's CHANGELOG section: from its heading to the next heading.
+          awk -v v="$version" '/^## /{p = index($0, v) > 0} p' CHANGELOG.md > notes.md
+          gh release create "$GITHUB_REF_NAME" --title "Goldpath $version" \
+            --notes-file notes.md $(case "$version" in *-*) echo --prerelease;; esac)

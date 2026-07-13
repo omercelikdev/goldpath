@@ -3,9 +3,32 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
-## [0.1.0-preview.1] - 2026-07-03
+## [0.1.0-preview.1] - 2026-07-13
+
+Upgrade guide: `docs/upgrades/0.1.0-preview.1.md` (first release — nothing to upgrade from).
 
 ### Added
+- **Release hardening (H1–H8) — the enterprise-ready pass before first publish**:
+  - *Migrations story (H1)*: migrations live in the APP; Development auto-migrates,
+    production is EF bundle-first; `goldpath db init|add|status|bundle` (owner-aware);
+    one table set has ONE owner (GP1801); three end-to-end proofs on real PostgreSQL
+    including data-preserving column adds; the migrations runbook.
+  - *Fail-closed admin surfaces (H2)*: every `Map*Admin` demands the `goldpath-ops`
+    policy out of the box; opting out is visible (`exposeUnsecured: true`) and warned.
+  - *End-to-end trace correlation (H4)*: run/chunk/replay spans; the operator's request
+    traceparent crosses the Quartz boundary via the job data map; bulk batches pin the
+    upload trace and every later span links back — one trace id per instruction,
+    through the repair path; `docs/ops/trace-correlation.md`.
+  - *Frozen admin API contract (H8)*: `docs/rfc/goldpath-admin-contract.md` — envelope,
+    paging (`take` clamped [1,500] everywhere), failure nouns, full route inventory,
+    with a route-freeze test.
+  - *Two-executor bulk kill-9 proof + CI reference benches (H6)*: the winning executor
+    killed mid-batch recovers on the second node with NO double payment; all bench
+    numbers re-measured on pinned CI hardware into the ops docs.
+  - *Versioning & support contract (H7)*: `docs/rfc/goldpath-versioning.md` — lockstep
+    train, pre-1.0 rules, support window, the D4 release gate this entry satisfies.
+  - Heavy proof gates moved to GitHub Actions: PR gates + integration, nightly GM
+    matrix (7 shapes) + migrations proofs + mutation matrix, dispatchable benches.
 - **Goldpath.Campaign S3 — campaign is a manifest capability (module COMPLETE — the execution
   ladder L1–L4 closes)** — `features.campaign` joins the manifest schema WITH the first
   cross-field rule: a solution enabling campaign cannot pick `broker: none` (the release
