@@ -40,3 +40,13 @@ chosen per customer (Turkish by default for Turkish customers — see domain-mem
 Every dependency, including first-party OSS (Mediant, Mockifyr, Spec Engine — personal GitHub),
 is consumed as a **published, pinned NuGet package** (nuget.org → internal mirror where required). Source
 references/submodules are forbidden. Details: foundation §10.
+
+## Versioning & Support
+
+One version train: every `Goldpath.*` package, the CLI and the template pack ship the
+same version. SemVer with the pre-1.0 rules spelled out — `0.x.y` patches are always
+safe to take blind; `0.(x+1)` minors may break but never silently: every break ships
+with a step-by-step upgrade guide (`docs/upgrades/`), and the `PublicAPI.*.txt` ledger
+diff is the mechanical proof of what changed. Support: latest release only pre-1.0;
+from 1.0, previous major gets security fixes for 6 months. The full written contract:
+[docs/rfc/goldpath-versioning.md](docs/rfc/goldpath-versioning.md).
