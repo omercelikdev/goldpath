@@ -294,17 +294,25 @@ public class EngineTests : IDisposable
             foreach (var row in db.Set<GoldpathBulkRow>().Where(r => r.BatchId == batch.Id))
             {
                 row.ClaimedAt = DateTimeOffset.UtcNow;
-                row.ExecutedAt = DateTimeOffset.UtcNow;   // stamped by the killed executor...
+                if (row.RowNumber == 3)
+                {
+                    row.FailedAt = DateTimeOffset.UtcNow;    // stamped failed by the killed executor...
+                }
+                else
+                {
+                    row.ExecutedAt = DateTimeOffset.UtcNow;  // ...or stamped paid...
+                }
             }
 
-            b.ExecutedRows = 2;   // ...whose counter increment never landed: one short
+            b.ExecutedRows = 1;   // ...but BOTH counter increments never landed: each one short
+            b.FailedRows = 0;
         });
 
         await _fixture.ExecuteAllAsync(Guid.NewGuid());   // every range skips (all stamped) -> terminal flip
 
         var healed = _fixture.Query(db => db.Set<GoldpathBulkBatch>().Single(x => x.Id == batch.Id));
-        Assert.Equal(GoldpathBulkBatchState.Completed, healed.State);
-        Assert.Equal(3, healed.ExecutedRows);   // recounted from the stamps
-        Assert.Equal(0, healed.FailedRows);
+        Assert.Equal(GoldpathBulkBatchState.CompletedWithFailures, healed.State);
+        Assert.Equal(2, healed.ExecutedRows);   // BOTH counters recounted from the stamps
+        Assert.Equal(1, healed.FailedRows);
     }
 }
