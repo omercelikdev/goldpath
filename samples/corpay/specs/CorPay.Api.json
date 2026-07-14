@@ -50,12 +50,90 @@
         }
       }
     },
-    "/api/v1/payment-instructions/{id}/reject": {
+    "/api/v1/payment-instructions/day-report": {
+      "get": {
+        "tags": [
+          "CorPay.Api"
+        ],
+        "operationId": "CorPay.Api.Payments.Features.GetDayReportQuery",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/DayReportDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/payment-instructions": {
+      "get": {
+        "tags": [
+          "CorPay.Api"
+        ],
+        "operationId": "CorPay.Api.Payments.Features.GetPaymentInstructionsQuery",
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/PageOfPaymentInstructionDto"
+                }
+              }
+            }
+          },
+          "400": {
+            "description": "Bad Request",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          },
+          "500": {
+            "description": "Internal Server Error",
+            "content": {
+              "application/problem+json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetails"
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "tags": [
           "CorPay.Api"
         ],
-        "operationId": "CorPay.Api.Payments.Features.RejectPaymentInstructionCommand",
+        "operationId": "CorPay.Api.Payments.Features.SubmitPaymentInstructionCommand",
         "responses": {
           "201": {
             "description": "Created",
@@ -95,12 +173,12 @@
         }
       }
     },
-    "/api/v1/payment-instructions": {
+    "/api/v1/payment-instructions/{id}/reject": {
       "post": {
         "tags": [
           "CorPay.Api"
         ],
-        "operationId": "CorPay.Api.Payments.Features.SubmitPaymentInstructionCommand",
+        "operationId": "CorPay.Api.Payments.Features.RejectPaymentInstructionCommand",
         "responses": {
           "201": {
             "description": "Created",
@@ -1281,6 +1359,55 @@
           "Saturday"
         ]
       },
+      "DayReportDto": {
+        "type": "object",
+        "properties": {
+          "day": {
+            "type": "string",
+            "format": "date"
+          },
+          "executed": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "executedTotal": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "pendingApproval": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "rejected": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "ledgerFeedRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
       "GoldpathArchiveDefinitionStatus": {
         "required": [
           "name",
@@ -2103,6 +2230,89 @@
           }
         },
         "description": "Cursor-pagination response. Deliberately carries no total count — counting large tables\nis the offset trap reborn (RFC decision D2); consumers needing totals get an explicit\naggregate endpoint."
+      },
+      "PageOfPaymentInstructionDto": {
+        "required": [
+          "items",
+          "nextCursor",
+          "size"
+        ],
+        "type": "object",
+        "properties": {
+          "items": {
+            "type": "array",
+            "items": {
+              "$ref": "#/components/schemas/PaymentInstructionDto"
+            },
+            "description": "The page items."
+          },
+          "nextCursor": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "description": "Cursor of the next page; `null` means the end."
+          },
+          "size": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "description": "The applied page size.",
+            "format": "int32"
+          }
+        },
+        "description": "Cursor-pagination response. Deliberately carries no total count — counting large tables\nis the offset trap reborn (RFC decision D2); consumers needing totals get an explicit\naggregate endpoint."
+      },
+      "PaymentInstructionDto": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "reference": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/PaymentStatus"
+          },
+          "approvedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "createdAt": {
+            "type": "string",
+            "format": "date-time"
+          }
+        }
+      },
+      "PaymentStatus": {
+        "enum": [
+          "Submitted",
+          "PendingApproval",
+          "Executed",
+          "Rejected",
+          "Failed"
+        ]
       },
       "ProblemDetails": {
         "type": "object",
