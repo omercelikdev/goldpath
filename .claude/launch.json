@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "kit-gallery",
+      "cwd": "ui/kit",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["gallery", "--port", "5199", "--strictPort"],
+      "port": 5199
+    }
+  ]
+}
