@@ -1,6 +1,8 @@
 # UI standard v1 — the Goldpath console's visual contract
 
-Status: ADOPTED as the kit's source of truth (2026-07-14). Lineage: extracted from the
+Status: ADOPTED for the stack-agnostic VISUAL layer — tokens, typography, status
+language, interaction rules (2026-07-14). The delivery mechanics (Tailwind mapping,
+npm packaging) ride the console RFC's D1 and become binding with its acceptance. Lineage: extracted from the
 Mockifyr dashboard's token system, which itself mirrors the Praxis design system — one
 visual family across the product line. The near-black ("siyah") accent logic is the
 identity; re-skinning a tenant is a ONE-FILE change.
@@ -64,6 +66,6 @@ Inherited from Mockifyr's proven set, extended with Goldpath-specific composites
 
 ## 6. What the standard is NOT
 
-No custom DSL over Tailwind, no per-screen color invention, no accent-colored status,
+No custom DSL over the CSS layer (Tailwind per the console RFC's D1), no per-screen color invention, no accent-colored status,
 no webfonts, no page-owned scrolling. A screen that needs a token that does not exist
 is a design conversation, not a hex code in a component.
