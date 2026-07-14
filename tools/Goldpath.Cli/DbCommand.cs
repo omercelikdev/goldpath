@@ -25,6 +25,13 @@ public static class DbCommand
             if (verb is "init" or "status")
             {
                 output.WriteLine("── goldpath db: no migration owner (no project references Microsoft.EntityFrameworkCore.Design) — nothing to do.");
+                if (verb is "init")
+                {
+                    // A contract-only app (no schema owner, but an openapi export) still
+                    // gets its FIRST-CONTRACT commit — init owns it on every path (#32).
+                    CommitFirstContract(appRoot, output);
+                }
+
                 return 0;
             }
 

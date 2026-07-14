@@ -177,6 +177,23 @@ public class DbCommandTests
     }
 
     [Fact]
+    public void Ownerless_init_still_commits_the_first_contract()
+    {
+        // Review R3 on #36: a contract-only app (gateway/API without a schema owner) has
+        // an openapi export but no Design reference — init must still land specs/.
+        using var app = new FakeApp();
+        var api = Path.Combine(app.Root, "src", "Shop.Api", "Shop.Api.csproj");
+        File.WriteAllText(api, File.ReadAllText(api).Replace("Microsoft.EntityFrameworkCore.Design", "Nothing.Here"));
+        var openapi = Path.Combine(app.Root, "src/Shop.Api/openapi");
+        Directory.CreateDirectory(openapi);
+        File.WriteAllText(Path.Combine(openapi, "Shop.Api.json"), "{}");
+
+        Assert.Equal(0, CliRunner.Run(["db", "init", "--path", app.Root], new FakeProcessRunner(), TextWriter.Null, TextWriter.Null));
+
+        Assert.Equal("{}", File.ReadAllText(Path.Combine(app.Root, "specs", "Shop.Api.json")));
+    }
+
+    [Fact]
     public void Db_add_skips_an_owner_whose_model_did_not_change()
     {
         // Issue #34: the probe db status trusts (exit 0 = nothing pending) now gates
