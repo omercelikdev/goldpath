@@ -41,6 +41,7 @@ public class DbCommandTests
         Assert.Equal(2, Db(app, new FakeProcessRunner(), "add"));   // usage error
 
         var runner = new FakeProcessRunner();
+        runner.ExitCodeWhenArgumentsContain["has-pending-model-changes"] = 1;   // #34: pending changes exist
         Assert.Equal(0, Db(app, runner, "add", "add-campaign"));
         // Kebab input is normalized: EF would otherwise emit an all-lowercase class (CS8981).
         Assert.Contains(runner.Calls, c => c.Arguments.Contains("AddCampaign"));
@@ -158,5 +159,52 @@ public class DbCommandTests
         var project = ef.Arguments[ef.Arguments.ToList().IndexOf("--project") + 1];
         Assert.True(Path.IsPathRooted(project), $"owner path must be absolute, got '{project}'");
         Assert.True(Path.IsPathRooted(ef.WorkingDirectory), "ef working directory must be absolute");
+    }
+
+    [Fact]
+    public void Db_init_commits_the_first_contract_even_when_run_manually()
+    {
+        // Issue #32: init owns the build moment, so a deferred-then-manual init must
+        // still land the first contract in specs/.
+        using var app = new FakeApp();
+        var openapi = Path.Combine(app.Root, "src/Shop.Api/openapi");
+        Directory.CreateDirectory(openapi);
+        File.WriteAllText(Path.Combine(openapi, "Shop.Api.json"), "{}");
+
+        Assert.Equal(0, CliRunner.Run(["db", "init", "--path", app.Root], new FakeProcessRunner(), TextWriter.Null, TextWriter.Null));
+
+        Assert.Equal("{}", File.ReadAllText(Path.Combine(app.Root, "specs", "Shop.Api.json")));
+    }
+
+    [Fact]
+    public void Ownerless_init_still_commits_the_first_contract()
+    {
+        // Review R3 on #36: a contract-only app (gateway/API without a schema owner) has
+        // an openapi export but no Design reference — init must still land specs/.
+        using var app = new FakeApp();
+        var api = Path.Combine(app.Root, "src", "Shop.Api", "Shop.Api.csproj");
+        File.WriteAllText(api, File.ReadAllText(api).Replace("Microsoft.EntityFrameworkCore.Design", "Nothing.Here"));
+        var openapi = Path.Combine(app.Root, "src/Shop.Api/openapi");
+        Directory.CreateDirectory(openapi);
+        File.WriteAllText(Path.Combine(openapi, "Shop.Api.json"), "{}");
+
+        Assert.Equal(0, CliRunner.Run(["db", "init", "--path", app.Root], new FakeProcessRunner(), TextWriter.Null, TextWriter.Null));
+
+        Assert.Equal("{}", File.ReadAllText(Path.Combine(app.Root, "specs", "Shop.Api.json")));
+    }
+
+    [Fact]
+    public void Db_add_skips_an_owner_whose_model_did_not_change()
+    {
+        // Issue #34: the probe db status trusts (exit 0 = nothing pending) now gates
+        // migrations add too — no more empty migrations per unchanged owner.
+        using var app = new FakeApp();
+        var runner = new FakeProcessRunner();   // default exit 0 = model unchanged
+        var output = new StringWriter();
+
+        Assert.Equal(0, CliRunner.Run(["db", "add", "AddThing", "--path", app.Root], runner, output, TextWriter.Null));
+
+        Assert.DoesNotContain(runner.Calls, c => c.Arguments.Contains("add") && c.Arguments.Contains("AddThing"));
+        Assert.Contains("model unchanged — skipped", output.ToString(), StringComparison.Ordinal);
     }
 }
