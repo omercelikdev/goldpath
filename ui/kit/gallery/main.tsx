@@ -4,14 +4,10 @@ import { StrictMode, useState } from "react";
 import { createRoot } from "react-dom/client";
 import "../src/tokens/tokens.css";
 import { StateBadge } from "../src/components/StateBadge";
+import { KNOWN_STATES } from "../src/status";
 
-const STATES = [
-  "Completed", "Running", "Failed", "Resumed",
-  "Received", "Validated", "Executing", "CompletedWithFailures", "Rejected",
-  "Requested", "Sent", "Suppressed",
-  "Submitted", "PendingApproval", "Executed",
-  "SomethingUnknown",
-];
+// Derived from the §5 source of truth — the eyes-on gate cannot drift from the map.
+const STATES = [...KNOWN_STATES, "SomethingUnknown"];
 
 function Gallery() {
   const [dark, setDark] = useState(false);
