@@ -25,6 +25,7 @@ templates + AI skills + guardrails + living documentation. Not a framework — a
 ```bash
 dotnet new install Goldpath.Templates@0.1.0-preview.2    # preview: pin the version
 dotnet tool install -g Goldpath.Cli --prerelease
+dotnet tool install -g specdrift                         # the deterministic engine behind goldpath check/add
 
 dotnet new goldpath-solution -n Acme.Orders --db postgresql --broker rabbitmq --features bulk
 cd Acme.Orders && goldpath check           # spec validate + drift + build, one verb
