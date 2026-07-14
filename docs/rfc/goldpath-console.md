@@ -1,6 +1,8 @@
 # RFC: Goldpath Console — the InfraOps surface (UI phase)
 
-Status: **PROPOSED** — D1–D3 await approval; U1 (kit) starts on acceptance.
+Status: **ACCEPTED** (2026-07-14) — D1 (React+Tailwind, dist-shipped; supersedes the
+RCL wording), D2 (triage-first home) and D3 (component tests + the GmConsole nightly
+shape) approved by the owner. U1 (kit) is live.
 Visual contract: `docs/strategy/ui-standard-v1.md` (adopted). Locked antecedents:
 ONE run console; the UI knows CAPABILITIES, not levels; products (Mockifyr, Praxis)
 own their UI — the console links, never embeds; UI is written ONCE against the full,

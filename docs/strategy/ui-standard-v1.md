@@ -2,7 +2,7 @@
 
 Status: ADOPTED for the stack-agnostic VISUAL layer — tokens, typography, status
 language, interaction rules (2026-07-14). The delivery mechanics (Tailwind mapping,
-npm packaging) ride the console RFC's D1 and become binding with its acceptance. Lineage: extracted from the
+npm packaging) ride the console RFC's D1 — accepted 2026-07-14, so binding. Lineage: extracted from the
 Mockifyr dashboard's token system, which itself mirrors the Praxis design system — one
 visual family across the product line. The near-black ("siyah") accent logic is the
 identity; re-skinning a tenant is a ONE-FILE change.
