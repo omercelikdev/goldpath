@@ -82,3 +82,26 @@ jobs:
         env:
           GOLDPATH_MUTATION_CONCURRENCY: "2"
         run: bash scripts/mutation-gate.sh "${{ matrix.package }}"
+
+  # The finance sample stays green forever: built against the PUBLISHED packages, its
+  # unit contract tests and the real-AppHost smoke run nightly (samples/GAP-LEDGER.md
+  # is this job's product when it goes red).
+  sample-corpay:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: build + unit contracts
+        working-directory: samples/corpay
+        run: |
+          dotnet build CorPay.sln --nologo
+          dotnet test tests/CorPay.Api.Tests/CorPay.Api.Tests.csproj --no-build --nologo
+      - name: smoke (real AppHost + containers)
+        working-directory: samples/corpay
+        run: dotnet test tests/CorPay.SmokeTests/CorPay.SmokeTests.csproj --no-build --nologo
+        timeout-minutes: 20

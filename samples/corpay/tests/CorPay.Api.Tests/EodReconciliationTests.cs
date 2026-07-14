@@ -31,3 +31,23 @@ public class EodReconciliationTests
         Assert.Equal(new DateTimeOffset(2026, 7, 13, 0, 0, 0, TimeSpan.Zero), to);
     }
 }
+
+/// <summary>NFR spot-check: the EOD rule at day-scale volume (the card: 100k in 45 min).</summary>
+public class EodReconciliationVolumeTests
+{
+    [Fact]
+    [Trait("Category", "Bench")]
+    public void Reconciling_100k_references_is_instant_the_budget_belongs_to_io()
+    {
+        var executed = Enumerable.Range(0, 100_000).Select(i => $"PAY-{i}").ToList();
+        var fed = executed.Where(r => !r.EndsWith("7", StringComparison.Ordinal)).ToList();   // ~10k missing
+
+        var watch = System.Diagnostics.Stopwatch.StartNew();
+        var mismatches = EodReconciliationJob.Reconcile(executed, fed);
+        watch.Stop();
+
+        Assert.Equal(10_000, mismatches.Count);
+        Assert.True(watch.ElapsedMilliseconds < 5_000, $"rule pass took {watch.ElapsedMilliseconds}ms");
+        Console.WriteLine($"BENCH-CORPAY eod-rule 100k refs in {watch.ElapsedMilliseconds}ms ({mismatches.Count} mismatches)");
+    }
+}
