@@ -26,6 +26,9 @@ const MAP: Record<string, StatusTone> = {
   Executed: "success",
 };
 
+/** Every state the standard maps — galleries and docs derive from THIS, never a hand copy. */
+export const KNOWN_STATES: readonly string[] = Object.keys(MAP);
+
 /**
  * Resolves a domain state to its ramp tone; unknown states are honest neutrals.
  * The STANDARD map wins collisions — adopter vocabulary extends, never replaces
