@@ -9,3 +9,7 @@ artifacts/
 StrykerOutput/
 BenchmarkDotNet.Artifacts/
 test-results/
+
+# UI kit / console (U1+)
+node_modules/
+ui/**/dist/
