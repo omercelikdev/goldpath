@@ -195,6 +195,7 @@ public static class AddWorkerCommand
     {
         "queue" => [
             "rename WorkItemQueued to the REAL upstream event (broker-bound contracts implement IIntegrationEvent — GP0401)",
+            "consuming an event the API publishes? the record moves to a shared <App>.Contracts classlib referenced by BOTH — events are wire contracts, never duplicated (docs/rfc/goldpath-event-contracts.md)",
             "put the real work into the consumer; it commits WITH the inbox bookkeeping — exactly-once by construction",
             "the worker owns its OWN tables' migrations: run `goldpath db add add-worker` and commit the migration",
         ],
