@@ -49,6 +49,15 @@ public partial class SubmitPaymentInstructionHandler(Orders.OrdersDbContext db, 
         };
         db.Set<PaymentInstruction>().Add(instruction);
 
+        // Four-eyes control: at/above the threshold NO money moves on submit — a second
+        // person approves (or rejects) through the dedicated verbs.
+        if (request.Amount >= PaymentPolicy.FourEyesThreshold)
+        {
+            instruction.Status = PaymentStatus.PendingApproval;
+            await db.SaveChangesAsync(cancellationToken);
+            return Result.Success(instruction.Id);
+        }
+
         // ONE transaction end to end: the Submitted row, the Executed flip and the outbox
         // row commit together — a crash anywhere leaves either no instruction or an
         // executed one WITH its event; never an executed payment the ledger never hears of.

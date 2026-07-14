@@ -50,6 +50,16 @@ public sealed class PaymentFileRowHandler(Orders.OrdersDbContext db, ICoreBankin
             Amount = row.Amount,
             Currency = row.Currency,
         };
+
+        // The SAME four-eyes control as single submit: file rows at/above the threshold
+        // park as PendingApproval — the batch gate approved the FILE, not each big ticket.
+        if (row.Amount >= PaymentPolicy.FourEyesThreshold)
+        {
+            instruction.Status = PaymentStatus.PendingApproval;
+            db.Set<PaymentInstruction>().Add(instruction);
+            return;
+        }
+
         instruction.ExecutionReceipt = await coreBanking.ExecuteAsync(instruction, cancellationToken);
         instruction.Status = PaymentStatus.Executed;
         db.Set<PaymentInstruction>().Add(instruction);

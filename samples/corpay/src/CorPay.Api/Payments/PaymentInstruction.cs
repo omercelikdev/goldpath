@@ -3,7 +3,9 @@ namespace CorPay.Api.Payments;
 public enum PaymentStatus
 {
     Submitted,
+    PendingApproval,
     Executed,
+    Rejected,
     Failed,
 }
 
@@ -28,6 +30,12 @@ public partial class PaymentInstruction : IAuditedEntity
 
     /// <summary>Core-banking receipt for the executed payment (evidence, not a foreign key).</summary>
     public string? ExecutionReceipt { get; set; }
+
+    /// <summary>The SECOND pair of eyes (four-eyes flow) — never the submitter.</summary>
+    public string? ApprovedBy { get; set; }
+
+    /// <summary>Required when rejected — the auditor reads the why here and in the change rows.</summary>
+    public string? RejectionReason { get; set; }
 
     public DateTimeOffset CreatedAt { get; set; }
     public string? CreatedBy { get; set; }
