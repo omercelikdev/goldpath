@@ -15,6 +15,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../../src/CorPay.Api/CorPay.Api.csproj" />
+    <ProjectReference Include="../../src/CorPay.EodWorker/CorPay.EodWorker.csproj" />
   </ItemGroup>
 
 </Project>

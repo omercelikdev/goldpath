@@ -35,6 +35,18 @@ builder.AddGoldpathJobs<WebApplicationBuilder, ReportsDbContext>(jobs =>
         j.Deadline = TimeSpan.FromHours(2);        // every job has an SLA (GP1302)
         j.MaxParallelChunks = 2;
     });
+
+    // Slice 5 — EOD reconciliation: BANKING days only (the calendar skips weekends;
+    // load the holiday table via GoldpathCalendars.BusinessDays(holidays) in production),
+    // 23:30 start + 7.5h deadline = the 07:00 breach is PREDICTED, not discovered.
+    jobs.AddCalendar("banking-days", GoldpathCalendars.BusinessDays());
+    jobs.AddJob<EodReconciliationJob>(j =>
+    {
+        j.Cron = "0 30 23 * * ?";
+        j.Calendar = "banking-days";
+        j.Deadline = TimeSpan.FromHours(7.5);
+        j.MaxParallelChunks = 2;                   // tenants reconcile in parallel, isolated
+    });
 });
 
 var app = builder.Build();
