@@ -17,6 +17,15 @@ public class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : DbCont
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.ApplyGoldpathModelDefaults();
+
+        // The money rule the DATABASE enforces: one reference pays once per tenant. The
+        // read-before-write checks in both intakes are the fast path; under a parallel
+        // race the loser hits this index — bulk's loser lands in the repair queue and
+        // replay heals it quietly (the row already exists), single-submit's client
+        // retries through the idempotency middleware.
+        modelBuilder.Entity<Payments.PaymentInstruction>()
+            .HasIndex(i => new { i.TenantId, i.Reference })
+            .IsUnique();
         // goldpath:features model — the drift profile is the source of these rows
         modelBuilder.AddGoldpathAuditLog();
         modelBuilder.ApplyGoldpathSoftDelete();

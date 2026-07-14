@@ -123,3 +123,56 @@ internal sealed class RecordingPublisher : IPublishEndpoint
 
     public ConnectHandle ConnectPublishObserver(IPublishObserver observer) => throw new NotSupportedException();
 }
+
+/// <summary>The DB-enforced money rule: one reference per tenant, even under a race.</summary>
+public class ReferenceUniquenessTests : IDisposable
+{
+    private readonly Microsoft.Data.Sqlite.SqliteConnection _connection = new("DataSource=:memory:");
+    private readonly CorPay.Api.Orders.OrdersDbContext _db;
+
+    public ReferenceUniquenessTests()
+    {
+        _connection.Open();
+        _db = new CorPay.Api.Orders.OrdersDbContext(
+            new Microsoft.EntityFrameworkCore.DbContextOptionsBuilder<CorPay.Api.Orders.OrdersDbContext>()
+                .UseSqlite(_connection)
+                .AddInterceptors(new Goldpath.GoldpathSaveChangesInterceptor(
+                    [new Goldpath.TenantStampContributor()], new Goldpath.GoldpathSaveContext(TimeProvider.System, null)))
+                .Options);
+        _db.Database.EnsureCreated();
+    }
+
+    public void Dispose()
+    {
+        _db.Dispose();
+        _connection.Dispose();
+    }
+
+    private static CorPay.Api.Payments.PaymentInstruction Instruction() => new()
+    {
+        Reference = "PAY-RACE",
+        DebtorIban = "TR330006100519786457841326",
+        CreditorIban = "DE89370400440532013000",
+        Amount = 10m,
+        Currency = "TRY",
+    };
+
+    [Fact]
+    public void The_same_reference_cannot_land_twice_for_one_tenant()
+    {
+        using (Goldpath.GoldpathTenant.Use("acme"))
+        {
+            _db.Add(Instruction());
+            _db.SaveChanges();
+            _db.Add(Instruction());
+            Assert.Throws<Microsoft.EntityFrameworkCore.DbUpdateException>(() => _db.SaveChanges());
+            _db.ChangeTracker.Clear();
+        }
+
+        using (Goldpath.GoldpathTenant.Use("rival"))
+        {
+            _db.Add(Instruction());   // another tenant's book, another row — fine
+            _db.SaveChanges();
+        }
+    }
+}
