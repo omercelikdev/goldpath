@@ -76,13 +76,52 @@ public static class DbCommand
         }
 
         output.WriteLine("── goldpath db init: done — Development now migrates from these; production applies the bundle");
+
+        // #32: init owns the build moment, so it owns the FIRST-CONTRACT commit too —
+        // a deferred-then-manual init no longer strands specs/ empty (SPEC0211).
+        CommitFirstContract(appRoot, output);
         return 0;
+    }
+
+    /// <summary>Copies the build-time OpenAPI export into specs/ — never clobbers an edited contract.</summary>
+    internal static void CommitFirstContract(string appRoot, TextWriter output)
+    {
+        var src = Path.Combine(appRoot, "src");
+        if (!Directory.Exists(src))
+        {
+            return;   // not an app layout at all (bare CWD)
+        }
+
+        var specs = Path.Combine(appRoot, "specs");
+        foreach (var document in Directory.GetDirectories(src)
+                     .Select(project => Path.Combine(project, "openapi"))
+                     .Where(Directory.Exists)
+                     .SelectMany(dir => Directory.GetFiles(dir, "*.json")))
+        {
+            var target = Path.Combine(specs, Path.GetFileName(document));
+            if (File.Exists(target))
+            {
+                continue;
+            }
+
+            Directory.CreateDirectory(specs);
+            File.Copy(document, target);
+            output.WriteLine($"goldpath: first OpenAPI contract committed to specs/{Path.GetFileName(document)}");
+        }
     }
 
     private static int Add(string name, IReadOnlyList<string> owners, string appRoot, IProcessRunner runner, TextWriter output)
     {
         foreach (var owner in owners)
         {
+            // #34: an owner whose model did not change gets NO empty migration — the
+            // same probe `db status` trusts decides it (exit 0 = nothing pending).
+            if (Ef(runner, appRoot, owner, ["migrations", "has-pending-model-changes"]) == 0)
+            {
+                output.WriteLine($"── goldpath db add: {Rel(appRoot, owner)} model unchanged — skipped (no empty migration)");
+                continue;
+            }
+
             output.WriteLine($"── goldpath db add: '{name}' for {Rel(appRoot, owner)}");
             var exitCode = Ef(runner, appRoot, owner, ["migrations", "add", name]);
             if (exitCode != 0)
