@@ -1,0 +1,28 @@
+# The six mutation runs hosted 16 GB runners cannot finish (issue #20 — exit 143 OOM at
+# concurrency 2, scattered times). Dispatch-only, concurrency 1, generous timeouts; the
+# release checklist keeps the LOCAL cadence as the authoritative fallback for these six.
+name: mutation-heavy
+
+on:
+  workflow_dispatch:
+
+jobs:
+  mutation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 340
+    strategy:
+      fail-fast: false
+      matrix:
+        package: [Goldpath.Jobs, Goldpath.Archival, Goldpath.Bulk,
+                  Goldpath.Notification, Goldpath.Campaign, Goldpath.Caching]
+    env:
+      GOLDPATH_MUTATION_CONCURRENCY: "1"
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: mutation gate (single testhost — the 16 GB survival mode)
+        run: bash scripts/mutation-gate.sh "${{ matrix.package }}"

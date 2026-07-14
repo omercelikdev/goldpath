@@ -66,10 +66,12 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
+        # The hosted-fit ten (issue #20): the six long-running packages OOM the 16 GB
+        # runners even at concurrency 2 — they live in mutation-heavy.yml (dispatch-only)
+        # and in the release checklist's local cadence.
         package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,
-                  Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.Caching, Goldpath.MultiTenancy,
-                  Goldpath.Locking, Goldpath.Auth, Goldpath.Cli, Goldpath.Jobs, Goldpath.Archival,
-                  Goldpath.Bulk, Goldpath.Notification, Goldpath.Campaign]
+                  Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.MultiTenancy,
+                  Goldpath.Locking, Goldpath.Auth, Goldpath.Cli]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4

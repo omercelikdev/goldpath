@@ -185,7 +185,15 @@ public sealed class NotificationTests : IAsyncLifetime
 
         var failed = Query(db => db.Set<GoldpathNotification>().AsNoTracking().Single(n => n.Id == id));
         Assert.Equal(3, failed.Attempts);
-        var runId = Query(db => db.Set<GoldpathJobItemFailure>().AsNoTracking().Single(f => f.ItemKey == id.ToString("N")).RunId);
+        // The repair row commits with the CHUNK's checkpoint, which can land after the
+        // notification's own Failed flip — poll it, never race it (issue #39).
+        GoldpathJobItemFailure? failure;
+        while ((failure = Query(db => db.Set<GoldpathJobItemFailure>().AsNoTracking().FirstOrDefault(f => f.ItemKey == id.ToString("N")))) is null)
+        {
+            await Task.Delay(TimeSpan.FromMilliseconds(250), timeout.Token);
+        }
+
+        var runId = failure.RunId;
 
         // Fix the world: a live hook that ACCEPTS the POST (a tiny in-test listener).
         using var listener = new System.Net.HttpListener();

@@ -10,8 +10,9 @@ only after that PR merges green.
 - [ ] Golden-manifest matrix green (nightly or a fresh dispatch — ADR-0008: no release
       while GM is red).
 - [ ] Mutation scores current for every package whose engine paths changed since the
-      last release (hosted-fit packages via nightly; the big six per issue #20's
-      cadence).
+      last release. Hosted-fit ten: nightly. The big six (Jobs, Archival, Bulk,
+      Notification, Campaign, Caching): `mutation-heavy.yml` dispatch when time allows,
+      otherwise the LOCAL run is authoritative (`scripts/mutation-gate.sh <pkg>`).
 - [ ] Bench reference numbers re-measured (`bench.yml` dispatch) IF any engine path
       changed; ops docs updated from the run.
 
