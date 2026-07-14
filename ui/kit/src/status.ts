@@ -26,7 +26,11 @@ const MAP: Record<string, StatusTone> = {
   Executed: "success",
 };
 
-/** Resolves a domain state to its ramp tone; unknown states are honest neutrals. */
+/**
+ * Resolves a domain state to its ramp tone; unknown states are honest neutrals.
+ * The STANDARD map wins collisions — adopter vocabulary extends, never replaces
+ * (ui-standard-v1 §5): a console must read the same everywhere.
+ */
 export function statusTone(state: string, extra?: Record<string, StatusTone>): StatusTone {
-  return extra?.[state] ?? MAP[state] ?? "neutral";
+  return MAP[state] ?? extra?.[state] ?? "neutral";
 }

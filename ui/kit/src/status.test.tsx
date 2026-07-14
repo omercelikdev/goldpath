@@ -21,7 +21,8 @@ describe("the domain-state → ramp mapping (ui-standard-v1 §5)", () => {
 
   it("adopter vocabulary extends the map without replacing it", () => {
     expect(statusTone("Settled", { Settled: "success" })).toBe("success");
-    expect(statusTone("Completed", { Settled: "success" })).toBe("success");
+    // The collision case IS the invariant: the standard wins, always.
+    expect(statusTone("Completed", { Completed: "danger" })).toBe("success");
   });
 
   it("the badge renders the state text with its tone", () => {
