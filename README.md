@@ -9,8 +9,9 @@ AI-native, spec-driven enterprise .NET accelerator: composable NuGet libraries +
 templates + AI skills + guardrails + living documentation. Not a framework — a
 **golden path**: a road paved with enterprise opinion on top of Microsoft (Aspire, Extensions.*).
 
-> Conceptual grounding: [Strategy/Foundation](docs/strategy/foundation.md) ·
-> Constitution: [ADR-0001..0010](docs/adr/README.md)
+> **New here? [The guide](docs/guide/README.md)** — getting started, the six concepts,
+> the CorPay tour, proof stories. Conceptual grounding:
+> [Strategy/Foundation](docs/strategy/foundation.md) · Constitution: [ADR-0001..0010](docs/adr/README.md)
 
 ## What it is / is not
 
@@ -53,6 +54,7 @@ on a pinned CI profile.
 | Directory | Contents |
 |---|---|
 | `docs/strategy/` · `docs/adr/` · `docs/rfc/` | Strategy, the 10-ADR constitution, module RFCs + frozen contracts |
+| `docs/guide/` · `docs/stories/` | The adopter's path (start here) · proof stories |
 | `docs/ops/` · `docs/upgrades/` | Migrations/trace/release runbooks · per-release upgrade guides |
 | `schemas/manifest/v1/` | Manifest JSON Schema + valid/invalid corpus (ajv-validated) |
 | `packages/` · `analyzers/` | The NuGet train (19 packages) · GP#### Roslyn rules |
