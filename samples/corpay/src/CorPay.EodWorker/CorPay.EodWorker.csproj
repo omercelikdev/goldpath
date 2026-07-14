@@ -14,4 +14,8 @@
     <PackageReference Include="Goldpath.Analyzers" PrivateAssets="all" />
   </ItemGroup>
 
+  <ItemGroup>
+    <InternalsVisibleTo Include="CorPay.Api.Tests" />
+  </ItemGroup>
+
 </Project>

@@ -51,8 +51,22 @@ builder.AddGoldpathBulk<WebApplicationBuilder, OrdersDbContext>(bulk =>
                 ctx.Fail(nameof(row.Amount), "amount must be positive");
             }
         }));
+
+    // Slice 2 — the finance card's batch file: same validation table as single submit.
+    bulk.AddBatch<CorPay.Api.Payments.Import.PaymentFileRow>("payment-instructions", b => b
+        .MaxRows(100_000)
+        .RowKey(r => r.Reference)
+        .Validate((row, ctx) =>
+        {
+            foreach (var error in CorPay.Api.Payments.Features.SubmitPaymentInstructionHandler.Validate(
+                new(row.Reference, row.DebtorIban, row.CreditorIban, row.Amount, row.Currency)))
+            {
+                ctx.Fail(error.PropertyName, error.Description);
+            }
+        }));
 });
 builder.Services.AddScoped<IGoldpathBulkRowHandler<OrderImportRow>, OrderImportHandler>();
+builder.Services.AddScoped<IGoldpathBulkRowHandler<CorPay.Api.Payments.Import.PaymentFileRow>, CorPay.Api.Payments.Import.PaymentFileRowHandler>();
 
 builder.Services.AddMediant(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
 
@@ -73,10 +87,14 @@ builder.AddGoldpathData<WebApplicationBuilder, OrdersDbContext>(options =>
     }
 });
 
+// The core-banking seam (slice 1): dev pays instantly; production plugs the bank's adapter.
+builder.Services.AddSingleton<CorPay.Api.Payments.ICoreBankingClient, CorPay.Api.Payments.DevCoreBankingClient>();
+
 builder.AddGoldpathMessaging(bus =>
 {
     // goldpath:features consumers — bus-riding features register here
     bus.AddConsumer<OrderPlacedConsumer>();
+    bus.AddConsumer<CorPay.Api.Payments.PaymentExecutedConsumer>();
     bus.AddGoldpathOutbox<OrdersDbContext>(outbox =>
     {
         outbox.UsePostgres();
