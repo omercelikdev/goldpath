@@ -33,10 +33,16 @@ blind proved nothing and flaked.)
 
 ## The assertions that make it a proof
 
-- **No sink row number appears twice** — across the kill, the takeover and the replay.
+- **On the automatic path — kill, takeover, resume — no sink row number appears
+  twice.** The machinery NEVER re-sends on its own; that is the guarantee.
 - Both executors actually paid rows (the recovery genuinely happened).
 - The books balance at the terminal state: `Executed + Failed == ValidRows`.
-- After replay, the batch is `Completed` and the ledger is exact.
+- After replay, the batch is `Completed` and every row number is accounted for exactly
+  once in the ledger. The replay itself is different in kind: a HUMAN authorized a
+  re-send after confirming downstream state — so the one interrupted row may
+  legitimately produce a second sink entry, and the test allows exactly that. The
+  system's promise is precise: it never duplicates a payment BY ITSELF; a deliberate,
+  audited human decision can.
 
 ## What the proof itself caught
 
