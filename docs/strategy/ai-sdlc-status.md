@@ -25,7 +25,7 @@ document exists to prevent.
 | Composition | manifest as the single source of truth | `goldpath-manifest` skill **SHIPPED-UNPROVEN**; CLI + schema + GM matrix **SHIPPED-PROVEN** (nightly, 8 shapes) | GM matrix (nightly) + specdrift | drive the skill in a recorded run |
 | Development | `new-service` / `add-feature`: spec → code with tests (§7) | `goldpath new`/`add worker` deterministic scaffolding **SHIPPED-PROVEN** (GM nightly); `goldpath-feature` skill **SHIPPED-PROVEN** — it drove the five CorPay S2 slices (`coverage-matrix.md` tooling table); the `goldpath add feature` CLI verb itself is **SHIPPED-UNPROVEN** (never driven in a sample) | build + analyzers (39 rules) + PublicAPI ledger + `dotnet format` | field the CLI verb (coverage-matrix plans it for the Insurance sample) |
 | DB | migrations discipline driven by CLI verbs | `goldpath db` verbs + D7 proofs (`validate-migrations.sh` on real pg) **SHIPPED-PROVEN** | migration bundle CI step + GP1801 | — |
-| Test | `test-gen` (never sees the implementation, §8.2) + breaker + property-based + mutation | `goldpath-test-gen` skill **SHIPPED-UNPROVEN**; `breaker` agent **SHIPPED-UNPROVEN** (`.claude/agents/breaker.md` + eval); mutation gates **SHIPPED-PROVEN** (10 packages nightly, 6 heavy on dispatch); property-based **PARTIAL** (CsCheck present, not yet the §8.3 catalog-driven norm) | Stryker break=70 + test projects in CI | proof run covers test-gen + breaker; edge-case catalog is Phase 2 (domain memory) |
+| Test | `test-gen` (never sees the implementation, §8.2) + breaker + property-based + mutation | `goldpath-test-gen` skill **SHIPPED-PROVEN** — fielded on CorPay 2026-07-23: 8 spec-derived paging/tenancy/state tests + a 7-item gap report (`samples/corpay/tests/SPEC-GAPS.md`), diet held (no `Features/` reads; public seams via compile probes); `breaker` agent **SHIPPED-PROVEN** — same run, own context: 15 `Breaker_` tests, 14 attacks repelled, **1 genuine finding** (sub-cent amount accepted — fixed in the same PR; `samples/corpay/tests/BREAKER-VERDICT.md`), breaker eval 3/3 PASS; mutation gates **SHIPPED-PROVEN** (10 packages nightly, 6 heavy on dispatch); property-based **PARTIAL** (CsCheck present, not yet the §8.3 catalog-driven norm) | Stryker break=70 + test projects in CI | edge-case catalog is Phase 2 (domain memory) |
 | Review / validation chain | §6.4: schema → build → analyzers → arch tests → contracts → tests → mutation → review agent → human | Chain **SHIPPED-PROVEN** up to mutation; review agent **SHIPPED-PROVEN as a manual script** (`scripts/review-agent.sh`, findings recorded on merged PRs); **in-loop mechanical gating (hooks) NOT BUILT** — nothing forces the chain while the AI is still in its turn | CI gates on PR + nightly | **hook set in the template** (post-edit format, stop-gate build + spec validate) — see §4 |
 | Skill quality (evals) | eval set per skill; a skill that fails evals is not released (§6.2) | 4 eval fixtures exist (`evals/skills/`: feature, manifest, test-gen, breaker) — **PARTIAL**: runners assume a local specdrift checkout and run on no schedule | none (manual) | make runners portable; add a nightly eval lane |
 | Model proficiency matrix | skill × model → pass-rate matrix (§6.2) | **NOT BUILT** — Phase 2 (needs the eval lane first) | — | after the eval lane |
@@ -42,19 +42,19 @@ document exists to prevent.
 | `spec-review` | NOT BUILT (Phase 2) | — |
 | `new-service` | covered deterministically | `goldpath new` (CLI — no LLM needed, by design) |
 | `add-feature` | **SHIPPED-PROVEN** (drove CorPay S2) | `.claude/skills/goldpath-feature` |
-| `test-gen` | SHIPPED-UNPROVEN | `.claude/skills/goldpath-test-gen` |
-| `breaker` | SHIPPED-UNPROVEN | `.claude/agents/breaker.md` |
+| `test-gen` | **SHIPPED-PROVEN** (fielded on CorPay 2026-07-23 — `samples/corpay/tests/SPEC-GAPS.md`) | `.claude/skills/goldpath-test-gen` |
+| `breaker` | **SHIPPED-PROVEN** (same run, 1 genuine finding fixed — `samples/corpay/tests/BREAKER-VERDICT.md`) | `.claude/agents/breaker.md` |
 | `reverse-engineer` | NOT BUILT (transformation package, §9) | — |
 | `differential-test` | NOT BUILT (transformation package, §9) | — |
 | `docs-sync` | NOT BUILT | — |
 | `upgrade` | NOT BUILT (first real consumer: a preview→preview migration) | — |
 | *(extra, not in §6.1)* `goldpath-manifest` | SHIPPED-UNPROVEN | `.claude/skills/goldpath-manifest` |
 
-3 skills + 1 agent ship in the template pack today. One (`goldpath-feature`) has been
-fielded in anger — it drove the five CorPay S2 slices. The other three
-(`goldpath-manifest`, `goldpath-test-gen`, `breaker`) have never been fielded, and the
-skills→specdrift MCP path has not been exercised inside a sample flow
-(`coverage-matrix.md` tracks both).
+3 skills + 1 agent ship in the template pack today. Three are now fielded in anger:
+`goldpath-feature` drove the five CorPay S2 slices; `goldpath-test-gen` and `breaker`
+ran on CorPay 2026-07-23 (spec-derived tests + gap report; adversarial run with one
+genuine finding, fixed). `goldpath-manifest` remains unfielded (`coverage-matrix.md`
+plans it for the Insurance sample).
 
 ## 3. Mechanism inventory — what carries the AI layer
 
@@ -69,10 +69,12 @@ skills→specdrift MCP path has not been exercised inside a sample flow
 
 ## 4. The near-term path (ordered)
 
-1. **Proof runs for the unfielded trio** — `goldpath-test-gen` and `breaker` can run on
-   CorPay today (a slice with a contract already exists); `goldpath-manifest` and the
-   `add feature` CLI verb distribute to the next samples per `coverage-matrix.md`.
-   Record transcripts; fix what breaks. Also exercises the skills→specdrift MCP path.
+1. **Proof runs** — DONE for `goldpath-test-gen` + `breaker` (CorPay, 2026-07-23; see
+   the Test row). Remaining: `goldpath-manifest` and the `add feature` CLI verb
+   distribute to the next samples per `coverage-matrix.md`. Follow-ups the run itself
+   surfaced: the exported OpenAPI misses request bodies/params (7 gaps in
+   `SPEC-GAPS.md`), and `spec_drift` flags CorPay's undeclared jobs capability
+   (SPEC0203) — both need owners.
 2. **Hook set in the template** — post-edit `dotnet format`; stop-gate `dotnet build` +
    `specdrift validate`. The §6.4 chain starts running *inside* the AI's turn instead of
    after it; an agent cannot end its turn on broken output.
