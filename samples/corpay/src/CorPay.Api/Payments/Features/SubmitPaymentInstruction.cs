@@ -85,6 +85,12 @@ public partial class SubmitPaymentInstructionHandler(Orders.OrdersDbContext db, 
         {
             errors.Add(new ValidationError(nameof(request.Amount), "amount must be positive"));
         }
+        else if (decimal.Round(request.Amount, 2) != request.Amount)
+        {
+            // Breaker finding (BREAKER-VERDICT.md): every whitelisted currency settles in
+            // 2 minor units — a sub-cent amount is un-settleable and must die at the door.
+            errors.Add(new ValidationError(nameof(request.Amount), "amount must not have more than 2 decimal places"));
+        }
 
         if (!Currencies.Contains(request.Currency))
         {
