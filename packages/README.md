@@ -1,3 +1,6 @@
-# packages
+# packages/
 
-To be filled in per the phase plan — see [module-plan](../docs/strategy/module-plan-v1.md).
+The NuGet train — 19 packages (Abstractions → ServiceDefaults → ApiDefaults → Data →
+Messaging → Ring B/C modules), published as `0.1.0-preview.*` with OIDC trusted publishing.
+Per-module RFCs and status: `docs/rfc/README.md`. Live capability ledger:
+`docs/strategy/coverage-matrix.md`.

@@ -40,3 +40,21 @@ the gap instead of peeking. That report is a more valuable output than a coupled
 
 New/changed test files + a one-paragraph note: which spec sections are covered, which are
 UNCOVERABLE as specified (the gap list). The gap list feeds the breaker agent.
+
+## The edge-case checklist (v0 of the foundation §8.3 catalog)
+
+Derive cases from THIS LIST, never from imagination — the model is "it's on the list",
+not "it came to mind". A case class that does not apply gets a written line saying why.
+
+- **Money:** rounding, negative, zero, sub-minor-unit scale (`0.001`), currency exactness
+  (homoglyphs, case, padding), extreme magnitudes.
+- **Time:** UTC vs local, DST transitions, business days/holidays, year-end boundaries,
+  writer/reader clock skew.
+- **Strings:** empty/whitespace-only, unicode digits & homoglyphs, max lengths, embedded
+  newlines/separators, normalization differences.
+- **Concurrency:** the same request replayed (idempotency), two writers on one aggregate,
+  claim races, cancel racing confirm.
+- **Pagination:** empty page, size 0/negative/absurd, inserts mid-walk, termination.
+- **Wire/IO:** duplicate delivery, out-of-order events, partial failure after a side effect.
+
+The catalog graduates into domain memory (Phase 2); until then this list is the floor.

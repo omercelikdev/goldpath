@@ -6,7 +6,7 @@ written-trigger deferrals — never silent workarounds.
 
 | # | Found while | Finding | Disposition |
 |---|---|---|---|
-| G1 | `goldpath add worker` (CorPay) | **specdrift is not on nuget.org** — the CLI's own teaching line (`dotnet tool install -g specdrift`) is unfulfillable for adopters; every `add` verb dead-ends without the engine | ISSUE [#31](https://github.com/omercelikdev/goldpath/issues/31) |
+| G1 | `goldpath add worker` (CorPay) | the CLI's teaching line (`dotnet tool install -g specdrift`) was unfulfillable — specdrift was not on nuget.org at the time | RESOLVED — specdrift 0.4.1 published (NuGet + MCP + Docker + Action); issue [#31](https://github.com/omercelikdev/goldpath/issues/31) closed |
 | G2 | `goldpath new -o <dir>` (CorPay) | `db init` broke whenever CWD ≠ appRoot: owner paths were CWD-relative while ef ran WITH appRoot as working directory (prefix doubled) — the post-step silently failed in the quickstart too | FIXED — PR #29; shipped in 0.1.0-preview.2's successor train |
 | G3 | first AppHost smoke (CorPay) | `add worker` generated no `Properties/launchSettings.json` — Aspire infers endpoints from it, so `WithHttpHealthCheck` found no endpoint and the WHOLE app refused to start | FIXED — PR #29; ships next train |
 | G4 | G2's fallout | when `db init` defers (teaching message path), the FIRST-CONTRACT commit is skipped too and never happens later — `goldpath db init` run manually does not re-attempt it | ISSUE [#32](https://github.com/omercelikdev/goldpath/issues/32) |

@@ -22,9 +22,11 @@ not propose anything that contradicts them; changes only via a superseding ADR).
 - "latest" dependencies are forbidden; everything is pinned. Air-gapped networks are a first-class scenario.
 - Code style: `.editorconfig` + analyzers + `dotnet format`; XML summaries mandatory on public APIs.
 
-## Status (2026-07-03)
-Phase 0 complete (strategy + constitution + manifest v1 schema + corpus). Mediant v1.0.0
-stable shipped (2026-07-03) — the Phase 1 precondition is MET. Phase 1 is active: `packages/`
-order Abstractions → ServiceDefaults → ApiDefaults → Data → Messaging → Analyzers →
-template pack + Template CI (see `docs/strategy/module-plan-v1.md`). Goldpath needs on Mediant
-and Mockifyr are filed as GitHub issues (omercelikdev/mediant, omercelikdev/mockifyr).
+## Status (2026-07-24)
+Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.2` train is on
+nuget.org (plus `specdrift` 0.4.1 as tool/MCP/Docker/Action). Phase D shipped the CorPay
+reference app (`samples/corpay`, proven nightly against the published packages). The UI
+phase is active (`docs/rfc/goldpath-console.md`, U1 in flight). Live status ledgers —
+keep them updated in the same PR that changes reality: `docs/strategy/ai-sdlc-status.md`
+(AI-assisted SDLC vs reality) and `docs/strategy/coverage-matrix.md` (capability × sample).
+Roadmap gates: `docs/strategy/foundation.md` §12.

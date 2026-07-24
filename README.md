@@ -56,11 +56,11 @@ on a pinned CI profile.
 | `docs/strategy/` · `docs/adr/` · `docs/rfc/` | Strategy, the 10-ADR constitution, module RFCs + frozen contracts |
 | `docs/guide/` · `docs/stories/` | The adopter's path (start here) · proof stories |
 | `docs/ops/` · `docs/upgrades/` | Migrations/trace/release runbooks · per-release upgrade guides |
-| `schemas/manifest/v1/` | Manifest JSON Schema + valid/invalid corpus (ajv-validated) |
+| `schemas/manifest/v1/` | Manifest JSON Schema + valid/invalid corpus (CI corpus gate: valid must pass, invalid must fail) |
 | `packages/` · `analyzers/` | The NuGet train (19 packages) · GP#### Roslyn rules |
 | `templates/` · `tools/` | `dotnet new` pack (solution + worker) · the `goldpath` CLI |
-| `tests/` | 586 unit + 34 integration proofs (Testcontainers) + bench suite |
-| `skills/` · `rulesets/` · `samples/` | AI skill layer · Spec Engine rulesets · reference app (Phase D) |
+| `tests/` | 592 unit + 34 integration proofs (Testcontainers) + bench suite |
+| `skills/` · `rulesets/` · `samples/` | pointers — the shipped skill layer and rulesets live inside `templates/` · reference app (CorPay) |
 
 ## Language Policy
 

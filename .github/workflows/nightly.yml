@@ -85,6 +85,26 @@ jobs:
           GOLDPATH_MUTATION_CONCURRENCY: "2"
         run: bash scripts/mutation-gate.sh "${{ matrix.package }}"
 
+  # Known CVEs in the dependency tree fail the night — the license gate's security twin.
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: vulnerable packages (transitive included)
+        run: |
+          dotnet restore Goldpath.sln
+          out=$(dotnet list Goldpath.sln package --vulnerable --include-transitive)
+          echo "$out"
+          if echo "$out" | grep -qi "has the following vulnerable packages"; then
+            echo "::error::vulnerable packages found"; exit 1
+          fi
+
   # The deterministic half of the eval harness: acceptance runners are portable and
   # green against committed artifacts. The LLM half (running the skills themselves)
   # stays deferred until an agent-in-CI story exists (foundation §12 / skills RFC).

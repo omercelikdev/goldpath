@@ -32,5 +32,5 @@ only after that PR merges green.
 ## After the merge
 
 - [ ] Tag `v<version>` on the merge commit.
-- [ ] NuGet push (release workflow — lands with issue #10).
+- [ ] NuGet push via `release.yml` (OIDC trusted publishing — tag-gated; shipped with issue #10).
 - [ ] GitHub release notes = the CHANGELOG entry + a link to the upgrade guide.

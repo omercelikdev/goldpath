@@ -73,8 +73,10 @@ plans it for the Insurance sample).
    the Test row). Remaining: `goldpath-manifest` and the `add feature` CLI verb
    distribute to the next samples per `coverage-matrix.md`. Follow-ups the run itself
    surfaced: the exported OpenAPI misses request bodies/params (7 gaps in
-   `SPEC-GAPS.md`), and `spec_drift` flags CorPay's undeclared jobs capability
-   (SPEC0203) — both need owners.
+   `SPEC-GAPS.md` — contract-export completeness is an agenda item), and the CorPay
+   SPEC0203 noise is DIAGNOSED as wiring-row OR-semantics (issue #11's written trigger
+   fired 2026-07-24); lands with the next specdrift train together with `--fail-on`
+   and the embedded schema.
 2. **Hook set in the template** — DONE 2026-07-23 (`.claude/settings.json` +
    `.claude/hooks/` in the template and CorPay): post-edit whitespace format; stop-gate
    `dotnet build` + `specdrift drift`. The §6.4 chain now runs *inside* the AI's turn —

@@ -52,8 +52,10 @@ Single .NET tool (`dotnet tool install -g <name>`), three verbs:
 - Rules are data where possible (invariant table), code where necessary; every rule has an
   id (`SPEC0xxx`), a message that teaches the fix, and a doc line — the analyzer discipline,
   one layer up.
-- Goldpath repo integration: a pinned tool reference + a `spec-lint` CI job in the template
-  (joins the gate set); the authoring skills call `mcp` (skills land with this track).
+- Goldpath repo integration: the goldpath repo's CI runs the corpus gate (`scripts/corpus-check.sh`:
+  valid corpus must pass, invalid must fail) and the template CI runs a pinned `spec-drift` step;
+  template-side `validate` rides the embedded-schema feature (specdrift 0.4.2 candidate).
+  The authoring skills call `mcp` (skills land with this track).
 
 ## 3. Decision Points (Ömer)
 

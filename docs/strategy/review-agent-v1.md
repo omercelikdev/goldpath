@@ -3,9 +3,10 @@
 > Definition of the "review agent" link in the Foundation 6.4 chain: a second AI set of eyes
 > that runs on every MR BEFORE human review. Status: v1 SHIPPED 2026-07-10 — rule set:
 > `.claude/skills/goldpath-review/SKILL.md`, runner: `scripts/review-agent.sh` (PR mode +
-> `--local <diff>` eval mode), CI step `review-agent` (manual until runner minutes carry
-> gh + claude). Calibration telemetry (section 5) starts as the reply-thread
-> convention the posted comment asks for; automated fate-tracking rides the CI enablement.
+> `--local <diff>` eval mode). The runner is MANUAL today — there is no CI step; one lands
+> when runner minutes carry gh + claude (deferred, tracked in ai-sdlc-status). Calibration
+> telemetry (section 5) starts as the reply-thread convention the posted comment asks for;
+> automated fate-tracking rides the CI enablement.
 
 ---
 
@@ -43,9 +44,11 @@ suggestion-level.
 
 ## 3. Input Context (what the agent is given)
 
-MR diff + the manifest of the touched service + the relevant BC's domain memory (only that
-folder) + the touched spec files + the MR description. **The whole repo is not provided** —
-context economy serves both cost and accuracy.
+MR diff + the manifest of the touched service + the touched spec files + the MR
+description. **The whole repo is not provided** — context economy serves both cost and
+accuracy. Domain memory joins this list when it exists (Phase 2/3 — `domain-memory-v1.md`
+is a draft); until then the runner passes none, so the R2 finding class is dormant by
+construction, not by accident.
 
 ## 4. Output Contract
 
