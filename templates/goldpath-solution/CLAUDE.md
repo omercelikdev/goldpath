@@ -20,6 +20,12 @@ a disabled feature does not exist in this codebase (compile-time composition).
 The deterministic engine is registered in `.mcp.json` (`specdrift mcp`); "done" without a
 clean `spec_validate` + `spec_drift` is not done.
 
+## Guardrail hooks (`.claude/settings.json` — in-loop, unskippable)
+- Post-edit: touched `.cs` files are whitespace-formatted automatically.
+- Stop gate: the agent cannot end a turn with a red `dotnet build`; `specdrift drift`
+  runs too and blocks on error-level findings (install: `dotnet tool install -g specdrift`).
+Hooks live in `.claude/hooks/` — delete `settings.json` to opt out (not recommended).
+
 ## Run
 `dotnet run --project src/GoldpathTemplate.AppHost` → containers start, dashboard opens.
 `dotnet test` → smoke: the shape's first-click contract (open shapes drive the full order flow; authed shapes prove probes green + the 401 auth floor).
