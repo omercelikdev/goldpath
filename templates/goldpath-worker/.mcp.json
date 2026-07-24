@@ -3,7 +3,7 @@
     "specdrift": {
       "command": "specdrift",
       "args": ["mcp"],
-      "comment": "The deterministic spec engine (dotnet tool install -g specdrift). Skills MUST consult spec_validate/spec_drift before declaring work done - see .claude/skills/."
+      "comment": "The deterministic spec engine (dotnet tool install -g specdrift). Skills MUST consult spec_validate/spec_drift before declaring work done. The worker is added INTO an existing goldpath solution and ships no skills of its own - the solution root's .claude/skills/ apply."
     }
   }
 }

@@ -1,3 +1,5 @@
-# analyzers
+# analyzers/
 
-To be filled in per the phase plan — see [module-plan](../docs/strategy/module-plan-v1.md).
+`Goldpath.Analyzers` — the executable-standards layer (ADR-0005): 39 `GP####` rules across
+the module set, enforced with `TreatWarningsAsErrors` in every generated app. Rule catalog
+and per-rule rationale: `docs/rfc/goldpath-analyzers.md`.

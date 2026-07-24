@@ -15,3 +15,9 @@ Handwritten docs drift; the maintenance promise only holds if documentation upda
 ## Consequences
 - Code references inside docs are matched against real code in CI; broken ones raise warnings.
 - Demo/training examples are generated only from the reference application (OrderPlatform).
+
+## Implementation status (2026-07-24 — honesty note, decision unchanged)
+- Curated-class freshness: SHIPPED — `scripts/docs-freshness.sh` fails CI on any relative
+  doc link to a missing file (born from the module-plan-v1.md rot incident).
+- Generated class (API/config reference regenerated per build): NOT BUILT yet — tracked in
+  `docs/strategy/ai-sdlc-status.md`; this ADR states the target, not the current state.

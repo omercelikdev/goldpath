@@ -15,6 +15,12 @@ jobs:
           dotnet-version: |
             8.0.x
             10.0.x
+      - name: pin the spec engine
+        run: dotnet tool install -g specdrift --version 0.4.1
+      - name: corpus gate (valid must pass, invalid must fail)
+        run: bash scripts/corpus-check.sh
+      - name: docs freshness (no link to a missing file)
+        run: bash scripts/docs-freshness.sh
       - name: build
         run: dotnet build Goldpath.sln --nologo
       - name: unit tests

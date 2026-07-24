@@ -58,18 +58,18 @@ if [ -d "$APP/src/$NAME.Api" ]; then
 fi
 
 echo "── spec-lint (specdrift: validate + drift)"
-# Pinned engine. The pin is REAL: the tag is used unless the caller EXPLICITLY opts into
-# a local checkout via GOLDPATH_SPECDRIFT_SRC (a green local run must mean a green CI run
-# — the silent local-checkout preference was exactly the drift this project exists to kill).
-SPECDRIFT_REF=v0.4.1
+# Pinned engine, consumed as the PUBLISHED tool (README dependency policy: source
+# references are the exception, not the silent default). A local checkout is used only
+# via an explicit GOLDPATH_SPECDRIFT_SRC and announces itself — a green local run must
+# mean a green CI run.
+SPECDRIFT_VERSION=0.4.1
 if [ -n "${GOLDPATH_SPECDRIFT_SRC:-}" ]; then
-  echo "── spec-lint: using LOCAL specdrift checkout (GOLDPATH_SPECDRIFT_SRC=$GOLDPATH_SPECDRIFT_SRC) — not the $SPECDRIFT_REF pin"
-  SPECDRIFT_SRC="$GOLDPATH_SPECDRIFT_SRC"
+  echo "── spec-lint: using LOCAL specdrift checkout (GOLDPATH_SPECDRIFT_SRC=$GOLDPATH_SPECDRIFT_SRC) — not the $SPECDRIFT_VERSION pin"
+  SPECDRIFT="dotnet run --project $GOLDPATH_SPECDRIFT_SRC/src/Specdrift --"
 else
-  SPECDRIFT_SRC="$WORK/specdrift"
-  [ -d "$SPECDRIFT_SRC" ] || git clone --quiet --depth 1 --branch "$SPECDRIFT_REF" https://github.com/omercelikdev/specdrift "$SPECDRIFT_SRC"
+  [ -x "$WORK/tools/specdrift" ] || dotnet tool install --tool-path "$WORK/tools" specdrift --version "$SPECDRIFT_VERSION" >/dev/null
+  SPECDRIFT="$WORK/tools/specdrift"
 fi
-SPECDRIFT="dotnet run --project $SPECDRIFT_SRC/src/Specdrift --"
 $SPECDRIFT validate "$APP/.goldpath/manifest.yaml"   --schema "$ROOT/schemas/manifest/v1/goldpath-manifest.schema.json"   --rules "$APP/.specdrift/rules.yaml"
 # First generation: commit the contract (what a team does on day one), then drift must be clean.
 if [ -d "$APP/src/$NAME.Api" ]; then

@@ -28,3 +28,9 @@ as a hostile caller would.
    doesn't repeat them").
 
 You succeed the day you find something. "All green" is a report, not a victory.
+
+## Target sources (minimum)
+
+Beyond the spec's own sentences, ALWAYS pull targets from the edge-case checklist in
+`goldpath-test-gen/SKILL.md` (money scale, unicode/homoglyphs, replay, races, hostile
+paging) and from the tester's gap list when one exists — the gaps are your richest ore.
