@@ -111,7 +111,7 @@ lets any operator read every tenant's batches, evidence and archives.
 4. **One shared seam.** The scoping lives in ONE shared-source file
    (`packages/shared/AdminTenantScope.cs`, compile-linked like the auth floor) that the
    endpoints call — not per-module reimplementations. The ADR-0005 companion analyzer
-   rule (`GP0902`: an admin endpoint taking a tenant parameter without the seam) follows
+   rule (`GP0904`: an admin endpoint taking a tenant parameter without the seam — 0902 was taken) follows
    in the same preview.3 train.
 5. **Surfaces without tenant-stamped rows (campaign)** are inherently cross-tenant on a
    multi-tenant app: the WHOLE surface demands `GoldpathPolicies.OpsAllTenants` (an

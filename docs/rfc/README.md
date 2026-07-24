@@ -34,7 +34,7 @@ All "implemented" modules are published on nuget.org at `0.1.0-preview.2`.
 | [goldpath-template](goldpath-template.md) | `dotnet new` solution pack | implemented |
 | [goldpath-template-completion](goldpath-template-completion.md) | template completion set | implemented |
 | [goldpath-migrations](goldpath-migrations.md) | migrations discipline + `goldpath db` + bundle | implemented (H1) |
-| [goldpath-admin-contract](goldpath-admin-contract.md) | the admin API contract | **FROZEN** (2026-07-12) — revision pending for tenant scoping (audit A1, preview.3) |
+| [goldpath-admin-contract](goldpath-admin-contract.md) | the admin API contract | **FROZEN** + revision R1 ACCEPTED & implemented (tenant scoping, 2026-07-24) |
 | [goldpath-versioning](goldpath-versioning.md) | SemVer & support promise (H7) | accepted (binding) |
 | [goldpath-event-contracts](goldpath-event-contracts.md) | event contracts idiom (per-app `<Name>.Contracts`) | accepted (2026-07-14) |
 | [goldpath-skills-v1](goldpath-skills-v1.md) | the AI skill layer v1 | implemented — ships inside the template; field status: `../strategy/ai-sdlc-status.md` §2 |

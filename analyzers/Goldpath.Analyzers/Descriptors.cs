@@ -202,6 +202,16 @@ public static class Descriptors
         isEnabledByDefault: true,
         helpLinkUri: HelpBase + "goldpath-multitenancy.md");
 
+    /// <summary>GP0904: admin endpoints with a tenant parameter must resolve the scope seam.</summary>
+    public static readonly DiagnosticDescriptor AdminEndpointSkipsTenantScope = new(
+        "GP0904",
+        "Admin endpoint takes a tenant parameter but never consults AdminTenantScope",
+        "This endpoint lambda accepts 'tenant' from the caller without resolving AdminTenantScope — on a multi-tenant app that is a client-controlled fence (admin-contract R1); route it through AdminTenantScope.ResolveAsync",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpBase + "goldpath-admin-contract.md");
+
     /// <summary>GP1101: raw lock names risk cross-tenant collisions.</summary>
     public static readonly DiagnosticDescriptor RawLockName = new(
         "GP1101",
