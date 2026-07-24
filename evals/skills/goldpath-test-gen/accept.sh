@@ -5,7 +5,14 @@ TRANSCRIPT=${2:-}
 NAME=$(basename "$APP")
 if [ -d "$HOME/.dotnet/sdk" ]; then export DOTNET_ROOT="$HOME/.dotnet"; export PATH="$HOME/.dotnet:$PATH"; fi
 PASS=0; FAIL=0
-check() { if eval "$2" >/dev/null 2>&1; then echo "  PASS $1"; PASS=$((PASS+1)); else echo "  FAIL $1"; FAIL=$((FAIL+1)); fi; }
+check() {
+  local out
+  if out=$(eval "$2" 2>&1); then
+    echo "  PASS $1"; PASS=$((PASS+1))
+  else
+    echo "  FAIL $1"; printf '%s\n' "$out" | tail -n 8 | sed 's/^/       | /'; FAIL=$((FAIL+1))
+  fi
+}
 echo "── goldpath-test-gen eval acceptance: $NAME"
 check "cancel contract tests exist (success + rejection)"  "grep -rlq 'Cancel' '$APP/tests/' && grep -rq 'Conflict\|409\|rejected\|Rejected' '$APP/tests/'"
 check "suite green"                                        "dotnet test '$APP' --nologo -m:1"

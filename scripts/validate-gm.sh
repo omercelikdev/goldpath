@@ -58,10 +58,13 @@ if [ -d "$APP/src/$NAME.Api" ]; then
 fi
 
 echo "── spec-lint (specdrift: validate + drift)"
-# Pinned engine: local checkout when present (dev loop), otherwise a shallow clone of the tag.
-SPECDRIFT_REF=v0.4.0
-if [ -d "$HOME/Repositories/specdrift" ]; then
-  SPECDRIFT_SRC="$HOME/Repositories/specdrift"
+# Pinned engine. The pin is REAL: the tag is used unless the caller EXPLICITLY opts into
+# a local checkout via GOLDPATH_SPECDRIFT_SRC (a green local run must mean a green CI run
+# — the silent local-checkout preference was exactly the drift this project exists to kill).
+SPECDRIFT_REF=v0.4.1
+if [ -n "${GOLDPATH_SPECDRIFT_SRC:-}" ]; then
+  echo "── spec-lint: using LOCAL specdrift checkout (GOLDPATH_SPECDRIFT_SRC=$GOLDPATH_SPECDRIFT_SRC) — not the $SPECDRIFT_REF pin"
+  SPECDRIFT_SRC="$GOLDPATH_SPECDRIFT_SRC"
 else
   SPECDRIFT_SRC="$WORK/specdrift"
   [ -d "$SPECDRIFT_SRC" ] || git clone --quiet --depth 1 --branch "$SPECDRIFT_REF" https://github.com/omercelikdev/specdrift "$SPECDRIFT_SRC"
