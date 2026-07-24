@@ -144,10 +144,17 @@ public sealed class GoldpathBulkAdminService<TContext>
 
     /// <summary>The validation report, pageable by row number (value-free by construction).</summary>
     public async Task<IReadOnlyList<GoldpathBulkRowError>> GetErrorsAsync(
-        Guid batchId, int afterRowNumber, int take, CancellationToken ct)
+        Guid batchId, string? tenant, int afterRowNumber, int take, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
+        if (tenant is not null
+            && !await db.Set<GoldpathBulkBatch>().AsNoTracking().AnyAsync(b => b.Id == batchId && b.Tenant == tenant, ct))
+        {
+            // R1: a foreign batch id answers like an absent one — no cross-tenant probing.
+            return [];
+        }
+
         return await db.Set<GoldpathBulkRowError>().AsNoTracking()
             .Where(e => e.BatchId == batchId && e.RowNumber > afterRowNumber)
             .OrderBy(e => e.RowNumber).ThenBy(e => e.Id)

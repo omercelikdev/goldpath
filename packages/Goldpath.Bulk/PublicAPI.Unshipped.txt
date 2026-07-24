@@ -1,1 +1,3 @@
 #nullable enable
+*REMOVED*Goldpath.GoldpathBulkAdminService<TContext>.GetErrorsAsync(System.Guid batchId, int afterRowNumber, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkRowError!>!>!
+Goldpath.GoldpathBulkAdminService<TContext>.GetErrorsAsync(System.Guid batchId, string? tenant, int afterRowNumber, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkRowError!>!>!

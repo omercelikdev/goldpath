@@ -1,1 +1,2 @@
 #nullable enable
+const Goldpath.GoldpathPolicies.OpsAllTenants = "goldpath-ops-all-tenants" -> string!

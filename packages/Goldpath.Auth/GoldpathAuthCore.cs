@@ -30,6 +30,12 @@ public sealed class GoldpathAuthOptions
     /// <summary>The role the admin surfaces' ops policy requires (mapped to your IdP's group/role claim).</summary>
     public string OpsRole { get; set; } = "goldpath-ops";
 
+    /// <summary>
+    /// The role that grants CROSS-TENANT admin access on a multi-tenant app (admin-contract
+    /// revision R1) — required ON TOP of <see cref="OpsRole"/> to widen past the ambient tenant.
+    /// </summary>
+    public string OpsAllTenantsRole { get; set; } = "goldpath-ops-all-tenants";
+
     /// <summary>Active strategy.</summary>
     public GoldpathAuthStrategy Strategy { get; set; } = GoldpathAuthStrategy.OpenId;
 

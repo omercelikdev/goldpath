@@ -32,6 +32,11 @@ public static class GoldpathCampaignAdminEndpoints
     {
         var group = endpoints.MapGroup(prefix);
         AdminSurfaceGuard.Apply(endpoints, group, prefix, exposeUnsecured);
+
+        // R1: campaign rows carry no tenant column — on a multi-tenant app this surface is
+        // inherently cross-tenant, so the WHOLE group demands the all-tenants privilege.
+        group.AddEndpointFilter(async (context, next) =>
+            await AdminTenantScope.RequireAllTenantsAsync(context.HttpContext) is { } refusal ? refusal : await next(context));
         group.MapGet("/", (string? state, int? take, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)
             => admin.ListAsync(state, take ?? 50, ct));
 

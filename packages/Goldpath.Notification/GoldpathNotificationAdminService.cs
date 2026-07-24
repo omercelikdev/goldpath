@@ -124,12 +124,12 @@ public sealed class GoldpathNotificationAdminService<TContext>
     }
 
     /// <summary>The suppression report — every MaySend refusal, with its when (evidence, not logs).</summary>
-    public Task<IReadOnlyList<GoldpathNotificationInfo>> GetSuppressionsAsync(int take, CancellationToken ct)
-        => GetNotificationsAsync(nameof(GoldpathNotificationState.Suppressed), null, null, take, ct);
+    public Task<IReadOnlyList<GoldpathNotificationInfo>> GetSuppressionsAsync(string? tenant, int take, CancellationToken ct)
+        => GetNotificationsAsync(nameof(GoldpathNotificationState.Suppressed), null, tenant, take, ct);
 
     /// <summary>The failure list — repair/replay itself lives in the JOBS console.</summary>
-    public Task<IReadOnlyList<GoldpathNotificationInfo>> GetFailuresAsync(int take, CancellationToken ct)
-        => GetNotificationsAsync(nameof(GoldpathNotificationState.Failed), null, null, take, ct);
+    public Task<IReadOnlyList<GoldpathNotificationInfo>> GetFailuresAsync(string? tenant, int take, CancellationToken ct)
+        => GetNotificationsAsync(nameof(GoldpathNotificationState.Failed), null, tenant, take, ct);
 
     private static GoldpathNotificationInfo ToInfo(GoldpathNotification n) => new(
         n.Id, n.DedupKey, n.Template, n.TemplateHash, n.Channel,

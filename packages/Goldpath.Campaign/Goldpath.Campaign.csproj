@@ -28,6 +28,7 @@
 
   <ItemGroup>
     <Compile Include="../shared/AdminSurfaceGuard.cs" Link="AdminSurfaceGuard.cs" />
+    <Compile Include="../shared/AdminTenantScope.cs" Link="AdminTenantScope.cs" />
     <Compile Include="../shared/AdminPaging.cs" Link="AdminPaging.cs" />
   </ItemGroup>
 
