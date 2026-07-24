@@ -452,3 +452,48 @@ public sealed class AuthSurfaceAnalyzer : DiagnosticAnalyzer
     private static bool IsApiKeysMember(IOperation? instance)
         => instance is IPropertyReferenceOperation { Property.Name: "ApiKeys" };
 }
+
+/// <summary>
+/// GP0904: an endpoint lambda that accepts a caller-supplied 'tenant' parameter without
+/// consulting AdminTenantScope — the admin-contract R1 seam. Syntactic heuristic in the
+/// GP0903 tradition: the lambda must mention AdminTenantScope somewhere in its body;
+/// a Map* lambda taking tenant from the wire with no visible seam is exactly the
+/// client-controlled fence the R1 revision exists to kill.
+/// </summary>
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+public sealed class AdminTenantScopeAnalyzer : DiagnosticAnalyzer
+{
+    /// <inheritdoc />
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+        => ImmutableArray.Create(Descriptors.AdminEndpointSkipsTenantScope);
+
+    /// <inheritdoc />
+    public override void Initialize(AnalysisContext context)
+    {
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.EnableConcurrentExecution();
+        context.RegisterOperationAction(static ctx =>
+        {
+            var lambda = (IAnonymousFunctionOperation)ctx.Operation;
+            if (!lambda.Symbol.Parameters.Any(p =>
+                    p.Name == "tenant" && p.Type.SpecialType == SpecialType.System_String))
+            {
+                return;
+            }
+
+            // Only endpoint lambdas: the enclosing invocation must be a Map* route mapper.
+            if (lambda.Syntax.Ancestors().OfType<InvocationExpressionSyntax>().FirstOrDefault()
+                    ?.Expression.ToString() is not { } target
+                || !target.Contains(".Map", StringComparison.Ordinal))
+            {
+                return;
+            }
+
+            if (!lambda.Syntax.ToString().Contains("AdminTenantScope", StringComparison.Ordinal))
+            {
+                ctx.ReportDiagnostic(Diagnostic.Create(
+                    Descriptors.AdminEndpointSkipsTenantScope, lambda.Syntax.GetLocation()));
+            }
+        }, OperationKind.AnonymousFunction);
+    }
+}

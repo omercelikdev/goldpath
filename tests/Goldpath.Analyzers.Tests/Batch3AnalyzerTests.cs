@@ -239,4 +239,51 @@ public class Batch3AnalyzerTests
             """,
             new DiagnosticResult(Descriptors.SecretInSource).WithLocation(0).WithArguments("HmacKey"),
             new DiagnosticResult(Descriptors.SecretInSource).WithLocation(1).WithArguments("ApiKeys"));
+    // ── GP0904 ─────────────────────────────────────────────────────────────
+
+    [Fact]
+    public Task GOLDPATH0904_flags_a_map_lambda_taking_tenant_without_the_seam()
+        => Verify<AdminTenantScopeAnalyzer>("""
+            public static class Endpoints
+            {
+                public static void Map(Router app)
+                    => app.MapGet("/batches", {|#0:(string? tenant, int take) => tenant + take|});
+            }
+            public sealed class Router
+            {
+                public void MapGet(string route, System.Func<string?, int, string> handler) { }
+            }
+            """,
+            new DiagnosticResult(Descriptors.AdminEndpointSkipsTenantScope).WithLocation(0));
+
+    [Fact]
+    public Task GOLDPATH0904_quiet_when_the_lambda_resolves_the_seam()
+        => Verify<AdminTenantScopeAnalyzer>("""
+            public static class Endpoints
+            {
+                public static void Map(Router app)
+                    => app.MapGet("/batches", (string? tenant, int take) => AdminTenantScope.Resolve(tenant) + take);
+            }
+            public sealed class Router
+            {
+                public void MapGet(string route, System.Func<string?, int, string> handler) { }
+            }
+            public static class AdminTenantScope
+            {
+                public static string Resolve(string? tenant) => tenant ?? "";
+            }
+            """);
+
+    [Fact]
+    public Task GOLDPATH0904_ignores_non_endpoint_lambdas()
+        => Verify<AdminTenantScopeAnalyzer>("""
+            public static class NotAnEndpoint
+            {
+                public static string Run()
+                {
+                    System.Func<string?, string> f = (string? tenant) => tenant ?? "";
+                    return f("acme");
+                }
+            }
+            """);
 }

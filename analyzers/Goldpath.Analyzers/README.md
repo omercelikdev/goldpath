@@ -52,6 +52,7 @@ In-code suppression requires a justification (reviewed like any deviation):
 | GP0901 | `IMultiTenant` entity but no `ApplyGoldpathMultiTenancy(this)` | **error** |
 | GP0902 | Manual write to `TenantId` from application code | warn |
 | GP0903 | `IgnoreQueryFilters` on a tenant entity without a visible `Bypass()` | warn |
+| GP0904 | Admin endpoint takes a `tenant` parameter but never consults `AdminTenantScope` (contract R1) | warn |
 | GP1101 | Raw string lock name (tenant-collision risk) | warn |
 | GP1102 | Lock handle discarded / stored without `using` | warn |
 | GP1201 | Anonymous endpoint inventory | info |
