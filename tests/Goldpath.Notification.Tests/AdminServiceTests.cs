@@ -98,11 +98,11 @@ public class AdminServiceTests : IDisposable
         await _fixture.RequestAsync(NotificationFixture.Renewal("renewal:dead", name: "FAIL"));
         await _fixture.RunSendPassAsync();
 
-        var suppression = Assert.Single(await _admin.GetSuppressionsAsync(10, CancellationToken.None));
+        var suppression = Assert.Single(await _admin.GetSuppressionsAsync(null, 10, CancellationToken.None));
         Assert.Equal("Suppressed", suppression.State);
         Assert.Contains("MaySend", suppression.Detail, StringComparison.Ordinal);
 
-        var failure = Assert.Single(await _admin.GetFailuresAsync(10, CancellationToken.None));
+        var failure = Assert.Single(await _admin.GetFailuresAsync(null, 10, CancellationToken.None));
         Assert.Equal("Failed", failure.State);
         Assert.Equal(3, failure.Attempts);
         Assert.Contains("gateway refused", failure.Detail, StringComparison.Ordinal);

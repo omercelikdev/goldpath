@@ -53,8 +53,12 @@ public static class GoldpathBulkAdminEndpoints
             return await admin.GetBatchAsync(batchId, scope.Tenant, ct) is { } batch ? Results.Ok(batch) : Results.NotFound();
         });
 
-        group.MapGet("/batches/{batchId:guid}/errors", (Guid batchId, int? afterRow, int? take, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
-            => admin.GetErrorsAsync(batchId, afterRow ?? 0, take ?? 200, ct));
+        group.MapGet("/batches/{batchId:guid}/errors", async (Guid batchId, int? afterRow, int? take, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
+            =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, null);
+            return scope.Refusal ?? Results.Ok(await admin.GetErrorsAsync(batchId, scope.Tenant, afterRow ?? 0, take ?? 200, ct));
+        });
 
         group.MapPost("/batches/{batchId:guid}/approve", async (Guid batchId, GoldpathBulkDecisionRequest? request, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
             => ToResult(await admin.ApproveAsync(batchId, Actor(http), request?.Note, ct)));

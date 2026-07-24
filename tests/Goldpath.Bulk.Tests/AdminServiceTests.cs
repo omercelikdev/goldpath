@@ -94,9 +94,9 @@ public class AdminServiceTests : IDisposable
         var batch = await _fixture.IngestValidatedAsync(BulkFixture.Csv(
             ("E1", "T", "-1", null), ("E2", "T", "-2", null), ("E3", "T", "-3", null)));
 
-        var firstPage = await _admin.GetErrorsAsync(batch.Id, afterRowNumber: 0, take: 2, CancellationToken.None);
+        var firstPage = await _admin.GetErrorsAsync(batch.Id, tenant: null, afterRowNumber: 0, take: 2, CancellationToken.None);
         Assert.Equal([1, 2], firstPage.Select(e => e.RowNumber));
-        var secondPage = await _admin.GetErrorsAsync(batch.Id, afterRowNumber: firstPage[^1].RowNumber, take: 2, CancellationToken.None);
+        var secondPage = await _admin.GetErrorsAsync(batch.Id, tenant: null, afterRowNumber: firstPage[^1].RowNumber, take: 2, CancellationToken.None);
         Assert.Equal([3], secondPage.Select(e => e.RowNumber));
         Assert.All(firstPage, e => Assert.Equal("amount must be positive", e.Message));
     }

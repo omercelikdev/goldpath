@@ -116,6 +116,12 @@ lets any operator read every tenant's batches, evidence and archives.
 5. **Surfaces without tenant-stamped rows (campaign)** are inherently cross-tenant on a
    multi-tenant app: the WHOLE surface demands `GoldpathPolicies.OpsAllTenants` (an
    endpoint filter on the group). Single-tenant apps see no change.
+6. **The same logic per-endpoint where a single surface mixes both kinds** (review-agent
+   findings on the R1 PR, all accepted): archival's hold/lift-hold/erase verbs and its
+   holds/erasures lists operate on rows keyed WITHOUT a tenant column — on a multi-tenant
+   app they demand the privilege outright; bulk's `/errors` scopes through its batch's
+   tenant (a foreign batch id answers like an absent one); notification's
+   `/suppressions` + `/failures` scope like its other lists.
 
 ### Why this is a contract REVISION, not a break-and-hope
 

@@ -43,19 +43,19 @@ public static class GoldpathArchivalAdminEndpoints
         });
 
         group.MapPost("/entries/{definition}/{key}/hold", async (string definition, string key, GoldpathHoldRequest request, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => ToResult(await admin.PlaceHoldAsync(definition, key, request.CaseReference, Actor(http), ct)));
+            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : ToResult(await admin.PlaceHoldAsync(definition, key, request.CaseReference, Actor(http), ct)));
 
         group.MapPost("/entries/{definition}/{key}/lift-hold", async (string definition, string key, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => ToResult(await admin.LiftHoldAsync(definition, key, Actor(http), ct)));
+            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : ToResult(await admin.LiftHoldAsync(definition, key, Actor(http), ct)));
 
-        group.MapGet("/holds", (bool? includeLifted, int? take, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => admin.GetHoldsAsync(includeLifted ?? false, take ?? 100, ct));
+        group.MapGet("/holds", async (bool? includeLifted, int? take, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
+            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : Results.Ok(await admin.GetHoldsAsync(includeLifted ?? false, take ?? 100, ct)));
 
         group.MapPost("/entries/{definition}/{key}/erase", async (string definition, string key, GoldpathErasureRequest request, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => ToResult(await admin.EraseAsync(definition, key, request.SubjectKey, Actor(http), request.Detail, ct)));
+            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : ToResult(await admin.EraseAsync(definition, key, request.SubjectKey, Actor(http), request.Detail, ct)));
 
-        group.MapGet("/erasures", (int? take, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => admin.GetErasuresAsync(take ?? 100, ct));
+        group.MapGet("/erasures", async (int? take, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
+            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : Results.Ok(await admin.GetErasuresAsync(take ?? 100, ct)));
 
         group.MapPost("/definitions/{definition}/verify", (string definition, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
             => admin.VerifyAsync(definition, ct));

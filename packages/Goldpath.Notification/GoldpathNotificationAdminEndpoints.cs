@@ -42,11 +42,17 @@ public static class GoldpathNotificationAdminEndpoints
             return await admin.GetNotificationAsync(id, scope.Tenant, ct) is { } info ? Results.Ok(info) : Results.NotFound();
         });
 
-        group.MapGet("/suppressions", (int? take, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct)
-            => admin.GetSuppressionsAsync(take ?? 100, ct));
+        group.MapGet("/suppressions", async (int? take, HttpContext http, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, null);
+            return scope.Refusal ?? Results.Ok(await admin.GetSuppressionsAsync(scope.Tenant, take ?? 100, ct));
+        });
 
-        group.MapGet("/failures", (int? take, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct)
-            => admin.GetFailuresAsync(take ?? 100, ct));
+        group.MapGet("/failures", async (int? take, HttpContext http, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, null);
+            return scope.Refusal ?? Results.Ok(await admin.GetFailuresAsync(scope.Tenant, take ?? 100, ct));
+        });
 
         return endpoints;
     }
