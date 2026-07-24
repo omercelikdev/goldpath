@@ -88,6 +88,26 @@ jobs:
   # The finance sample stays green forever: built against the PUBLISHED packages, its
   # unit contract tests and the real-AppHost smoke run nightly (samples/GAP-LEDGER.md
   # is this job's product when it goes red).
+  # The deterministic half of the eval harness: acceptance runners are portable and
+  # green against committed artifacts. The LLM half (running the skills themselves)
+  # stays deferred until an agent-in-CI story exists (foundation §12 / skills RFC).
+  evals-acceptance:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - name: pin the engine (published tool, not a checkout)
+        run: dotnet tool install -g specdrift --version 0.4.1
+      - name: runner syntax holds
+        run: for f in evals/skills/*/accept.sh; do bash -n "$f"; done
+      - name: breaker acceptance vs CorPay
+        run: bash evals/skills/breaker/accept.sh samples/corpay
+
   sample-corpay:
     runs-on: ubuntu-latest
     timeout-minutes: 30

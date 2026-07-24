@@ -27,7 +27,7 @@ document exists to prevent.
 | DB | migrations discipline driven by CLI verbs | `goldpath db` verbs + D7 proofs (`validate-migrations.sh` on real pg) **SHIPPED-PROVEN** | migration bundle CI step + GP1801 | — |
 | Test | `test-gen` (never sees the implementation, §8.2) + breaker + property-based + mutation | `goldpath-test-gen` skill **SHIPPED-PROVEN** — fielded on CorPay 2026-07-23: 8 spec-derived paging/tenancy/state tests + a 7-item gap report (`samples/corpay/tests/SPEC-GAPS.md`), diet held (no `Features/` reads; public seams via compile probes); `breaker` agent **SHIPPED-PROVEN** — same run, own context: 15 `Breaker_` tests, 14 attacks repelled, **1 genuine finding** (sub-cent amount accepted — fixed in the same PR; `samples/corpay/tests/BREAKER-VERDICT.md`), breaker eval 3/3 PASS; mutation gates **SHIPPED-PROVEN** (10 packages nightly, 6 heavy on dispatch); property-based **PARTIAL** (CsCheck present, not yet the §8.3 catalog-driven norm) | Stryker break=70 + test projects in CI | edge-case catalog is Phase 2 (domain memory) |
 | Review / validation chain | §6.4: schema → build → analyzers → arch tests → contracts → tests → mutation → review agent → human | Chain **SHIPPED-PROVEN** up to mutation; review agent **SHIPPED-PROVEN as a manual script** (`scripts/review-agent.sh`, findings recorded on merged PRs); **in-loop mechanical gating (hooks) NOT BUILT** — nothing forces the chain while the AI is still in its turn | CI gates on PR + nightly | **hook set in the template** (post-edit format, stop-gate build + spec validate) — see §4 |
-| Skill quality (evals) | eval set per skill; a skill that fails evals is not released (§6.2) | 4 eval fixtures exist (`evals/skills/`: feature, manifest, test-gen, breaker) — **PARTIAL**: runners assume a local specdrift checkout and run on no schedule | none (manual) | make runners portable; add a nightly eval lane |
+| Skill quality (evals) | eval set per skill; a skill that fails evals is not released (§6.2) | **PARTIAL** — as of 2026-07-24 the 4 acceptance runners are portable (published specdrift tool, no local-checkout assumption; failures print their output) and the deterministic half runs nightly (`evals-acceptance`: runner syntax + breaker vs CorPay). The LLM half — running the skills themselves per fixture — stays deferred until an agent-in-CI story exists (P2) | nightly `evals-acceptance` job | agent-in-CI story (P2) unlocks full skill-run evals |
 | Model proficiency matrix | skill × model → pass-rate matrix (§6.2) | **NOT BUILT** — Phase 2 (needs the eval lane first) | — | after the eval lane |
 | Release / DevOps | release train + delivery telemetry (§6.5) | Train **SHIPPED-PROVEN** (OIDC trusted publishing, license gate, roll script); delivery report **NOT BUILT** — Phase 2 | release workflow + license gate | — |
 | Operations | admin APIs + ops packs + console (§7.1) | Admin APIs + dashboards + runbooks **SHIPPED-PROVEN** per module; console **PARTIAL** (U1 in progress, RFC accepted) | admin contract frozen + integration proofs | console phases U1–U4 |
@@ -64,7 +64,7 @@ plans it for the Insurance sample).
 | Skills | active recipes | PARTIAL — one fielded, three not (see §2) |
 | MCP (`specdrift mcp`) | deterministic tools in the AI's hand | SHIPPED (`spec_validate`, `spec_drift`) |
 | Hooks | unskippable in-loop gates | **SHIPPED** (template + CorPay, 2026-07-23): post-edit whitespace format on touched `.cs`; Stop gate blocks a red `dotnet build` and error-level `specdrift drift` findings. Honest limit: SPEC0203 is warn-level today, so drift blocks only on errors — a `--fail-on warn` flag is a specdrift 0.4.2 candidate |
-| Evals | skill regression tests | PARTIAL (fixtures yes, portable runner + schedule no) |
+| Evals | skill regression tests | PARTIAL — runners portable + nightly deterministic lane; full skill-run evals await agent-in-CI (P2) |
 | Plugin packaging | install the layer into an *existing* app | NOT BUILT (template-only distribution today) |
 
 ## 4. The near-term path (ordered)
@@ -80,8 +80,12 @@ plans it for the Insurance sample).
    `dotnet build` + `specdrift drift`. The §6.4 chain now runs *inside* the AI's turn —
    an agent cannot end its turn on a red build. Follow-up: specdrift `--fail-on warn`
    so adopters can choose gate strictness (SPEC0203 is warn-level and passes today).
-3. **Portable evals + nightly lane** — remove the local-checkout assumption from
-   `evals/skills/*/accept.sh` (pin the published tool), run all four on the nightly.
+3. **Portable evals + nightly lane** — DONE 2026-07-24: `accept.sh` runners use the
+   published specdrift tool (no `$HOME` checkout assumption) and print failing output;
+   nightly `evals-acceptance` runs the deterministic half (syntax + breaker vs CorPay).
+   Same PR closes the other half of the audit's Y10: `validate-gm.sh` now honors its
+   pin (v0.4.1) — a local checkout is used only via an explicit
+   `GOLDPATH_SPECDRIFT_SRC`, and announces itself when it is.
 4. **CLI verbs as MCP tools** — typed `goldpath_*` tools next to specdrift's, so skills
    stop shelling out. Shaped by what the proof run shows is actually needed.
 5. **Plugin packaging** — one installable unit (skills + MCP + hooks) for existing apps.
