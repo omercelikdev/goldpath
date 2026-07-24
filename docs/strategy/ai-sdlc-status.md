@@ -63,7 +63,7 @@ plans it for the Insurance sample).
 | CLAUDE.md family + `conventions.md` | passive context | SHIPPED (template) |
 | Skills | active recipes | PARTIAL — one fielded, three not (see §2) |
 | MCP (`specdrift mcp`) | deterministic tools in the AI's hand | SHIPPED (`spec_validate`, `spec_drift`) |
-| Hooks | unskippable in-loop gates | **NOT BUILT — the biggest gap in the loop** |
+| Hooks | unskippable in-loop gates | **SHIPPED** (template + CorPay, 2026-07-23): post-edit whitespace format on touched `.cs`; Stop gate blocks a red `dotnet build` and error-level `specdrift drift` findings. Honest limit: SPEC0203 is warn-level today, so drift blocks only on errors — a `--fail-on warn` flag is a specdrift 0.4.2 candidate |
 | Evals | skill regression tests | PARTIAL (fixtures yes, portable runner + schedule no) |
 | Plugin packaging | install the layer into an *existing* app | NOT BUILT (template-only distribution today) |
 
@@ -75,9 +75,11 @@ plans it for the Insurance sample).
    surfaced: the exported OpenAPI misses request bodies/params (7 gaps in
    `SPEC-GAPS.md`), and `spec_drift` flags CorPay's undeclared jobs capability
    (SPEC0203) — both need owners.
-2. **Hook set in the template** — post-edit `dotnet format`; stop-gate `dotnet build` +
-   `specdrift validate`. The §6.4 chain starts running *inside* the AI's turn instead of
-   after it; an agent cannot end its turn on broken output.
+2. **Hook set in the template** — DONE 2026-07-23 (`.claude/settings.json` +
+   `.claude/hooks/` in the template and CorPay): post-edit whitespace format; stop-gate
+   `dotnet build` + `specdrift drift`. The §6.4 chain now runs *inside* the AI's turn —
+   an agent cannot end its turn on a red build. Follow-up: specdrift `--fail-on warn`
+   so adopters can choose gate strictness (SPEC0203 is warn-level and passes today).
 3. **Portable evals + nightly lane** — remove the local-checkout assumption from
    `evals/skills/*/accept.sh` (pin the published tool), run all four on the nightly.
 4. **CLI verbs as MCP tools** — typed `goldpath_*` tools next to specdrift's, so skills
