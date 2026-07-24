@@ -40,6 +40,7 @@ public static class GoldpathAuthExtensions
         {
             authz.FallbackPolicy = new AuthorizationPolicyBuilder().RequireAuthenticatedUser().Build();
             authz.AddPolicy(GoldpathPolicies.Ops, policy => policy.RequireRole(options.OpsRole));
+            authz.AddPolicy(GoldpathPolicies.OpsAllTenants, policy => policy.RequireRole(options.OpsAllTenantsRole));
         });
 
         if (options.Strategy == GoldpathAuthStrategy.OpenId)

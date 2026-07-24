@@ -1,1 +1,3 @@
 #nullable enable
+Goldpath.GoldpathAuthOptions.OpsAllTenantsRole.get -> string!
+Goldpath.GoldpathAuthOptions.OpsAllTenantsRole.set -> void

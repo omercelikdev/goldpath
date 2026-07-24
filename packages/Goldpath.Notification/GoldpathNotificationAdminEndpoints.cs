@@ -25,11 +25,22 @@ public static class GoldpathNotificationAdminEndpoints
         group.MapGet("/templates", ([FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct)
             => admin.GetTemplatesAsync(ct));
 
-        group.MapGet("/notifications", (string? state, string? template, string? tenant, int? take, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct)
-            => admin.GetNotificationsAsync(state, template, tenant, take ?? 50, ct));
+        group.MapGet("/notifications", async (string? state, string? template, string? tenant, int? take, HttpContext http, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, tenant);
+            return scope.Refusal ?? Results.Ok(await admin.GetNotificationsAsync(state, template, scope.Tenant, take ?? 50, ct));
+        });
 
-        group.MapGet("/notifications/{id:guid}", async (Guid id, string? tenant, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct)
-            => await admin.GetNotificationAsync(id, tenant, ct) is { } info ? Results.Ok(info) : Results.NotFound());
+        group.MapGet("/notifications/{id:guid}", async (Guid id, string? tenant, HttpContext http, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, tenant);
+            if (scope.Refusal is not null)
+            {
+                return scope.Refusal;
+            }
+
+            return await admin.GetNotificationAsync(id, scope.Tenant, ct) is { } info ? Results.Ok(info) : Results.NotFound();
+        });
 
         group.MapGet("/suppressions", (int? take, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct)
             => admin.GetSuppressionsAsync(take ?? 100, ct));

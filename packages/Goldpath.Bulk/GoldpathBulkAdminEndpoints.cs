@@ -30,14 +30,28 @@ public static class GoldpathBulkAdminEndpoints
         group.MapGet("/definitions", ([FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
             => admin.GetDefinitionsAsync(ct));
 
-        group.MapPost("/batches/{definition}", async (string definition, string? fileName, string? tenant, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
-            => Results.Ok(await admin.UploadAsync(definition, http.Request.Body, fileName ?? "upload.csv", tenant, Actor(http), ct)));
+        group.MapPost("/batches/{definition}", async (string definition, string? fileName, string? tenant, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, tenant);
+            return scope.Refusal ?? Results.Ok(await admin.UploadAsync(definition, http.Request.Body, fileName ?? "upload.csv", scope.Tenant, Actor(http), ct));
+        });
 
-        group.MapGet("/batches", (string? state, string? tenant, int? take, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
-            => admin.GetBatchesAsync(state, tenant, take ?? 50, ct));
+        group.MapGet("/batches", async (string? state, string? tenant, int? take, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, tenant);
+            return scope.Refusal ?? Results.Ok(await admin.GetBatchesAsync(state, scope.Tenant, take ?? 50, ct));
+        });
 
-        group.MapGet("/batches/{batchId:guid}", async (Guid batchId, string? tenant, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
-            => await admin.GetBatchAsync(batchId, tenant, ct) is { } batch ? Results.Ok(batch) : Results.NotFound());
+        group.MapGet("/batches/{batchId:guid}", async (Guid batchId, string? tenant, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, tenant);
+            if (scope.Refusal is not null)
+            {
+                return scope.Refusal;
+            }
+
+            return await admin.GetBatchAsync(batchId, scope.Tenant, ct) is { } batch ? Results.Ok(batch) : Results.NotFound();
+        });
 
         group.MapGet("/batches/{batchId:guid}/errors", (Guid batchId, int? afterRow, int? take, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
             => admin.GetErrorsAsync(batchId, afterRow ?? 0, take ?? 200, ct));

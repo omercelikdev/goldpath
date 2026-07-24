@@ -85,3 +85,41 @@ versioning note per H7).
 - Breaking fixes applied at freeze time (cheap now, expensive after the UI):
   campaign `/{id}/failed-items` → `/{id}/failures`; `take` clamp made uniform across all
   five modules (was jobs/archival-only).
+
+## Revision R1 — tenant scoping (ACCEPTED 2026-07-24, lands at the preview.3 boundary)
+
+**Finding (independent audit, A1 — CRITICAL):** the data layer is fail-closed, the admin
+surfaces are not. No admin endpoint reads `ITenantContext`; where tenant filtering exists
+at all (bulk, archival, notification) it is a CLIENT-SUPPLIED `?tenant=` query parameter,
+and campaign has none. In a deployment with per-tenant operators, `goldpath-ops` alone
+lets any operator read every tenant's batches, evidence and archives.
+
+### The rule (all five surfaces, uniform)
+
+1. **Ambient tenant is the scope.** When `multiTenancy` is on, every admin read and verb
+   is scoped to the ambient `ITenantContext` — resolved exactly like the business
+   endpoints (header/subdomain per the manifest). No ambient tenant on a multi-tenant
+   app → `400` with a teaching envelope (fail-closed, never "all tenants").
+2. **Cross-tenant is a second, explicit privilege.** The `?tenant=` override (and the
+   implicit "all tenants" view) demands `GoldpathPolicies.OpsAllTenants`
+   (`goldpath-ops-all` role) ON TOP of `GoldpathPolicies.Ops`. Without it: `403`.
+   With it, `?tenant=` narrows and omitting it means "all" — today's semantics, now
+   privilege-gated — and every crossing is logged with the actor, the requested tenant
+   and the ambient one (structured warning on `Goldpath.AdminSurface`).
+3. **Single-tenant apps are untouched.** `multiTenancy: false` keeps today's behavior
+   byte-for-byte; the scoping layer compiles to a pass-through.
+4. **One shared seam.** The scoping lives in ONE shared-source file
+   (`packages/shared/AdminTenantScope.cs`, compile-linked like the auth floor) that the
+   endpoints call — not per-module reimplementations. The ADR-0005 companion analyzer
+   rule (`GP0902`: an admin endpoint taking a tenant parameter without the seam) follows
+   in the same preview.3 train.
+5. **Surfaces without tenant-stamped rows (campaign)** are inherently cross-tenant on a
+   multi-tenant app: the WHOLE surface demands `GoldpathPolicies.OpsAllTenants` (an
+   endpoint filter on the group). Single-tenant apps see no change.
+
+### Why this is a contract REVISION, not a break-and-hope
+
+Routes, nouns, envelopes and paging are unchanged. What changes is authorization
+semantics (`?tenant=` becomes privilege-gated) and default scope (ambient, not "all") —
+a behavioral break permitted at a preview boundary per the H7 versioning promise, shipped
+with an upgrade-guide entry. The UI phase (U2+) is written against THIS revision.

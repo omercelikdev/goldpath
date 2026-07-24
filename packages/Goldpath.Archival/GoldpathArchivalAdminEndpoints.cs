@@ -31,8 +31,16 @@ public static class GoldpathArchivalAdminEndpoints
         group.MapGet("/definitions", ([FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
             => admin.GetDefinitionsAsync(ct));
 
-        group.MapGet("/entries/{definition}/{key}", async (string definition, string key, string? tenant, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => await admin.RetrieveAsync(definition, key, tenant, ct) is { } entry ? Results.Ok(entry) : Results.NotFound());
+        group.MapGet("/entries/{definition}/{key}", async (string definition, string key, string? tenant, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct) =>
+        {
+            var scope = await AdminTenantScope.ResolveAsync(http, tenant);
+            if (scope.Refusal is not null)
+            {
+                return scope.Refusal;
+            }
+
+            return await admin.RetrieveAsync(definition, key, scope.Tenant, ct) is { } entry ? Results.Ok(entry) : Results.NotFound();
+        });
 
         group.MapPost("/entries/{definition}/{key}/hold", async (string definition, string key, GoldpathHoldRequest request, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
             => ToResult(await admin.PlaceHoldAsync(definition, key, request.CaseReference, Actor(http), ct)));
