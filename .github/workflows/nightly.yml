@@ -119,7 +119,7 @@ jobs:
             8.0.x
             10.0.x
       - name: pin the engine (published tool, not a checkout)
-        run: dotnet tool install -g specdrift --version 0.4.1
+        run: dotnet tool install -g specdrift --version 0.4.2
       - name: runner syntax holds
         run: for f in evals/skills/*/accept.sh; do bash -n "$f"; done
       - name: breaker acceptance vs CorPay
