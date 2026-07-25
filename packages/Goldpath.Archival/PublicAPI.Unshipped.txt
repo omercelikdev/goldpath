@@ -1,1 +1,3 @@
 #nullable enable
+Goldpath.GoldpathArchiveEntry.PreErasureContentHash.get -> string?
+Goldpath.GoldpathArchiveEntry.PreErasureContentHash.set -> void

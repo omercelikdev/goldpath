@@ -255,9 +255,14 @@ public sealed class GoldpathArchiveEngine<TContext>
                 findings.Add(new GoldpathChainFinding(definition.Name, entry.ChainIndex, entry.AggregateKey, "document does not match its content hash"));
             }
 
-            var appendContent = entry.ErasedAt is null ? entry.ContentHash : null;
-            if (appendContent is not null
-                && GoldpathArchiveEnvelope.ChainHash(appendContent, entry.PreviousHash, entry.ChainIndex) != entry.ChainHash)
+            // A2: erasure re-stamps ContentHash but keeps the SEALED hash — so the chain
+            // check never skips. An erased row with no retained hash is itself a finding.
+            var appendContent = entry.ErasedAt is null ? entry.ContentHash : entry.PreErasureContentHash;
+            if (appendContent is null)
+            {
+                findings.Add(new GoldpathChainFinding(definition.Name, entry.ChainIndex, entry.AggregateKey, "erased entry retains no pre-erasure content hash — the chain cannot vouch for it"));
+            }
+            else if (GoldpathArchiveEnvelope.ChainHash(appendContent, entry.PreviousHash, entry.ChainIndex) != entry.ChainHash)
             {
                 findings.Add(new GoldpathChainFinding(definition.Name, entry.ChainIndex, entry.AggregateKey, "content diverged from the sealed chain hash without an erasure record"));
             }

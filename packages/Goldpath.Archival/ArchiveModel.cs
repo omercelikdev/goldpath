@@ -54,6 +54,14 @@ public class GoldpathArchiveEntry
 
     /// <summary>Set when an erasure redacted classified fields (the evidence pointer).</summary>
     public DateTimeOffset? ErasedAt { get; set; }
+
+    /// <summary>
+    /// The content hash as it was SEALED into the chain, kept verbatim when erasure
+    /// re-stamps <see cref="ContentHash"/> — the chain stays verifiable after redaction
+    /// (audit finding A2: without this, an attacker who can write the table erases their
+    /// tamper by re-stamping the hash and flagging the row erased).
+    /// </summary>
+    public string? PreErasureContentHash { get; set; }
 }
 
 /// <summary>Per-definition chain head + purged-prefix bookkeeping (append is single-writer via Jobs).</summary>
@@ -143,6 +151,7 @@ public static class GoldpathArchiveModelExtensions
             entity.Property(e => e.ContentHash).HasMaxLength(64);
             entity.Property(e => e.ChainHash).HasMaxLength(64);
             entity.Property(e => e.PreviousHash).HasMaxLength(64);
+            entity.Property(e => e.PreErasureContentHash).HasMaxLength(64);
             // The retrieval budget (finance: p95 < 5s at 1M entries) rides this index.
             entity.HasIndex(e => new { e.Definition, e.AggregateKey }).IsUnique();
             entity.HasIndex(e => new { e.Definition, e.ChainIndex }).IsUnique();

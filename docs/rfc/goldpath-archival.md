@@ -174,3 +174,11 @@ drift rows + CLI recipe.
 - **D6 — Analyzer block GP1401–1403** as listed. **Recommendation: yes.**
 - **D7 — `features.archival` joins the schema WITH S3** (not before), keeping the
   schema-rejects-unimplemented rule intact. **Recommendation: yes.**
+
+## Deferral (2026-07-25, audit A2 follow-through)
+
+Post-erasure tamper of the REDACTED document is not provable today: the redacted
+content's hash lives outside the sealed chain, so a table-writer can re-stamp it.
+Closing this needs erasure to append its OWN chain entry (an erasure event sealing the
+redacted content). Trigger: the first compliance review that requires proving the
+redacted remainder untouched — or the next archival schema revision, whichever first.

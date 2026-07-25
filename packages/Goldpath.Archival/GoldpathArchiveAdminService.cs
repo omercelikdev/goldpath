@@ -168,6 +168,7 @@ public sealed class GoldpathArchiveAdminService<TContext>
         }
 
         entry.Document = JsonSerializer.Serialize(root, archiveDefinition.RootType, GoldpathArchiveEnvelope.Json);
+        entry.PreErasureContentHash ??= entry.ContentHash;
         entry.ContentHash = GoldpathArchiveEnvelope.ContentHash(
             entry.SchemaVersion, entry.Definition, entry.AggregateKey, entry.Tenant, entry.DueAt, entry.Document);
         entry.ErasedAt = _time.GetUtcNow();
