@@ -39,4 +39,5 @@ All "implemented" modules are published on nuget.org at `0.1.0-preview.2`.
 | [goldpath-event-contracts](goldpath-event-contracts.md) | event contracts idiom (per-app `<Name>.Contracts`) | accepted (2026-07-14) |
 | [goldpath-skills-v1](goldpath-skills-v1.md) | the AI skill layer v1 | implemented — ships inside the template; field status: `../strategy/ai-sdlc-status.md` §2 |
 | [goldpath-console](goldpath-console.md) | Goldpath.Console (the UI phase) | accepted — U1 in flight |
-| [spec-engine-v1](spec-engine-v1.md) | specdrift (separate repo) | implemented — 0.4.1 published (NuGet tool + MCP + Docker + Action) |
+| [goldpath-ai](goldpath-ai.md) | Goldpath.Ai — opt-in runtime AI (gateway · tool registry · decision record · confidence gate) | **PROPOSED** — D1–D4 await the owner; ADR-0011 rides it |
+| [spec-engine-v1](spec-engine-v1.md) | specdrift (separate repo) | implemented — 0.4.2 published (NuGet tool + MCP + Docker + Action) |
