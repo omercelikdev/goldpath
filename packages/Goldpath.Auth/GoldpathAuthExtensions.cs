@@ -57,13 +57,16 @@ public static class GoldpathAuthExtensions
         });
 
         if (options.Strategy == GoldpathAuthStrategy.OpenId
+            && options.Authority is { Length: > 0 }
             && options.Audience is not { Length: > 0 }
             && !options.AllowAnyAudience)
         {
-            // Fail-closed (audit A3): a missing audience is a configuration decision,
-            // never a silent widening of who gets in — refuse at startup, teach the fix.
+            // Fail-closed (audit A3): with a REAL authority, a missing audience silently
+            // accepted tokens minted for other clients — refuse at startup, teach the fix.
+            // No authority = nothing can authenticate anyway, so the first-click dev app
+            // still starts with its 401 floor intact (ADR-0008, review R3 on this PR).
             throw new InvalidOperationException(
-                "Goldpath:Auth:Audience is not set. Set it to this API's audience, or opt out EXPLICITLY with Goldpath:Auth:AllowAnyAudience=true (accepts any token the authority minted).");
+                "Goldpath:Auth:Authority is set but Goldpath:Auth:Audience is not. Set the audience, or opt out EXPLICITLY with Goldpath:Auth:AllowAnyAudience=true (accepts any token the authority minted).");
         }
 
         if (options.Strategy == GoldpathAuthStrategy.OpenId)

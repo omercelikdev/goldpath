@@ -103,6 +103,7 @@ public sealed class AuthEdgeTests
         // The old silent widening now refuses at startup (audit A3)...
         var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => StartAsync(o =>
         {
+            o.Authority = "https://idp.local";
             o.Audience = null;
             o.RequireHttpsMetadata = false;
         }));

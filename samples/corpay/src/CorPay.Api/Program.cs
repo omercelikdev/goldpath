@@ -9,7 +9,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.AddGoldpathServiceDefaults();
 builder.AddGoldpathApiDefaults();
-builder.AddGoldpathAuth();   // OpenId: set Goldpath:Auth:Authority (+ Audience) in configuration
+builder.AddGoldpathAuth();   // OpenId: set Goldpath:Auth:Authority AND Audience in configuration (authority without audience refuses to start — A3)
 // goldpath:features registrations — the drift profile is the source of these rows
 builder.AddGoldpathMultiTenancy();
 builder.AddGoldpathAuditTrail<WebApplicationBuilder, OrdersDbContext>();
