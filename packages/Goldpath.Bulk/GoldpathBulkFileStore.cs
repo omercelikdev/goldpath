@@ -67,8 +67,27 @@ public sealed class GoldpathBulkFileStore<TContext>
         }
 
         db.Set<GoldpathBulkFile>().Add(file);
-        await db.SaveChangesAsync(cancellationToken);
-        await transaction.CommitAsync(cancellationToken);
+        try
+        {
+            await db.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
+        }
+        catch (DbUpdateException)
+        {
+            // The unique index made this race LOSE — now it loses gracefully (audit A7):
+            // the concurrent identical upload that won is the answer, not a 500.
+            await transaction.RollbackAsync(cancellationToken);
+            db.ChangeTracker.Clear();
+            var winner = await db.Set<GoldpathBulkFile>().AsNoTracking()
+                .FirstOrDefaultAsync(f => f.Sha256 == file.Sha256, cancellationToken);
+            if (winner is null)
+            {
+                throw;   // not the dedup race — a real store failure must surface, not be masked
+            }
+
+            return (winner, false);
+        }
+
         return (file, true);
     }
 

@@ -101,6 +101,25 @@ public class ServiceDefaultsTests
     }
 
     [Fact]
+    public async Task A_hostile_inbound_correlation_id_is_replaced_not_echoed()
+    {
+        // Audit A7: the inbound id lands in a response header and every log scope —
+        // newline smuggling and absurd lengths must never survive the door.
+        await using var app = await StartAppAsync();
+        var client = app.GetTestClient();
+        client.DefaultRequestHeaders.TryAddWithoutValidation(GoldpathHeaders.CorrelationId, "evil%0d%0aInjected: yes");
+
+        var response = await client.GetAsync("/ok");
+        var echoed = response.Headers.GetValues(GoldpathHeaders.CorrelationId).Single();
+        Assert.DoesNotContain("evil", echoed, StringComparison.Ordinal);   // regenerated, not honored
+
+        client.DefaultRequestHeaders.Remove(GoldpathHeaders.CorrelationId);
+        client.DefaultRequestHeaders.Add(GoldpathHeaders.CorrelationId, new string('a', 300));
+        var tooLong = await client.GetAsync("/ok");
+        Assert.NotEqual(300, tooLong.Headers.GetValues(GoldpathHeaders.CorrelationId).Single().Length);
+    }
+
+    [Fact]
     public async Task Inbound_correlation_id_is_honored_by_default()
     {
         await using var app = await StartAppAsync();

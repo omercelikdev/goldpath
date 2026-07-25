@@ -74,8 +74,21 @@ public sealed class GoldpathJobsFleetRegistry<TContext> : IGoldpathJobsFleetRegi
     }
 
     /// <inheritdoc />
-    public Task<IScheduler> GetSchedulerAsync(string schedulerName, CancellationToken cancellationToken)
-        => _schedulers.GetOrAdd(schedulerName, CreateSchedulerAsync);
+    public async Task<IScheduler> GetSchedulerAsync(string schedulerName, CancellationToken cancellationToken)
+    {
+        var task = _schedulers.GetOrAdd(schedulerName, CreateSchedulerAsync);
+        try
+        {
+            return await task;
+        }
+        catch
+        {
+            // A faulted creation (DB down at the FIRST admin call) must not poison the
+            // cache until restart (audit A7) — evict so the next call retries fresh.
+            _schedulers.TryRemove(new KeyValuePair<string, Task<IScheduler>>(schedulerName, task));
+            throw;
+        }
+    }
 
     private async Task<IScheduler> CreateSchedulerAsync(string schedulerName)
     {

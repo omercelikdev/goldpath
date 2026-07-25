@@ -45,9 +45,38 @@ public class IdempotencyTests
             return Results.Ok(new { execution });
         });
         app.MapGet("/api/v1/orders", () => Results.Ok(new { listed = true }));
+        app.MapPost("/api/v1/orders/created", () => Results.Created("/api/v1/orders/42", new { id = 42 }));
 
         await app.StartAsync();
         return app;
+    }
+
+    [Fact]
+    public async Task A_replayed_created_keeps_its_location_header()
+    {
+        // Audit A7: the Location of a 201 is the one pointer the caller retried to get.
+        using var app = await StartAppAsync();
+        var client = app.GetTestClient();
+        app.Lifetime.ApplicationStopping.Register(() => { });
+
+        HttpRequestMessage Created(string key)
+        {
+            var request = new HttpRequestMessage(HttpMethod.Post, "/api/v1/orders/created")
+            {
+                Content = JsonContent.Create(new { name = "x" }),
+            };
+            request.Headers.Add(GoldpathHeaders.IdempotencyKey, key);
+            return request;
+        }
+
+        var first = await client.SendAsync(Created("loc-1"));
+        Assert.Equal(HttpStatusCode.Created, first.StatusCode);
+        Assert.Equal("/api/v1/orders/42", first.Headers.Location!.ToString());
+
+        var retry = await client.SendAsync(Created("loc-1"));
+        Assert.Equal(HttpStatusCode.Created, retry.StatusCode);
+        Assert.Equal("true", retry.Headers.GetValues(GoldpathIdempotencyMiddleware.ReplayHeader).Single());
+        Assert.Equal("/api/v1/orders/42", retry.Headers.Location!.ToString());   // survived the replay
     }
 
     private static HttpRequestMessage Request(string key, object body, string? tenant = null)
