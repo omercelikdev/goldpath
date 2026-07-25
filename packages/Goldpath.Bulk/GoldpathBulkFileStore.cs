@@ -79,7 +79,12 @@ public sealed class GoldpathBulkFileStore<TContext>
             await transaction.RollbackAsync(cancellationToken);
             db.ChangeTracker.Clear();
             var winner = await db.Set<GoldpathBulkFile>().AsNoTracking()
-                .FirstAsync(f => f.Sha256 == file.Sha256, cancellationToken);
+                .FirstOrDefaultAsync(f => f.Sha256 == file.Sha256, cancellationToken);
+            if (winner is null)
+            {
+                throw;   // not the dedup race — a real store failure must surface, not be masked
+            }
+
             return (winner, false);
         }
 
