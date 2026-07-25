@@ -29,7 +29,20 @@ public static class GoldpathAuthExtensions
 
         if (options.Strategy == GoldpathAuthStrategy.None)
         {
-            // Internal service behind mTLS/gateway: nothing is wired ON PURPOSE.
+            // Internal service behind mTLS/gateway: no AUTHENTICATION is wired ON PURPOSE —
+            // but the ops policies still register (audit A4): AdminSurfaceGuard requires
+            // them, and an unregistered policy answers 500 at request time instead of the
+            // honest 403. With no authentication there is no principal, no role, no pass:
+            // the admin floor stays fail-closed, it just refuses correctly now.
+            builder.Services.AddAuthorization(authz =>
+            {
+                authz.AddPolicy(GoldpathPolicies.Ops, policy => policy.RequireRole(options.OpsRole));
+                authz.AddPolicy(GoldpathPolicies.OpsAllTenants, policy => policy.RequireRole(options.OpsAllTenantsRole));
+            });
+            builder.Services
+                .AddAuthentication(GoldpathNoneAuthenticationHandler.SchemeName)
+                .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, GoldpathNoneAuthenticationHandler>(
+                    GoldpathNoneAuthenticationHandler.SchemeName, static _ => { });
             return builder;
         }
 
@@ -42,6 +55,16 @@ public static class GoldpathAuthExtensions
             authz.AddPolicy(GoldpathPolicies.Ops, policy => policy.RequireRole(options.OpsRole));
             authz.AddPolicy(GoldpathPolicies.OpsAllTenants, policy => policy.RequireRole(options.OpsAllTenantsRole));
         });
+
+        if (options.Strategy == GoldpathAuthStrategy.OpenId
+            && options.Audience is not { Length: > 0 }
+            && !options.AllowAnyAudience)
+        {
+            // Fail-closed (audit A3): a missing audience is a configuration decision,
+            // never a silent widening of who gets in — refuse at startup, teach the fix.
+            throw new InvalidOperationException(
+                "Goldpath:Auth:Audience is not set. Set it to this API's audience, or opt out EXPLICITLY with Goldpath:Auth:AllowAnyAudience=true (accepts any token the authority minted).");
+        }
 
         if (options.Strategy == GoldpathAuthStrategy.OpenId)
         {
@@ -57,6 +80,8 @@ public static class GoldpathAuthExtensions
                     }
                     else
                     {
+                        // Reachable only through the VISIBLE AllowAnyAudience opt-out —
+                        // the eager guard above already refused the silent path.
                         jwt.TokenValidationParameters.ValidateAudience = false;
                     }
 
@@ -100,7 +125,10 @@ public static class GoldpathAuthExtensions
         var options = app.ApplicationServices.GetRequiredService<GoldpathAuthOptions>();
         if (options.Strategy == GoldpathAuthStrategy.None)
         {
-            return app;
+            // A4: the deny-only scheme + authorization still enter the pipeline, so a
+            // guarded admin route answers 401/403 instead of failing at startup/request.
+            app.UseAuthentication();
+            return app.UseAuthorization();
         }
 
         app.UseAuthentication();

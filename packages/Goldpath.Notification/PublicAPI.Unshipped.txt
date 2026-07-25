@@ -3,3 +3,5 @@
 *REMOVED*Goldpath.GoldpathNotificationAdminService<TContext>.GetFailuresAsync(int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!
 Goldpath.GoldpathNotificationAdminService<TContext>.GetSuppressionsAsync(string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!
 Goldpath.GoldpathNotificationAdminService<TContext>.GetFailuresAsync(string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!
+Goldpath.GoldpathEmailOptions.AllowInsecureTransport.get -> bool
+Goldpath.GoldpathEmailOptions.AllowInsecureTransport.set -> void

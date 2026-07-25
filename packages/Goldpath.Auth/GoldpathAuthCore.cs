@@ -42,6 +42,13 @@ public sealed class GoldpathAuthOptions
     /// <summary>OIDC authority (the IdP's base URL); discovery does the rest.</summary>
     public string? Authority { get; set; }
 
+    /// <summary>
+    /// EXPLICIT opt-out of audience validation (audit A3): without an <c>Audience</c>,
+    /// startup fails unless this is true — accepting any token the authority minted must
+    /// be a visible decision, never a default.
+    /// </summary>
+    public bool AllowAnyAudience { get; set; }
+
     /// <summary>Expected audience; unset skips audience validation (single-audience IdPs).</summary>
     public string? Audience { get; set; }
 

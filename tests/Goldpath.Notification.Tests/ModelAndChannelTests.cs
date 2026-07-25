@@ -160,4 +160,19 @@ public class ModelAndChannelTests : IDisposable
             () => new GoldpathEmailChannel(options).SendAsync(message, CancellationToken.None));
         Assert.Contains("Goldpath:Notification:Email", email.Message, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public async Task Plaintext_smtp_is_an_explicit_optout_never_a_default()
+    {
+        var options = new GoldpathNotificationOptions();
+        options.Email(e => { e.Host = "smtp.local"; e.From = "noreply@goldpath.local"; });
+
+        Assert.True(options.EmailOptions.UseSsl);   // secure BY DEFAULT (audit A3)
+
+        options.Email(e => e.UseSsl = false);
+        var message = new GoldpathNotificationMessage(Guid.NewGuid(), "x@y.z", null, "b", [], "t", null, null);
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(
+            () => new GoldpathEmailChannel(options).SendAsync(message, CancellationToken.None));
+        Assert.Contains("AllowInsecureTransport", refused.Message, StringComparison.Ordinal);
+    }
 }

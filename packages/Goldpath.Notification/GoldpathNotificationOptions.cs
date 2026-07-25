@@ -225,8 +225,15 @@ public sealed class GoldpathEmailOptions
     /// <summary>SMTP port (587 submission default).</summary>
     public int Port { get; set; } = 587;
 
-    /// <summary>STARTTLS/SSL toggle (true outside dev).</summary>
-    public bool UseSsl { get; set; }
+    /// <summary>STARTTLS toggle — secure BY DEFAULT (audit A3); see <see cref="AllowInsecureTransport"/>.</summary>
+    public bool UseSsl { get; set; } = true;
+
+    /// <summary>
+    /// EXPLICIT opt-out for plaintext SMTP (dev relays like MailHog): with
+    /// <see cref="UseSsl"/> false and this false, the channel refuses to connect —
+    /// credentials never travel in the clear by accident.
+    /// </summary>
+    public bool AllowInsecureTransport { get; set; }
 
     /// <summary>SMTP user (empty = anonymous, dev relays).</summary>
     public string User { get; set; } = "";
