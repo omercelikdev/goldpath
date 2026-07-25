@@ -57,6 +57,10 @@ public sealed class NotificationTests : IAsyncLifetime
                 e.Host = _smtp.Hostname;
                 e.Port = _smtp.GetMappedPublicPort(25);
                 e.From = "noreply@goldpath.local";
+                // The dev-relay container speaks plaintext — the A3 contract makes that
+                // an EXPLICIT opt-in pair, exactly what an adopter writes for MailHog.
+                e.UseSsl = false;
+                e.AllowInsecureTransport = true;
             });
             notification.Webhook(w => w.Url = "http://127.0.0.1:9/refuses");   // port 9: the poisoned hook
             notification.AddTemplate("policy-renewal", t => t
