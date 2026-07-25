@@ -178,6 +178,34 @@ public class AdminServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task A2_tamper_hidden_behind_ErasedAt_is_caught()
+    {
+        var key = await ArchiveOneAsync();
+        Assert.True((await _admin.EraseAsync("Claim", key, "subject-x", "dpo", null, CancellationToken.None)).Ok);
+
+        // The audit's attack: a table-writer alters the document, re-stamps BOTH hashes
+        // and hides behind ErasedAt. Pre-A2, verification skipped erased rows entirely.
+        _fixture.Mutate(db =>
+        {
+            var entry = db.Set<GoldpathArchiveEntry>().Single();
+            entry.Document = entry.Document.Replace("***", "$$$", StringComparison.Ordinal);
+            entry.ContentHash = GoldpathArchiveEnvelope.ContentHash(
+                entry.SchemaVersion, entry.Definition, entry.AggregateKey, entry.Tenant, entry.DueAt, entry.Document);
+            entry.PreErasureContentHash = entry.ContentHash;   // even the retained hash is forged
+        });
+
+        using var scope = _fixture.Scope();
+        var findings = await _fixture.Engine.VerifySliceAsync(scope.ServiceProvider, _options.Archives[0], 1, 1, CancellationToken.None);
+        Assert.Contains(findings, f => f.Problem.Contains("sealed chain hash", StringComparison.Ordinal));
+
+        // Deleting the retained hash is no escape either — that is its own finding.
+        _fixture.Mutate(db => db.Set<GoldpathArchiveEntry>().Single().PreErasureContentHash = null);
+        using var scope2 = _fixture.Scope();
+        var findings2 = await _fixture.Engine.VerifySliceAsync(scope2.ServiceProvider, _options.Archives[0], 1, 1, CancellationToken.None);
+        Assert.Contains(findings2, f => f.Problem.Contains("no pre-erasure content hash", StringComparison.Ordinal));
+    }
+
+    [Fact]
     public async Task Erasure_refuses_without_the_dataprotection_module()
     {
         var key = await ArchiveOneAsync();
