@@ -198,7 +198,6 @@ Goldpath.GoldpathBulkAdminService<TContext>.GoldpathBulkAdminService(Goldpath.Go
 Goldpath.GoldpathBulkAdminService<TContext>.GetBatchAsync(System.Guid batchId, string? tenant, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathBulkBatchInfo?>!
 Goldpath.GoldpathBulkAdminService<TContext>.GetBatchesAsync(string? state, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkBatchInfo!>!>!
 Goldpath.GoldpathBulkAdminService<TContext>.GetDefinitionsAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkDefinitionStatus!>!>!
-Goldpath.GoldpathBulkAdminService<TContext>.GetErrorsAsync(System.Guid batchId, int afterRowNumber, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkRowError!>!>!
 Goldpath.GoldpathBulkAdminService<TContext>.RejectAsync(System.Guid batchId, string! actor, string? note, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathBulkAdminService<TContext>.UploadAsync(string! definition, System.IO.Stream! content, string! fileName, string? tenant, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathBulkBatchInfo!>!
 Goldpath.GoldpathBulkBatchInfo
@@ -251,3 +250,4 @@ Goldpath.GoldpathBulkDefinitionStatus.OldestAwaitingApprovalSeconds.get -> doubl
 Goldpath.GoldpathBulkDefinitionStatus.OldestAwaitingApprovalSeconds.init -> void
 static Goldpath.GoldpathBulkAdminEndpoints.MapGoldpathBulkAdmin<TContext>(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/bulk", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
 static Goldpath.GoldpathBulkMetrics.SetIntakeSnapshot(string! definition, System.Collections.Generic.IReadOnlyDictionary<string!, int>! batchesByState, double oldestAwaitingSeconds) -> void
+Goldpath.GoldpathBulkAdminService<TContext>.GetErrorsAsync(System.Guid batchId, string? tenant, int afterRowNumber, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkRowError!>!>!

@@ -38,3 +38,7 @@ static Goldpath.GoldpathAuthExtensions.AddGoldpathAuth<TBuilder>(this TBuilder b
 static Goldpath.GoldpathAuthExtensions.UseGoldpathAuth(this Microsoft.AspNetCore.Builder.IApplicationBuilder! app) -> Microsoft.AspNetCore.Builder.IApplicationBuilder!
 Goldpath.GoldpathAuthOptions.OpsRole.get -> string!
 Goldpath.GoldpathAuthOptions.OpsRole.set -> void
+Goldpath.GoldpathAuthOptions.OpsAllTenantsRole.get -> string!
+Goldpath.GoldpathAuthOptions.OpsAllTenantsRole.set -> void
+Goldpath.GoldpathAuthOptions.AllowAnyAudience.get -> bool
+Goldpath.GoldpathAuthOptions.AllowAnyAudience.set -> void
