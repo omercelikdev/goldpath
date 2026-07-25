@@ -1,8 +1,9 @@
 # RFC: Goldpath.Ai — the opt-in runtime AI module
 
-> Status: **v0.1 PROPOSED** (2026-07-25) — decision points D1–D4 await the owner.
-> Requires a constitutional companion: **ADR-0011 (proposed inside this RFC)** narrowing
-> ADR-0006 without breaking its spirit.
+> Status: **v1.0 ACCEPTED** (2026-07-26) — D1–D4 approved by Ömer as recommended:
+> D1 ADR-0011 adopted (docs/adr/ADR-0011) · D2 the four-capability cut stands, document
+> AI/RAG/ML serving stay OUT · D3 the tool registry ships ON when `features.ai` is on ·
+> D4 implementation opens AFTER the UI phase (U1–U4 first).
 
 ## 0. Why (and why NOT more)
 
@@ -98,7 +99,7 @@ stubbed) proving compile-time composition both ways.
 Module + analyzers + ops pack + GM shape green + this RFC's D-points resolved + ADR-0011
 committed + `ai-sdlc-status.md` gains the runtime row with honest statuses.
 
-## Decision points (Ömer)
+## Decision points (Ömer) — RESOLVED 2026-07-26, all as recommended
 
 - **D1** — Adopt ADR-0011 as scoped above (core stays clean; runtime AI only in the
   opt-in module)?
