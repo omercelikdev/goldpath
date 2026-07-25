@@ -26,7 +26,7 @@ if ! dotnet build --nologo -v quiet >"$LOG" 2>&1; then
 fi
 
 if command -v specdrift >/dev/null 2>&1; then
-  if ! specdrift drift --repo . --profile .specdrift/drift.yaml >"$LOG" 2>&1; then
+  if ! specdrift drift --repo . --profile .specdrift/drift.yaml --fail-on warn >"$LOG" 2>&1; then
     echo "stop-gate: manifest and repository disagree (specdrift drift):" >&2
     tail -n 30 "$LOG" >&2
     rm -f "$LOG"

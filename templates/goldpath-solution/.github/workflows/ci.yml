@@ -20,10 +20,11 @@ jobs:
         run: dotnet build -c Release --nologo
       - name: tests
         run: dotnet test -c Release --no-build --nologo
-      - name: spec drift (manifest and repository agree)
+      - name: spec lint (schema + rules + drift; embedded schema since 0.4.2)
         run: |
-          dotnet tool install -g specdrift --version 0.4.1
-          specdrift drift --repo . --profile .specdrift/drift.yaml
+          dotnet tool install -g specdrift --version 0.4.2
+          specdrift validate .goldpath/manifest.yaml --rules .specdrift/rules.yaml
+          specdrift drift --repo . --profile .specdrift/drift.yaml --fail-on warn
       - name: migrations match the model (goldpath db status)
         run: |
           dotnet tool restore

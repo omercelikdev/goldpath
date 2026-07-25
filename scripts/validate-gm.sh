@@ -62,7 +62,7 @@ echo "── spec-lint (specdrift: validate + drift)"
 # references are the exception, not the silent default). A local checkout is used only
 # via an explicit GOLDPATH_SPECDRIFT_SRC and announces itself — a green local run must
 # mean a green CI run.
-SPECDRIFT_VERSION=0.4.1
+SPECDRIFT_VERSION=0.4.2
 if [ -n "${GOLDPATH_SPECDRIFT_SRC:-}" ]; then
   echo "── spec-lint: using LOCAL specdrift checkout (GOLDPATH_SPECDRIFT_SRC=$GOLDPATH_SPECDRIFT_SRC) — not the $SPECDRIFT_VERSION pin"
   SPECDRIFT="dotnet run --project $GOLDPATH_SPECDRIFT_SRC/src/Specdrift --"

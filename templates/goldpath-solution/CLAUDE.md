@@ -23,7 +23,7 @@ clean `spec_validate` + `spec_drift` is not done.
 ## Guardrail hooks (`.claude/settings.json` — in-loop, unskippable)
 - Post-edit: touched `.cs` files are whitespace-formatted automatically.
 - Stop gate: the agent cannot end a turn with a red `dotnet build`; `specdrift drift`
-  runs too and blocks on error-level findings (install: `dotnet tool install -g specdrift`).
+  runs too and gates at WARN (`--fail-on warn`, install: `dotnet tool install -g specdrift`).
 Hooks live in `.claude/hooks/` — delete `settings.json` to opt out (not recommended).
 
 ## Run
