@@ -3,6 +3,40 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [0.1.0-preview.3] - 2026-07-25
+
+The security train — every actionable finding of the 2026-07-21 independent audit's
+"security & correctness" block, closed. Upgrade guide: `docs/upgrades/0.1.0-preview.3.md`
+(three behavioral breaks, each with its written opt-out/migration).
+
+### Security
+- **Admin surfaces are tenant-scoped (admin-contract revision R1, audit A1 — CRITICAL).**
+  On multi-tenant apps every admin read/verb scopes to the ambient tenant; crossing the
+  fence demands the new `goldpath-ops-all-tenants` policy and is logged with the actor.
+  Surfaces whose rows carry no tenant column (campaign; archival holds/erasures) demand
+  the privilege outright. Single-tenant apps unchanged. New analyzer `GP0904` flags an
+  endpoint taking a caller-supplied tenant without the `AdminTenantScope` seam.
+- **Erasure keeps the sealed hash (audit A2).** `PreErasureContentHash` preserves the
+  chain-sealed content hash through redaction — chain verification never skips erased
+  rows, and post-erasure tampering is now detectable.
+- **Two fail-open defaults closed (audit A3).** OpenId with an authority but no audience
+  refuses to start (`AllowAnyAudience=true` is the visible opt-out); SMTP is secure by
+  default (`UseSsl=true`; plaintext needs `AllowInsecureTransport=true`).
+
+### Fixed
+- **`Strategy=None` + guarded admin route answered 500 (audit A4)** — the None path now
+  registers the ops policies and a deny-only scheme; the admin floor refuses with an
+  honest 401/403.
+- `goldpath db init` commits the first contract; `goldpath db add` skips empty
+  migrations; `add worker` generates `launchSettings.json` (Aspire endpoint inference);
+  CWD-independent `db` verbs. (Merged after preview.2; first shipped here.)
+
+### Added
+- Guardrail hooks in the template (`.claude/settings.json`): post-edit whitespace format
+  and a stop gate — the agent cannot end a turn on a red build.
+- The edge-case checklist v0 inside `goldpath-test-gen` + the `breaker` agent.
+- Event-contracts idiom (per-app `<Name>.Contracts` classlib) taught by `add worker`.
+
 ## [0.1.0-preview.2] - 2026-07-13
 
 Upgrade guide: `docs/upgrades/0.1.0-preview.2.md` (no breaking changes).

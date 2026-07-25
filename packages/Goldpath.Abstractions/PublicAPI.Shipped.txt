@@ -55,3 +55,4 @@ static Goldpath.GoldpathAmbientTenant.Current.set -> void
 const Goldpath.GoldpathHeaders.ApiKey = "X-Goldpath-Api-Key" -> string!
 Goldpath.GoldpathPolicies
 const Goldpath.GoldpathPolicies.Ops = "goldpath-ops" -> string!
+const Goldpath.GoldpathPolicies.OpsAllTenants = "goldpath-ops-all-tenants" -> string!

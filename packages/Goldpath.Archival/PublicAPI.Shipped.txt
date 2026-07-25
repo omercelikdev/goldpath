@@ -194,3 +194,5 @@ static Goldpath.GoldpathArchiveEnvelope.ChainHash(string! contentHashAtAppend, s
 static Goldpath.GoldpathArchiveEnvelope.ContentHash(int schemaVersion, string! definition, string! key, string? tenant, System.DateTimeOffset dueAt, string! document) -> string!
 static Goldpath.GoldpathArchiveModelExtensions.AddGoldpathArchiveModel(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder) -> Microsoft.EntityFrameworkCore.ModelBuilder!
 static Goldpath.GoldpathDocumentRedactor.Redact(object! root, Goldpath.IGoldpathDataProtector! protector) -> int
+Goldpath.GoldpathArchiveEntry.PreErasureContentHash.get -> string?
+Goldpath.GoldpathArchiveEntry.PreErasureContentHash.set -> void
