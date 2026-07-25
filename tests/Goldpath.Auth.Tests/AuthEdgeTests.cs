@@ -42,17 +42,22 @@ public sealed class AuthEdgeTests
         }
 
         app.MapGet("/secure", () => "in");
+        app.MapGet("/ops", () => "ops").RequireAuthorization(GoldpathPolicies.Ops);
         await app.StartAsync();
         return app;
     }
 
     [Fact]
-    public async Task Strategy_none_wires_nothing_by_design()
+    public async Task Strategy_none_stays_open_but_the_ops_floor_refuses_cleanly()
     {
         using var app = await StartAsync(o => o.Strategy = GoldpathAuthStrategy.None);
-        var response = await app.GetTestClient().GetAsync("/secure");
+        var client = app.GetTestClient();
 
-        Assert.Equal(HttpStatusCode.OK, response.StatusCode);   // no fallback policy, no schemes
+        Assert.Equal(HttpStatusCode.OK, (await client.GetAsync("/secure")).StatusCode);   // no fallback policy
+
+        // A4: the guarded floor answers an honest 401 through the deny-only scheme —
+        // BEFORE this fix the unregistered policy crashed the request with a 500.
+        Assert.Equal(HttpStatusCode.Unauthorized, (await client.GetAsync("/ops")).StatusCode);
     }
 
     [Fact]
@@ -93,11 +98,22 @@ public sealed class AuthEdgeTests
     }
 
     [Fact]
-    public async Task Unset_audience_skips_audience_validation()
+    public async Task Any_audience_is_an_explicit_optout_never_a_default()
     {
+        // The old silent widening now refuses at startup (audit A3)...
+        var refused = await Assert.ThrowsAsync<InvalidOperationException>(() => StartAsync(o =>
+        {
+            o.Authority = "https://idp.local";
+            o.Audience = null;
+            o.RequireHttpsMetadata = false;
+        }));
+        Assert.Contains("AllowAnyAudience", refused.Message, StringComparison.Ordinal);
+
+        // ...and the opt-out is visible, spelled out, and still works.
         using var app = await StartAsync(o =>
         {
             o.Audience = null;
+            o.AllowAnyAudience = true;
             o.RequireHttpsMetadata = false;
         });
 
@@ -139,6 +155,7 @@ public sealed class AuthEdgeTests
         using var app = await StartAsync(o =>
         {
             o.Strategy = strategy;
+            o.Audience = TestIdp.Audience;
             o.RequireHttpsMetadata = false;
         }, mapOpenApi: true);
 

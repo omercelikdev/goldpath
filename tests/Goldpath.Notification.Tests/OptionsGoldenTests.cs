@@ -14,7 +14,8 @@ public class OptionsGoldenTests
         Assert.Equal(100, options.ChunkSize);
         Assert.Equal(TimeSpan.FromMinutes(5), options.StaleClaimAfter);
         Assert.Equal(587, options.EmailOptions.Port);
-        Assert.False(options.EmailOptions.UseSsl);
+        Assert.True(options.EmailOptions.UseSsl);            // secure BY DEFAULT since A3 (plaintext is an explicit opt-out)
+        Assert.False(options.EmailOptions.AllowInsecureTransport);
         Assert.Equal("", options.EmailOptions.Host);
         Assert.Equal("", options.EmailOptions.User);
         Assert.Equal("", options.EmailOptions.Password);

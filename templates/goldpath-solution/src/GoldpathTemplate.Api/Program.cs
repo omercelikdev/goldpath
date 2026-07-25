@@ -25,7 +25,7 @@ builder.AddGoldpathApiDefaults();
 //#if (UseApiKey)
 builder.AddGoldpathAuth(o => o.Strategy = GoldpathAuthStrategy.ApiKey);
 //#elif (UseAuth)
-builder.AddGoldpathAuth();   // OpenId: set Goldpath:Auth:Authority (+ Audience) in configuration
+builder.AddGoldpathAuth();   // OpenId: set Goldpath:Auth:Authority AND Audience in configuration (authority without audience refuses to start — A3)
 //#endif
 // goldpath:features registrations — the drift profile is the source of these rows
 //#if (UseMultiTenancy)

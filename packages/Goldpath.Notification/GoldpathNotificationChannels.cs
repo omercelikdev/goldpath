@@ -28,6 +28,13 @@ public sealed class GoldpathEmailChannel : IGoldpathNotificationChannel
                 "The email channel needs Goldpath:Notification:Email Host and From — configuration, not code (see the notification README).");
         }
 
+        if (!_options.UseSsl && !_options.AllowInsecureTransport)
+        {
+            // Fail-closed (audit A3): plaintext SMTP is a visible decision, never a default.
+            throw new InvalidOperationException(
+                "Goldpath:Notification:Email:UseSsl is false without AllowInsecureTransport=true — plaintext SMTP must be opted into explicitly (dev relays only).");
+        }
+
         var mime = BuildMessage(message);
         using var client = new SmtpClient();
         await client.ConnectAsync(_options.Host, _options.Port,
