@@ -29,11 +29,17 @@ public sealed class CorrelationMiddleware
         _logger = logger;
     }
 
+    // The inbound id goes into a response header and every log scope — clamp it (audit
+    // A7: log-injection surface): sane length, token-safe characters, nothing else.
+    private static bool IsSafeCorrelationId(string? candidate)
+        => candidate is { Length: > 0 and <= 128 }
+            && candidate.All(static c => char.IsAsciiLetterOrDigit(c) || c is '-' or '_' or '.' or ':');
+
     /// <summary>Processes the request.</summary>
     public async Task InvokeAsync(HttpContext context)
     {
         string? inbound = context.Request.Headers[GoldpathHeaders.CorrelationId];
-        var correlationId = _options.Correlation.AcceptInbound && !string.IsNullOrWhiteSpace(inbound)
+        var correlationId = _options.Correlation.AcceptInbound && IsSafeCorrelationId(inbound)
             ? inbound!
             : Activity.Current?.TraceId.ToString() ?? Guid.NewGuid().ToString("n");
 

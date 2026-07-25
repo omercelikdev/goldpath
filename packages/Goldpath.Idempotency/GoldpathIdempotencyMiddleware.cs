@@ -94,6 +94,7 @@ public sealed class GoldpathIdempotencyMiddleware
                     StatusCode = context.Response.StatusCode,
                     ContentType = context.Response.ContentType,
                     BodyBase64 = Convert.ToBase64String(buffer.ToArray()),
+                    Location = context.Response.Headers.Location.Count > 0 ? context.Response.Headers.Location.ToString() : null,
                 };
                 await operation.CompleteAsync(stored, TimeSpan.FromHours(_options.TtlHours), CancellationToken.None);
             }
@@ -117,6 +118,11 @@ public sealed class GoldpathIdempotencyMiddleware
     {
         context.Response.StatusCode = stored.StatusCode;
         context.Response.ContentType = stored.ContentType;
+        if (stored.Location is { Length: > 0 } location)
+        {
+            context.Response.Headers.Location = location;
+        }
+
         context.Response.Headers[ReplayHeader] = "true";
         var body = Convert.FromBase64String(stored.BodyBase64);
         await context.Response.Body.WriteAsync(body, context.RequestAborted);
@@ -147,4 +153,10 @@ public sealed record StoredHttpResponse
 
     /// <summary>The original body, base64-encoded.</summary>
     public string BodyBase64 { get; init; } = "";
+
+    /// <summary>
+    /// The original Location header — a replayed `201 Created` without it would strip
+    /// the one pointer the caller retried to obtain (audit A7).
+    /// </summary>
+    public string? Location { get; init; }
 }
