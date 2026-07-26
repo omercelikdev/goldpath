@@ -20,3 +20,12 @@ Spec-derived tests added by this run (all green, implementation-blind):
 `PaymentListPagingContractTests` — cursor walk termination (`nextCursor: null` = end),
 exactly-once page coverage across sizes, applied-size reporting, tenant fencing,
 the closed 5-state status set.
+
+
+## Root fix landed (2026-07-26)
+G1/G2's root cause — the `[HttpEndpoint]` dispatcher hiding the request side from OpenAPI
+inference — is FIXED at the seam: Mediant 1.4.0 stamps request metadata + `Accepts`, and
+`Goldpath.ApiDefaults` projects query-bound properties into documented parameters (proof:
+`ContractExportTests` in the goldpath repo). CorPay's own committed contract re-exports
+when this sample moves to the next published train (preview.4) — the gaps above stay
+listed until that re-export makes them false.

@@ -38,7 +38,11 @@ public static class GoldpathApiDefaultsExtensions
         });
 
 #if NET10_0_OR_GREATER
-        builder.Services.AddOpenApi("v1");
+        // The request side of the exported contract: Mediant's generic dispatcher hides
+        // query-bound request properties from framework inference, so the mapper's
+        // metadata (Mediant 1.4.0) is projected into documented parameters here.
+        builder.Services.AddOpenApi("v1", openApi =>
+            openApi.AddOperationTransformer(MediantQueryParameterTransformer.TransformAsync));
 #endif
         return builder;
     }

@@ -72,8 +72,9 @@ plans it for the Insurance sample).
 1. **Proof runs** — DONE for `goldpath-test-gen` + `breaker` (CorPay, 2026-07-23; see
    the Test row). Remaining: `goldpath-manifest` and the `add feature` CLI verb
    distribute to the next samples per `coverage-matrix.md`. Follow-ups the run itself
-   surfaced: the exported OpenAPI misses request bodies/params (7 gaps in
-   `SPEC-GAPS.md` — contract-export completeness is an agenda item), and the CorPay
+   surfaced: contract-export completeness is FIXED at the seam (Mediant 1.4.0 stamps
+   request metadata + Accepts; ApiDefaults projects query properties into documented
+   parameters — `ContractExportTests`); CorPay's re-export rides the next train. And the CorPay
    SPEC0203 noise is DIAGNOSED as wiring-row OR-semantics (issue #11's written trigger
    fired 2026-07-24); LANDED in specdrift 0.4.2 (OR-semantics + `--fail-on` + embedded schema).
 2. **Hook set in the template** — DONE 2026-07-23 (`.claude/settings.json` +
