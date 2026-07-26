@@ -30,7 +30,8 @@ CONNECTION="Host=localhost;Port=55432;Database=smoke;Username=postgres;Password=
 until docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
 
 echo "── the app (real packages, real Quartz, the FROZEN admin surface)"
-dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- "$CONNECTION" --console "$SERVICE_URL" > /tmp/console-smoke-host.log 2>&1 &
+GOLDPATH_CONSOLE_ORIGIN="$CONSOLE_URL" \
+  dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- "$CONNECTION" --console "$SERVICE_URL" > /tmp/console-smoke-host.log 2>&1 &
 HOST_PID=$!
 for _ in $(seq 1 60); do
   grep -q "CONSOLEHOST-READY" /tmp/console-smoke-host.log && break

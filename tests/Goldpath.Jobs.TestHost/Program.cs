@@ -78,8 +78,12 @@ static async Task RunConsoleHostAsync(string connectionString, string url)
     var web = WebApplication.CreateBuilder();
     web.Configuration["ConnectionStrings:jobsdb"] = connectionString;
     web.Services.AddDbContext<ClusterDb>(o => o.UseNpgsql(connectionString));
+    // The console origin is NAMED, never reflected: reflected-origin + AllowCredentials
+    // is the classic CORS hole (CWE-942), and a test host is still a worked example
+    // someone will copy (review R4 on the U2 gate PR).
+    var consoleOrigin = Environment.GetEnvironmentVariable("GOLDPATH_CONSOLE_ORIGIN") ?? "http://localhost:5201";
     web.Services.AddCors(cors => cors.AddDefaultPolicy(policy => policy
-        .SetIsOriginAllowed(_ => true).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+        .WithOrigins(consoleOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
     web.AddGoldpathJobs<WebApplicationBuilder, ClusterDb>(jobs =>
     {
         jobs.SchedulerName = "console-smoke";
