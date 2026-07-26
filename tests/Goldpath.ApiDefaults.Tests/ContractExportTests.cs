@@ -20,13 +20,39 @@ namespace Goldpath.Tests;
 /// </summary>
 public class ContractExportTests
 {
-    /// <summary>The probe list query — cursor/size/flag should become documented query parameters.</summary>
+    /// <summary>Probe lifecycle states — the enum must travel as a STRING schema.</summary>
+    public enum ProbeState
+    {
+        Active,
+        Archived,
+    }
+
+    /// <summary>The probe list query — cursor/size/flag/state become documented query parameters.</summary>
     [HttpEndpoint("GET", "/api/v1/probes")]
     public record ListProbesQuery : IQuery<Result<string>>
     {
         public string? Cursor { get; init; }
         public int Size { get; init; } = 50;
         public bool IncludeArchived { get; init; }
+        public ProbeState? State { get; init; }
+        public required string Owner { get; init; }
+
+        /// <summary>Computed — never a wire input, must be SKIPPED.</summary>
+        public string Summary => $"{Cursor}/{Size}";
+    }
+
+    /// <summary>Mixed route+query: the route-bound id keeps its slot, verbose joins as query.</summary>
+    [HttpEndpoint("GET", "/api/v1/probes/{id}")]
+    public record GetProbeQuery : IQuery<Result<string>>
+    {
+        public long Id { get; init; }
+        public bool Verbose { get; init; }
+    }
+
+    public sealed class GetProbeHandler : IQueryHandler<GetProbeQuery, Result<string>>
+    {
+        public ValueTask<Result<string>> Handle(GetProbeQuery request, CancellationToken cancellationToken)
+            => ValueTask.FromResult(Result.Success("one"));
     }
 
     /// <summary>The probe submit command — its schema should become the requestBody.</summary>
@@ -76,6 +102,29 @@ public class ContractExportTests
         var size = parameters.EnumerateArray().Single(p => p.GetProperty("name").GetString() == "size");
         Assert.Equal("query", size.GetProperty("in").GetString());
         Assert.Contains("integer", size.GetProperty("schema").GetProperty("type").ToString());
+
+        // Enums travel as STRING schemas with their names enumerated.
+        var state = parameters.EnumerateArray().Single(p => p.GetProperty("name").GetString() == "state");
+        Assert.Contains("string", state.GetProperty("schema").GetProperty("type").ToString());
+        Assert.Contains("Archived", state.GetProperty("schema").GetProperty("enum").ToString());
+
+        // `required` members document as required; computed members never appear.
+        var owner = parameters.EnumerateArray().Single(p => p.GetProperty("name").GetString() == "owner");
+        Assert.True(owner.GetProperty("required").GetBoolean());
+        Assert.DoesNotContain("summary", names);
+    }
+
+    [Fact]
+    public async Task Route_bound_parameters_keep_their_slot()
+    {
+        var doc = await ExportedDocumentAsync();
+        var get = doc.GetProperty("paths").GetProperty("/api/v1/probes/{id}").GetProperty("get");
+        var parameters = get.GetProperty("parameters").EnumerateArray().ToList();
+
+        var id = Assert.Single(parameters, p => p.GetProperty("name").GetString() == "id");
+        Assert.Equal("path", id.GetProperty("in").GetString());   // exactly one id, and it is the ROUTE one
+        Assert.Contains(parameters, p => p.GetProperty("name").GetString() == "verbose"
+            && p.GetProperty("in").GetString() == "query");
     }
 
     [Fact]

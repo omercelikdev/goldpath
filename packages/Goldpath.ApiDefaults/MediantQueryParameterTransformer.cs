@@ -1,5 +1,6 @@
 #if NET10_0_OR_GREATER
 using System.Reflection;
+using System.Runtime.CompilerServices;
 using System.Text.Json;
 using Mediant.AspNetCore.Mapping;
 using Microsoft.AspNetCore.OpenApi;
@@ -30,6 +31,16 @@ internal static class MediantQueryParameterTransformer
         var taken = new HashSet<string>(
             operation.Parameters.Select(p => p.Name ?? string.Empty), StringComparer.OrdinalIgnoreCase);
 
+        // The dispatcher hides EVERYTHING from inference — including path parameters, so
+        // route-template tokens are resolved here too ({id:long} -> "id"), documented as
+        // path (always required); the rest of the request's properties become query.
+        var routeTokens = new HashSet<string>(
+            (context.Description.RelativePath ?? string.Empty)
+                .Split('/', StringSplitOptions.RemoveEmptyEntries)
+                .Where(static segment => segment.StartsWith('{') && segment.EndsWith('}'))
+                .Select(static segment => segment[1..^1].Split(':')[0]),
+            StringComparer.OrdinalIgnoreCase);
+
         foreach (var property in metadata.RequestType.GetProperties(BindingFlags.Public | BindingFlags.Instance))
         {
             if (!property.CanWrite && property.SetMethod is null)
@@ -40,14 +51,15 @@ internal static class MediantQueryParameterTransformer
             var name = JsonNamingPolicy.CamelCase.ConvertName(property.Name);
             if (!taken.Add(name))
             {
-                continue;   // route-bound parameters keep their slot
+                continue;   // already documented (framework-inferred) parameters keep their slot
             }
 
+            var isRoute = routeTokens.Contains(name);
             operation.Parameters.Add(new OpenApiParameter
             {
                 Name = name,
-                In = ParameterLocation.Query,
-                Required = false,   // query-bound request members always have defaults
+                In = isRoute ? ParameterLocation.Path : ParameterLocation.Query,
+                Required = isRoute || property.GetCustomAttribute<RequiredMemberAttribute>() is not null,
                 Schema = SchemaFor(property.PropertyType),
             });
         }
