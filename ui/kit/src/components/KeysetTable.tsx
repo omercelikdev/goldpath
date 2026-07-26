@@ -1,4 +1,5 @@
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+import { Banner } from "./Banner";
 
 /** One keyset page — `nextCursor: null` means the end (the frozen paging contract). */
 export interface KeysetPage<T> {
@@ -96,14 +97,16 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
       )}
 
       {state === "error" && (
-        <div role="alert" className="my-3 rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger">
-          The page could not be loaded.
-          <button
-            className="ml-3 rounded-md border border-border bg-background px-2 py-0.5 text-xs hover:bg-accent"
-            onClick={() => void fetchPage(rows.length === 0 ? null : cursor, rows.length === 0)}
-          >
-            retry
-          </button>
+        <div className="my-3">
+          <Banner tone="danger">
+            The page could not be loaded.
+            <button
+              className="ml-3 rounded-md border border-border bg-background px-2 py-0.5 text-xs hover:bg-accent"
+              onClick={() => void fetchPage(rows.length === 0 ? null : cursor, rows.length === 0)}
+            >
+              retry
+            </button>
+          </Banner>
         </div>
       )}
 

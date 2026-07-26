@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppShell } from "@goldpath/kit";
+import { AppShell, Banner } from "@goldpath/kit";
 import type { ShellNavItem } from "@goldpath/kit";
 import { AdminClient, MODULES, type ModuleName } from "./adminClient";
 import { RunConsole } from "./RunConsole";
@@ -72,9 +72,9 @@ export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: C
       )}
 
       {capabilities?.[section] === "forbidden" && (
-        <div role="alert" className="rounded-md border border-warning-border bg-warning-bg px-3 py-2 text-sm text-warning">
+        <Banner tone="warning">
           {SECTION_LABEL[section]} exists on this service, but your account lacks the ops role for it.
-        </div>
+        </Banner>
       )}
 
       {capabilities?.[section] === "present" && section === "jobs" && (
