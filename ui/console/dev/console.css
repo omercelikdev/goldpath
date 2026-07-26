@@ -1,0 +1,5 @@
+/* The console's stylesheet: the kit's tokens plus the source globs Tailwind must scan
+   (the kit ships the tokens; the classes live in BOTH packages). */
+@import "../../kit/src/tokens/tokens.css";
+@source "../src";
+@source "../../kit/src";

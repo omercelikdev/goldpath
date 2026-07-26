@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { Banner } from "./Banner";
 import type { VerbOutcome } from "../adminResult";
 
 export interface VerbButtonProps {
@@ -71,24 +72,20 @@ export function VerbButton({ label, confirm, execute, onDone, destructive = fals
       </button>
 
       {phase.at === "settled" && phase.outcome.kind === "ok" && (
-        <span role="status" className="rounded-md border border-success-border bg-success-bg px-2 py-0.5 text-xs text-success">
-          {phase.outcome.message}
-        </span>
+        <Banner tone="success" live="status" dense>{phase.outcome.message}</Banner>
       )}
 
       {phase.at === "settled" && phase.outcome.kind === "refused" && (
         // The refusal surface: the envelope's message VERBATIM — it teaches the fix.
-        <span role="alert" className="rounded-md border border-danger-border bg-danger-bg px-2 py-0.5 text-xs text-danger">
-          {phase.outcome.message}
-        </span>
+        <Banner tone="danger" dense>{phase.outcome.message}</Banner>
       )}
 
       {phase.at === "settled" && phase.outcome.kind === "error" && (
-        <span role="alert" className="rounded-md border border-warning-border bg-warning-bg px-2 py-0.5 text-xs text-warning">
+        <Banner tone="warning" dense>
           {phase.outcome.status === 0
             ? "the request did not reach the server — the verb may not have run"
             : `unexpected ${phase.outcome.status} — check the service logs`}
-        </span>
+        </Banner>
       )}
     </span>
   );

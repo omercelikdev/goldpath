@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { KeysetTable, RunProgress, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, KeysetTable, RunProgress, StateBadge, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type { AdminClient, FleetInfo, JobInfo, RunDetail, RunSummary } from "./adminClient";
 
@@ -84,11 +84,7 @@ export function RunConsole({ client, now }: RunConsoleProps) {
 
   return (
     <div data-testid="run-console" className="space-y-6">
-      {error && (
-        <div role="alert" className="rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger">
-          {error}
-        </div>
-      )}
+      {error && <Banner tone="danger">{error}</Banner>}
 
       <section>
         <h2 className="mb-2 text-sm font-medium text-muted-foreground">Fleets</h2>
