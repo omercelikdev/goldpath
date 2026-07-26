@@ -17,13 +17,13 @@ const run = (over: Partial<RunSummary> = {}): RunSummary => ({
   ...over,
 });
 
+// The contract's real shape: a nested record with chunk COUNTS per status.
 const detail = (over: Partial<RunDetail> = {}): RunDetail => ({
-  ...run(),
-  chunks: [
-    { index: 0, status: "Completed", attempts: 1 },
-    { index: 1, status: "Failed", attempts: 3 },
+  run: run(),
+  chunksByStatus: { Completed: 9, Failed: 1 },
+  openFailures: [
+    { id: 1, runId: "run-9f21", chunkIndex: 1, itemKey: "ORD-77", reason: "bank refused", failedAt: "2026-07-26T10:04:00Z" },
   ],
-  failures: [{ itemKey: "ORD-77", reason: "bank refused", chunkIndex: 1 }],
   ...over,
 });
 
@@ -78,8 +78,8 @@ describe("the run console (console RFC §2 — a client of the frozen contract)"
     await userEvent.click(await screen.findByRole("button", { name: "run-9f21" }));
 
     const panel = await screen.findByTestId("run-detail");
-    expect(panel).toHaveTextContent("0:Completed");
-    expect(panel).toHaveTextContent("1:Failed");
+    expect(panel).toHaveTextContent("Completed: 9");
+    expect(panel).toHaveTextContent("Failed: 1");
     expect(panel).toHaveTextContent("ORD-77");
     expect(panel).toHaveTextContent("bank refused");
   });
@@ -108,7 +108,7 @@ describe("the run console (console RFC §2 — a client of the frozen contract)"
   });
 
   it("replay-items appears only when the repair queue has something to replay", async () => {
-    const { client: api } = client({ run: detail({ failures: [] }) });
+    const { client: api } = client({ run: detail({ openFailures: [] }) });
     render(<RunConsole client={api} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "run-9f21" }));
