@@ -122,8 +122,13 @@ public sealed class JobsClusterTests : IAsyncLifetime
             var admin = management.Services.GetRequiredService<GoldpathJobsAdminService<ClusterDb>>();
 
             // D9 zero-config discovery: the fleet APPEARS because the executor exists.
+            // Wait for the WHOLE precondition — jobs are visible as soon as they are
+            // scheduled, but a node row only exists after the executor's first Quartz
+            // check-in, so waiting on JobCount alone races that window (CI flake, the
+            // same shape as the chaining wait fixed on 2026-07-25).
             await WaitUntilAsync(async () =>
-                (await admin.GetFleetsAsync(timeout.Token)).Any(f => f.SchedulerName == "it-cluster" && f.JobCount >= 2), timeout.Token);
+                (await admin.GetFleetsAsync(timeout.Token))
+                    .Any(f => f.SchedulerName == "it-cluster" && f.JobCount >= 2 && f.Nodes.Count > 0), timeout.Token);
             var fleet = (await admin.GetFleetsAsync(timeout.Token)).Single(f => f.SchedulerName == "it-cluster");
             Assert.NotEmpty(fleet.Nodes);   // the executor checks in
 
