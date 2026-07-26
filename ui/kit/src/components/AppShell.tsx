@@ -56,7 +56,14 @@ export function AppShell({
         data-collapsed={collapsed}
         className={`shrink-0 bg-app transition-[width] duration-300 ${collapsed ? "w-[74px]" : "w-[252px]"}`}
       >
-        <nav aria-label="console sections" className="flex h-full flex-col gap-1 p-3">
+        {/* The rail scrolls INDEPENDENTLY: a console composed of many capability panels
+            (console RFC §3's cross-service registry) must never clip its own nav inside
+            the frame's overflow-hidden — review R1 on this PR. */}
+        <nav
+          data-testid="shell-rail"
+          aria-label="console sections"
+          className="scroll-area flex h-full flex-col gap-1 overflow-y-auto p-3"
+        >
           <div className="flex items-center justify-between px-2 py-3">
             {!collapsed && <span className="truncate text-sm font-semibold">{title}</span>}
             {onToggleCollapsed && (

@@ -94,6 +94,16 @@ describe("the app shell (ui-standard-v1 §3 — the surface scrolls, never the p
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
+  it("the RAIL scrolls on its own once many capabilities are composed", () => {
+    const many = Array.from({ length: 24 }, (_, i) => nav({ id: `cap-${i}`, label: `Capability ${i}` }));
+    render(<AppShell title="CorPay" nav={many} activeId="cap-0"><p>c</p></AppShell>);
+
+    // The frame stays put, but the rail must not clip what it was given.
+    expect(screen.getByTestId("app-shell").className).toContain("overflow-hidden");
+    expect(screen.getByTestId("shell-rail").className).toContain("overflow-y-auto");
+    expect(screen.getByRole("button", { name: "Capability 23" })).toBeInTheDocument();
+  });
+
   it("the footer learns the collapsed state so it can shrink with the rail", () => {
     const footer = (collapsed: boolean) => <span>{collapsed ? "T" : "theme"}</span>;
     const { rerender } = render(
