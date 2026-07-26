@@ -187,8 +187,10 @@ export function RunConsole({ client, now }: RunConsoleProps) {
               {selectedRun.failures.length > 0 && (
                 <VerbButton
                   label="replay-items"
-                  confirm={`Replay ${selectedRun.failures.length} repair items?`}
-                  execute={() => asOutcome(client.replayItems(selectedRun.id, selectedRun.failures.map((f) => f.itemKey)))}
+                  // The verb redrives ALL open items; the listed failures are a capped
+                  // VIEW, so a count here would understate what the operator triggers.
+                  confirm="Replay all open repair items of this run?"
+                  execute={() => asOutcome(client.replayItems(selectedRun.id))}
                   onDone={refresh}
                 />
               )}
@@ -211,7 +213,7 @@ export function RunConsole({ client, now }: RunConsoleProps) {
           </div>
 
           <h3 className="mb-1 mt-4 text-xs text-muted-foreground">
-            Repair queue{selectedRun.failures.length === 0 ? " — empty" : ` (${selectedRun.failures.length})`}
+            Repair queue{selectedRun.failures.length === 0 ? " — empty" : ` (${selectedRun.failures.length} shown)`}
           </h3>
           <ul className="space-y-1">
             {selectedRun.failures.map((failure) => (

@@ -168,7 +168,12 @@ export class AdminClient {
     return this.verb(`/goldpath/admin/jobs/runs/${encodeURIComponent(runId)}/rerun`);
   }
 
-  replayItems(runId: string, itemKeys: string[]): Promise<AdminResult> {
-    return this.verb(`/goldpath/admin/jobs/runs/${encodeURIComponent(runId)}/replay-items`, { itemKeys });
+  /**
+   * Redrives EVERY open repair item of the run — the frozen verb takes no body and
+   * scopes itself server-side (`RedrivenAt == null`). The console must not pretend to
+   * select items it cannot select (review R1 on the U2 slice-1 PR).
+   */
+  replayItems(runId: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/jobs/runs/${encodeURIComponent(runId)}/replay-items`);
   }
 }

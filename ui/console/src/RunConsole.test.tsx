@@ -36,14 +36,14 @@ interface Routes {
 }
 
 function client(routes: Routes) {
-  const posted: string[] = [];
+  const posted: { url: string; body: BodyInit | null | undefined }[] = [];
   const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
     const json = (body: unknown, status = 200) =>
       new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
 
     if (init?.method === "POST") {
-      posted.push(url);
+      posted.push({ url, body: init.body });
       const verb = routes.verb ?? { status: 200, body: { ok: true, message: "done" } };
       return json(verb.body, verb.status);
     }
@@ -92,7 +92,7 @@ describe("the run console (console RFC §2 — a client of the frozen contract)"
     await userEvent.click(screen.getByRole("alertdialog").querySelector("button")!);
 
     await waitFor(() => expect(posted).toHaveLength(1));
-    expect(posted[0]).toContain("/goldpath/admin/jobs/fleets/it-cluster/jobs/eod-reconciliation/trigger");
+    expect(posted[0].url).toContain("/goldpath/admin/jobs/fleets/it-cluster/jobs/eod-reconciliation/trigger");
   });
 
   it("a refusal surfaces verbatim — the console never paraphrases the server", async () => {
@@ -118,16 +118,21 @@ describe("the run console (console RFC §2 — a client of the frozen contract)"
     expect(screen.getByText(/Repair queue — empty/)).toBeInTheDocument();
   });
 
-  it("replaying posts every repair item's key on the frozen route", async () => {
+  it("replaying posts the frozen route with NO body — the server scopes it, not the UI", async () => {
     const { client: api, posted } = client({});
     render(<RunConsole client={api} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "run-9f21" }));
     await userEvent.click(await screen.findByRole("button", { name: "replay-items" }));
-    await userEvent.click(screen.getByRole("alertdialog").querySelector("button")!);
+
+    // The copy must not promise a scoped replay the server does not perform.
+    const dialog = screen.getByRole("alertdialog");
+    expect(dialog).toHaveTextContent(/Replay all open repair items/);
+    await userEvent.click(dialog.querySelector("button")!);
 
     await waitFor(() => expect(posted).toHaveLength(1));
-    expect(posted[0]).toContain("/goldpath/admin/jobs/runs/run-9f21/replay-items");
+    expect(posted[0].url).toContain("/goldpath/admin/jobs/runs/run-9f21/replay-items");
+    expect(posted[0].body).toBeUndefined();   // no body: the server scopes the redrive
   });
 
   it("a fleet list that will not load says so instead of showing an empty console", async () => {
