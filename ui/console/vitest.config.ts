@@ -11,5 +11,7 @@ export default defineConfig({
     environment: "jsdom",
     globals: true,
     setupFiles: ["./src/test-setup.ts"],
+    // The e2e suite belongs to Playwright (`pnpm e2e`); vitest owns src/ only.
+    include: ["src/**/*.{test,spec}.{ts,tsx}"],
   },
 });

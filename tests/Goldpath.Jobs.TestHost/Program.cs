@@ -3,6 +3,8 @@
 // gracefully — a kill-9 needs a process). Usage:
 //   Goldpath.Jobs.TestHost <connectionString> [--trigger]            (jobs cluster mode)
 //   Goldpath.Jobs.TestHost <connectionString> --bulk --fleet <name>  (bulk executor mode)
+//   Goldpath.Jobs.TestHost <connectionString> --console <url>         (console smoke mode:
+//       a REAL Goldpath web app serving the FROZEN admin surface for the U2 Playwright gate)
 using Goldpath;
 using Goldpath.Jobs.TestHost;
 using Microsoft.EntityFrameworkCore;
@@ -12,7 +14,14 @@ using Quartz;
 
 var connectionString = args[0];
 var bulkMode = args.Contains("--bulk");
+var consoleMode = args.Contains("--console");
 var fleet = args.Contains("--fleet") ? args[Array.IndexOf(args, "--fleet") + 1] : "it-cluster";
+
+if (consoleMode)
+{
+    await RunConsoleHostAsync(connectionString, args[Array.IndexOf(args, "--console") + 1]);
+    return;
+}
 
 var builder = Host.CreateApplicationBuilder();
 builder.Configuration["ConnectionStrings:jobsdb"] = connectionString;
@@ -59,6 +68,46 @@ if (args.Contains("--trigger"))
 }
 
 await host.WaitForShutdownAsync();
+
+// The console smoke's service: a REAL Goldpath app (composed from the packages, backed by
+// real Postgres + Quartz) whose admin surface the console drives over real HTTP. The ops
+// policy is opted OUT explicitly here — the auth floor has its own proofs (H2/A3/A4); this
+// host exists to prove the CONSOLE, so it must not need an IdP to do it.
+static async Task RunConsoleHostAsync(string connectionString, string url)
+{
+    var web = WebApplication.CreateBuilder();
+    web.Configuration["ConnectionStrings:jobsdb"] = connectionString;
+    web.Services.AddDbContext<ClusterDb>(o => o.UseNpgsql(connectionString));
+    // The console origin is NAMED, never reflected: reflected-origin + AllowCredentials
+    // is the classic CORS hole (CWE-942), and a test host is still a worked example
+    // someone will copy (review R4 on the U2 gate PR).
+    var consoleOrigin = Environment.GetEnvironmentVariable("GOLDPATH_CONSOLE_ORIGIN") ?? "http://localhost:5201";
+    web.Services.AddCors(cors => cors.AddDefaultPolicy(policy => policy
+        .WithOrigins(consoleOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+    web.AddGoldpathJobs<WebApplicationBuilder, ClusterDb>(jobs =>
+    {
+        jobs.SchedulerName = "console-smoke";
+        jobs.ConnectionName = "jobsdb";
+        jobs.CheckinInterval = TimeSpan.FromSeconds(1);
+        jobs.AddJob<SmokeJob>();
+    });
+
+    var app = web.Build();
+
+    // The smoke owns its database: EnsureCreated provisions BOTH the Goldpath tables and
+    // the Quartz schema the model maps, so the script needs no migration step.
+    using (var scope = app.Services.CreateScope())
+    {
+        await scope.ServiceProvider.GetRequiredService<ClusterDb>().Database.EnsureCreatedAsync();
+    }
+
+    app.Urls.Add(url);
+    app.UseCors();
+    app.MapGoldpathJobsAdmin<ClusterDb>(exposeUnsecured: true);
+    await app.StartAsync();
+    Console.WriteLine("CONSOLEHOST-READY");
+    await app.WaitForShutdownAsync();
+}
 
 namespace Goldpath.Jobs.TestHost
 {
@@ -129,6 +178,30 @@ namespace Goldpath.Jobs.TestHost
             db.Sink.Add(new SinkEntry { JobName = nameof(SlowClusterJob), ChunkIndex = chunk.Index, Instance = context.InstanceName });
             await db.SaveChangesAsync(cancellationToken);
             await Task.Delay(TimeSpan.FromMilliseconds(250), cancellationToken);
+        }
+    }
+
+    /// <summary>
+    /// The console smoke's job: four chunks, one of which reports an item failure — so a
+    /// single trigger produces a run the console can watch complete AND a repair queue it
+    /// can replay. Nothing is faked: the engine writes the rows the console reads.
+    /// </summary>
+    public sealed class SmokeJob : IGoldpathJob
+    {
+        public Task<GoldpathJobPlan> PlanAsync(GoldpathJobContext context, CancellationToken cancellationToken)
+            => Task.FromResult(GoldpathJobPlanner.ByRange(4, 1));
+
+        public async Task ExecuteChunkAsync(GoldpathJobChunk chunk, GoldpathJobContext context, CancellationToken cancellationToken)
+        {
+            if (chunk.Index == 2)
+            {
+                chunk.ReportItemFailure($"ORD-{chunk.Index}7", "the bank refused this instruction");
+            }
+
+            var db = context.Services.GetRequiredService<ClusterDb>();
+            db.Sink.Add(new SinkEntry { JobName = nameof(SmokeJob), ChunkIndex = chunk.Index, Instance = context.InstanceName });
+            await db.SaveChangesAsync(cancellationToken);
+            await Task.Delay(TimeSpan.FromMilliseconds(150), cancellationToken);
         }
     }
 

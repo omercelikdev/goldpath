@@ -72,7 +72,7 @@ custom-develop ON, with the same kit, the same way they add features to the back
 | Phase | Delivers | Exit gate |
 |---|---|---|
 | U1 | `ui/kit`: tokens + primitives + composites | component tests green; kit gallery page |
-| U2 | Run console over the registry (single-app path) | Playwright smoke vs CorPay locally |
+| U2 | Run console over the registry (single-app path) | **MET** (2026-07-26): `scripts/console-smoke.sh` drives the real console against a real Goldpath app (Postgres + Quartz + the frozen surface) — capability discovery, confirm gate, run reaching terminal, repair queue replayed; runs nightly |
 | U3 | Module panels (bulk/campaign/notification/archival), capability-lit | each panel drives its module's real verbs in smoke |
 | U4 | Cross-service registry + triage home + auth story + `MapGoldpathConsole()` + GmConsole in nightly | the full D3 bar; CorPay screenshots into the README |
 

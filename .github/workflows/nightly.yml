@@ -125,6 +125,35 @@ jobs:
       - name: breaker acceptance vs CorPay
         run: bash evals/skills/breaker/accept.sh samples/corpay
 
+  # The U2 exit gate (console RFC D3): the REAL console driven against a REAL Goldpath
+  # app — capability discovery, the confirm gate, a run reaching terminal, and the repair
+  # queue replayed. Behaviour only; no screenshot diffing.
+  console-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ui/console/pnpm-lock.yaml
+      - name: install the console + browser
+        working-directory: ui/console
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: the console smoke
+        run: bash scripts/console-smoke.sh
+
   # The finance sample stays green forever: built against the PUBLISHED packages, its
   # unit contract tests and the real-AppHost smoke run nightly (samples/GAP-LEDGER.md
   # is this job's product when it goes red).

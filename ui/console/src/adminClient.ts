@@ -55,9 +55,23 @@ export interface RunSummary {
   itemFailures: number;
 }
 
-export interface RunDetail extends RunSummary {
-  chunks: { index: number; status: string; attempts: number }[];
-  failures: { itemKey: string; reason: string; chunkIndex: number }[];
+/**
+ * The run detail as the contract actually returns it — a NESTED record
+ * (`GoldpathRunDetail(Run, ChunksByStatus, OpenFailures)`), not a flattened row:
+ * chunks arrive as counts per status, and open failures are capped at 200 server-side.
+ */
+export interface RunDetail {
+  run: RunSummary;
+  chunksByStatus: Record<string, number>;
+  openFailures: {
+    id: number;
+    runId: string;
+    chunkIndex: number;
+    itemKey: string;
+    reason: string;
+    failedAt: string;
+    redrivenAt?: string | null;
+  }[];
 }
 
 export interface AdminResult {
@@ -79,7 +93,11 @@ export class AdminClient {
 
   constructor(options: AdminClientOptions = {}) {
     this.baseUrl = (options.baseUrl ?? "").replace(/\/$/, "");
-    this.fetcher = options.fetcher ?? fetch;
+    // BIND the default: a bare `fetch` stored on an object and called as `this.fetcher(...)`
+    // loses its receiver and throws "Illegal invocation" in a real browser — which the
+    // discovery catch would have silently turned into "no capabilities" (found by the U2
+    // Playwright gate; jsdom does not reproduce it, so the unit tests were green).
+    this.fetcher = options.fetcher ?? ((input, init) => globalThis.fetch(input, init));
   }
 
   private async get<T>(route: string): Promise<T> {

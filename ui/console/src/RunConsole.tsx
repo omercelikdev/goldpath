@@ -24,6 +24,7 @@ export function RunConsole({ client, now }: RunConsoleProps) {
   const [fleets, setFleets] = useState<FleetInfo[]>([]);
   const [fleet, setFleet] = useState<string | null>(null);
   const [jobs, setJobs] = useState<JobInfo[]>([]);
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedRun, setSelectedRun] = useState<RunDetail | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -65,18 +66,28 @@ export function RunConsole({ client, now }: RunConsoleProps) {
     [client, fleet, refreshToken],
   );
 
-  const openRun = async (run: RunSummary) => {
-    try {
-      setSelectedRun(await client.run(run.id));
-    } catch {
-      setError(`run ${run.id} could not be opened`);
-    }
-  };
+  const openRun = (run: RunSummary) => setSelectedRunId(run.id);
 
-  const refresh = () => {
-    setRefreshToken((token) => token + 1);
-    setSelectedRun(null);
-  };
+  // The open run RE-FETCHES on every refresh instead of closing: a verb's outcome strip
+  // lives inside the panel, so tearing the panel down would hide the very message the
+  // operator just triggered (found by the U2 Playwright gate).
+  useEffect(() => {
+    if (!selectedRunId) {
+      setSelectedRun(null);
+      return;
+    }
+
+    let live = true;
+    client
+      .run(selectedRunId)
+      .then((detail) => live && setSelectedRun(detail))
+      .catch(() => live && setError(`run ${selectedRunId} could not be opened`));
+    return () => {
+      live = false;
+    };
+  }, [client, selectedRunId, refreshToken]);
+
+  const refresh = () => setRefreshToken((token) => token + 1);
 
   if (fleets.length === 0 && !error) {
     return <p className="text-sm text-muted-foreground">Discovering fleets…</p>;
@@ -98,7 +109,7 @@ export function RunConsole({ client, now }: RunConsoleProps) {
               }`}
               onClick={() => {
                 setFleet(entry.schedulerName);
-                setSelectedRun(null);
+                setSelectedRunId(null);
               }}
             >
               {entry.schedulerName}
@@ -154,7 +165,7 @@ export function RunConsole({ client, now }: RunConsoleProps) {
             key={`${fleet}-${refreshToken}`}
             columns={[
               { header: "Run", cell: (run) => (
-                <button className="font-mono text-xs underline-offset-2 hover:underline" onClick={() => void openRun(run)}>
+                <button className="font-mono text-xs underline-offset-2 hover:underline" onClick={() => openRun(run)}>
                   {run.id}
                 </button>
               ) },
@@ -172,48 +183,44 @@ export function RunConsole({ client, now }: RunConsoleProps) {
       {selectedRun && (
         <section data-testid="run-detail" className="rounded-lg border border-border p-4">
           <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium">Run {selectedRun.id} · {selectedRun.jobName}</h2>
+            <h2 className="text-sm font-medium">Run {selectedRun.run.id} · {selectedRun.run.jobName}</h2>
             <span className="flex gap-2">
               <VerbButton
                 label="rerun"
-                confirm={`Rerun ${selectedRun.id}?`}
-                execute={() => asOutcome(client.rerun(selectedRun.id))}
+                confirm={`Rerun ${selectedRun.run.id}?`}
+                execute={() => asOutcome(client.rerun(selectedRun.run.id))}
                 onDone={refresh}
               />
-              {selectedRun.failures.length > 0 && (
+              {selectedRun.openFailures.length > 0 && (
                 <VerbButton
                   label="replay-items"
                   // The verb redrives ALL open items; the listed failures are a capped
                   // VIEW, so a count here would understate what the operator triggers.
                   confirm="Replay all open repair items of this run?"
-                  execute={() => asOutcome(client.replayItems(selectedRun.id))}
+                  execute={() => asOutcome(client.replayItems(selectedRun.run.id))}
                   onDone={refresh}
                 />
               )}
             </span>
           </div>
 
-          <RunProgress run={selectedRun} now={now} />
+          <RunProgress run={selectedRun.run} now={now} />
 
-          <h3 className="mb-1 mt-4 text-xs text-muted-foreground">Chunks</h3>
+          <h3 className="mb-1 mt-4 text-xs text-muted-foreground">Chunks by status</h3>
           <div className="flex flex-wrap gap-1">
-            {selectedRun.chunks.map((chunk) => (
-              <span
-                key={chunk.index}
-                title={`chunk ${chunk.index} · ${chunk.status} · ${chunk.attempts} attempts`}
-                className="rounded border border-border px-1.5 py-0.5 text-[11px]"
-              >
-                {chunk.index}:{chunk.status}
+            {Object.entries(selectedRun.chunksByStatus).map(([status, count]) => (
+              <span key={status} className="rounded border border-border px-1.5 py-0.5 text-[11px]">
+                {status}: {count}
               </span>
             ))}
           </div>
 
           <h3 className="mb-1 mt-4 text-xs text-muted-foreground">
-            Repair queue{selectedRun.failures.length === 0 ? " — empty" : ` (${selectedRun.failures.length} shown)`}
+            Repair queue{selectedRun.openFailures.length === 0 ? " — empty" : ` (${selectedRun.openFailures.length} shown)`}
           </h3>
           <ul className="space-y-1">
-            {selectedRun.failures.map((failure) => (
-              <li key={failure.itemKey} className="flex items-baseline gap-2 text-xs">
+            {selectedRun.openFailures.map((failure) => (
+              <li key={failure.id} className="flex items-baseline gap-2 text-xs">
                 <span className="font-mono">{failure.itemKey}</span>
                 <span className="text-faint">chunk {failure.chunkIndex}</span>
                 <span className="text-danger">{failure.reason}</span>
