@@ -74,6 +74,43 @@ export interface RunDetail {
   }[];
 }
 
+/** Intake numbers per definition — the panel's headline row. */
+export interface BulkDefinitionStatus {
+  name: string;
+  batchesByState: Record<string, number>;
+  awaitingApproval: number;
+  oldestAwaitingApprovalSeconds?: number | null;
+}
+
+/** One batch over the wire: the state machine's public face. */
+export interface BulkBatchInfo {
+  id: string;
+  definition: string;
+  state: string;
+  tenant?: string | null;
+  totalRows: number;
+  validRows: number;
+  invalidRows: number;
+  executedRows: number;
+  failedRows: number;
+  runId?: string | null;
+  receivedAt: string;
+  validatedAt?: string | null;
+  decidedAt?: string | null;
+  decidedBy?: string | null;
+  decisionNote?: string | null;
+  completedAt?: string | null;
+}
+
+/** One validation finding — teaching text, value-free by contract. */
+export interface BulkRowError {
+  id: number;
+  batchId: string;
+  rowNumber: number;
+  field: string;
+  message: string;
+}
+
 export interface AdminResult {
   ok: boolean;
   message: string;
@@ -193,5 +230,62 @@ export class AdminClient {
    */
   replayItems(runId: string): Promise<AdminResult> {
     return this.verb(`/goldpath/admin/jobs/runs/${encodeURIComponent(runId)}/replay-items`);
+  }
+
+  bulkDefinitions(): Promise<BulkDefinitionStatus[]> {
+    return this.get<BulkDefinitionStatus[]>("/goldpath/admin/bulk/definitions");
+  }
+
+  /**
+   * The batch list. The frozen surface filters by STATE only — there is no `definition`
+   * query parameter, so the panel narrows by definition client-side over the page it was
+   * given, and says so, rather than sending a parameter the server would ignore.
+   */
+  bulkBatches(options: { state?: string; take?: number } = {}): Promise<BulkBatchInfo[]> {
+    const query = new URLSearchParams();
+    if (options.state) query.set("state", options.state);
+    query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
+    return this.get<BulkBatchInfo[]>(`/goldpath/admin/bulk/batches?${query.toString()}`);
+  }
+
+  /** The VALIDATION report — keyset-paged by row number (the contract's own cursor). */
+  bulkErrors(batchId: string, options: { afterRow?: number; take?: number } = {}): Promise<BulkRowError[]> {
+    const query = new URLSearchParams();
+    query.set("afterRow", String(options.afterRow ?? 0));
+    query.set("take", String(Math.min(500, Math.max(1, options.take ?? 100))));
+    return this.get<BulkRowError[]>(
+      `/goldpath/admin/bulk/batches/${encodeURIComponent(batchId)}/errors?${query.toString()}`,
+    );
+  }
+
+  approveBatch(batchId: string, note?: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/bulk/batches/${encodeURIComponent(batchId)}/approve`, { note: note ?? null });
+  }
+
+  rejectBatch(batchId: string, note: string): Promise<AdminResult> {
+    // The contract makes the note MANDATORY on reject — the refusal must teach later readers.
+    return this.verb(`/goldpath/admin/bulk/batches/${encodeURIComponent(batchId)}/reject`, { note });
+  }
+
+  /**
+   * Intake upload. The contract takes a RAW body on purpose (`curl --data-binary @file.csv`)
+   * — no multipart, no antiforgery coupling — so the console posts the file bytes as-is.
+   */
+  async uploadBatch(definition: string, file: File, tenant?: string): Promise<BulkBatchInfo> {
+    const query = new URLSearchParams({ fileName: file.name });
+    if (tenant) query.set("tenant", tenant);
+    const route = `/goldpath/admin/bulk/batches/${encodeURIComponent(definition)}?${query.toString()}`;
+    const response = await this.fetcher(`${this.baseUrl}${route}`, {
+      method: "POST",
+      credentials: "include",
+      headers: { accept: "application/json", "content-type": "application/octet-stream" },
+      body: file,
+    });
+    if (!response.ok) throw new AdminHttpError(response.status, route);
+    return (await response.json()) as BulkBatchInfo;
+  }
+
+  batch(batchId: string): Promise<BulkBatchInfo> {
+    return this.get<BulkBatchInfo>(`/goldpath/admin/bulk/batches/${encodeURIComponent(batchId)}`);
   }
 }

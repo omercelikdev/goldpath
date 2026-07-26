@@ -125,9 +125,11 @@ jobs:
       - name: breaker acceptance vs CorPay
         run: bash evals/skills/breaker/accept.sh samples/corpay
 
-  # The U2 exit gate (console RFC D3): the REAL console driven against a REAL Goldpath
-  # app — capability discovery, the confirm gate, a run reaching terminal, and the repair
-  # queue replayed. Behaviour only; no screenshot diffing.
+  # The console exit gate (console RFC D3): the REAL console driven against a REAL
+  # Goldpath app — capability discovery, the confirm gate, a run reaching terminal, the
+  # repair queue replayed (U2), and the bulk intake journey end to end: upload → the
+  # engine's own validation report → refused approval → rejection with evidence →
+  # approval of a clean file (U3). Behaviour only; no screenshot diffing.
   console-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25

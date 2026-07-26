@@ -13,6 +13,7 @@ const MAP: Record<string, StatusTone> = {
   Received: "info",
   Validating: "info",
   Validated: "warning", // awaiting the gate
+  Approved: "info",     // gate passed — work still ahead; Completed is the success end
   Executing: "info",
   CompletedWithFailures: "danger",
   Rejected: "danger",

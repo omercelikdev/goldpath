@@ -84,12 +84,26 @@ static async Task RunConsoleHostAsync(string connectionString, string url)
     var consoleOrigin = Environment.GetEnvironmentVariable("GOLDPATH_CONSOLE_ORIGIN") ?? "http://localhost:5201";
     web.Services.AddCors(cors => cors.AddDefaultPolicy(policy => policy
         .WithOrigins(consoleOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+    // Bulk is composed too, so the console's capability probe LIGHTS the intake panel and
+    // the U3 gate can drive the real four-eyes verbs (upload → validate → approve/reject).
+    web.Services.AddScoped<IGoldpathBulkRowHandler<ClusterPaymentRow>, SmokePaymentHandler>();
+    web.AddGoldpathBulk<WebApplicationBuilder, ClusterDb>(bulk =>
+    {
+        bulk.ChunkSize = 5;
+        bulk.AddBatch<ClusterPaymentRow>("payments", b => b
+            .MaxRows(10_000)
+            .RowKey(r => r.EndToEndId));
+    });
+
     web.AddGoldpathJobs<WebApplicationBuilder, ClusterDb>(jobs =>
     {
         jobs.SchedulerName = "console-smoke";
         jobs.ConnectionName = "jobsdb";
         jobs.CheckinInterval = TimeSpan.FromSeconds(1);
         jobs.AddJob<SmokeJob>();
+        // Validation runs on a tight cron so the smoke can WAIT for a real report instead
+        // of forging one; execution stays far-future — the gate decides when rows move.
+        jobs.AddGoldpathBulkJobs<ClusterDb>(validateCron: "0/5 * * * * ?", executeCron: "0 0 0 1 1 ? 2099");
     });
 
     var app = web.Build();
@@ -104,6 +118,7 @@ static async Task RunConsoleHostAsync(string connectionString, string url)
     app.Urls.Add(url);
     app.UseCors();
     app.MapGoldpathJobsAdmin<ClusterDb>(exposeUnsecured: true);
+    app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: true);
     await app.StartAsync();
     Console.WriteLine("CONSOLEHOST-READY");
     await app.WaitForShutdownAsync();
@@ -202,6 +217,21 @@ namespace Goldpath.Jobs.TestHost
             db.Sink.Add(new SinkEntry { JobName = nameof(SmokeJob), ChunkIndex = chunk.Index, Instance = context.InstanceName });
             await db.SaveChangesAsync(cancellationToken);
             await Task.Delay(TimeSpan.FromMilliseconds(150), cancellationToken);
+        }
+    }
+
+    /// <summary>The console smoke's row handler: records the payment, no artificial delay.</summary>
+    public sealed class SmokePaymentHandler(ClusterDb db) : IGoldpathBulkRowHandler<ClusterPaymentRow>
+    {
+        public async Task ExecuteAsync(ClusterPaymentRow row, GoldpathBulkRowContext context, CancellationToken cancellationToken)
+        {
+            db.PaymentSink.Add(new PaymentSinkEntry
+            {
+                EndToEndId = row.EndToEndId,
+                RowNumber = context.RowNumber,
+                Instance = Environment.ProcessId.ToString(),
+            });
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 
