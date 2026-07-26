@@ -83,10 +83,14 @@ public sealed class JobsClusterTests : IAsyncLifetime
             Assert.Equal(2, sink.Select(s => s.Instance).Distinct().Count());   // both nodes really worked
 
             // Chaining: completion triggered the successor exactly once (on the surviving node).
-            await WaitUntilAsync(async () => await CountSinkAsync(nameof(ChainedProofJob)) >= 1, timeout.Token);
-            Assert.Equal(1, await CountSinkAsync(nameof(ChainedProofJob)));
+            // Wait on the RUN's terminal status, not on the sink row: the handler's side
+            // effect lands microseconds BEFORE the run flips to Completed, and asserting
+            // across that window is a race the proof itself created (CI flake, 2026-07-26).
+            await WaitUntilAsync(async () =>
+                (await QueryRunAsync(nameof(ChainedProofJob)))?.Status == GoldpathJobRunStatus.Completed, timeout.Token);
             var chained = await QueryRunAsync(nameof(ChainedProofJob));
             Assert.Equal(GoldpathJobRunStatus.Completed, chained!.Status);
+            Assert.Equal(1, await CountSinkAsync(nameof(ChainedProofJob)));   // exactly once, still
         }
         finally
         {
