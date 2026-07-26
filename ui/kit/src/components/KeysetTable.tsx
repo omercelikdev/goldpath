@@ -1,0 +1,127 @@
+import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
+
+/** One keyset page — `nextCursor: null` means the end (the frozen paging contract). */
+export interface KeysetPage<T> {
+  items: T[];
+  nextCursor: string | null;
+}
+
+export interface KeysetColumn<T> {
+  header: string;
+  cell: (row: T) => ReactNode;
+  align?: "left" | "right";
+}
+
+export interface KeysetTableProps<T> {
+  columns: KeysetColumn<T>[];
+  /** Loads one page. The kit clamps `take` to the contract's [1, 500] before calling. */
+  loadPage: (cursor: string | null, take: number) => Promise<KeysetPage<T>>;
+  rowKey: (row: T) => string;
+  take?: number;
+  emptyMessage?: string;
+}
+
+/** AdminPaging.Clamp, mirrored — the UI never asks for what the API would refuse. */
+export function clampTake(take: number): number {
+  if (!Number.isFinite(take)) return 50;
+  return Math.min(500, Math.max(1, Math.trunc(take)));
+}
+
+type LoadState = "loading" | "idle" | "error";
+
+/**
+ * The keyset table of ui-standard-v1 §4: cursor pager only — NO offsets, NO page
+ * numbers, NO total count (the contract deliberately never counts large tables).
+ * Pages append; the walk ends when the API answers `nextCursor: null`.
+ */
+export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMessage = "Nothing here yet." }: KeysetTableProps<T>) {
+  const [rows, setRows] = useState<T[]>([]);
+  const [cursor, setCursor] = useState<string | null>(null);
+  const [ended, setEnded] = useState(false);
+  const [state, setState] = useState<LoadState>("loading");
+  const generation = useRef(0);
+
+  const fetchPage = useCallback(
+    async (from: string | null, fresh: boolean) => {
+      const mine = ++generation.current;
+      setState("loading");
+      try {
+        const page = await loadPage(from, clampTake(take));
+        if (mine !== generation.current) return;   // a newer load superseded this one
+        setRows((existing) => (fresh ? page.items : [...existing, ...page.items]));
+        setCursor(page.nextCursor);
+        setEnded(page.nextCursor === null);
+        setState("idle");
+      } catch {
+        if (mine !== generation.current) return;
+        setState("error");
+      }
+    },
+    [loadPage, take],
+  );
+
+  useEffect(() => {
+    void fetchPage(null, true);
+  }, [fetchPage]);
+
+  return (
+    <div data-testid="keyset-table">
+      <table className="w-full text-sm">
+        <thead>
+          <tr className="border-b border-border text-left text-xs text-muted-foreground">
+            {columns.map((column) => (
+              <th key={column.header} className={`py-2 pr-4 font-medium ${column.align === "right" ? "text-right" : ""}`}>
+                {column.header}
+              </th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {rows.map((row) => (
+            <tr key={rowKey(row)} className="border-b border-border/60 hover:bg-muted/40">
+              {columns.map((column) => (
+                <td key={column.header} className={`py-2 pr-4 ${column.align === "right" ? "text-right" : ""}`}>
+                  {column.cell(row)}
+                </td>
+              ))}
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      {state === "idle" && rows.length === 0 && ended && (
+        // Only the END of an empty walk is "empty" — an empty intermediate page keeps
+        // the load-more path alive without contradicting itself (review R3 on this PR).
+        <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+      )}
+
+      {state === "error" && (
+        <div role="alert" className="my-3 rounded-md border border-danger-border bg-danger-bg px-3 py-2 text-sm text-danger">
+          The page could not be loaded.
+          <button
+            className="ml-3 rounded-md border border-border bg-background px-2 py-0.5 text-xs hover:bg-accent"
+            onClick={() => void fetchPage(rows.length === 0 ? null : cursor, rows.length === 0)}
+          >
+            retry
+          </button>
+        </div>
+      )}
+
+      <div className="flex items-center justify-between py-3">
+        <span className="text-xs text-faint">
+          {/* The honest footer: what is LOADED — never a total (the offset trap reborn). */}
+          {rows.length} loaded{ended ? " · end" : ""}
+        </span>
+        {!ended && state !== "error" && (
+          <button
+            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-50"
+            disabled={state === "loading"}
+            onClick={() => void fetchPage(cursor, false)}
+          >
+            {state === "loading" ? "loading…" : "load more"}
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
