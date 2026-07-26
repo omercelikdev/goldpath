@@ -89,7 +89,9 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
         </tbody>
       </table>
 
-      {state === "idle" && rows.length === 0 && (
+      {state === "idle" && rows.length === 0 && ended && (
+        // Only the END of an empty walk is "empty" — an empty intermediate page keeps
+        // the load-more path alive without contradicting itself (review R3 on this PR).
         <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>
       )}
 

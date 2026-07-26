@@ -54,6 +54,38 @@ describe("the keyset table (ui-standard-v1 §4 — cursor pager, never offsets)"
     expect(await screen.findByText("No runs today.")).toBeInTheDocument();
   });
 
+  it("an empty INTERMEDIATE page never shows the empty message while more remains", async () => {
+    const load = vi
+      .fn<(cursor: string | null, take: number) => Promise<KeysetPage<Row>>>()
+      .mockResolvedValueOnce(page([], "c1"))
+      .mockResolvedValueOnce(page([{ id: "1", name: "late" }], null));
+    render(<KeysetTable columns={columns} loadPage={load} rowKey={(r) => r.id} emptyMessage="Empty." />);
+
+    expect(await screen.findByRole("button", { name: /load more/i })).toBeInTheDocument();
+    expect(screen.queryByText("Empty.")).toBeNull();   // not the end — not empty
+
+    await userEvent.click(screen.getByRole("button", { name: /load more/i }));
+    expect(await screen.findByText("late")).toBeInTheDocument();
+  });
+
+  it("a mid-walk failure retries with the PENDING cursor and appends", async () => {
+    const load = vi
+      .fn<(cursor: string | null, take: number) => Promise<KeysetPage<Row>>>()
+      .mockResolvedValueOnce(page([{ id: "1", name: "first" }], "c1"))
+      .mockRejectedValueOnce(new Error("boom"))
+      .mockResolvedValueOnce(page([{ id: "2", name: "second" }], null));
+    render(<KeysetTable columns={columns} loadPage={load} rowKey={(r) => r.id} />);
+
+    await screen.findByText("first");
+    await userEvent.click(screen.getByRole("button", { name: /load more/i }));
+    expect(await screen.findByRole("alert")).toBeInTheDocument();
+
+    await userEvent.click(screen.getByRole("button", { name: /retry/i }));
+    expect(await screen.findByText("second")).toBeInTheDocument();
+    expect(screen.getByText("first")).toBeInTheDocument();          // appended, not replaced
+    expect(load).toHaveBeenNthCalledWith(3, "c1", 50);              // the PENDING cursor
+  });
+
   it("a failed load surfaces the alert and retry re-asks for the SAME page", async () => {
     const load = vi
       .fn<(cursor: string | null, take: number) => Promise<KeysetPage<Row>>>()
