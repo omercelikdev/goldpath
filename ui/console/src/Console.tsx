@@ -3,6 +3,7 @@ import { AppShell, Banner } from "@goldpath/kit";
 import type { ShellNavItem } from "@goldpath/kit";
 import { AdminClient, MODULES, type ModuleName } from "./adminClient";
 import { RunConsole } from "./RunConsole";
+import { BulkPanel } from "./BulkPanel";
 
 export interface ConsoleProps {
   /** Service root; omit for same-origin (the console is served BY the app it drives). */
@@ -25,8 +26,8 @@ const SECTION_LABEL: Record<ModuleName, string> = {
 /**
  * The console shell: capability discovery decides what EXISTS, the shell renders only
  * that (console RFC §2). A module the app never composed is an absent section — never a
- * dead link, never a manifest upload. Panels beyond the run console land in U3; until
- * then a present-but-unbuilt capability says so honestly instead of pretending.
+ * dead link, never a manifest upload. A capability whose panel is not built yet says so
+ * honestly instead of pretending (the remaining U3 panels land slice by slice).
  */
 export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: ConsoleProps) {
   const client = useMemo(() => new AdminClient({ baseUrl, fetcher }), [baseUrl, fetcher]);
@@ -81,9 +82,11 @@ export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: C
         <RunConsole client={client} now={now} />
       )}
 
-      {capabilities?.[section] === "present" && section !== "jobs" && (
+      {capabilities?.[section] === "present" && section === "bulk" && <BulkPanel client={client} />}
+
+      {capabilities?.[section] === "present" && section !== "jobs" && section !== "bulk" && (
         <p className="text-sm text-muted-foreground">
-          {SECTION_LABEL[section]} is composed into this app; its panel ships in U3. Until then drive it
+          {SECTION_LABEL[section]} is composed into this app; its panel is not built yet. Until then drive it
           through the admin API — the console adds no capability the API does not already expose.
         </p>
       )}

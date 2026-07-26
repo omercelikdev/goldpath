@@ -40,11 +40,17 @@ describe("the console shell (capability discovery decides what EXISTS)", () => {
     expect(await screen.findByText(/No Goldpath admin surface answered here/)).toBeInTheDocument();
   });
 
-  it("a composed-but-unbuilt panel is honest about U3 instead of faking a screen", async () => {
+  it("a composed-but-unbuilt panel is honest instead of faking a screen", async () => {
     render(<Console fetcher={service({ "/campaign/": 200 })} />);
 
-    expect(await screen.findByText(/its panel ships in U3/)).toBeInTheDocument();
+    expect(await screen.findByText(/its panel is not built yet/)).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Campaigns" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("lands on the bulk panel when bulk is the only composed module", async () => {
+    render(<Console fetcher={service({ "/bulk/definitions": 200 })} />);
+
+    expect(await screen.findByTestId("bulk-panel")).toBeInTheDocument();
   });
 
   it("lands on the run console when jobs is present", async () => {

@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import type { VerbOutcome } from "../adminResult";
 import { VerbButton } from "./VerbButton";
@@ -72,5 +72,69 @@ describe("the verb button (ui-standard-v1 §3/§4 — confirm-before-verb, verba
     await userEvent.click(screen.getByRole("alertdialog").querySelector("button")!);
     expect(await screen.findByRole("status")).toHaveTextContent("now it worked");
     expect(screen.queryByRole("alert")).toBeNull();   // the old refusal strip is gone
+  });
+
+  it("an evidence note is handed to the verb and cleared afterwards", async () => {
+    const seen: (string | undefined)[] = [];
+    render(
+      <VerbButton
+        label="reject"
+        confirm="Reject this batch?"
+        note={{ label: "reason (required)", required: true }}
+        execute={(note) => {
+          seen.push(note);
+          return Promise.resolve({ kind: "ok", message: "rejected" } as VerbOutcome);
+        }}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "reject" }));
+    const dialog = screen.getByRole("alertdialog");
+    // A required note is the gate: the verb cannot fire until the reason exists.
+    expect(within(dialog).getByRole("button", { name: "reject" })).toBeDisabled();
+
+    await userEvent.type(within(dialog).getByLabelText("reason (required)"), "  duplicate file  ");
+    await userEvent.click(within(dialog).getByRole("button", { name: "reject" }));
+
+    expect(await screen.findByText("rejected")).toBeInTheDocument();
+    expect(seen).toEqual(["duplicate file"]);   // trimmed — surrounding space is not evidence
+
+    // The next confirm starts empty: a stale reason must never ride along on another verb.
+    await userEvent.click(screen.getByRole("button", { name: "reject" }));
+    expect(within(screen.getByRole("alertdialog")).getByLabelText("reason (required)")).toHaveValue("");
+  });
+
+  it("an optional note lets the verb fire without one", async () => {
+    const seen: (string | undefined)[] = [];
+    render(
+      <VerbButton
+        label="approve"
+        confirm="Approve?"
+        note={{ label: "note (optional)" }}
+        execute={(note) => {
+          seen.push(note);
+          return Promise.resolve({ kind: "ok", message: "approved" } as VerbOutcome);
+        }}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "approve" }));
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "approve" }));
+
+    expect(await screen.findByText("approved")).toBeInTheDocument();
+    expect(seen).toEqual([""]);
+  });
+
+  it("a quiet verb stays silent — its composite owns the outcome", async () => {
+    const seen: VerbOutcome[] = [];
+    render(<VerbButton label="approve" confirm="Approve?" quiet execute={() => Promise.resolve(ok("approved"))} onDone={(o) => seen.push(o)} />);
+
+    await userEvent.click(screen.getByRole("button", { name: "approve" }));
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "approve" }));
+
+    // The outcome still REACHES the composite; only the button's own strip is suppressed,
+    // because a gate button unmounts the moment its verb changes the state.
+    await waitFor(() => expect(seen).toEqual([ok("approved")]));
+    expect(screen.queryByText("approved")).toBeNull();
   });
 });
