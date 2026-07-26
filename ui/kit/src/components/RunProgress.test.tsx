@@ -1,4 +1,5 @@
 import { render, screen } from "@testing-library/react";
+import { StateBadge } from "./StateBadge";
 import { RunProgress, deadlineVerdict, itemsPerSecond, type RunProgressData } from "./RunProgress";
 
 const base: RunProgressData = {
@@ -65,6 +66,24 @@ describe("the run progress composite (ui-standard-v1 §4)", () => {
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "40");
     expect(screen.getByText("400 items/s")).toBeInTheDocument();
     expect(screen.getByText("predicted to overrun")).toBeInTheDocument();
+  });
+
+  it("the BADGE carries the predicted-overrun warning (§5's composite state)", () => {
+    const { rerender } = render(<RunProgress run={{ ...base, deadlineAt: "2026-07-26T11:00:00Z" }} now={now} />);
+    expect(screen.getByText("Running")).toHaveAttribute("data-tone", "info");   // plain Running
+
+    rerender(
+      <RunProgress
+        run={{ ...base, deadlineAt: "2026-07-26T10:30:00Z", predictedFinishAt: "2026-07-26T10:45:00Z" }}
+        now={now}
+      />,
+    );
+    expect(screen.getByText("Running")).toHaveAttribute("data-tone", "warning");
+  });
+
+  it("the tone override does NOT weaken the MAP-wins rule for adopter vocabulary", () => {
+    render(<StateBadge state="Running" extra={{ Running: "danger" }} />);
+    expect(screen.getByText("Running")).toHaveAttribute("data-tone", "info");   // MAP still wins
   });
 
   it("surfaces failed chunks and repair-queue depth — never hides them in the bar", () => {

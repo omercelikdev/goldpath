@@ -1,4 +1,5 @@
 import { StateBadge } from "./StateBadge";
+import type { StatusTone } from "../status";
 
 /** The run row of the frozen contract, as the console reads it. */
 export interface RunProgressData {
@@ -71,10 +72,16 @@ export function RunProgress({ run, now = new Date() }: RunProgressProps) {
         ? "bg-warning"
         : "bg-primary";
 
+  // ui-standard-v1 §5: `Running + predicted-overrun` is a WARNING state at the badge
+  // level too — the chip is the operator's first glance, so it must carry the verdict
+  // (review R1 on this PR), not just the bar and the footnote. `extra` cannot do this:
+  // the standard MAP wins collisions by design, so the override is explicit.
+  const badgeTone: StatusTone | undefined = verdict === "overrun-predicted" ? "warning" : undefined;
+
   return (
     <div data-testid="run-progress" className="space-y-2">
       <div className="flex items-center gap-3">
-        <StateBadge state={run.status} />
+        <StateBadge state={run.status} tone={badgeTone} />
         <span className="text-sm text-muted-foreground">
           {run.completedChunks}/{run.totalChunks} chunks
         </span>

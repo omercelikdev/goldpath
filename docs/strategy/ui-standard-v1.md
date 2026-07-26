@@ -60,7 +60,7 @@ Inherited from Mockifyr's proven set, extended with Goldpath-specific composites
 |---|---|---|---|---|
 | success | Completed | Completed | Sent | Executed |
 | info | Running | Executing/Validating | Requested | Submitted |
-| warning | Running+predicted-overrun | Validated (awaiting gate) | Suppressed | PendingApproval |
+| warning | Running+predicted-overrun (composite: the badge takes the tone via `StateBadge`'s explicit `tone` override — `extra` cannot, since the standard MAP wins collisions) | Validated (awaiting gate) | Suppressed | PendingApproval |
 | danger | Failed | CompletedWithFailures/Rejected | Failed | Rejected/Failed |
 | violet | Recovering/Resumed | — | — | — (reserved: replay/repair flows) |
 
