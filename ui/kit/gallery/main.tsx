@@ -5,6 +5,8 @@ import { createRoot } from "react-dom/client";
 import "../src/tokens/tokens.css";
 import { StateBadge } from "../src/components/StateBadge";
 import { KeysetTable, type KeysetPage } from "../src/components/KeysetTable";
+import { VerbButton } from "../src/components/VerbButton";
+import type { VerbOutcome } from "../src/adminResult";
 import { KNOWN_STATES } from "../src/status";
 
 // Derived from the §5 source of truth — the eyes-on gate cannot drift from the map.
@@ -32,6 +34,19 @@ async function loadDemoRuns(cursor: string | null, take: number): Promise<Keyset
   return { items, nextCursor: next };
 }
 
+const verbOk = async (): Promise<VerbOutcome> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return { kind: "ok", message: "run 9f22 scheduled; audit row written" };
+};
+const verbRefused = async (): Promise<VerbOutcome> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return { kind: "refused", message: "the batch is not Validated — approve requires the validation gate to have passed" };
+};
+const verbError = async (): Promise<VerbOutcome> => {
+  await new Promise((resolve) => setTimeout(resolve, 500));
+  return { kind: "error", status: 503 };
+};
+
 function Gallery() {
   const [dark, setDark] = useState(false);
   return (
@@ -54,6 +69,16 @@ function Gallery() {
             <h2 className="text-sm font-medium text-muted-foreground mb-4">StateBadge — the §5 ramp, every domain state</h2>
             <div className="flex flex-wrap gap-2">
               {STATES.map((s) => <StateBadge key={s} state={s} />)}
+            </div>
+          </section>
+
+          <section className="bg-background rounded-lg border border-border p-5 mt-6" style={{ boxShadow: "var(--shadow-surface)" }}>
+            <h2 className="text-sm font-medium text-muted-foreground mb-4">VerbButton — confirm-before-verb, verbatim refusals, audit hint</h2>
+            <div className="flex flex-wrap items-center gap-4">
+              <VerbButton label="trigger" confirm="Trigger the eod-reconciliation run now?" execute={verbOk} />
+              <VerbButton label="approve" confirm="Approve batch b-1231?" execute={verbRefused} />
+              <VerbButton label="erase" confirm="Erase the classified fields of ORD-77?" execute={verbOk} destructive />
+              <VerbButton label="pause-all" confirm="Pause EVERY job in the fleet?" execute={verbError} destructive />
             </div>
           </section>
 
