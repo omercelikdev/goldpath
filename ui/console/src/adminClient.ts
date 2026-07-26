@@ -237,9 +237,11 @@ export class AdminClient {
   }
 
   /**
-   * The batch list. The frozen surface filters by STATE only — there is no `definition`
-   * query parameter, so the panel narrows by definition client-side over the page it was
-   * given, and says so, rather than sending a parameter the server would ignore.
+   * The batch list. The frozen surface filters by STATE (and tenant) only — there is no
+   * `definition` parameter, and the panel does NOT fake one client-side: narrowing the
+   * take-bounded page the server returned would read as "no batches" while plenty exist.
+   * The per-definition counts come from `/definitions`; issue #72 tracks adding the
+   * server-side filter.
    */
   bulkBatches(options: { state?: string; take?: number } = {}): Promise<BulkBatchInfo[]> {
     const query = new URLSearchParams();
