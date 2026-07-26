@@ -74,3 +74,9 @@ jobs:
           pnpm install --frozen-lockfile
           pnpm test
           pnpm typecheck
+      - name: console tests (the run console over the frozen contract)
+        working-directory: ui/console
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm test
+          pnpm typecheck
