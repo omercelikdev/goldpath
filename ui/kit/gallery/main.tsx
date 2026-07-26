@@ -8,6 +8,7 @@ import { KeysetTable, type KeysetPage } from "../src/components/KeysetTable";
 import { VerbButton } from "../src/components/VerbButton";
 import { RunProgress, type RunProgressData } from "../src/components/RunProgress";
 import { AuditBlock, type AuditEntry } from "../src/components/AuditBlock";
+import { AppShell } from "../src/components/AppShell";
 import type { VerbOutcome } from "../src/adminResult";
 import { KNOWN_STATES } from "../src/status";
 
@@ -77,22 +78,36 @@ const DEMO_AUDIT: AuditEntry[] = [
 
 function Gallery() {
   const [dark, setDark] = useState(false);
+  const [collapsed, setCollapsed] = useState(false);
+  const [section, setSection] = useState("composites");
   return (
     <div className={dark ? "dark" : ""}>
-      <div className="min-h-screen bg-app text-foreground p-8" style={{ minHeight: "100vh" }}>
-        <div className="bg-surface rounded-2xl p-6">
-          <div className="flex items-center justify-between mb-6">
-            <h1 className="text-lg font-semibold">@goldpath/kit — gallery</h1>
-            <button
-              className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent"
-              onClick={() => {
-                document.documentElement.classList.toggle("dark", !dark);
-                setDark(!dark);
-              }}
-            >
-              {dark ? "light" : "dark"} theme
-            </button>
-          </div>
+      <AppShell
+        title="@goldpath/kit"
+        nav={[
+          { id: "composites", label: "Composites", onSelect: () => setSection("composites") },
+          { id: "triage", label: "Triage", badge: 3, onSelect: () => setSection("triage") },
+        ]}
+        activeId={section}
+        services={[{ name: "api", onSelect: () => {} }, { name: "payments", onSelect: () => {} }]}
+        activeService="api"
+        collapsed={collapsed}
+        onToggleCollapsed={() => setCollapsed(!collapsed)}
+        footer={(railCollapsed) => (
+          <button
+            className="w-full rounded-md border border-border bg-background px-2 py-1.5 text-sm hover:bg-accent"
+            title={`${dark ? "light" : "dark"} theme`}
+            onClick={() => {
+              document.documentElement.classList.toggle("dark", !dark);
+              setDark(!dark);
+            }}
+          >
+            {railCollapsed ? (dark ? "☀" : "☾") : `${dark ? "light" : "dark"} theme`}
+          </button>
+        )}
+      >
+        <div>
+          <h1 className="mb-6 text-lg font-semibold">@goldpath/kit — gallery</h1>
           <section className="bg-background rounded-lg border border-border p-5" style={{ boxShadow: "var(--shadow-surface)" }}>
             <h2 className="text-sm font-medium text-muted-foreground mb-4">StateBadge — the §5 ramp, every domain state</h2>
             <div className="flex flex-wrap gap-2">
@@ -143,7 +158,7 @@ function Gallery() {
             />
           </section>
         </div>
-      </div>
+      </AppShell>
     </div>
   );
 }
