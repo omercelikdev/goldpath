@@ -7,6 +7,7 @@ import { StateBadge } from "../src/components/StateBadge";
 import { KeysetTable, type KeysetPage } from "../src/components/KeysetTable";
 import { VerbButton } from "../src/components/VerbButton";
 import { RunProgress, type RunProgressData } from "../src/components/RunProgress";
+import { AuditBlock, type AuditEntry } from "../src/components/AuditBlock";
 import type { VerbOutcome } from "../src/adminResult";
 import { KNOWN_STATES } from "../src/status";
 
@@ -66,6 +67,14 @@ const DEMO_RUN_STATES: { label: string; run: RunProgressData }[] = [
   { label: "completed, overran", run: { ...DEMO_RUN_BASE, status: "Completed", completedChunks: 10, finishedAt: "2026-07-26T10:44:00Z", deadlineAt: "2026-07-26T10:30:00Z" } },
 ];
 
+const DEMO_AUDIT: AuditEntry[] = [
+  { id: 1, timestamp: "2026-07-26T10:04:11Z", user: "ops-chief", correlationId: "corr-7f21", entityType: "PaymentInstruction", entityKey: "8814", action: "Modified", propertyName: "Status", oldValue: "PendingApproval", newValue: "Executed" },
+  { id: 2, timestamp: "2026-07-26T10:04:11Z", user: "ops-chief", correlationId: "corr-7f21", entityType: "PaymentInstruction", entityKey: "8814", action: "Modified", propertyName: "ApprovedBy", oldValue: null, newValue: "ops-chief" },
+  { id: 3, timestamp: "2026-07-26T09:58:02Z", user: "treasurer", correlationId: "corr-7f1e", entityType: "Counterparty", entityKey: "CP-233", action: "Modified", propertyName: "nationalId", oldValue: "12345678901", newValue: "10987654321" },
+  { id: 4, timestamp: "2026-07-26T09:58:02Z", user: "treasurer", correlationId: "corr-7f1e", entityType: "Counterparty", entityKey: "CP-233", action: "Modified", propertyName: "iban", oldValue: "TR330006100519786457841326", newValue: "DE89370400440532013000" },
+  { id: 5, timestamp: "2026-07-26T02:00:00Z", user: null, correlationId: "corr-nightly", entityType: "ArchiveEntry", entityKey: "ORD-77", action: "Added", propertyName: "ErasedAt", oldValue: null, newValue: "2026-07-26T02:00:00Z" },
+];
+
 function Gallery() {
   const [dark, setDark] = useState(false);
   return (
@@ -89,6 +98,11 @@ function Gallery() {
             <div className="flex flex-wrap gap-2">
               {STATES.map((s) => <StateBadge key={s} state={s} />)}
             </div>
+          </section>
+
+          <section className="bg-background rounded-lg border border-border p-5 mt-6" style={{ boxShadow: "var(--shadow-surface)" }}>
+            <h2 className="text-sm font-medium text-muted-foreground mb-4">AuditBlock — old→new rows, classified fields masked</h2>
+            <AuditBlock entries={DEMO_AUDIT} classified={["nationalId", "iban"]} />
           </section>
 
           <section className="bg-background rounded-lg border border-border p-5 mt-6" style={{ boxShadow: "var(--shadow-surface)" }}>
