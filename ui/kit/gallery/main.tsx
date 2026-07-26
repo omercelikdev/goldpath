@@ -6,6 +6,7 @@ import "../src/tokens/tokens.css";
 import { StateBadge } from "../src/components/StateBadge";
 import { KeysetTable, type KeysetPage } from "../src/components/KeysetTable";
 import { VerbButton } from "../src/components/VerbButton";
+import { RunProgress, type RunProgressData } from "../src/components/RunProgress";
 import type { VerbOutcome } from "../src/adminResult";
 import { KNOWN_STATES } from "../src/status";
 
@@ -47,6 +48,24 @@ const verbError = async (): Promise<VerbOutcome> => {
   return { kind: "error", status: 503 };
 };
 
+const DEMO_NOW = new Date("2026-07-26T10:01:40Z");
+const DEMO_RUN_BASE: RunProgressData = {
+  status: "Running",
+  startedAt: "2026-07-26T10:00:00Z",
+  totalChunks: 10,
+  completedChunks: 4,
+  failedChunks: 0,
+  totalItems: 100_000,
+  itemFailures: 0,
+};
+
+const DEMO_RUN_STATES: { label: string; run: RunProgressData }[] = [
+  { label: "healthy · on track", run: { ...DEMO_RUN_BASE, deadlineAt: "2026-07-26T11:00:00Z", predictedFinishAt: "2026-07-26T10:14:00Z" } },
+  { label: "predicted to overrun (the warning fires BEFORE the deadline)", run: { ...DEMO_RUN_BASE, deadlineAt: "2026-07-26T10:30:00Z", predictedFinishAt: "2026-07-26T10:45:00Z" } },
+  { label: "failures + repair queue", run: { ...DEMO_RUN_BASE, completedChunks: 7, failedChunks: 2, itemFailures: 37 } },
+  { label: "completed, overran", run: { ...DEMO_RUN_BASE, status: "Completed", completedChunks: 10, finishedAt: "2026-07-26T10:44:00Z", deadlineAt: "2026-07-26T10:30:00Z" } },
+];
+
 function Gallery() {
   const [dark, setDark] = useState(false);
   return (
@@ -69,6 +88,18 @@ function Gallery() {
             <h2 className="text-sm font-medium text-muted-foreground mb-4">StateBadge — the §5 ramp, every domain state</h2>
             <div className="flex flex-wrap gap-2">
               {STATES.map((s) => <StateBadge key={s} state={s} />)}
+            </div>
+          </section>
+
+          <section className="bg-background rounded-lg border border-border p-5 mt-6" style={{ boxShadow: "var(--shadow-surface)" }}>
+            <h2 className="text-sm font-medium text-muted-foreground mb-4">RunProgress — chunks, live rate, prediction vs deadline</h2>
+            <div className="space-y-6">
+              {DEMO_RUN_STATES.map((demo) => (
+                <div key={demo.label}>
+                  <p className="mb-2 text-xs text-faint">{demo.label}</p>
+                  <RunProgress run={demo.run} now={DEMO_NOW} />
+                </div>
+              ))}
             </div>
           </section>
 

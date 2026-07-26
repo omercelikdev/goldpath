@@ -13,11 +13,17 @@ export interface StateBadgeProps {
   state: string;
   /** Adopter vocabulary — extends, never replaces, the standard map. */
   extra?: Record<string, StatusTone>;
+  /**
+   * EXPLICIT tone override for composite states the ramp defines beyond the bare word
+   * (§5: `Running + predicted-overrun` is warning). Deliberate and greppable — `extra`
+   * cannot express this because the standard MAP wins collisions by design.
+   */
+  tone?: StatusTone;
 }
 
 /** The state chip of ui-standard-v1 §5: semantic ramp only, never the accent. */
-export function StateBadge({ state, extra }: StateBadgeProps) {
-  const tone = statusTone(state, extra);
+export function StateBadge({ state, extra, tone: override }: StateBadgeProps) {
+  const tone = override ?? statusTone(state, extra);
   return (
     <span
       data-tone={tone}
