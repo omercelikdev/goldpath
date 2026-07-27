@@ -71,6 +71,19 @@ public sealed class ResolutionMiddlewareTests
     }
 
     [Fact]
+    public async Task The_consoles_own_page_passes_without_a_tenant_because_a_browser_cannot_send_one()
+    {
+        // A document request carries no custom headers. Without this exemption a
+        // multi-tenant app serves its operators a bare 400 where the console should be —
+        // found by taking preview.4 on the reference app. The admin CALLS the console then
+        // makes stay tenant-scoped, which is where R1's scoping actually belongs.
+        using var host = await BuildServerAsync();
+        var response = await host.GetTestClient().GetAsync("/goldpath/console/");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+    }
+
+    [Fact]
     public async Task Non_strict_mode_lets_tenantless_requests_through()
     {
         using var host = await BuildServerAsync(o => o.Strict = false);

@@ -56,6 +56,13 @@ custom-develop ON, with the same kit, the same way they add features to the back
      established (cookie, or a gateway's header). Nothing to configure, and no way to ship
      an unauthenticated console by accident — proven in the smoke: the console mapped on
      the auth-floored host answers 401 for its own page.
+  1b. **On a MULTI-TENANT app.** The console's own page is exempt from tenant resolution
+     (it is a static document, and a browser cannot put a tenant header on one — a
+     multi-tenant app served a bare 400 where the console should be until preview.4). The
+     admin CALLS it makes stay tenant-scoped exactly as R1 says, so an app resolving the
+     tenant by SUBDOMAIN works end to end, while a header-resolving app has the console
+     report its surfaces as refused, in the server's words. A tenant PICKER for operators
+     holding the all-tenants privilege is open-threads T11.
   2. **Cross-service.** The console sends its calls with credentials, so each additional
      service must (a) sit under the same auth as the console's origin, or (b) allow that
      origin explicitly in CORS *with* credentials. There is no third option that does not

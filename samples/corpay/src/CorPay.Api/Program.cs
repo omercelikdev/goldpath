@@ -11,7 +11,12 @@ builder.AddGoldpathServiceDefaults();
 builder.AddGoldpathApiDefaults();
 builder.AddGoldpathAuth();   // OpenId: set Goldpath:Auth:Authority AND Audience in configuration (authority without audience refuses to start — A3)
 // goldpath:features registrations — the drift profile is the source of these rows
-builder.AddGoldpathMultiTenancy();
+builder.AddGoldpathMultiTenancy(o =>
+    // The console's own PAGE cannot carry a tenant header — a browser does not put custom
+    // headers on a document request — so it joins the probe paths. From the next train
+    // this is the package default; on preview.4 an adopter lists it, and must repeat the
+    // defaults because this option REPLACES them.
+    o.ExemptPaths = ["/health", "/alive", "/openapi", "/goldpath/console"]);
 builder.AddGoldpathAuditTrail<WebApplicationBuilder, OrdersDbContext>();
 builder.AddGoldpathSoftDelete();
 builder.AddGoldpathCaching();                       // HybridCache L1+L2 (redis resource in the AppHost)

@@ -17,7 +17,7 @@ public class SmokeTests
     [Fact]
     public async Task Secure_by_default_probes_green_and_the_auth_floor_holds()
     {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(8));
 
         var appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.CorPay_AppHost>(timeout.Token);
@@ -43,36 +43,25 @@ public class SmokeTests
         // unauthenticated console is the one mistake this composition cannot make.
         var console = await client.GetAsync("/goldpath/console/", timeout.Token);
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, console.StatusCode);
-    }
 
-    [Fact]
-    public async Task The_internal_worker_head_serves_the_console_it_opted_into()
-    {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
-
-        var appHost = await DistributedApplicationTestingBuilder
-            .CreateAsync<Projects.CorPay_AppHost>(timeout.Token);
-        await using var app = await appHost.BuildAsync(timeout.Token);
-        await app.StartAsync(timeout.Token);
-
+        // The INTERNAL head made the opposite, visible choice (`exposeUnsecured: true`, the
+        // cluster boundary being what protects it), so its console serves — and its assets
+        // come with it. Asserted in the SAME app: a second AppHost costs another round of
+        // containers for one page, which is how a smoke turns into a timeout.
         var worker = app.CreateHttpClient("eod-worker");
         await WaitUntilAsync(async () =>
             (await worker.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
 
-        // This head chose `exposeUnsecured: true` for its fleet surface (the cluster
-        // boundary is what protects it), and the console rides the same choice — visibly,
-        // in the same file. What must hold is that the page and its assets actually SERVE
-        // from the package, because nothing else in CorPay would notice if they did not.
-        var page = await worker.GetAsync("/goldpath/console/", timeout.Token);
-        page.EnsureSuccessStatusCode();
-        Assert.Contains("text/html", page.Content.Headers.ContentType!.ToString());
+        var internalConsole = await worker.GetAsync("/goldpath/console/", timeout.Token);
+        internalConsole.EnsureSuccessStatusCode();
+        Assert.Contains("text/html", internalConsole.Content.Headers.ContentType!.ToString());
 
-        var html = await page.Content.ReadAsStringAsync(timeout.Token);
+        // The page must reference its own bundle, and that bundle must serve: nothing else
+        // in CorPay would notice if the embedded assets went missing.
+        var html = await internalConsole.Content.ReadAsStringAsync(timeout.Token);
         var asset = System.Text.RegularExpressions.Regex.Match(html, @"src=""\./(assets/[^""]+)""").Groups[1].Value;
         Assert.False(string.IsNullOrEmpty(asset), "the served page must reference its own bundle");
-
-        var bundle = await worker.GetAsync($"/goldpath/console/{asset}", timeout.Token);
-        bundle.EnsureSuccessStatusCode();
+        (await worker.GetAsync($"/goldpath/console/{asset}", timeout.Token)).EnsureSuccessStatusCode();
     }
 
     private static async Task WaitUntilAsync(Func<Task<bool>> condition, CancellationToken cancellationToken)
