@@ -31,27 +31,39 @@ describe("the run progress composite (ui-standard-v1 §4)", () => {
     expect(itemsPerSecond(finished, now)).toBeCloseTo(2000);   // 100k in 50s, not in 100s
   });
 
-  it("judges the deadline: live runs on the prediction, finished runs on reality", () => {
-    expect(deadlineVerdict(base)).toBe("none");                                    // no deadline
-    expect(deadlineVerdict({ ...base, deadlineAt: "2026-07-26T11:00:00Z" })).toBe("on-track");
+  it("judges the deadline: live runs on the clock and the prediction, finished runs on reality", () => {
+    // The clock is INJECTED: a verdict that silently reads the wall clock cannot be tested
+    // and would drift under a skewed browser.
+    const now = new Date("2026-07-26T10:10:00Z");
+    expect(deadlineVerdict(base, now)).toBe("none");                                    // no deadline
+    expect(deadlineVerdict({ ...base, deadlineAt: "2026-07-26T11:00:00Z" }, now)).toBe("on-track");
     expect(deadlineVerdict({
       ...base,
       deadlineAt: "2026-07-26T10:30:00Z",
       predictedFinishAt: "2026-07-26T10:45:00Z",
-    })).toBe("overrun-predicted");
+    }, now)).toBe("overrun-predicted");
+
+    // Still running AFTER its deadline: it has overrun, prediction or not. Anything else
+    // would tell the operator the one thing that is certainly false.
+    expect(deadlineVerdict({ ...base, deadlineAt: "2026-07-26T10:05:00Z" }, now)).toBe("overrun");
+    expect(deadlineVerdict({
+      ...base,
+      deadlineAt: "2026-07-26T10:05:00Z",
+      predictedFinishAt: "2026-07-26T10:04:00Z",
+    }, now)).toBe("overrun");
     expect(deadlineVerdict({
       ...base,
       status: "Completed",
       deadlineAt: "2026-07-26T10:30:00Z",
       predictedFinishAt: "2026-07-26T10:45:00Z",
       finishedAt: "2026-07-26T10:20:00Z",
-    })).toBe("on-track");                                                          // reality beat the prediction
+    }, now)).toBe("on-track");                                                          // reality beat the prediction
     expect(deadlineVerdict({
       ...base,
       status: "Completed",
       deadlineAt: "2026-07-26T10:30:00Z",
       finishedAt: "2026-07-26T10:44:00Z",
-    })).toBe("overrun");
+    }, now)).toBe("overrun");
   });
 
   it("renders chunk progress, the rate and the predicted-overrun warning", () => {
@@ -98,5 +110,32 @@ describe("the run progress composite (ui-standard-v1 §4)", () => {
 
     expect(screen.getByRole("progressbar")).toHaveAttribute("aria-valuenow", "0");
     expect(screen.getByText("0/0 chunks")).toBeInTheDocument();
+  });
+
+  it("an overrun that ALREADY happened reads danger; one merely predicted reads warning", () => {
+    const overrun = render(
+      <RunProgress
+        run={{
+          status: "Running", startedAt: "2026-07-27T00:00:00Z",
+          deadlineAt: "2026-07-27T01:00:00Z", totalChunks: 10, completedChunks: 3, failedChunks: 0, itemFailures: 0,
+        }}
+        now={new Date("2026-07-27T02:00:00Z")}
+      />,
+    );
+    expect(overrun.container.querySelector(".text-danger")).not.toBeNull();
+    overrun.unmount();
+
+    const predicted = render(
+      <RunProgress
+        run={{
+          status: "Running", startedAt: "2026-07-27T00:00:00Z",
+          deadlineAt: "2026-07-27T01:00:00Z", predictedFinishAt: "2026-07-27T01:30:00Z",
+          totalChunks: 10, completedChunks: 3, failedChunks: 0, itemFailures: 0,
+        }}
+        now={new Date("2026-07-27T00:30:00Z")}
+      />,
+    );
+    expect(predicted.container.querySelector(".text-warning")).not.toBeNull();
+    expect(predicted.container.querySelector(".text-danger")).toBeNull();
   });
 });

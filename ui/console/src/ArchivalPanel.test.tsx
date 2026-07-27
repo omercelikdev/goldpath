@@ -261,4 +261,45 @@ describe("the archival panel (chain health, retrieval, lifecycle)", () => {
     // The previous "verifies" verdict is GONE — an unknown chain must not read as a proven one.
     expect(screen.queryByTestId("chain-findings")).toBeNull();
   });
+
+  it("a lifecycle verb that never reached the server is NOT reported as applied", async () => {
+    const { client: api } = client({ verb: { status: 503, body: {} } });
+    render(<ArchivalPanel client={api} now={NOW} />);
+
+    await retrieve();
+    await userEvent.click(await screen.findByRole("button", { name: "lift-hold" }));
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "lift-hold" }));
+
+    expect(await screen.findByText(/did not reach the server — it may not have been applied/)).toBeInTheDocument();
+  });
+
+  it("switching archive clears the open entry — a key means nothing outside its archive", async () => {
+    const { client: api } = client({
+      definitions: [
+        { name: "policies", entries: 10, dueBacklog: 0, activeHolds: 0, chainHead: 10, purgedThrough: 0 },
+        { name: "claims", entries: 4, dueBacklog: 0, activeHolds: 0, chainHead: 4, purgedThrough: 0 },
+      ],
+    });
+    render(<ArchivalPanel client={api} now={NOW} />);
+
+    await retrieve();
+    await screen.findByTestId("archive-entry");
+
+    await userEvent.selectOptions(screen.getByLabelText("archive"), "claims");
+
+    // The policies entry must not linger under the claims archive's name.
+    expect(screen.queryByTestId("archive-entry")).toBeNull();
+    expect(screen.queryByText(/No entry for/)).toBeNull();
+  });
+
+  it("a lifted hold shows who lifted it and when — the row stays as evidence", async () => {
+    const { client: api } = client({
+      holds: [hold({ liftedBy: "legal@example.com", liftedAt: "2026-07-27T05:00:00Z" })],
+    });
+    render(<ArchivalPanel client={api} now={NOW} />);
+
+    const row = await screen.findByRole("row", { name: /CASE-2026-7/ });
+    expect(row).toHaveTextContent("lifted by legal@example.com at 2026-07-27T05:00:00Z");
+    expect(within(row).queryByText("Held")).toBeNull();
+  });
 });

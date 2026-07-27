@@ -132,4 +132,41 @@ describe("the admin client (the console's only door — the FROZEN contract)", (
 
     expect(calls[0].init?.credentials).toBe("include");
   });
+
+  it("every campaign verb posts ITS frozen route — including the ones the panel shows rarely", async () => {
+    const { fetcher, calls } = fakeFetch({ "/campaign/": json({ ok: true, message: "done" }) });
+    const client = new AdminClient({ fetcher });
+
+    await client.resumeCampaign("c-1");
+    await client.pauseCampaign("c-1");
+
+    expect(calls[0].url).toContain("/goldpath/admin/campaign/c-1/resume");
+    expect(calls[1].url).toContain("/goldpath/admin/campaign/c-1/pause");
+  });
+
+  it("ids with slashes and spaces are ENCODED — a key is data, never part of the path", async () => {
+    const { fetcher, calls } = fakeFetch({ "/goldpath/admin/": json({}) });
+    const client = new AdminClient({ fetcher });
+
+    await client.notification("a/b c");
+    await client.archiveEntry("policies", "P/42 x");
+
+    expect(calls[0].url).toContain("/notifications/a%2Fb%20c");
+    expect(calls[1].url).toContain("/entries/policies/P%2F42%20x");
+  });
+
+  it("rerun posts the run's own route — the repair verbs are all one shape", async () => {
+    const { fetcher, calls } = fakeFetch({ "/jobs/runs/": json({ ok: true, message: "rerun queued" }) });
+
+    const result = await new AdminClient({ fetcher }).rerun("run-9f21");
+
+    expect(calls[0].url).toContain("/goldpath/admin/jobs/runs/run-9f21/rerun");
+    expect(result).toEqual({ ok: true, message: "rerun queued" });
+  });
+
+  it("a verb answered with an unexpected status THROWS — it is never read as an outcome", async () => {
+    const { fetcher } = fakeFetch({ "/jobs/runs/": new Response("", { status: 503 }) });
+
+    await expect(new AdminClient({ fetcher }).rerun("run-9f21")).rejects.toThrow(/503/);
+  });
 });
