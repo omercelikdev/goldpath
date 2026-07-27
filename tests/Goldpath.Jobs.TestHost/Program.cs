@@ -4,9 +4,13 @@
 //   Goldpath.Jobs.TestHost <connectionString> [--trigger]            (jobs cluster mode)
 //   Goldpath.Jobs.TestHost <connectionString> --bulk --fleet <name>  (bulk executor mode)
 //   Goldpath.Jobs.TestHost <connectionString> --console <url> [--broker <amqp>]
+//                                              [--secured] [--multitenant] [--fleet <name>]
 //       (console smoke mode: a REAL Goldpath web app serving the FROZEN admin surface for
 //        the Playwright gate; with --broker the campaign module joins, since campaign
-//        REQUIRES a broker by design (campaign RFC D8) — no in-memory stand-in)
+//        REQUIRES a broker by design (campaign RFC D8) — no in-memory stand-in.
+//        --secured raises the AUTH FLOOR (no principal → the surfaces refuse), and
+//        --multitenant makes the app tenant-scoped (R1), so the gate can prove how the
+//        console behaves when it is refused rather than only when it is welcome.)
 using Goldpath;
 using Goldpath.Jobs.TestHost;
 using MassTransit;
@@ -25,7 +29,10 @@ if (consoleMode)
     await RunConsoleHostAsync(
         connectionString,
         args[Array.IndexOf(args, "--console") + 1],
-        args.Contains("--broker") ? args[Array.IndexOf(args, "--broker") + 1] : null);
+        args.Contains("--broker") ? args[Array.IndexOf(args, "--broker") + 1] : null,
+        args.Contains("--secured"),
+        args.Contains("--multitenant"),
+        fleet);
     return;
 }
 
@@ -79,7 +86,8 @@ await host.WaitForShutdownAsync();
 // real Postgres + Quartz) whose admin surface the console drives over real HTTP. The ops
 // policy is opted OUT explicitly here — the auth floor has its own proofs (H2/A3/A4); this
 // host exists to prove the CONSOLE, so it must not need an IdP to do it.
-static async Task RunConsoleHostAsync(string connectionString, string url, string? brokerUri)
+static async Task RunConsoleHostAsync(
+    string connectionString, string url, string? brokerUri, bool secured, bool multiTenant, string fleet)
 {
     var web = WebApplication.CreateBuilder();
     web.Configuration["ConnectionStrings:jobsdb"] = connectionString;
@@ -90,6 +98,21 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
     var consoleOrigin = Environment.GetEnvironmentVariable("GOLDPATH_CONSOLE_ORIGIN") ?? "http://localhost:5201";
     web.Services.AddCors(cors => cors.AddDefaultPolicy(policy => policy
         .WithOrigins(consoleOrigin).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+
+    if (secured)
+    {
+        // The auth floor with NO authentication wired (A4): the ops policies exist, so the
+        // guarded surfaces answer an honest 401 instead of a 500 — which is exactly the
+        // shape the console must render as "forbidden", never as "absent".
+        web.AddGoldpathAuth(auth => auth.Strategy = GoldpathAuthStrategy.None);
+    }
+
+    if (multiTenant)
+    {
+        // R1: on a multi-tenant app every admin read is scoped to the ambient tenant, and a
+        // request that carries none is REFUSED with a teaching envelope (400).
+        web.AddGoldpathMultiTenancy();
+    }
     // Bulk is composed too, so the console's capability probe LIGHTS the intake panel and
     // the U3 gate can drive the real four-eyes verbs (upload → validate → approve/reject).
     web.Services.AddScoped<IGoldpathBulkRowHandler<ClusterPaymentRow>, SmokePaymentHandler>();
@@ -184,7 +207,7 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
 
     web.AddGoldpathJobs<WebApplicationBuilder, ClusterDb>(jobs =>
     {
-        jobs.SchedulerName = "console-smoke";
+        jobs.SchedulerName = fleet;
         jobs.ConnectionName = "jobsdb";
         jobs.CheckinInterval = TimeSpan.FromSeconds(1);
         jobs.AddJob<SmokeJob>();
@@ -232,15 +255,29 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
 
     app.Urls.Add(url);
     app.UseCors();
-    app.MapGoldpathJobsAdmin<ClusterDb>(exposeUnsecured: true);
-    app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: true);
-    app.MapGoldpathNotificationAdmin<ClusterDb>(exposeUnsecured: true);
-    app.MapGoldpathArchivalAdmin<ClusterDb>(exposeUnsecured: true);
+    // The module's OWN primitives, in the order they document: tenant resolution first,
+    // so the auth floor sees a resolved ambient tenant (ADR-0003 — compose, never rewrite;
+    // hand-copying UseGoldpathAuth's body is how a host drifts from what adopters run).
+    if (multiTenant)
+    {
+        app.UseGoldpathMultiTenancy();
+    }
+
+    if (secured)
+    {
+        app.UseGoldpathAuth();
+    }
+
+    var unsecured = !secured;   // secured mode keeps the ops guard ON — that is the point
+    app.MapGoldpathJobsAdmin<ClusterDb>(exposeUnsecured: unsecured);
+    app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: unsecured);
+    app.MapGoldpathNotificationAdmin<ClusterDb>(exposeUnsecured: unsecured);
+    app.MapGoldpathArchivalAdmin<ClusterDb>(exposeUnsecured: unsecured);
     // The webhook channel's destination: a real endpoint that really answers 200.
     app.MapPost("/smoke/hook", () => Results.Ok());
     if (brokerUri is not null)
     {
-        app.MapGoldpathCampaignAdmin<ClusterDb>(exposeUnsecured: true);
+        app.MapGoldpathCampaignAdmin<ClusterDb>(exposeUnsecured: unsecured);
     }
     await app.StartAsync();
 

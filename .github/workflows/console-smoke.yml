@@ -1,0 +1,42 @@
+# The console's proof gate, in its own workflow so it can be RUN ON DEMAND — a change to
+# the console or to any admin surface can be proven in CI without waiting for the night.
+# The nightly calls this same file, so there is exactly one definition of the gate.
+name: console-smoke
+
+on:
+  workflow_dispatch:
+  workflow_call:
+
+jobs:
+  console-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ui/console/pnpm-lock.yaml
+      - name: install the console + browser
+        working-directory: ui/console
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+      - name: "the console smoke — three real apps: open, auth-floored, tenant-scoped"
+        run: bash scripts/console-smoke.sh
+      - name: the host logs, when it goes red
+        if: failure()
+        run: |
+          for log in /tmp/console-smoke-host.log /tmp/console-smoke-secured.log /tmp/console-smoke-tenanted.log; do
+            echo "--- $log"
+            tail -60 "$log" 2>/dev/null || echo "(missing)"
+          done

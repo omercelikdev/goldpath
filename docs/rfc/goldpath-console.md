@@ -62,7 +62,11 @@ custom-develop ON, with the same kit, the same way they add features to the back
   landing page: operators open consoles to answer "is anything wrong", not to browse.
 - **D3 — Proof bar (UI is claims-are-proofs too).**
   Kit: component tests (vitest) on the composites (keyset table paging, verb button's
-  refusal surface, state mapping). Console: Playwright smoke against a REAL generated
+  refusal surface, state mapping). Console: the smoke drives THREE real apps — one open,
+  one behind the auth floor, one tenant-scoped — because how the console behaves when it
+  is REFUSED is as much a claim as how it behaves when it is welcome; plus a service that
+  dies mid-session. Runnable on demand (`.github/workflows/console-smoke.yml`), not only
+  nightly. Playwright smoke against a REAL generated
   app (a `GmConsole` shape joins the GM matrix: generate → run AppHost → drive triage →
   trigger a run → watch it complete → replay a repair item). No screenshot-diff theater;
   behavior only.

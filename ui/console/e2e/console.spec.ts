@@ -5,6 +5,10 @@ import { expect, test } from "@playwright/test";
  * admin surface). Every assertion is behaviour the operator would see; nothing is stubbed.
  */
 const service = process.env.GOLDPATH_SERVICE_URL ?? "http://localhost:5310";
+/** The same packages, behind the auth floor — every admin call answers 401. */
+const secured = process.env.GOLDPATH_SECURED_URL ?? "http://localhost:5312";
+/** The same packages, tenant-scoped (R1) — a call with no ambient tenant is refused. */
+const tenanted = process.env.GOLDPATH_TENANT_URL ?? "http://localhost:5313";
 
 test.describe("the run console against a real Goldpath app", () => {
   test("discovers the composed capability and hides what the app never composed", async ({ page }) => {
@@ -83,13 +87,25 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // ── act 1: a file with a structurally broken line
     await openBulk();
-    await upload("payments.csv", "EndToEndId,Amount\nE2E-1,10.00\nE2E-2,20.00\nE2E-3,30.00,stray\n");
+    // 120 broken lines: enough that the validation report has a SECOND keyset page, so
+    // the walk itself is proven in a browser and not only in a unit test.
+    const broken = Array.from({ length: 120 }, (_, index) => `E2E-B${index + 1},30.00,stray`).join("\n");
+    await upload("payments.csv", `EndToEndId,Amount\nE2E-1,10.00\nE2E-2,20.00\n${broken}\n`);
     await waitForState("Validated");
 
     await newest.getByRole("button").first().click();
     const detail = page.getByTestId("batch-detail");
     // The report the ENGINE wrote — the broken line, named by its own message.
     await expect(detail).toContainText("expected 2 fields");
+
+    // The report is keyset-paged: the first page ends at row 100 and the walk continues
+    // from there. Page one stops at data row 102 (two good rows precede the broken ones).
+    // Scoped to the REPORT table: the ledger above it also prints 122 (the row count).
+    const report = detail.locator("table");
+    await expect(report.getByText("102", { exact: true })).toBeVisible();
+    await expect(report.getByText("122", { exact: true })).toHaveCount(0);
+    await detail.getByRole("button", { name: /more/i }).click();
+    await expect(report.getByText("122", { exact: true })).toBeVisible();
 
     // The gate refuses to fire without evidence.
     await page.getByRole("button", { name: "reject" }).click();
@@ -103,7 +119,7 @@ test.describe("the run console against a real Goldpath app", () => {
     const blocked = page.getByRole("alertdialog", { name: "confirm approve" });
     await expect(blocked).toContainText("audited");
     await blocked.getByRole("button", { name: "approve" }).click();
-    await expect(page.getByText(/1 invalid rows block approval/)).toBeVisible();
+    await expect(page.getByText(/\d+ invalid rows block approval/)).toBeVisible();
 
     // ── act 2: the operator rejects it, with the reason the contract demands
     await page.getByRole("button", { name: "reject" }).click();
@@ -176,12 +192,17 @@ test.describe("the run console against a real Goldpath app", () => {
     await page.getByRole("alertdialog", { name: "confirm resume" }).getByRole("button", { name: "resume" }).click();
     await expect(page.getByRole("button", { name: "pause" })).toBeVisible();
 
-    // Abort names the cost, demands a reason, and ends the campaign for good.
+    // Abort names the cost, demands a reason, and ends the campaign for good. The verb
+    // buttons swap with the state, so the dialog is asserted OPEN before it is filled —
+    // otherwise a click that raced the resume's refresh would fail far away from here.
     await page.getByRole("button", { name: "abort" }).click();
     const aborting = page.getByRole("alertdialog", { name: "confirm abort" });
+    await expect(aborting).toBeVisible();
     await expect(aborting).toContainText("stamped Aborted");
     await aborting.getByLabel("reason (required)").fill("smoke run finished");
     await aborting.getByRole("button", { name: "abort" }).click();
+    // The pacer's own answer, before any reload: proof the verb LANDED.
+    await expect(page.getByTestId("campaign-detail").getByRole("status")).toBeVisible();
 
     await expect(async () => {
       await openCampaigns();
@@ -297,5 +318,45 @@ test.describe("the run console against a real Goldpath app", () => {
     await page.getByRole("button", { name: "verify policies" }).click();
     await page.getByRole("alertdialog", { name: "confirm verify policies" }).getByRole("button", { name: "verify policies" }).click();
     await expect(page.getByTestId("chain-findings")).toContainText("the chain verifies");
+  });
+
+  test("behind the auth floor: every surface is NAMED as forbidden, never hidden", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(secured)}`);
+
+    // The modules ARE composed here; the operator simply has no principal. Hiding them
+    // would tell the operator this app has no admin surface, which is false.
+    await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
+    await expect(page.getByRole("alert")).toContainText("lacks the ops role");
+    await expect(page.getByTestId("run-console")).toHaveCount(0);
+    await expect(page.getByText(/No Goldpath admin surface answered here/)).toHaveCount(0);
+  });
+
+  test("tenant-scoped: a call that cannot be scoped is refused, with the server's reason", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(tenanted)}`);
+
+    // R1: no ambient tenant → the app refuses (400). The console must repeat that, not
+    // silently downgrade a composed module to "absent".
+    await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
+    const banner = page.getByRole("alert");
+    await expect(banner).toContainText("composed here but refused this request");
+    await expect(banner).toContainText(/tenant/i);
+    await expect(page.getByTestId("run-console")).toHaveCount(0);
+  });
+
+  test("a service that dies MID-SESSION is reported, not papered over", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await expect(page.getByTestId("run-console")).toBeVisible();
+
+    // The console discovered a healthy service; now the service stops answering.
+    await page.route(`${service}/goldpath/admin/**`, (route) => route.abort("failed"));
+
+    await page.locator("li", { hasText: "SmokeJob" }).getByRole("button", { name: "trigger" }).first().click();
+    const dialog = page.getByRole("alertdialog");
+    await dialog.getByRole("button", { name: "trigger" }).click();
+
+    // The verb never reached the server, and the console says exactly that — the one
+    // thing it must never do here is imply the trigger landed.
+    await expect(page.getByText(/did not reach the server/)).toBeVisible();
   });
 });

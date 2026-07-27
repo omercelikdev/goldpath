@@ -13,12 +13,20 @@ if [ -d "$HOME/.dotnet/sdk" ]; then export DOTNET_ROOT="$HOME/.dotnet"; export P
 PG_NAME="goldpath-console-smoke-pg"
 MQ_NAME="goldpath-console-smoke-mq"
 SERVICE_URL="http://localhost:5310"
+# Two more REAL apps, so the gate can prove how the console behaves when it is REFUSED —
+# not only when it is welcome: one behind the auth floor, one tenant-scoped (R1).
+SECURED_URL="http://localhost:5312"
+TENANT_URL="http://localhost:5313"
 CONSOLE_URL="http://localhost:5201"
 HOST_PID=""
+SECURED_PID=""
+TENANT_PID=""
 VITE_PID=""
 
 cleanup() {
   [ -n "$HOST_PID" ] && kill "$HOST_PID" 2>/dev/null || true
+  [ -n "$SECURED_PID" ] && kill "$SECURED_PID" 2>/dev/null || true
+  [ -n "$TENANT_PID" ] && kill "$TENANT_PID" 2>/dev/null || true
   [ -n "$VITE_PID" ] && kill "$VITE_PID" 2>/dev/null || true
   docker rm -f "$PG_NAME" >/dev/null 2>&1 || true
   docker rm -f "$MQ_NAME" >/dev/null 2>&1 || true
@@ -55,13 +63,33 @@ docker exec "$MQ_NAME" rabbitmq-diagnostics -q check_port_connectivity >/dev/nul
 
 echo "── the app (real packages, real Quartz, real broker, the FROZEN admin surface)"
 GOLDPATH_CONSOLE_ORIGIN="$CONSOLE_URL" \
-  dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- "$CONNECTION" --console "$SERVICE_URL" --broker "$BROKER" > /tmp/console-smoke-host.log 2>&1 &
+  dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- "$CONNECTION" --console "$SERVICE_URL" --broker "$BROKER" --fleet console-smoke > /tmp/console-smoke-host.log 2>&1 &
 HOST_PID=$!
 for _ in $(seq 1 60); do
   grep -q "CONSOLEHOST-READY" /tmp/console-smoke-host.log && break
   sleep 1
 done
 grep -q "CONSOLEHOST-READY" /tmp/console-smoke-host.log || { echo "the app never came up:"; tail -30 /tmp/console-smoke-host.log; exit 1; }
+
+echo "── the refusing apps (auth floor raised · tenant-scoped)"
+docker exec "$PG_NAME" createdb -U postgres secured >/dev/null 2>&1 || true
+docker exec "$PG_NAME" createdb -U postgres tenanted >/dev/null 2>&1 || true
+GOLDPATH_CONSOLE_ORIGIN="$CONSOLE_URL" \
+  dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- \
+  "Host=localhost;Port=55432;Database=secured;Username=postgres;Password=smoke" \
+  --console "$SECURED_URL" --secured --fleet secured-smoke > /tmp/console-smoke-secured.log 2>&1 &
+SECURED_PID=$!
+GOLDPATH_CONSOLE_ORIGIN="$CONSOLE_URL" \
+  dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- \
+  "Host=localhost;Port=55432;Database=tenanted;Username=postgres;Password=smoke" \
+  --console "$TENANT_URL" --multitenant --fleet tenanted-smoke > /tmp/console-smoke-tenanted.log 2>&1 &
+TENANT_PID=$!
+for _ in $(seq 1 90); do
+  grep -q "CONSOLEHOST-READY" /tmp/console-smoke-secured.log && grep -q "CONSOLEHOST-READY" /tmp/console-smoke-tenanted.log && break
+  sleep 1
+done
+grep -q "CONSOLEHOST-READY" /tmp/console-smoke-secured.log || { echo "the secured app never came up:"; tail -20 /tmp/console-smoke-secured.log; exit 1; }
+grep -q "CONSOLEHOST-READY" /tmp/console-smoke-tenanted.log || { echo "the tenant-scoped app never came up:"; tail -20 /tmp/console-smoke-tenanted.log; exit 1; }
 
 echo "── the console"
 (cd "$ROOT/ui/console" && pnpm dev --port 5201 --strictPort > /tmp/console-smoke-vite.log 2>&1) &
@@ -74,4 +102,6 @@ curl -sf "$CONSOLE_URL" >/dev/null || { echo "the console never came up:"; tail 
 
 echo "── playwright"
 cd "$ROOT/ui/console"
-GOLDPATH_CONSOLE_URL="$CONSOLE_URL" GOLDPATH_SERVICE_URL="$SERVICE_URL" pnpm exec playwright test
+GOLDPATH_CONSOLE_URL="$CONSOLE_URL" GOLDPATH_SERVICE_URL="$SERVICE_URL" \
+  GOLDPATH_SECURED_URL="$SECURED_URL" GOLDPATH_TENANT_URL="$TENANT_URL" \
+  pnpm exec playwright test

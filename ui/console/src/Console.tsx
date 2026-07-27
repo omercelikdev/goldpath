@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { AppShell, Banner } from "@goldpath/kit";
 import type { ShellNavItem } from "@goldpath/kit";
-import { AdminClient, MODULES, type ModuleName } from "./adminClient";
+import { AdminClient, MODULES, type Capability, type ModuleName } from "./adminClient";
 import { RunConsole } from "./RunConsole";
 import { BulkPanel } from "./BulkPanel";
 import { CampaignPanel } from "./CampaignPanel";
@@ -16,7 +16,7 @@ export interface ConsoleProps {
   now?: Date;
 }
 
-type Capabilities = Record<ModuleName, "present" | "absent" | "forbidden">;
+type Capabilities = Record<ModuleName, Capability>;
 
 const SECTION_LABEL: Record<ModuleName, string> = {
   jobs: "Runs",
@@ -29,8 +29,9 @@ const SECTION_LABEL: Record<ModuleName, string> = {
 /**
  * The console shell: capability discovery decides what EXISTS, the shell renders only
  * that (console RFC §2). A module the app never composed is an absent section — never a
- * dead link, never a manifest upload. A capability whose panel is not built yet says so
- * honestly instead of pretending (the remaining U3 panels land slice by slice).
+ * dead link, never a manifest upload. A capability that is present but REFUSING — no ops
+ * role, or no tenant to scope the call to — says exactly that, in the server's words:
+ * "absent" is reserved for a module the app genuinely does not compose.
  */
 export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: ConsoleProps) {
   const client = useMemo(() => new AdminClient({ baseUrl, fetcher }), [baseUrl, fetcher]);
@@ -43,7 +44,7 @@ export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: C
     void client.discoverCapabilities().then((found) => {
       if (!live) return;
       setCapabilities(found);
-      const first = MODULES.find((module) => found[module] !== "absent");
+      const first = MODULES.find((module) => found[module].kind !== "absent");
       if (first) setSection(first);
     });
     return () => {
@@ -52,7 +53,7 @@ export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: C
   }, [client]);
 
   const nav: ShellNavItem[] = capabilities
-    ? MODULES.filter((module) => capabilities[module] !== "absent").map((module) => ({
+    ? MODULES.filter((module) => capabilities[module].kind !== "absent").map((module) => ({
         id: module,
         label: SECTION_LABEL[module],
         onSelect: () => setSection(module),
@@ -75,23 +76,33 @@ export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: C
         </p>
       )}
 
-      {capabilities?.[section] === "forbidden" && (
+      {capabilities?.[section].kind === "forbidden" && (
         <Banner tone="warning">
           {SECTION_LABEL[section]} exists on this service, but your account lacks the ops role for it.
+          {capabilities[section].message ? ` The service said: “${capabilities[section].message}”` : ""}
         </Banner>
       )}
 
-      {capabilities?.[section] === "present" && section === "jobs" && (
+      {capabilities?.[section].kind === "refused" && (
+        // Composed, reachable, and REFUSING — the operator needs the server's reason
+        // (a multi-tenant app scopes admin calls to the ambient tenant), not a blank screen.
+        <Banner tone="warning">
+          {SECTION_LABEL[section]} is composed here but refused this request.
+          {capabilities[section].message ? ` The service said: “${capabilities[section].message}”` : ""}
+        </Banner>
+      )}
+
+      {capabilities?.[section].kind === "present" && section === "jobs" && (
         <RunConsole client={client} now={now} />
       )}
 
-      {capabilities?.[section] === "present" && section === "bulk" && <BulkPanel client={client} />}
+      {capabilities?.[section].kind === "present" && section === "bulk" && <BulkPanel client={client} />}
 
-      {capabilities?.[section] === "present" && section === "campaign" && <CampaignPanel client={client} />}
+      {capabilities?.[section].kind === "present" && section === "campaign" && <CampaignPanel client={client} />}
 
-      {capabilities?.[section] === "present" && section === "notification" && <NotificationPanel client={client} />}
+      {capabilities?.[section].kind === "present" && section === "notification" && <NotificationPanel client={client} />}
 
-      {capabilities?.[section] === "present" && section === "archival" && <ArchivalPanel client={client} />}
+      {capabilities?.[section].kind === "present" && section === "archival" && <ArchivalPanel client={client} />}
     </AppShell>
   );
 }
