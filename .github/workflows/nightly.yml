@@ -52,6 +52,17 @@ jobs:
           dotnet-version: |
             8.0.x
             10.0.x
+      # The GM lane packs a local feed, and that feed shadows nuget.org for the same
+      # version — so the console it packs must carry its assets, or every shape with an
+      # operational module serves a 500 where its console should be.
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ui/console/pnpm-lock.yaml
       - name: ${{ matrix.name }}
         env:
           GOLDPATH_GM_TEMPLATE: ${{ matrix.template || 'goldpath-solution' }}
