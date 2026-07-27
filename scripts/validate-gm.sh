@@ -28,6 +28,25 @@ echo "── shape: $NAME ($*) · workdir: $WORK"
 rm -rf "$HOME/.nuget/packages/goldpath."*
 
 if [ ! -d "$FEED" ] || [ -z "$(ls -A "$FEED" 2>/dev/null)" ]; then
+  # The console's dist FIRST: the local feed shadows nuget.org for the same version, so a
+  # Goldpath.Console packed without its assets is the one a generated app restores — and
+  # its page answers 500, which is exactly what the nightly saw on 2026-07-27. This lane
+  # validating a generated app is OUR CI, not an adopter's machine: "adopters never run
+  # Node" is a claim about the apps we generate, not about the gate that proves them.
+  if command -v pnpm >/dev/null 2>&1; then
+    echo "── build the console (its assets ship inside Goldpath.Console)"
+    bash "$ROOT/scripts/build-console.sh" >/dev/null
+  else
+    # Warning-then-carry-on is how the 500 came back under a different trigger: the feed
+    # would ship an asset-less console and every shape that renders a page would fail far
+    # from here (review R3 on the fix that added this).
+    echo "── pnpm not found, so the console cannot be built"
+    echo "   this lane packs a local feed that SHADOWS nuget.org, so it would ship an"
+    echo "   asset-less console and every shape composing an operational module would fail"
+    echo "   on its console page. Install pnpm (10.x) and re-run."
+    exit 1
+  fi
+
   echo "── pack repo packages -> local feed"
   dotnet pack "$ROOT/Goldpath.sln" -c Release -o "$FEED" --nologo -v q
 fi
