@@ -22,6 +22,7 @@
     <PackageReference Include="Goldpath.Archival" />
     <PackageReference Include="Goldpath.Bulk" />
     <PackageReference Include="Goldpath.Jobs" />
+    <PackageReference Include="Goldpath.Console" />
     <PackageReference Include="Goldpath.ApiDefaults" />
     <PackageReference Include="Goldpath.Data" />
     <PackageReference Include="Goldpath.Messaging" />

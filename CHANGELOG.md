@@ -25,6 +25,10 @@ plus the tenancy fix that the console's own gate uncovered. Upgrade guide:
   keyed retrieval, hold/lift/erase). Capability-lit: a module the app never composed has no
   panel, and one that refuses says why in the SERVER's words.
 
+### Changed
+- **Mediant floor is 1.4.0** (`Goldpath.ApiDefaults`, `Goldpath.Auth`). Apps that pin
+  Mediant themselves must bump; apps that do not are carried by the transitive reference.
+
 ### Fixed
 - **Multi-tenancy is a MARKER, not "some `ITenantContext` exists".** Composing a broker
   registers an `ITenantContext` for message-scoped propagation, and the admin seam read

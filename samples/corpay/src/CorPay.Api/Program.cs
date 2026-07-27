@@ -11,7 +11,12 @@ builder.AddGoldpathServiceDefaults();
 builder.AddGoldpathApiDefaults();
 builder.AddGoldpathAuth();   // OpenId: set Goldpath:Auth:Authority AND Audience in configuration (authority without audience refuses to start — A3)
 // goldpath:features registrations — the drift profile is the source of these rows
-builder.AddGoldpathMultiTenancy();
+builder.AddGoldpathMultiTenancy(o =>
+    // The console's own PAGE cannot carry a tenant header — a browser does not put custom
+    // headers on a document request — so it joins the probe paths. From the next train
+    // this is the package default; on preview.4 an adopter lists it, and must repeat the
+    // defaults because this option REPLACES them.
+    o.ExemptPaths = ["/health", "/alive", "/openapi", "/goldpath/console"]);
 builder.AddGoldpathAuditTrail<WebApplicationBuilder, OrdersDbContext>();
 builder.AddGoldpathSoftDelete();
 builder.AddGoldpathCaching();                       // HybridCache L1+L2 (redis resource in the AppHost)
@@ -121,6 +126,10 @@ app.MapMediantEndpoints(typeof(Program).Assembly);
 app.MapGoldpathJobsAdmin<OrdersDbContext>();        // run console API: trigger/pause/reschedule/audit — ops policy REQUIRED (H2)
 app.MapGoldpathArchivalAdmin<OrdersDbContext>();    // lifecycle verbs: retrieve/hold/erase/verify — ops policy REQUIRED (H2)
 app.MapGoldpathBulkAdmin<OrdersDbContext>();        // intake verbs: upload/report/approve/reject — ops policy REQUIRED (H2)
+// The console the ops team actually opens — served by THIS head, from the package's
+// embedded assets, behind the same ops floor as the surfaces above. No Node anywhere in
+// CorPay: `MapGoldpathConsole` is the whole integration.
+app.MapGoldpathConsole();
 
 // Skip schema work under the build-time OpenAPI generator (no database there).
 var isDocGen = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";

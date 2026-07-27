@@ -17,7 +17,7 @@ public class SmokeTests
     [Fact]
     public async Task Secure_by_default_probes_green_and_the_auth_floor_holds()
     {
-        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(8));
 
         var appHost = await DistributedApplicationTestingBuilder
             .CreateAsync<Projects.CorPay_AppHost>(timeout.Token);
@@ -37,6 +37,20 @@ public class SmokeTests
         var unauthorized = await client.PostAsJsonAsync("/api/v1/orders",
             new { reference = "smoke-001", amount = 42.50m }, timeout.Token);
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+
+        // The console is served by this head and inherits that floor: an operator without a
+        // principal is refused the PAGE, not just the calls behind it. Shipping an
+        // unauthenticated console is the one mistake this composition cannot make.
+        var console = await client.GetAsync("/goldpath/console/", timeout.Token);
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, console.StatusCode);
+
+        // The INTERNAL head also serves a console (its own `exposeUnsecured: true` choice,
+        // the cluster boundary being what protects it) — NOT asserted here, because asking
+        // for its readiness is what uncovered a defect this test cannot fix: the worker
+        // validates the Quartz schema at startup while the API is still migrating the
+        // shared database, so it never becomes ready. Pre-existing, and invisible until
+        // something asked. Recorded as open-threads T12 with what must be proven when it
+        // is fixed.
     }
 
     private static async Task WaitUntilAsync(Func<Task<bool>> condition, CancellationToken cancellationToken)
@@ -53,6 +67,12 @@ public class SmokeTests
             catch (HttpRequestException)
             {
                 // service still starting
+            }
+            catch (TaskCanceledException) when (!cancellationToken.IsCancellationRequested)
+            {
+                // The per-request timeout, not our deadline: a cold machine can take longer
+                // than 100s to answer the FIRST probe (migrations + bus + cache), and the
+                // escaping exception killed the wait instead of retrying it.
             }
 
             await Task.Delay(TimeSpan.FromSeconds(1), cancellationToken);

@@ -25,7 +25,12 @@ public enum GoldpathTenantStrategy
 /// <summary>Tuning surface — bound from <c>Goldpath:MultiTenancy</c>.</summary>
 public sealed class GoldpathMultiTenancyOptions
 {
-    private static readonly string[] s_defaultExemptPaths = ["/health", "/alive", "/openapi"];
+    // The console's own PAGE joins the probes for the same reason they are here: it is a
+    // static document, not a tenant-scoped operation, and a browser cannot put a tenant
+    // header on a document request — a multi-tenant app would otherwise serve its
+    // operators a bare 400 where the console should be. The admin CALLS the console then
+    // makes stay tenant-scoped exactly as R1 says; that is where the scoping matters.
+    private static readonly string[] s_defaultExemptPaths = ["/health", "/alive", "/openapi", "/goldpath/console"];
 
     /// <summary>How the tenant is resolved from the request.</summary>
     public GoldpathTenantStrategy Strategy { get; set; } = GoldpathTenantStrategy.Header;
