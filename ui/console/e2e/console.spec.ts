@@ -15,8 +15,7 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Campaigns" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Notifications" })).toBeVisible();
-    // Archival is never composed here — no panel, no dead link.
-    await expect(page.getByRole("button", { name: "Archival" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Archival" })).toBeVisible();
   });
 
   test("triggers a job, watches the run finish, and replays its repair item", async ({ page }) => {
@@ -234,5 +233,69 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // Read-only by contract: this surface offers no verb at all.
     await expect(page.getByRole("button", { name: /resend|retry/i })).toHaveCount(0);
+  });
+
+  test("archival: verifies the chain, retrieves an entry, holds it, then erases it", async ({ page }) => {
+    const openArchival = async () => {
+      await page.goto(`/?base=${encodeURIComponent(service)}`);
+      await page.getByRole("button", { name: "Archival" }).click();
+      await expect(page.getByTestId("archival-panel")).toBeVisible();
+    };
+
+    // The archive job is real and runs on its own cron — poll until it has appended.
+    await expect(async () => {
+      await openArchival();
+      await expect(page.getByText(/[1-9]\d* entries/)).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 90_000 });
+
+    // The chain verifies END TO END, computed by the engine over every entry.
+    await page.getByRole("button", { name: "verify policies" }).click();
+    await page.getByRole("alertdialog", { name: "confirm verify policies" }).getByRole("button", { name: "verify policies" }).click();
+    await expect(page.getByTestId("chain-findings")).toContainText("the chain verifies");
+
+    // Retrieval is by key — the archive is not browsable, and the panel says so.
+    await page.getByLabel("aggregate key").fill("1");
+    await page.getByRole("button", { name: "retrieve" }).click();
+    const entry = page.getByTestId("archive-entry");
+    await expect(entry).toBeVisible();
+
+    // The document is not on screen until asked for.
+    await expect(entry).not.toContainText("Holder 1");
+    await page.getByRole("button", { name: "reveal document" }).click();
+    await expect(entry).toContainText("Holder 1");
+
+    // A hold needs its case reference, and the hold list records who placed it.
+    // "hold" is a substring of "lift-hold" — every locator here must be exact.
+    await page.getByRole("button", { name: "hold", exact: true }).click();
+    const holding = page.getByRole("alertdialog", { name: "confirm hold" });
+    await expect(holding.getByRole("button", { name: "hold", exact: true })).toBeDisabled();
+    await holding.getByLabel("case reference (required)").fill("CASE-SMOKE-1");
+    await holding.getByRole("button", { name: "hold", exact: true }).click();
+    await expect(page.getByRole("row", { name: /CASE-SMOKE-1/ })).toBeVisible();
+
+    // A held entry cannot be erased — the engine says WHY, and the console repeats it
+    // verbatim. This is the whole point of a hold, so the gate proves it.
+    await page.getByRole("button", { name: "erase" }).click();
+    const blocked = page.getByRole("alertdialog", { name: "confirm erase" });
+    await blocked.getByLabel("subject key (required)").fill("holder:1");
+    await blocked.getByRole("button", { name: "erase" }).click();
+    await expect(entry).toContainText("lift the hold first");
+
+    // Lift it, then erase: the redaction records itself as an erasure row.
+    await page.getByRole("button", { name: "lift-hold" }).click();
+    await page.getByRole("alertdialog", { name: "confirm lift-hold" }).getByRole("button", { name: "lift-hold" }).click();
+
+    await page.getByRole("button", { name: "erase" }).click();
+    const erasing = page.getByRole("alertdialog", { name: "confirm erase" });
+    await erasing.getByLabel("subject key (required)").fill("holder:1");
+    await erasing.getByRole("button", { name: "erase" }).click();
+    await expect(page.getByRole("row", { name: /holder:1/ })).toBeVisible();
+
+    // The redacted entry explains its own hash divergence — redaction, not tamper.
+    await expect(entry).toContainText("BY DESIGN");
+
+    await page.getByRole("button", { name: "verify policies" }).click();
+    await page.getByRole("alertdialog", { name: "confirm verify policies" }).getByRole("button", { name: "verify policies" }).click();
+    await expect(page.getByTestId("chain-findings")).toContainText("the chain verifies");
   });
 });

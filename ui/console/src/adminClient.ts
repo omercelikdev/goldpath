@@ -209,6 +209,64 @@ export interface NotificationInfo {
   correlationId?: string | null;
 }
 
+/** One archive definition with the numbers that decide whether it is healthy. */
+export interface ArchiveDefinitionStatus {
+  name: string;
+  entries: number;
+  dueBacklog: number;
+  activeHolds: number;
+  chainHead: number;
+  purgedThrough: number;
+}
+
+/** One archived entry: the document plus the tamper-evidence around it. */
+export interface ArchiveEntry {
+  id: number;
+  definition: string;
+  aggregateKey: string;
+  tenant?: string | null;
+  document: string;
+  schemaVersion: number;
+  dueAt: string;
+  archivedAt: string;
+  chainIndex: number;
+  contentHash: string;
+  chainHash: string;
+  previousHash: string;
+  erasedAt?: string | null;
+  preErasureContentHash?: string | null;
+}
+
+/** A legal hold — the row IS its own audit. */
+export interface LegalHold {
+  id: number;
+  definition: string;
+  aggregateKey: string;
+  caseReference: string;
+  placedBy: string;
+  placedAt: string;
+  liftedBy?: string | null;
+  liftedAt?: string | null;
+}
+
+/** An erasure record — the row IS the answer to the subject's request. */
+export interface ErasureRecord {
+  id: number;
+  subjectKey: string;
+  requestedBy: string;
+  requestedAt: string;
+  entriesAffected: number;
+  detail?: string | null;
+}
+
+/** One thing the chain verifier found wrong. An empty list is the good news. */
+export interface ChainFinding {
+  definition: string;
+  chainIndex: number;
+  aggregateKey: string;
+  problem: string;
+}
+
 export interface AdminResult {
   ok: boolean;
   message: string;
@@ -453,5 +511,61 @@ export class AdminClient {
 
   notificationFailures(take = 100): Promise<NotificationInfo[]> {
     return this.get<NotificationInfo[]>(`/goldpath/admin/notification/failures?take=${Math.min(500, Math.max(1, take))}`);
+  }
+
+  archiveDefinitions(): Promise<ArchiveDefinitionStatus[]> {
+    return this.get<ArchiveDefinitionStatus[]>("/goldpath/admin/archival/definitions");
+  }
+
+  /** Retrieval is by (definition, key) — the archive has no browse route by design. */
+  async archiveEntry(definition: string, key: string): Promise<ArchiveEntry | null> {
+    const route = `/goldpath/admin/archival/entries/${encodeURIComponent(definition)}/${encodeURIComponent(key)}`;
+    const response = await this.fetcher(`${this.baseUrl}${route}`, {
+      headers: { accept: "application/json" },
+      credentials: "include",
+    });
+    if (response.status === 404) return null;   // "no such entry" is an answer, not a failure
+    if (!response.ok) throw new AdminHttpError(response.status, route);
+    return (await response.json()) as ArchiveEntry;
+  }
+
+  holds(includeLifted = false, take = 100): Promise<LegalHold[]> {
+    const query = new URLSearchParams({ includeLifted: String(includeLifted), take: String(Math.min(500, Math.max(1, take))) });
+    return this.get<LegalHold[]>(`/goldpath/admin/archival/holds?${query.toString()}`);
+  }
+
+  erasures(take = 100): Promise<ErasureRecord[]> {
+    return this.get<ErasureRecord[]>(`/goldpath/admin/archival/erasures?take=${Math.min(500, Math.max(1, take))}`);
+  }
+
+  placeHold(definition: string, key: string, caseReference: string): Promise<AdminResult> {
+    // The case reference is mandatory: a hold that cannot be justified later is not a hold.
+    return this.verb(`/goldpath/admin/archival/entries/${encodeURIComponent(definition)}/${encodeURIComponent(key)}/hold`, { caseReference });
+  }
+
+  liftHold(definition: string, key: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/archival/entries/${encodeURIComponent(definition)}/${encodeURIComponent(key)}/lift-hold`, {});
+  }
+
+  erase(definition: string, key: string, subjectKey: string, detail?: string): Promise<AdminResult> {
+    return this.verb(
+      `/goldpath/admin/archival/entries/${encodeURIComponent(definition)}/${encodeURIComponent(key)}/erase`,
+      { subjectKey, detail: detail ?? null },
+    );
+  }
+
+  /**
+   * Chain verification. This POST does NOT answer the verb envelope — it returns the
+   * FINDINGS themselves, and an empty list is the good news.
+   */
+  async verifyChain(definition: string): Promise<ChainFinding[]> {
+    const route = `/goldpath/admin/archival/definitions/${encodeURIComponent(definition)}/verify`;
+    const response = await this.fetcher(`${this.baseUrl}${route}`, {
+      method: "POST",
+      credentials: "include",
+      headers: { accept: "application/json" },
+    });
+    if (!response.ok) throw new AdminHttpError(response.status, route);
+    return (await response.json()) as ChainFinding[];
   }
 }

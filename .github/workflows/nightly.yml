@@ -131,8 +131,9 @@ jobs:
   # engine's own validation report → refused approval → rejection with evidence →
   # approval of a clean file, and the campaign governor against a REAL broker: watch the
   # pacer release, throttle it, pause, resume, abort with a reason, and the notification
-  # evidence read back in all three kinds — sent, failed, suppressed (U3). Behaviour only;
-  # no screenshot diffing.
+  # evidence read back in all three kinds — sent, failed, suppressed — and archival's
+  # chain verification, hold, hold-blocks-erasure refusal and erasure, after which the
+  # chain still verifies (U3). Behaviour only; no screenshot diffing.
   console-smoke:
     runs-on: ubuntu-latest
     timeout-minutes: 25

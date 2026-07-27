@@ -40,10 +40,10 @@ describe("the console shell (capability discovery decides what EXISTS)", () => {
     expect(await screen.findByText(/No Goldpath admin surface answered here/)).toBeInTheDocument();
   });
 
-  it("a composed-but-unbuilt panel is honest instead of faking a screen", async () => {
+  it("lands on the archival panel when archival is the only composed module", async () => {
     render(<Console fetcher={service({ "/archival/definitions": 200 })} />);
 
-    expect(await screen.findByText(/its panel is not built yet/)).toBeInTheDocument();
+    expect(await screen.findByTestId("archival-panel")).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Archival" })).toHaveAttribute("aria-current", "page");
   });
 

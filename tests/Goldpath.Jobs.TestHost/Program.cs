@@ -133,6 +133,25 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
         });
     }
 
+    // Erasure REFUSES without DataProtection — classification is what tells the archive
+    // which fields to redact (GP1401), so the smoke composes it and marks the holder's
+    // name as personal data.
+    web.AddGoldpathDataProtection();
+
+    // Archival joins too: the panel's evidence — a chain that verifies, a hold that
+    // survives retention, an erasure that redacts without breaking the chain — can only
+    // be proven against entries the ENGINE appended.
+    web.AddGoldpathArchival<WebApplicationBuilder, ClusterDb>(archival =>
+    {
+        archival.BatchSize = 50;
+        archival.AddArchive<SmokePolicy>(a => a
+            .Named("policies")
+            .Key(x => x.Id)
+            .DueWhen(x => x.ClosedAt != null, x => x.ClosedAt!.Value)
+            .ArchiveAfter(TimeSpan.Zero)      // the smoke has no month to wait
+            .RetainFor(years: 10));
+    });
+
     // Notification joins unconditionally: its surface is READ-ONLY, so the gate proves
     // the EVIDENCE — a sent row, a suppressed row and a failed row, each written by the
     // module itself. The webhook points back at this host; the email channel points at a
@@ -173,6 +192,9 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
         // of forging one; execution stays far-future — the gate decides when rows move.
         jobs.AddGoldpathBulkJobs<ClusterDb>(validateCron: "0/5 * * * * ?", executeCron: "0 0 0 1 1 ? 2099");
         jobs.AddGoldpathNotificationJobs<ClusterDb>(sendCron: "0/5 * * * * ?");
+        // Archive every 5s so the panel has a real chain within the smoke's lifetime;
+        // purge and verify keep their own chained/rare schedules from the module.
+        jobs.AddGoldpathArchivalJobs<ClusterDb>(archiveCron: "0/5 * * * * ?");
         if (brokerUri is not null)
         {
             jobs.AddGoldpathCampaignJobs<ClusterDb>(pacerCron: "0/5 * * * * ?");
@@ -187,6 +209,18 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
     {
         var db = scope.ServiceProvider.GetRequiredService<ClusterDb>();
         await db.Database.EnsureCreatedAsync();
+        if (!await db.Policies.AnyAsync())
+        {
+            // Closed long ago: the archive job finds them due on its very first fire.
+            db.Policies.AddRange(Enumerable.Range(1, 5).Select(i => new SmokePolicy
+            {
+                PolicyNo = $"P-{i}",
+                Holder = $"Holder {i}",
+                ClosedAt = DateTimeOffset.UtcNow.AddDays(-400),
+            }));
+            await db.SaveChangesAsync();
+        }
+
         if (brokerUri is not null && !await db.CampaignCustomers.AnyAsync())
         {
             // A real target population for the pacer to work through.
@@ -201,6 +235,7 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
     app.MapGoldpathJobsAdmin<ClusterDb>(exposeUnsecured: true);
     app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: true);
     app.MapGoldpathNotificationAdmin<ClusterDb>(exposeUnsecured: true);
+    app.MapGoldpathArchivalAdmin<ClusterDb>(exposeUnsecured: true);
     // The webhook channel's destination: a real endpoint that really answers 200.
     app.MapPost("/smoke/hook", () => Results.Ok());
     if (brokerUri is not null)
@@ -237,12 +272,15 @@ namespace Goldpath.Jobs.TestHost
 
         public DbSet<SmokeCustomer_Row> CampaignCustomers => Set<SmokeCustomer_Row>();
 
+        public DbSet<SmokePolicy> Policies => Set<SmokePolicy>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.AddGoldpathJobs();
             modelBuilder.AddGoldpathBulk();
             modelBuilder.AddGoldpathCampaign();
             modelBuilder.AddGoldpathNotification();
+            modelBuilder.AddGoldpathArchiveModel();
         }
     }
 
@@ -252,6 +290,19 @@ namespace Goldpath.Jobs.TestHost
         public int Id { get; set; }
 
         public string Email { get; set; } = "";
+    }
+
+    /// <summary>The archivable aggregate of the console smoke: a closed policy.</summary>
+    public class SmokePolicy
+    {
+        public int Id { get; set; }
+
+        public string PolicyNo { get; set; } = "";
+
+        [GoldpathPersonalData]
+        public string Holder { get; set; } = "";
+
+        public DateTimeOffset? ClosedAt { get; set; }
     }
 
     /// <summary>One target as the campaign type projects it.</summary>
