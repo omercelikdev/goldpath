@@ -64,10 +64,22 @@ public static class GoldpathConsoleEndpoints
         AdminSurfaceGuard.Apply(endpoints, group, prefix, exposeUnsecured);
 
         // The registry, as the console reads it. Served from CONFIG so the same dist works
-        // for every adopter; an empty registry is simply absent, which the console reads
-        // as "this service only".
+        // for every adopter.
+        //
+        // An app that configures NO service has no registry, and says so with 404 — which
+        // the console reads as "this service only", silently and correctly. Answering with
+        // an empty LIST instead looked equivalent and was not: the console reads an empty
+        // registry as a BROKEN one and warns the operator that a service they configured is
+        // missing. Every single-app adopter met that false warning on their first screen
+        // (caught by the README screenshot run, because the two halves were each tested
+        // alone and the seam between them never was).
         group.MapGet("/console.config.json", () =>
         {
+            if (options.Services.Count == 0)
+            {
+                return Results.NotFound();
+            }
+
             var payload = JsonSerializer.Serialize(new
             {
                 services = options.Services.Select(service => new { name = service.Name, adminBaseUrl = service.AdminBaseUrl }),
