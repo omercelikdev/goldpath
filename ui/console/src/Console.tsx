@@ -6,6 +6,7 @@ import { RunConsole } from "./RunConsole";
 import { BulkPanel } from "./BulkPanel";
 import { CampaignPanel } from "./CampaignPanel";
 import { NotificationPanel } from "./NotificationPanel";
+import { ArchivalPanel } from "./ArchivalPanel";
 
 export interface ConsoleProps {
   /** Service root; omit for same-origin (the console is served BY the app it drives). */
@@ -90,12 +91,7 @@ export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: C
 
       {capabilities?.[section] === "present" && section === "notification" && <NotificationPanel client={client} />}
 
-      {capabilities?.[section] === "present" && section !== "jobs" && section !== "bulk" && section !== "campaign" && section !== "notification" && (
-        <p className="text-sm text-muted-foreground">
-          {SECTION_LABEL[section]} is composed into this app; its panel is not built yet. Until then drive it
-          through the admin API — the console adds no capability the API does not already expose.
-        </p>
-      )}
+      {capabilities?.[section] === "present" && section === "archival" && <ArchivalPanel client={client} />}
     </AppShell>
   );
 }
