@@ -62,7 +62,9 @@ custom-develop ON, with the same kit, the same way they add features to the back
   landing page: operators open consoles to answer "is anything wrong", not to browse.
 - **D3 — Proof bar (UI is claims-are-proofs too).**
   Kit: component tests (vitest) on the composites (keyset table paging, verb button's
-  refusal surface, state mapping). Console: the smoke drives THREE real apps — one open,
+  refusal surface, state mapping), under a COVERAGE FLOOR that CI enforces (kit 95/90,
+  console 97/85 statements/branches) — the floor exists because the gaps that hid real
+  bugs here were branches nobody had thought to exercise, not tests anyone had deleted. Console: the smoke drives THREE real apps — one open,
   one behind the auth floor, one tenant-scoped — because how the console behaves when it
   is REFUSED is as much a claim as how it behaves when it is welcome; plus a service that
   dies mid-session. Runnable on demand (`.github/workflows/console-smoke.yml`), not only

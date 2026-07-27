@@ -45,6 +45,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
   const [lens, setLens] = useState<Lens>("all");
   const [state, setState] = useState<string>("");
   const [template, setTemplate] = useState<string>("");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<NotificationInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -76,6 +77,24 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
     },
     [client, lens, state, template, refreshToken],
   );
+
+  // The open row RE-READS by id: a notification is evidence in MOTION (Requested → Sent
+  // or Failed), so a row captured minutes ago is not what the operator should judge.
+  useEffect(() => {
+    if (!selectedId) {
+      setSelected(null);
+      return;
+    }
+
+    let live = true;
+    client
+      .notification(selectedId)
+      .then((found) => live && setSelected(found))
+      .catch(() => live && setError(`notification ${selectedId} could not be read`));
+    return () => {
+      live = false;
+    };
+  }, [client, selectedId, refreshToken]);
 
   const waiting = (templates ?? []).filter((entry) => (entry.oldestRequestedSeconds ?? 0) > 0);
 
@@ -127,7 +146,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
               }`}
               onClick={() => {
                 setLens(entry.key);
-                setSelected(null);
+                setSelectedId(null);
               }}
             >
               {entry.label}
@@ -145,7 +164,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
                 value={state}
                 onChange={(event) => {
                   setState(event.target.value);
-                  setSelected(null);
+                  setSelectedId(null);
                 }}
               >
                 <option value="">all states</option>
@@ -165,7 +184,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
                 value={template}
                 onChange={(event) => {
                   setTemplate(event.target.value);
-                  setSelected(null);
+                  setSelectedId(null);
                 }}
               >
                 <option value="">all templates</option>
@@ -192,7 +211,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
             {
               header: "Recipient (masked)",
               cell: (row) => (
-                <button className="font-mono text-xs underline-offset-2 hover:underline" onClick={() => setSelected(row)}>
+                <button className="font-mono text-xs underline-offset-2 hover:underline" onClick={() => setSelectedId(row.id)}>
                   {row.maskedRecipient}
                 </button>
               ),

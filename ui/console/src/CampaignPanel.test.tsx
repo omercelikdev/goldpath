@@ -298,4 +298,26 @@ describe("the campaign governor panel", () => {
 
     await waitFor(() => expect(screen.getByTestId("campaign-detail").textContent).not.toBe(before));
   });
+
+  it("a verb that never reached the server is NOT reported as applied", async () => {
+    const { client: api } = client({ verb: { status: 503, body: {} } });
+    render(<CampaignPanel client={api} />);
+
+    await open();
+    await userEvent.click(await screen.findByRole("button", { name: "pause" }));
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "pause" }));
+
+    expect(await screen.findByText(/did not reach the server — it may not have been applied/)).toBeInTheDocument();
+  });
+
+  it("a campaign with no window releases around the clock, and says exactly that", async () => {
+    const always = campaign({ windowStart: null, windowEnd: null, dailyQuota: null });
+    const { client: api } = client({ detail: always, list: [always] });
+    render(<CampaignPanel client={api} />);
+
+    await open();
+    const detail = await screen.findByTestId("campaign-detail");
+    expect(detail).toHaveTextContent("around the clock");
+    expect(detail).toHaveTextContent("Daily quotanone");
+  });
 });

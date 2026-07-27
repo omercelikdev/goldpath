@@ -124,4 +124,27 @@ describe("the app shell (ui-standard-v1 §3 — the surface scrolls, never the p
     rerender(<AppShell title="CorPay" nav={[nav({ badge: 0 })]} activeId="runs"><p>c</p></AppShell>);
     expect(screen.queryByText("0")).toBeNull();
   });
+
+  it("the service picker defaults to the first service and switches to the one chosen", async () => {
+    const chosen: string[] = [];
+    render(
+      <AppShell
+        title="Goldpath console"
+        nav={[]}
+        services={[
+          { name: "payments", onSelect: () => chosen.push("payments") },
+          { name: "claims", onSelect: () => chosen.push("claims") },
+        ]}
+      >
+        <p>body</p>
+      </AppShell>,
+    );
+
+    // No activeService given: the picker shows the first, rather than an empty box.
+    const picker = screen.getByLabelText(/service/i);
+    expect(picker).toHaveValue("payments");
+
+    await userEvent.selectOptions(picker, "claims");
+    expect(chosen).toEqual(["claims"]);
+  });
 });

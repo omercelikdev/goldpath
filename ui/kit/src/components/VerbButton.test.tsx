@@ -137,4 +137,21 @@ describe("the verb button (ui-standard-v1 §3/§4 — confirm-before-verb, verba
     await waitFor(() => expect(seen).toEqual([ok("approved")]));
     expect(screen.queryByText("approved")).toBeNull();
   });
+
+  it("an unexpected STATUS is named — the operator gets a number to take to the logs", async () => {
+    render(
+      <VerbButton
+        label="trigger"
+        confirm="Trigger?"
+        execute={() => Promise.resolve({ kind: "error", status: 503 } as VerbOutcome)}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "trigger" }));
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "trigger" }));
+
+    // Status 0 means "never left the browser"; a real status means the service answered
+    // something unexpected — two different stories, told differently.
+    expect(await screen.findByText(/unexpected 503 — check the service logs/)).toBeInTheDocument();
+  });
 });

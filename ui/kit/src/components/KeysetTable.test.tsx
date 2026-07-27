@@ -100,4 +100,53 @@ describe("the keyset table (ui-standard-v1 §4 — cursor pager, never offsets)"
     expect(load).toHaveBeenNthCalledWith(1, null, 50);
     expect(load).toHaveBeenNthCalledWith(2, null, 50);   // same page, fresh walk
   });
+
+  it("a superseded load never overwrites the newer one — the page the operator sees is the last they asked for", async () => {
+    // Page 1 resolves LAST: without the generation guard it would land on top of the
+    // second page and the table would silently show stale rows.
+    const gates: ((rows: string[]) => void)[] = [];
+    const loadPage = (cursor: string | null) =>
+      new Promise<KeysetPage<string>>((resolve) => {
+        gates.push((rows) => resolve({ items: rows, nextCursor: cursor === null ? "c1" : null }));
+      });
+
+    const { rerender } = render(
+      <KeysetTable<string>
+        columns={[{ header: "Row", cell: (row) => row }]}
+        loadPage={loadPage}
+        rowKey={(row) => row}
+      />,
+    );
+
+    // A second load supersedes the first (a filter change does exactly this).
+    rerender(
+      <KeysetTable<string>
+        columns={[{ header: "Row", cell: (row) => row }]}
+        loadPage={(cursor) => loadPage(cursor)}
+        rowKey={(row) => row}
+      />,
+    );
+
+    await waitFor(() => expect(gates).toHaveLength(2));
+    gates[1](["fresh"]);
+    gates[0](["stale"]);
+
+    expect(await screen.findByText("fresh")).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByText("stale")).toBeNull());
+  });
+
+  it("right-aligned columns align their header AND their cells", () => {
+    render(
+      <KeysetTable<{ n: number }>
+        columns={[{ header: "Count", align: "right", cell: (row) => row.n }]}
+        loadPage={async () => ({ items: [{ n: 7 }], nextCursor: null })}
+        rowKey={(row) => String(row.n)}
+      />,
+    );
+
+    return waitFor(() => {
+      expect(screen.getByRole("columnheader", { name: "Count" })).toHaveClass("text-right");
+      expect(screen.getByRole("cell", { name: "7" })).toHaveClass("text-right");
+    });
+  });
 });

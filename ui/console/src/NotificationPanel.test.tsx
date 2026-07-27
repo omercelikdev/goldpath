@@ -44,6 +44,18 @@ function client(routes: Routes = {}) {
     const json = (body: unknown) =>
       new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
 
+    // The by-id route must be matched BEFORE the list route it is nested under.
+    if (/\/notifications\/[^/?]+$/.test(url)) {
+      const id = url.split("/").pop();
+      const all = [
+        notification(),
+        notification({ state: "Failed", id: "failed-1", attempts: 3, detail: "the relay refused: mailbox full", failedAt: "2026-07-27T06:02:00Z" }),
+        notification({ state: "Suppressed", id: "suppressed-1", detail: "suppressed by the MaySend hook — suppression is evidence too" }),
+        ...(Array.isArray(routes.list) ? (routes.list as NotificationInfo[]) : []),
+      ];
+      return json(all.find((row) => row.id === id) ?? notification());
+    }
+
     if (url.includes("/failures")) return json(routes.failures ?? [notification({ state: "Failed", id: "failed-1", attempts: 3, detail: "the relay refused: mailbox full", failedAt: "2026-07-27T06:02:00Z" })]);
     if (url.includes("/suppressions")) return json(routes.suppressions ?? [notification({ state: "Suppressed", id: "suppressed-1", detail: "suppressed by the MaySend hook — suppression is evidence too" })]);
     if (url.includes("/notifications")) return json(routes.list ?? [notification()]);
@@ -157,7 +169,7 @@ describe("the notification evidence panel (read-only by contract)", () => {
   });
 
   it("says when the body was deleted — the retention promise, kept and recorded", async () => {
-    const { client: api } = client({ list: [notification({ bodyDeletedAt: "2026-10-25T00:00:00Z" })] });
+    const { client: api } = client({ list: [notification({ id: "deleted-1", bodyDeletedAt: "2026-10-25T00:00:00Z" })] });
     render(<NotificationPanel client={api} />);
 
     await userEvent.click(await screen.findByRole("button", { name: "a***@e***" }));
@@ -170,5 +182,27 @@ describe("the notification evidence panel (read-only by contract)", () => {
 
     // The table reports its own failure too — the panel-level banner is the first one.
     expect((await screen.findAllByRole("alert"))[0]).toHaveTextContent(/notification templates could not be loaded/i);
+  });
+
+  it("tenant and correlation id appear when the row carries them — and never as empty labels", async () => {
+    const { client: api } = client({
+      list: [notification({ id: "traced-1", tenant: "acme", correlationId: "0af7651916cd43dd8448eb211c80319c" })],
+    });
+    render(<NotificationPanel client={api} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "a***@e***" }));
+    const detail = await screen.findByTestId("notification-detail");
+    expect(detail).toHaveTextContent("acme");
+    expect(detail).toHaveTextContent("0af7651916cd43dd8448eb211c80319c");
+  });
+
+  it("a row WITHOUT them shows no tenant or correlation block at all", async () => {
+    const { client: api } = client();
+    render(<NotificationPanel client={api} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "a***@e***" }));
+    const detail = await screen.findByTestId("notification-detail");
+    expect(within(detail).queryByText("Tenant")).toBeNull();
+    expect(within(detail).queryByText("Correlation")).toBeNull();
   });
 });

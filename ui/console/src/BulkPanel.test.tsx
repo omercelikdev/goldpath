@@ -259,4 +259,40 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "approve" })).toBeNull());
     expect(screen.getByText("approved")).toBeInTheDocument();
   });
+
+  it("a decision that never reached the server is NOT reported as recorded", async () => {
+    // The verb envelope never came back — 503 is neither an ok nor a refusal, and the
+    // operator must not walk away believing the gate moved.
+    const { client: api } = client({ verb: { status: 503, body: {} } });
+    render(<BulkPanel client={api} />);
+
+    await openBatch();
+    await userEvent.click(await screen.findByRole("button", { name: "approve" }));
+    await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "approve" }));
+
+    expect(await screen.findByText(/did not reach the server — it may not have been recorded/)).toBeInTheDocument();
+  });
+
+  it("a decided batch carries its evidence: who, when, and why", async () => {
+    const decided = batch({
+      state: "Rejected",
+      decidedAt: "2026-07-27T10:00:00Z",
+      decidedBy: "ops@example.com",
+      decisionNote: "line 3 is malformed",
+    });
+    const { client: api } = client({ batch: decided, batches: [decided] });
+    render(<BulkPanel client={api} />);
+
+    await openBatch();
+    const detail = await screen.findByTestId("batch-detail");
+    expect(detail).toHaveTextContent("Rejected by ops@example.com at 2026-07-27T10:00:00Z");
+    expect(detail).toHaveTextContent("line 3 is malformed");
+  });
+
+  it("a definition with nothing in it says so, instead of showing a bare name", async () => {
+    const { client: api } = client({ definitions: [definition({ batchesByState: {}, awaitingApproval: 0 })] });
+    render(<BulkPanel client={api} />);
+
+    expect(await screen.findByText("no batches yet")).toBeInTheDocument();
+  });
 });

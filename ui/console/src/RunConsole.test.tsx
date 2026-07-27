@@ -141,4 +141,46 @@ describe("the run console (console RFC §2 — a client of the frozen contract)"
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/fleet list could not be loaded/i);
   });
+
+  it("choosing another fleet loads ITS jobs and closes the run that belonged to the first", async () => {
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (init?.method === "POST") return json({ ok: true, message: "done" });
+      if (url.includes("/jobs/runs/")) return json(detail());
+      if (url.includes("/runs?")) return json(url.includes("night-cluster") ? [] : [run()]);
+      if (url.endsWith("/jobs")) return json(url.includes("night-cluster") ? [{ name: "nightly-sweep" }] : [{ name: "eod-reconciliation" }]);
+      return json([
+        { schedulerName: "it-cluster", jobCount: 1, nodes: [{ instanceId: "node-a" }] },
+        { schedulerName: "night-cluster", jobCount: 1, nodes: [] },
+      ]);
+    }) as typeof fetch;
+
+    render(<RunConsole client={new AdminClient({ fetcher })} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "run-9f21" }));
+    await screen.findByTestId("run-detail");
+
+    await userEvent.click(screen.getByRole("button", { name: /night-cluster/ }));
+
+    // The open run belonged to the other fleet: keeping it on screen would put one
+    // fleet's job list next to another fleet's run.
+    await waitFor(() => expect(screen.queryByTestId("run-detail")).toBeNull());
+    expect(await screen.findByText("nightly-sweep")).toBeInTheDocument();
+  });
+
+  it("a PAUSED job offers resume, and resuming posts the frozen route", async () => {
+    const { client: api, posted } = client({ jobs: [{ name: "eod-reconciliation", paused: true }] });
+    render(<RunConsole client={api} />);
+
+    // A paused job must never offer "pause" — the console reads the job's own flag.
+    expect(await screen.findByRole("button", { name: "resume" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "pause" })).toBeNull();
+
+    await userEvent.click(screen.getByRole("button", { name: "resume" }));
+    await userEvent.click(screen.getByRole("alertdialog").querySelector("button")!);
+
+    await waitFor(() => expect(posted).toHaveLength(1));
+    expect(posted[0].url).toContain("/goldpath/admin/jobs/fleets/it-cluster/jobs/eod-reconciliation/resume");
+  });
 });

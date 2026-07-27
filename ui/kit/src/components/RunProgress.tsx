@@ -34,14 +34,18 @@ export function itemsPerSecond(run: RunProgressData, now: Date): number | null {
 export type DeadlineVerdict = "none" | "on-track" | "overrun-predicted" | "overrun";
 
 /**
- * The deadline verdict: a FINISHED run is judged on when it actually ended; a live run
- * on its prediction. The console warns BEFORE the deadline passes — that is the whole
- * point of carrying a prediction in the run row.
+ * The deadline verdict: a FINISHED run is judged on when it actually ended; a live run on
+ * the CLOCK first and its prediction second. The console warns BEFORE the deadline passes
+ * — that is the point of carrying a prediction — but a run that is still going after its
+ * deadline has already overrun, prediction or not. Reading that as "on track" (which it
+ * did until the UI coverage sweep of 2026-07-27) tells the operator the one thing that is
+ * certainly false.
  */
-export function deadlineVerdict(run: RunProgressData): DeadlineVerdict {
+export function deadlineVerdict(run: RunProgressData, now: Date = new Date()): DeadlineVerdict {
   if (!run.deadlineAt) return "none";
   const deadline = new Date(run.deadlineAt).getTime();
   if (run.finishedAt) return new Date(run.finishedAt).getTime() > deadline ? "overrun" : "on-track";
+  if (now.getTime() > deadline) return "overrun";
   if (!run.predictedFinishAt) return "on-track";
   return new Date(run.predictedFinishAt).getTime() > deadline ? "overrun-predicted" : "on-track";
 }
@@ -64,7 +68,7 @@ function formatRate(rate: number): string {
 export function RunProgress({ run, now = new Date() }: RunProgressProps) {
   const pct = run.totalChunks > 0 ? Math.round((run.completedChunks / run.totalChunks) * 100) : 0;
   const rate = itemsPerSecond(run, now);
-  const verdict = deadlineVerdict(run);
+  const verdict = deadlineVerdict(run, now);
   const barTone =
     verdict === "overrun" || run.failedChunks > 0
       ? "bg-danger"
