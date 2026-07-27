@@ -133,6 +133,36 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
         });
     }
 
+    // Notification joins unconditionally: its surface is READ-ONLY, so the gate proves
+    // the EVIDENCE — a sent row, a suppressed row and a failed row, each written by the
+    // module itself. The webhook points back at this host; the email channel points at a
+    // dead port ON PURPOSE, because a failure with the transport's own words is evidence
+    // the panel must be able to show.
+    web.AddGoldpathNotification<WebApplicationBuilder, ClusterDb>(notification =>
+    {
+        notification.MaxAttempts = 1;
+        notification.RetryDelay = TimeSpan.FromMilliseconds(100);
+        notification.Webhook(w => w.Url = $"{url.TrimEnd('/')}/smoke/hook");
+        notification.Email(e =>
+        {
+            e.Host = "127.0.0.1";
+            e.Port = 9;                       // discard: the connection is refused
+            e.From = "noreply@goldpath.local";
+            e.UseSsl = false;
+            e.AllowInsecureTransport = true;  // A3: plaintext is an explicit opt-in pair
+        });
+        notification.AddTemplate("welcome", t => t
+            .Channel("webhook", c => c.Body("", "Welcome, {{Name}}."))
+            .DeleteBodyAfter(TimeSpan.FromDays(90)));
+        notification.AddTemplate("ops-alert", t => t
+            .Channel("email", c => c
+                .Subject("", "Alert")
+                .Body("", "Alert: {{Text}}")));
+        // Suppression is evidence too: the hook refuses one recipient, and the row that
+        // records the refusal is exactly what the panel's Suppressions lens reads.
+        notification.MaySend((request, _) => Task.FromResult(!request.Recipient.StartsWith("blocked@", StringComparison.Ordinal)));
+    });
+
     web.AddGoldpathJobs<WebApplicationBuilder, ClusterDb>(jobs =>
     {
         jobs.SchedulerName = "console-smoke";
@@ -142,6 +172,7 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
         // Validation runs on a tight cron so the smoke can WAIT for a real report instead
         // of forging one; execution stays far-future — the gate decides when rows move.
         jobs.AddGoldpathBulkJobs<ClusterDb>(validateCron: "0/5 * * * * ?", executeCron: "0 0 0 1 1 ? 2099");
+        jobs.AddGoldpathNotificationJobs<ClusterDb>(sendCron: "0/5 * * * * ?");
         if (brokerUri is not null)
         {
             jobs.AddGoldpathCampaignJobs<ClusterDb>(pacerCron: "0/5 * * * * ?");
@@ -169,11 +200,28 @@ static async Task RunConsoleHostAsync(string connectionString, string url, strin
     app.UseCors();
     app.MapGoldpathJobsAdmin<ClusterDb>(exposeUnsecured: true);
     app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: true);
+    app.MapGoldpathNotificationAdmin<ClusterDb>(exposeUnsecured: true);
+    // The webhook channel's destination: a real endpoint that really answers 200.
+    app.MapPost("/smoke/hook", () => Results.Ok());
     if (brokerUri is not null)
     {
         app.MapGoldpathCampaignAdmin<ClusterDb>(exposeUnsecured: true);
     }
     await app.StartAsync();
+
+    // Three real requests: one that sends, one the hook refuses, one whose transport is
+    // dead. The send job (cron) does the rest — nothing here forges a state.
+    using (var scope = app.Services.CreateScope())
+    {
+        var notifier = scope.ServiceProvider.GetRequiredService<IGoldpathNotifier>();
+        await notifier.RequestAsync(new GoldpathNotificationRequest(
+            "welcome", "webhook", "customer1@example.com", "", new Dictionary<string, string> { ["Name"] = "Customer" }, "smoke:welcome:1"), CancellationToken.None);
+        await notifier.RequestAsync(new GoldpathNotificationRequest(
+            "welcome", "webhook", "blocked@example.com", "", new Dictionary<string, string> { ["Name"] = "Blocked" }, "smoke:welcome:blocked"), CancellationToken.None);
+        await notifier.RequestAsync(new GoldpathNotificationRequest(
+            "ops-alert", "email", "ops@example.com", "", new Dictionary<string, string> { ["Text"] = "the night is quiet" }, "smoke:alert:1"), CancellationToken.None);
+    }
+
     Console.WriteLine("CONSOLEHOST-READY");
     await app.WaitForShutdownAsync();
 }
@@ -194,6 +242,7 @@ namespace Goldpath.Jobs.TestHost
             modelBuilder.AddGoldpathJobs();
             modelBuilder.AddGoldpathBulk();
             modelBuilder.AddGoldpathCampaign();
+            modelBuilder.AddGoldpathNotification();
         }
     }
 

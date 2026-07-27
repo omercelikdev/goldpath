@@ -47,6 +47,12 @@ describe("the console shell (capability discovery decides what EXISTS)", () => {
     expect(screen.getByRole("button", { name: "Archival" })).toHaveAttribute("aria-current", "page");
   });
 
+  it("lands on the notification evidence panel when notification is the only composed module", async () => {
+    render(<Console fetcher={service({ "/notification/templates": 200 })} />);
+
+    expect(await screen.findByTestId("notification-panel")).toBeInTheDocument();
+  });
+
   it("lands on the campaign governor when campaign is the only composed module", async () => {
     render(<Console fetcher={service({ "/campaign/": 200 })} />);
 

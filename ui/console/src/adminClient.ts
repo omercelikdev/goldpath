@@ -173,6 +173,42 @@ export interface CampaignThrottle {
   clearWindow?: boolean;
 }
 
+/** One template with its live queue numbers and its retention promise. */
+export interface NotificationTemplateStatus {
+  key: string;
+  hash: string;
+  /** ISO-8601 duration or null — how long the rendered body survives (D4 retention). */
+  deleteBodyAfter?: string | null;
+  byState: Record<string, number>;
+  oldestRequestedSeconds?: number | null;
+}
+
+/**
+ * One notification as the ADMIN surface returns it. The recipient arrives MASKED from the
+ * server (first character + domain hint); the console never has the full address and must
+ * never present this field as if it were one.
+ */
+export interface NotificationInfo {
+  id: string;
+  dedupKey: string;
+  template: string;
+  templateHash: string;
+  channel: string;
+  maskedRecipient: string;
+  culture: string;
+  state: string;
+  attempts: number;
+  detail?: string | null;
+  requestedAt: string;
+  notBefore?: string | null;
+  claimedAt?: string | null;
+  sentAt?: string | null;
+  failedAt?: string | null;
+  bodyDeletedAt?: string | null;
+  tenant?: string | null;
+  correlationId?: string | null;
+}
+
 export interface AdminResult {
   ok: boolean;
   message: string;
@@ -392,5 +428,30 @@ export class AdminClient {
 
   throttleCampaign(id: string, patch: CampaignThrottle): Promise<AdminResult> {
     return this.verb(`/goldpath/admin/campaign/${encodeURIComponent(id)}/throttle`, patch);
+  }
+
+  notificationTemplates(): Promise<NotificationTemplateStatus[]> {
+    return this.get<NotificationTemplateStatus[]>("/goldpath/admin/notification/templates");
+  }
+
+  notifications(options: { state?: string; template?: string; take?: number } = {}): Promise<NotificationInfo[]> {
+    const query = new URLSearchParams();
+    if (options.state) query.set("state", options.state);
+    if (options.template) query.set("template", options.template);
+    query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
+    return this.get<NotificationInfo[]>(`/goldpath/admin/notification/notifications?${query.toString()}`);
+  }
+
+  notification(id: string): Promise<NotificationInfo> {
+    return this.get<NotificationInfo>(`/goldpath/admin/notification/notifications/${encodeURIComponent(id)}`);
+  }
+
+  /** The two focused lists the contract exposes in their own right. */
+  notificationSuppressions(take = 100): Promise<NotificationInfo[]> {
+    return this.get<NotificationInfo[]>(`/goldpath/admin/notification/suppressions?take=${Math.min(500, Math.max(1, take))}`);
+  }
+
+  notificationFailures(take = 100): Promise<NotificationInfo[]> {
+    return this.get<NotificationInfo[]>(`/goldpath/admin/notification/failures?take=${Math.min(500, Math.max(1, take))}`);
   }
 }

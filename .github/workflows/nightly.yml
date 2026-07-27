@@ -130,7 +130,8 @@ jobs:
   # repair queue replayed (U2), and the bulk intake journey end to end: upload → the
   # engine's own validation report → refused approval → rejection with evidence →
   # approval of a clean file, and the campaign governor against a REAL broker: watch the
-  # pacer release, throttle it, pause, resume, abort with a reason (U3). Behaviour only;
+  # pacer release, throttle it, pause, resume, abort with a reason, and the notification
+  # evidence read back in all three kinds — sent, failed, suppressed (U3). Behaviour only;
   # no screenshot diffing.
   console-smoke:
     runs-on: ubuntu-latest

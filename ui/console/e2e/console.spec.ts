@@ -14,9 +14,9 @@ test.describe("the run console against a real Goldpath app", () => {
     // This host composes jobs + bulk; the other three surfaces answer 404, so no panels.
     await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Campaigns" })).toBeVisible();
-    // Archival and notification are never composed here — no panel, no dead link.
+    await expect(page.getByRole("button", { name: "Notifications" })).toBeVisible();
+    // Archival is never composed here — no panel, no dead link.
     await expect(page.getByRole("button", { name: "Archival" })).toHaveCount(0);
-    await expect(page.getByRole("button", { name: "Notifications" })).toHaveCount(0);
   });
 
   test("triggers a job, watches the run finish, and replays its repair item", async ({ page }) => {
@@ -194,5 +194,45 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(detail).toContainText("abort");
     await expect(detail).toContainText("smoke run finished");
     await expect(page.getByRole("button", { name: "pause" })).toHaveCount(0);
+  });
+
+  test("reads the notification evidence: sent, suppressed and failed, each with its own words", async ({ page }) => {
+    const openNotifications = async () => {
+      await page.goto(`/?base=${encodeURIComponent(service)}`);
+      await page.getByRole("button", { name: "Notifications" }).click();
+      await expect(page.getByTestId("notification-panel")).toBeVisible();
+    };
+
+    // The send job is real and runs on its own cron; the app requested three notifications
+    // at startup — one the webhook accepts, one the MaySend hook refuses, one whose
+    // transport is a dead port. Poll until the queue has worked through them.
+    const sentRow = page.getByRole("row", { name: /Sent/ }).first();
+    await expect(async () => {
+      await openNotifications();
+      await expect(sentRow).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 90_000 });
+
+    // Recipients arrive MASKED from the API — the address itself never reaches the browser.
+    // The API masks both halves (`c***@e***`) — neither address nor domain reaches here.
+    await expect(page.getByRole("row", { name: /c\*\*\*@e\*\*\*/ }).first()).toBeVisible();
+    await expect(page.locator("body")).not.toContainText("customer1@example.com");
+    await expect(page.locator("body")).not.toContainText("@example.com");
+
+    // The failure lens: the transport's own refusal, written by the module.
+    await page.getByRole("button", { name: "Failures" }).click();
+    const failedRow = page.getByRole("row", { name: /Failed/ }).first();
+    await expect(failedRow).toBeVisible();
+    await failedRow.getByRole("button").first().click();
+    const detail = page.getByTestId("notification-detail");
+    await expect(detail).toContainText("ops-alert");
+    await expect(detail).toContainText(/refused|connection|error/i);
+
+    // The suppression lens: a refusal by policy is evidence, and it carries its reason.
+    await page.getByRole("button", { name: "Suppressions" }).click();
+    await page.getByRole("row", { name: /Suppressed/ }).first().getByRole("button").first().click();
+    await expect(detail).toContainText("suppressed by the MaySend hook");
+
+    // Read-only by contract: this surface offers no verb at all.
+    await expect(page.getByRole("button", { name: /resend|retry/i })).toHaveCount(0);
   });
 });

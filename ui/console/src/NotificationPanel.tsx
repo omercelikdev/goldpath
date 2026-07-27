@@ -1,0 +1,302 @@
+import { useCallback, useEffect, useState } from "react";
+import { Banner, KeysetTable, StateBadge } from "@goldpath/kit";
+import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
+
+export interface NotificationPanelProps {
+  client: AdminClient;
+}
+
+/** The evidence row's state machine, in its own order. */
+const STATES = ["Requested", "Suppressed", "Sent", "Failed"] as const;
+
+/** The three lenses the contract exposes: the full list, and its two focused cuts. */
+const LENSES = [
+  { key: "all", label: "All notifications" },
+  { key: "failures", label: "Failures" },
+  { key: "suppressions", label: "Suppressions" },
+] as const;
+
+type Lens = (typeof LENSES)[number]["key"];
+
+function ageWords(seconds: number): string {
+  if (seconds < 90) return `${Math.round(seconds)}s`;
+  if (seconds < 5400) return `${Math.round(seconds / 60)}m`;
+  if (seconds < 172_800) return `${Math.round(seconds / 3600)}h`;
+  return `${Math.round(seconds / 86_400)}d`;
+}
+
+/**
+ * .NET serializes a TimeSpan as `d.hh:mm:ss` — shown as-is would read like a timestamp,
+ * so the retention promise is spelled out in days/hours.
+ */
+export function retentionWords(deleteBodyAfter: string | null | undefined): string {
+  if (!deleteBodyAfter) return "kept";
+  const match = /^(?:(\d+)\.)?(\d{2}):(\d{2}):(\d{2})/.exec(deleteBodyAfter);
+  if (!match) return deleteBodyAfter;
+  const [, days, hours, minutes] = match;
+  const totalHours = Number(days ?? 0) * 24 + Number(hours);
+  if (totalHours >= 48) return `body deleted after ${Math.round(totalHours / 24)}d`;
+  if (totalHours >= 1) return `body deleted after ${totalHours}h`;
+  return `body deleted after ${Number(minutes)}m`;
+}
+
+/**
+ * The notification evidence panel (console RFC §3). The surface is READ-ONLY by contract
+ * and so is this screen: requesting belongs to the app (a console that could inject
+ * messages would be an evidence hole) and re-sending belongs to the run console. What the
+ * operator gets here is the evidence: who was written to (masked), which template hash
+ * rendered it, when it was claimed, sent or failed, and why.
+ */
+export function NotificationPanel({ client }: NotificationPanelProps) {
+  const [templates, setTemplates] = useState<NotificationTemplateStatus[] | null>(null);
+  const [lens, setLens] = useState<Lens>("all");
+  const [state, setState] = useState<string>("");
+  const [template, setTemplate] = useState<string>("");
+  const [selected, setSelected] = useState<NotificationInfo | null>(null);
+  const [error, setError] = useState<string | null>(null);
+  const [refreshToken, setRefreshToken] = useState(0);
+
+  const refresh = () => setRefreshToken((token) => token + 1);
+
+  useEffect(() => {
+    let live = true;
+    client
+      .notificationTemplates()
+      .then((found) => live && setTemplates(found))
+      .catch(() => live && setError("the notification templates could not be loaded"));
+    return () => {
+      live = false;
+    };
+  }, [client, refreshToken]);
+
+  const loadRows = useCallback(
+    async (_cursor: string | null, take: number) => {
+      // Each lens is the contract's OWN route — the focused cuts are not this screen
+      // re-filtering the broad list, so a server-side change to either is visible here.
+      const rows =
+        lens === "failures"
+          ? await client.notificationFailures(take)
+          : lens === "suppressions"
+            ? await client.notificationSuppressions(take)
+            : await client.notifications({ state: state || undefined, template: template || undefined, take });
+      return { items: rows, nextCursor: null };
+    },
+    [client, lens, state, template, refreshToken],
+  );
+
+  const waiting = (templates ?? []).filter((entry) => (entry.oldestRequestedSeconds ?? 0) > 0);
+
+  return (
+    <div data-testid="notification-panel" className="space-y-6">
+      {error && <Banner tone="danger">{error}</Banner>}
+
+      {waiting.length > 0 && (
+        <Banner tone="info" live="status">
+          {waiting
+            .map((entry) => `${entry.key}: oldest request waiting ${ageWords(entry.oldestRequestedSeconds ?? 0)}`)
+            .join(" · ")}
+        </Banner>
+      )}
+
+      <section>
+        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Templates</h2>
+        <ul className="space-y-2">
+          {(templates ?? []).map((entry) => (
+            <li key={entry.key} className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 px-3 py-2">
+              <span className="text-sm font-medium">{entry.key}</span>
+              {/* The hash is what proves WHICH text was sent — truncated for the eye, whole in the row. */}
+              <span className="font-mono text-xs text-faint" title={entry.hash}>
+                {entry.hash.slice(0, 12)}
+              </span>
+              <span className="text-xs text-faint">{retentionWords(entry.deleteBodyAfter)}</span>
+              {Object.entries(entry.byState).map(([key, count]) => (
+                <span key={key} className="text-xs text-faint">
+                  {key}: {count}
+                </span>
+              ))}
+              {Object.keys(entry.byState ?? {}).length === 0 && (
+                <span className="text-xs text-faint">nothing requested yet</span>
+              )}
+            </li>
+          ))}
+          {templates?.length === 0 && <li className="text-xs text-faint">No templates are registered in this app.</li>}
+        </ul>
+      </section>
+
+      <section>
+        <div className="mb-2 flex flex-wrap items-center gap-2">
+          {LENSES.map((entry) => (
+            <button
+              key={entry.key}
+              aria-pressed={lens === entry.key}
+              className={`rounded-md border px-3 py-1 text-sm ${
+                lens === entry.key ? "border-border bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent"
+              }`}
+              onClick={() => {
+                setLens(entry.key);
+                setSelected(null);
+              }}
+            >
+              {entry.label}
+            </button>
+          ))}
+
+          {lens === "all" && (
+            <>
+              <label className="ml-2 text-xs text-muted-foreground" htmlFor="notification-state">
+                State
+              </label>
+              <select
+                id="notification-state"
+                className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+                value={state}
+                onChange={(event) => {
+                  setState(event.target.value);
+                  setSelected(null);
+                }}
+              >
+                <option value="">all states</option>
+                {STATES.map((option) => (
+                  <option key={option} value={option}>
+                    {option}
+                  </option>
+                ))}
+              </select>
+
+              <label className="text-xs text-muted-foreground" htmlFor="notification-template">
+                Template
+              </label>
+              <select
+                id="notification-template"
+                className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+                value={template}
+                onChange={(event) => {
+                  setTemplate(event.target.value);
+                  setSelected(null);
+                }}
+              >
+                <option value="">all templates</option>
+                {(templates ?? []).map((entry) => (
+                  <option key={entry.key} value={entry.key}>
+                    {entry.key}
+                  </option>
+                ))}
+              </select>
+            </>
+          )}
+
+          <button
+            className="ml-auto rounded-md border border-border bg-background px-3 py-1 text-sm hover:bg-accent"
+            onClick={refresh}
+          >
+            refresh
+          </button>
+        </div>
+
+        <KeysetTable<NotificationInfo>
+          key={`${lens}-${state}-${template}-${refreshToken}`}
+          columns={[
+            {
+              header: "Recipient (masked)",
+              cell: (row) => (
+                <button className="font-mono text-xs underline-offset-2 hover:underline" onClick={() => setSelected(row)}>
+                  {row.maskedRecipient}
+                </button>
+              ),
+            },
+            { header: "Template", cell: (row) => row.template },
+            { header: "Channel", cell: (row) => row.channel },
+            { header: "State", cell: (row) => <StateBadge state={row.state} /> },
+            { header: "Attempts", align: "right", cell: (row) => row.attempts },
+            { header: "Requested", cell: (row) => row.requestedAt },
+          ]}
+          loadPage={loadRows}
+          rowKey={(row) => row.id}
+          emptyMessage={
+            lens === "failures"
+              ? "No failed notifications."
+              : lens === "suppressions"
+                ? "Nothing was suppressed."
+                : "No notifications match this filter."
+          }
+        />
+        <p className="mt-1 text-xs text-faint">
+          Recipients are masked by the API, not by this screen — the full address never leaves the store. Requesting
+          belongs to the app and re-sending to the run console, so this surface has no verbs at all.
+        </p>
+      </section>
+
+      {selected && (
+        <section data-testid="notification-detail" className="rounded-lg border border-border p-4">
+          <div className="mb-3 flex flex-wrap items-center gap-3">
+            <h2 className="text-sm font-medium">
+              {selected.template} → <span className="font-mono">{selected.maskedRecipient}</span>
+            </h2>
+            <StateBadge state={selected.state} />
+            <span className="text-xs text-faint">{selected.channel} · {selected.culture || "default culture"}</span>
+          </div>
+
+          <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
+            <div>
+              <dt className="text-faint">Dedup key</dt>
+              {/* The business identity that makes a retry storm land once. */}
+              <dd className="font-mono break-all">{selected.dedupKey}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Template hash</dt>
+              <dd className="font-mono break-all">{selected.templateHash}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Attempts</dt>
+              <dd>{selected.attempts}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Requested</dt>
+              <dd>{selected.requestedAt}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Not before</dt>
+              <dd>{selected.notBefore ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Claimed</dt>
+              <dd>{selected.claimedAt ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Sent</dt>
+              <dd>{selected.sentAt ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Failed</dt>
+              <dd className={selected.failedAt ? "text-danger" : undefined}>{selected.failedAt ?? "—"}</dd>
+            </div>
+            <div>
+              <dt className="text-faint">Body</dt>
+              {/* Retention is a promise the module keeps; the row records when it was kept. */}
+              <dd>{selected.bodyDeletedAt ? `deleted ${selected.bodyDeletedAt}` : "retained"}</dd>
+            </div>
+            {selected.tenant && (
+              <div>
+                <dt className="text-faint">Tenant</dt>
+                <dd>{selected.tenant}</dd>
+              </div>
+            )}
+            {selected.correlationId && (
+              <div>
+                <dt className="text-faint">Correlation</dt>
+                <dd className="font-mono break-all">{selected.correlationId}</dd>
+              </div>
+            )}
+          </dl>
+
+          {selected.detail && (
+            // The server's own words: the transport's refusal, or why it was suppressed.
+            <p className={`mt-3 text-xs ${selected.state === "Failed" ? "text-danger" : "text-muted-foreground"}`}>
+              {selected.detail}
+            </p>
+          )}
+        </section>
+      )}
+    </div>
+  );
+}
