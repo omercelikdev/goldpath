@@ -28,11 +28,11 @@ describe("the admin client (the console's only door — the FROZEN contract)", (
 
     const capabilities = await new AdminClient({ fetcher }).discoverCapabilities();
 
-    expect(capabilities.jobs).toBe("present");
-    expect(capabilities.bulk).toBe("present");
-    expect(capabilities.campaign).toBe("present");
-    expect(capabilities.archival).toBe("absent");        // 404 = never composed
-    expect(capabilities.notification).toBe("absent");
+    expect(capabilities.jobs).toEqual({ kind: "present" });
+    expect(capabilities.bulk).toEqual({ kind: "present" });
+    expect(capabilities.campaign).toEqual({ kind: "present" });
+    expect(capabilities.archival).toEqual({ kind: "absent" });        // 404 = never composed
+    expect(capabilities.notification).toEqual({ kind: "absent" });
   });
 
   it("tells 'forbidden' apart from 'absent' — the panel exists, this operator may not see it", async () => {
@@ -43,9 +43,39 @@ describe("the admin client (the console's only door — the FROZEN contract)", (
 
     const capabilities = await new AdminClient({ fetcher }).discoverCapabilities();
 
-    expect(capabilities.jobs).toBe("forbidden");
-    expect(capabilities.archival).toBe("forbidden");
-    expect(capabilities.bulk).toBe("absent");
+    expect(capabilities.jobs.kind).toBe("forbidden");
+    expect(capabilities.archival.kind).toBe("forbidden");
+    expect(capabilities.bulk).toEqual({ kind: "absent" });
+  });
+
+  it("a 400 is REFUSED, not absent — and carries the server's own reason", async () => {
+    // What a multi-tenant app answers when the call cannot be scoped (R1): the module is
+    // composed and reachable; only this request is impossible. Tenant resolution answers
+    // ProblemDetails, the admin seam answers the Goldpath envelope — both are read.
+    const { fetcher } = fakeFetch({
+      "/goldpath/admin/jobs/fleets": new Response(
+        JSON.stringify({ title: "Tenant could not be resolved.", status: 400 }),
+        { status: 400, headers: { "content-type": "application/json" } },
+      ),
+      "/goldpath/admin/bulk/definitions": new Response(
+        JSON.stringify({ ok: false, message: "no ambient tenant on a multi-tenant app" }),
+        { status: 400, headers: { "content-type": "application/json" } },
+      ),
+    });
+
+    const capabilities = await new AdminClient({ fetcher }).discoverCapabilities();
+
+    expect(capabilities.jobs).toEqual({ kind: "refused", message: "Tenant could not be resolved." });
+    expect(capabilities.bulk).toEqual({ kind: "refused", message: "no ambient tenant on a multi-tenant app" });
+    expect(capabilities.campaign).toEqual({ kind: "absent" });
+  });
+
+  it("a refusal with a body the console cannot read still refuses — it never invents words", async () => {
+    const { fetcher } = fakeFetch({ "/goldpath/admin/jobs/fleets": new Response("<html>gateway</html>", { status: 400 }) });
+
+    const capabilities = await new AdminClient({ fetcher }).discoverCapabilities();
+
+    expect(capabilities.jobs).toEqual({ kind: "refused", message: undefined });
   });
 
   it("an unreachable service yields no panels instead of crashing the console", async () => {
@@ -55,7 +85,7 @@ describe("the admin client (the console's only door — the FROZEN contract)", (
 
     const capabilities = await new AdminClient({ fetcher }).discoverCapabilities();
 
-    expect(MODULES.every((module) => capabilities[module] === "absent")).toBe(true);
+    expect(MODULES.every((module) => capabilities[module].kind === "absent")).toBe(true);
   });
 
   it("clamps take to the contract's [1,500] before the request leaves the browser", async () => {

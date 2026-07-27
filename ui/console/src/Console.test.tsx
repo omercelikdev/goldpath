@@ -70,4 +70,36 @@ describe("the console shell (capability discovery decides what EXISTS)", () => {
 
     expect(await screen.findByTestId("run-console")).toBeInTheDocument();
   });
+
+  it("a REFUSED capability is named with the server's reason — never hidden as absent", async () => {
+    // A multi-tenant app with no ambient tenant: every surface answers 400. The modules
+    // are composed; only this request cannot be scoped. Calling that "absent" would tell
+    // the operator the app does not have the module at all.
+    const fetcher = (async () =>
+      new Response(JSON.stringify({ title: "Tenant could not be resolved." }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      })) as typeof fetch;
+
+    render(<Console fetcher={fetcher} />);
+
+    expect(await screen.findByRole("button", { name: "Runs" })).toBeInTheDocument();
+    const banner = await screen.findByRole("alert");
+    expect(banner).toHaveTextContent("Runs is composed here but refused this request");
+    expect(banner).toHaveTextContent("Tenant could not be resolved.");
+    expect(screen.queryByText(/No Goldpath admin surface answered here/)).toBeNull();
+    expect(screen.queryByTestId("run-console")).toBeNull();
+  });
+
+  it("a forbidden capability repeats the server's words when it gave any", async () => {
+    const fetcher = (async () =>
+      new Response(JSON.stringify({ message: "the 'goldpath-ops' role is required" }), {
+        status: 403,
+        headers: { "content-type": "application/json" },
+      })) as typeof fetch;
+
+    render(<Console fetcher={fetcher} />);
+
+    expect(await screen.findByRole("alert")).toHaveTextContent("the 'goldpath-ops' role is required");
+  });
 });

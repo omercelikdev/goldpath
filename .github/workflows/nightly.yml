@@ -125,40 +125,14 @@ jobs:
       - name: breaker acceptance vs CorPay
         run: bash evals/skills/breaker/accept.sh samples/corpay
 
-  # The console exit gate (console RFC D3): the REAL console driven against a REAL
-  # Goldpath app — capability discovery, the confirm gate, a run reaching terminal, the
-  # repair queue replayed (U2), and the bulk intake journey end to end: upload → the
-  # engine's own validation report → refused approval → rejection with evidence →
-  # approval of a clean file, and the campaign governor against a REAL broker: watch the
-  # pacer release, throttle it, pause, resume, abort with a reason, and the notification
-  # evidence read back in all three kinds — sent, failed, suppressed — and archival's
-  # chain verification, hold, hold-blocks-erasure refusal and erasure, after which the
-  # chain still verifies (U3). Behaviour only; no screenshot diffing.
+  # The console exit gate (console RFC D3): the REAL console driven against REAL Goldpath
+  # apps — capability discovery, the confirm gate, a run reaching terminal, the repair
+  # queue replayed, bulk's four-eyes gate and its keyset-paged report, the campaign
+  # governor over a real broker, the notification evidence in all three kinds, archival's
+  # chain/hold/erasure cycle, plus how the console behaves when it is REFUSED (auth floor
+  # raised, tenant-scoped) and when the service dies mid-session. Dispatchable on its own.
   console-smoke:
-    runs-on: ubuntu-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-dotnet@v4
-        with:
-          dotnet-version: |
-            8.0.x
-            10.0.x
-      - uses: pnpm/action-setup@v4
-        with:
-          version: 10
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 24
-          cache: pnpm
-          cache-dependency-path: ui/console/pnpm-lock.yaml
-      - name: install the console + browser
-        working-directory: ui/console
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm exec playwright install --with-deps chromium
-      - name: the console smoke
-        run: bash scripts/console-smoke.sh
+    uses: ./.github/workflows/console-smoke.yml
 
   # The finance sample stays green forever: built against the PUBLISHED packages, its
   # unit contract tests and the real-AppHost smoke run nightly (samples/GAP-LEDGER.md

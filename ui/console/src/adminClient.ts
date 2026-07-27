@@ -26,6 +26,30 @@ const PROBE: Record<ModuleName, string> = {
   campaign: "/goldpath/admin/campaign/",
 };
 
+/**
+ * What a probe learned about one module. A refusal carries the SERVER's words: the
+ * console repeats them rather than inventing its own explanation.
+ */
+export type Capability =
+  | { kind: "present" }
+  | { kind: "absent" }
+  | { kind: "forbidden"; message?: string }
+  | { kind: "refused"; message?: string };
+
+/**
+ * Pulls the human sentence out of a refusal. Goldpath's own envelope says `message`;
+ * ASP.NET's ProblemDetails (what tenant resolution answers with) says `title`/`detail`.
+ * Neither is guessed at — an unreadable body simply yields nothing.
+ */
+async function refusalMessage(response: Response): Promise<string | undefined> {
+  try {
+    const body = (await response.clone().json()) as { message?: string; detail?: string; title?: string };
+    return body.message ?? body.detail ?? body.title;
+  } catch {
+    return undefined;
+  }
+}
+
 export interface FleetInfo {
   schedulerName: string;
   jobCount: number;
@@ -303,11 +327,17 @@ export class AdminClient {
   }
 
   /**
-   * Capability discovery: probe each module's list root ONCE. 404 = absent (the module
-   * was never composed). 401/403 = present but this operator may not see it — surfaced
-   * as `forbidden` so the console can say WHY instead of hiding the panel silently.
+   * Capability discovery: probe each module's list root ONCE.
+   *
+   * - 404 → `absent`: the module was never composed into this app.
+   * - 401/403 → `forbidden`: it exists, this operator may not see it.
+   * - 400 → `refused`: it exists and answered, but the request could not be SCOPED — a
+   *   multi-tenant app refuses an admin call that carries no ambient tenant (contract
+   *   revision R1). Reading that as "absent" would tell the operator the module is not
+   *   composed, which is a lie the console must never tell.
+   * - anything else non-ok → `absent`, honestly: nothing usable answered.
    */
-  async discoverCapabilities(): Promise<Record<ModuleName, "present" | "absent" | "forbidden">> {
+  async discoverCapabilities(): Promise<Record<ModuleName, Capability>> {
     const entries = await Promise.all(
       MODULES.map(async (module) => {
         try {
@@ -315,15 +345,22 @@ export class AdminClient {
             headers: { accept: "application/json" },
             credentials: "include",
           });
-          if (response.status === 404) return [module, "absent"] as const;
-          if (response.status === 401 || response.status === 403) return [module, "forbidden"] as const;
-          return [module, response.ok ? "present" : "absent"] as const;
+          if (response.status === 404) return [module, { kind: "absent" } as Capability] as const;
+          if (response.status === 401 || response.status === 403) {
+            return [module, { kind: "forbidden", message: await refusalMessage(response) } as Capability] as const;
+          }
+
+          if (response.status === 400) {
+            return [module, { kind: "refused", message: await refusalMessage(response) } as Capability] as const;
+          }
+
+          return [module, { kind: response.ok ? "present" : "absent" } as Capability] as const;
         } catch {
-          return [module, "absent"] as const;   // unreachable service: no panel, no crash
+          return [module, { kind: "absent" } as Capability] as const;   // unreachable: no panel, no crash
         }
       }),
     );
-    return Object.fromEntries(entries) as Record<ModuleName, "present" | "absent" | "forbidden">;
+    return Object.fromEntries(entries) as Record<ModuleName, Capability>;
   }
 
   fleets(): Promise<FleetInfo[]> {
