@@ -52,6 +52,9 @@ public class MapGoldpathConsoleTests
             .AddService("payments", "https://payments.internal")
             .AddService("claims", "https://claims.internal"));
 
+        // `GetFromJsonAsync` reads with JsonSerializerDefaults.Web, which is
+        // case-INSENSITIVE — the camelCase the endpoint emits binds to these PascalCase
+        // records without options (checked after review R5 asked whether it really does).
         var registry = await client.GetFromJsonAsync<Registry>("/goldpath/console/console.config.json");
 
         Assert.NotNull(registry);

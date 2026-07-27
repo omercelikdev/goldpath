@@ -3,6 +3,7 @@ using System.Text.Json;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
+using Microsoft.AspNetCore.StaticFiles;
 using Microsoft.Extensions.FileProviders;
 
 namespace Goldpath;
@@ -39,6 +40,8 @@ public sealed class GoldpathConsoleOptions
 /// </summary>
 public static class GoldpathConsoleEndpoints
 {
+    private static readonly FileExtensionContentTypeProvider ContentTypes = new();
+
     /// <summary>
     /// Maps the console under <paramref name="prefix"/>, behind the SAME ops floor as the
     /// admin surfaces (H2). `exposeUnsecured: true` is for hosts that have no auth at all
@@ -110,21 +113,11 @@ public static class GoldpathConsoleEndpoints
     }
 
     /// <summary>
-    /// The handful of types a built single page actually ships. Deliberately explicit: a
-    /// guessed content type is how a console ends up served as `text/plain`.
+    /// The framework's own extension→type map (ADR-0003: compose, never rewrite). Anything
+    /// it does not know is served as bytes rather than guessed at — a guessed content type
+    /// is how a console ends up rendered as text.
     /// </summary>
-    private static string ContentTypeOf(string path) => Path.GetExtension(path).ToLowerInvariant() switch
-    {
-        ".html" => "text/html; charset=utf-8",
-        ".js" => "text/javascript; charset=utf-8",
-        ".mjs" => "text/javascript; charset=utf-8",
-        ".css" => "text/css; charset=utf-8",
-        ".json" => "application/json; charset=utf-8",
-        ".svg" => "image/svg+xml",
-        ".png" => "image/png",
-        ".ico" => "image/x-icon",
-        ".woff2" => "font/woff2",
-        ".map" => "application/json; charset=utf-8",
-        _ => "application/octet-stream",
-    };
+    private static string ContentTypeOf(string path)
+        => ContentTypes.TryGetContentType(path, out var contentType) ? contentType : "application/octet-stream";
+
 }
