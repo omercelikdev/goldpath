@@ -52,6 +52,7 @@
     <!--#endif -->
     <!--#if (UseArchival || UseBulk || UseNotification || UseCampaign) -->
     <PackageReference Include="Goldpath.Jobs" />
+    <PackageReference Include="Goldpath.Console" />
     <!--#endif -->
     <PackageReference Include="Goldpath.ApiDefaults" />
     <PackageReference Include="Goldpath.Data" />

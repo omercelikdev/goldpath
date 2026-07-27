@@ -19,7 +19,10 @@ only after that PR merges green.
 ## In the release PR
 
 - [ ] Version bump: the single train version (D1 — every `Goldpath.*` package, the CLI
-      and the template pack).
+      and the template pack) — INCLUDING the templates' own `Goldpath.*` pins, which
+      decide which train a generated app restores. `scripts/template-pins.sh` gates this
+      on every PR; it exists because the pins sat four trains behind while the golden
+      manifest matrix quietly validated the old one.
 - [ ] PublicAPI roll: each package's `PublicAPI.Unshipped.txt` content moves to
       `PublicAPI.Shipped.txt` (empty Unshipped after the roll).
 - [ ] `CHANGELOG.md`: the train's entry, newest on top.

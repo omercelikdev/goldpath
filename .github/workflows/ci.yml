@@ -21,6 +21,8 @@ jobs:
         run: bash scripts/corpus-check.sh
       - name: docs freshness (no link to a missing file)
         run: bash scripts/docs-freshness.sh
+      - name: template pins are on THIS train (a stale pin silently generates an old one)
+        run: bash scripts/template-pins.sh
       - name: build
         run: dotnet build Goldpath.sln --nologo
       - name: unit tests
