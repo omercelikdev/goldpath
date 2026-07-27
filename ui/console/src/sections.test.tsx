@@ -2,8 +2,11 @@ import { render, screen } from "@testing-library/react";
 import { AdminClient, MODULES, type Capability, type ModuleName } from "./adminClient";
 import { composedSections, ServicePanels, type Capabilities } from "./sections";
 
-const capabilities = (over: Partial<Record<ModuleName, Capability>> = {}): Capabilities =>
-  Object.fromEntries(MODULES.map((module) => [module, over[module] ?? { kind: "absent" }])) as Capabilities;
+const capabilities = (
+  over: Partial<Record<ModuleName, Capability>> = {},
+  fallback: Capability["kind"] = "absent",
+): Capabilities =>
+  Object.fromEntries(MODULES.map((module) => [module, over[module] ?? { kind: fallback }])) as Capabilities;
 
 const client = new AdminClient({ fetcher: (async () => new Response("[]", { status: 200 })) as typeof fetch });
 
@@ -45,6 +48,14 @@ describe("one service's panels", () => {
 
       view.unmount();
     }
+  });
+
+  it("a service that did not answer says SO — it is not an app without modules", () => {
+    render(<ServicePanels client={client} capabilities={capabilities({}, "unreachable")} section="jobs" />);
+
+    expect(screen.getByRole("alert")).toHaveTextContent(/did not answer at all/);
+    expect(screen.getByRole("alert")).toHaveTextContent(/CORS policy/);
+    expect(screen.queryByText(/composes none of them/)).toBeNull();
   });
 
   it("composedSections keeps the standard order, whatever order the probes answered in", () => {

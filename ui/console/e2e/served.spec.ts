@@ -49,4 +49,14 @@ test.describe("the console served by the app itself", () => {
 
     expect(response.status()).toBe(404);
   });
+
+  test("the console served by an AUTH-FLOORED app refuses its own page", async ({ page }) => {
+    // The most important property of the auth story: an adopter cannot ship an
+    // unauthenticated console by accident. The page itself is behind the ops floor, so an
+    // operator without a principal never reaches a screen to be confused by.
+    const secured = process.env.GOLDPATH_SECURED_URL ?? "http://localhost:5312";
+    const response = await page.request.get(`${secured}/goldpath/console/`);
+
+    expect(response.status()).toBe(401);
+  });
 });

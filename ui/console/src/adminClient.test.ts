@@ -78,14 +78,18 @@ describe("the admin client (the console's only door — the FROZEN contract)", (
     expect(capabilities.jobs).toEqual({ kind: "refused", message: undefined });
   });
 
-  it("an unreachable service yields no panels instead of crashing the console", async () => {
+  it("a service that never ANSWERS is unreachable, not module-less", async () => {
+    // A dead service and a cross-origin one whose CORS refuses this console look identical
+    // from here — fetch reports nothing more. Both are "we could not ask", which is a
+    // different sentence from "the app does not have this module", and the console must
+    // not collapse the two: only one of them means stop looking.
     const fetcher = (async () => {
       throw new TypeError("network down");
     }) as typeof fetch;
 
     const capabilities = await new AdminClient({ fetcher }).discoverCapabilities();
 
-    expect(MODULES.every((module) => capabilities[module].kind === "absent")).toBe(true);
+    expect(MODULES.every((module) => capabilities[module].kind === "unreachable")).toBe(true);
   });
 
   it("clamps take to the contract's [1,500] before the request leaves the browser", async () => {

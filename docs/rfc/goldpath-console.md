@@ -47,9 +47,26 @@ custom-develop ON, with the same kit, the same way they add features to the back
   appear under another's name. A registry that fails to load is ANNOUNCED, because an
   operator who configured four services and silently sees one is looking at the wrong
   console.
-- **Auth**: the console signs in ONCE against the adopter's IdP and carries the token
-  to every service — all surfaces demand `goldpath-ops` (H2); the console is just a
-  well-dressed client of that floor. The login-gate primitive exists in the kit.
+- **Auth** (settled in U4, 2026-07-27 — and deliberately NOT an IdP client of our own):
+
+  1. **Same origin — the shape we ship.** The console is served by the app it drives
+     (`MapGoldpathConsole`), behind the SAME ops floor as the admin surfaces. The browser
+     is challenged for the console's own document, so an unauthenticated operator never
+     reaches a screen at all; every subsequent call rides whatever the app's floor already
+     established (cookie, or a gateway's header). Nothing to configure, and no way to ship
+     an unauthenticated console by accident — proven in the smoke: the console mapped on
+     the auth-floored host answers 401 for its own page.
+  2. **Cross-service.** The console sends its calls with credentials, so each additional
+     service must (a) sit under the same auth as the console's origin, or (b) allow that
+     origin explicitly in CORS *with* credentials. There is no third option that does not
+     involve a token the console would have to hold.
+  3. **A token the console holds is NOT built.** A browser-side OIDC client would put an
+     identity library in the dist and a per-adopter authority/clientId in config, which is
+     a different product decision from "the console is a client of the app's floor". Until
+     an adopter needs it, the honest answer is (1) and (2) — and the console says so when
+     a service refuses: a call blocked by CORS is reported as UNREACHABLE, never as an
+     absent module, because "we could not ask" and "they do not have it" are different
+     sentences.
 - **External products**: Mockifyr (mocks) and other products appear as configured LINK
   tiles — their UI is theirs.
 

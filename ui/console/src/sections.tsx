@@ -22,6 +22,11 @@ export function composedSections(capabilities: Capabilities | null): ModuleName[
   return capabilities ? MODULES.filter((module) => capabilities[module].kind !== "absent") : [];
 }
 
+/** True when NOTHING answered — the service is down or blocking us, not module-less. */
+export function isUnreachable(capabilities: Capabilities | null): boolean {
+  return capabilities !== null && MODULES.every((module) => capabilities[module].kind === "unreachable");
+}
+
 export interface ServicePanelsProps {
   client: AdminClient;
   capabilities: Capabilities | null;
@@ -42,10 +47,20 @@ export function ServicePanels({ client, capabilities, section, now }: ServicePan
     return <p className="text-sm text-muted-foreground">Discovering capabilities…</p>;
   }
 
+  if (isUnreachable(capabilities)) {
+    return (
+      <Banner tone="danger" live="alert">
+        This service did not answer at all — it may be down, or its CORS policy may not allow this console's
+        origin. That is different from an app that composes no Goldpath module, and the console will not
+        pretend otherwise.
+      </Banner>
+    );
+  }
+
   if (composedSections(capabilities).length === 0) {
     return (
       <p className="text-sm text-muted-foreground">
-        No Goldpath admin surface answered here — this app composes none, or the service is unreachable.
+        No Goldpath admin surface answered here — this app composes none of them.
       </p>
     );
   }
@@ -58,6 +73,12 @@ export function ServicePanels({ client, capabilities, section, now }: ServicePan
         <Banner tone="warning">
           {SECTION_LABEL[section]} exists on this service, but your account lacks the ops role for it.
           {capability.message ? ` The service said: “${capability.message}”` : ""}
+        </Banner>
+      )}
+
+      {capability.kind === "unreachable" && (
+        <Banner tone="danger" live="alert">
+          {SECTION_LABEL[section]} did not answer — the service may be down, or blocking this console's origin.
         </Banner>
       )}
 
