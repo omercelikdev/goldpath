@@ -3,10 +3,13 @@
 // gracefully — a kill-9 needs a process). Usage:
 //   Goldpath.Jobs.TestHost <connectionString> [--trigger]            (jobs cluster mode)
 //   Goldpath.Jobs.TestHost <connectionString> --bulk --fleet <name>  (bulk executor mode)
-//   Goldpath.Jobs.TestHost <connectionString> --console <url>         (console smoke mode:
-//       a REAL Goldpath web app serving the FROZEN admin surface for the U2 Playwright gate)
+//   Goldpath.Jobs.TestHost <connectionString> --console <url> [--broker <amqp>]
+//       (console smoke mode: a REAL Goldpath web app serving the FROZEN admin surface for
+//        the Playwright gate; with --broker the campaign module joins, since campaign
+//        REQUIRES a broker by design (campaign RFC D8) — no in-memory stand-in)
 using Goldpath;
 using Goldpath.Jobs.TestHost;
+using MassTransit;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -19,7 +22,10 @@ var fleet = args.Contains("--fleet") ? args[Array.IndexOf(args, "--fleet") + 1] 
 
 if (consoleMode)
 {
-    await RunConsoleHostAsync(connectionString, args[Array.IndexOf(args, "--console") + 1]);
+    await RunConsoleHostAsync(
+        connectionString,
+        args[Array.IndexOf(args, "--console") + 1],
+        args.Contains("--broker") ? args[Array.IndexOf(args, "--broker") + 1] : null);
     return;
 }
 
@@ -73,7 +79,7 @@ await host.WaitForShutdownAsync();
 // real Postgres + Quartz) whose admin surface the console drives over real HTTP. The ops
 // policy is opted OUT explicitly here — the auth floor has its own proofs (H2/A3/A4); this
 // host exists to prove the CONSOLE, so it must not need an IdP to do it.
-static async Task RunConsoleHostAsync(string connectionString, string url)
+static async Task RunConsoleHostAsync(string connectionString, string url, string? brokerUri)
 {
     var web = WebApplication.CreateBuilder();
     web.Configuration["ConnectionStrings:jobsdb"] = connectionString;
@@ -95,6 +101,38 @@ static async Task RunConsoleHostAsync(string connectionString, string url)
             .RowKey(r => r.EndToEndId));
     });
 
+    // Campaign joins only when a broker exists: the module releases items through the bus,
+    // so composing it without one would light a panel over machinery that cannot run.
+    if (brokerUri is not null)
+    {
+        web.Services.AddScoped<IGoldpathCampaignItemHandler<SmokeCustomer>, SmokeCampaignHandler>();
+        web.AddGoldpathCampaign<WebApplicationBuilder, ClusterDb>(campaign =>
+        {
+            campaign.LeadershipSlice = TimeSpan.FromSeconds(5);
+            campaign.LeaderTick = TimeSpan.FromMilliseconds(200);
+            campaign.EnumerationBatchSize = 100;
+            campaign.AddCampaign<SmokeCustomer>("welcome", c => c
+                .MaxTargets(1_000)
+                // Slow ON PURPOSE: the governor must still be governing something while
+                // the operator throttles, pauses, resumes and finally aborts it.
+                .DefaultPolicy(policy => policy with { Tps = 2, MaxInFlight = 5 })
+                .Targets((services, _) => services.GetRequiredService<ClusterDb>()
+                    .CampaignCustomers.AsNoTracking()
+                    .OrderBy(x => x.Id)
+                    .Select(x => new SmokeCustomer(x.Id, x.Email))
+                    .AsAsyncEnumerable()));
+        });
+        web.AddGoldpathMessaging(bus =>
+        {
+            bus.AddGoldpathCampaignConsumers<ClusterDb>();
+            bus.UsingRabbitMq((context, cfg) =>
+            {
+                cfg.Host(new Uri(brokerUri));
+                cfg.ConfigureGoldpathEndpoints(context);
+            });
+        });
+    }
+
     web.AddGoldpathJobs<WebApplicationBuilder, ClusterDb>(jobs =>
     {
         jobs.SchedulerName = "console-smoke";
@@ -104,6 +142,10 @@ static async Task RunConsoleHostAsync(string connectionString, string url)
         // Validation runs on a tight cron so the smoke can WAIT for a real report instead
         // of forging one; execution stays far-future — the gate decides when rows move.
         jobs.AddGoldpathBulkJobs<ClusterDb>(validateCron: "0/5 * * * * ?", executeCron: "0 0 0 1 1 ? 2099");
+        if (brokerUri is not null)
+        {
+            jobs.AddGoldpathCampaignJobs<ClusterDb>(pacerCron: "0/5 * * * * ?");
+        }
     });
 
     var app = web.Build();
@@ -112,13 +154,25 @@ static async Task RunConsoleHostAsync(string connectionString, string url)
     // the Quartz schema the model maps, so the script needs no migration step.
     using (var scope = app.Services.CreateScope())
     {
-        await scope.ServiceProvider.GetRequiredService<ClusterDb>().Database.EnsureCreatedAsync();
+        var db = scope.ServiceProvider.GetRequiredService<ClusterDb>();
+        await db.Database.EnsureCreatedAsync();
+        if (brokerUri is not null && !await db.CampaignCustomers.AnyAsync())
+        {
+            // A real target population for the pacer to work through.
+            db.CampaignCustomers.AddRange(Enumerable.Range(1, 200)
+                .Select(i => new SmokeCustomer_Row { Email = $"customer{i}@example.com" }));
+            await db.SaveChangesAsync();
+        }
     }
 
     app.Urls.Add(url);
     app.UseCors();
     app.MapGoldpathJobsAdmin<ClusterDb>(exposeUnsecured: true);
     app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: true);
+    if (brokerUri is not null)
+    {
+        app.MapGoldpathCampaignAdmin<ClusterDb>(exposeUnsecured: true);
+    }
     await app.StartAsync();
     Console.WriteLine("CONSOLEHOST-READY");
     await app.WaitForShutdownAsync();
@@ -133,10 +187,34 @@ namespace Goldpath.Jobs.TestHost
 
         public DbSet<PaymentSinkEntry> PaymentSink => Set<PaymentSinkEntry>();
 
+        public DbSet<SmokeCustomer_Row> CampaignCustomers => Set<SmokeCustomer_Row>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             modelBuilder.AddGoldpathJobs();
             modelBuilder.AddGoldpathBulk();
+            modelBuilder.AddGoldpathCampaign();
+        }
+    }
+
+    /// <summary>The campaign's target population (console smoke).</summary>
+    public class SmokeCustomer_Row
+    {
+        public int Id { get; set; }
+
+        public string Email { get; set; } = "";
+    }
+
+    /// <summary>One target as the campaign type projects it.</summary>
+    public sealed record SmokeCustomer(int Id, string Email);
+
+    /// <summary>Sends the "welcome" — records the side effect, nothing else.</summary>
+    public sealed class SmokeCampaignHandler(ClusterDb db) : IGoldpathCampaignItemHandler<SmokeCustomer>
+    {
+        public async Task ExecuteAsync(SmokeCustomer target, GoldpathCampaignItemContext context, CancellationToken cancellationToken)
+        {
+            db.Sink.Add(new SinkEntry { JobName = "welcome", ChunkIndex = target.Id, Instance = "campaign" });
+            await db.SaveChangesAsync(cancellationToken);
         }
     }
 

@@ -13,8 +13,10 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
     // This host composes jobs + bulk; the other three surfaces answer 404, so no panels.
     await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Campaigns" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Campaigns" })).toBeVisible();
+    // Archival and notification are never composed here — no panel, no dead link.
     await expect(page.getByRole("button", { name: "Archival" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Notifications" })).toHaveCount(0);
   });
 
   test("triggers a job, watches the run finish, and replays its repair item", async ({ page }) => {
@@ -129,5 +131,68 @@ test.describe("the run console against a real Goldpath app", () => {
     await waitForState("Approved");
     await newest.getByRole("button").first().click();
     await expect(detail).toContainText("checked against the ledger");
+  });
+
+  test("governs a live campaign: watches it release, throttles, pauses, resumes, aborts", async ({ page, request }) => {
+    // The campaign is CREATED through the API, not the console: its parameters are
+    // domain-shaped, so authoring belongs to the app. The console governs what exists.
+    const created = await request.post(`${service}/goldpath/admin/campaign/`, {
+      data: { type: "welcome", name: "smoke-welcome", policy: { tps: 2, maxInFlight: 5 } },
+    });
+    expect(created.ok()).toBeTruthy();
+
+    const openCampaigns = async () => {
+      await page.goto(`/?base=${encodeURIComponent(service)}`);
+      await page.getByRole("button", { name: "Campaigns" }).click();
+      await expect(page.getByTestId("campaign-panel")).toBeVisible();
+    };
+
+    await openCampaigns();
+    await page.getByRole("button", { name: "smoke-welcome" }).click();
+    const detail = page.getByTestId("campaign-detail");
+    await expect(detail).toBeVisible();
+
+    // The pacer is real: items enumerate and release through the broker on their own.
+    await expect(async () => {
+      await openCampaigns();
+      await page.getByRole("button", { name: "smoke-welcome" }).click();
+      await expect(detail).toContainText(/Released\s*[1-9]/, { timeout: 5_000 });
+    }).toPass({ timeout: 90_000 });
+
+    // Throttle: only the field the operator touched travels, and it is named first.
+    await page.getByLabel("tps").fill("1");
+    await page.getByRole("button", { name: "throttle" }).click();
+    const throttling = page.getByRole("alertdialog", { name: "confirm throttle" });
+    await expect(throttling).toContainText("1 tps");
+    await throttling.getByRole("button", { name: "throttle" }).click();
+    await expect(page.getByRole("status")).toBeVisible();
+    await expect(detail).toContainText("(now 1)");   // the server's new policy, read back
+
+    // Pause → resume: the pacer obeys, and the buttons swap with the state.
+    await page.getByRole("button", { name: "pause" }).click();
+    await page.getByRole("alertdialog", { name: "confirm pause" }).getByRole("button", { name: "pause" }).click();
+    await expect(page.getByRole("button", { name: "resume" })).toBeVisible();
+
+    await page.getByRole("button", { name: "resume" }).click();
+    await page.getByRole("alertdialog", { name: "confirm resume" }).getByRole("button", { name: "resume" }).click();
+    await expect(page.getByRole("button", { name: "pause" })).toBeVisible();
+
+    // Abort names the cost, demands a reason, and ends the campaign for good.
+    await page.getByRole("button", { name: "abort" }).click();
+    const aborting = page.getByRole("alertdialog", { name: "confirm abort" });
+    await expect(aborting).toContainText("stamped Aborted");
+    await aborting.getByLabel("reason (required)").fill("smoke run finished");
+    await aborting.getByRole("button", { name: "abort" }).click();
+
+    await expect(async () => {
+      await openCampaigns();
+      await page.getByRole("button", { name: "smoke-welcome" }).click();
+      await expect(detail).toContainText("Aborted", { timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
+
+    // The verb log is the server's own record — every governor action, with its reason.
+    await expect(detail).toContainText("abort");
+    await expect(detail).toContainText("smoke run finished");
+    await expect(page.getByRole("button", { name: "pause" })).toHaveCount(0);
   });
 });
