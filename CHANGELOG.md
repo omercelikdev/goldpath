@@ -3,6 +3,37 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [0.1.0-preview.4] - 2026-07-27
+
+The console train. Goldpath ships an operations console — served by the adopter's own
+management head, driving the frozen admin contract with the operator's own credentials —
+plus the tenancy fix that the console's own gate uncovered. Upgrade guide:
+`docs/upgrades/0.1.0-preview.4.md` (no breaking changes).
+
+### Added
+- **`Goldpath.Console` — the operations console, mapped by your app.**
+  `app.MapGoldpathConsole()` serves the built single page from embedded assets, behind the
+  SAME ops floor as the admin surfaces. Adopters never run Node: the dist is built by
+  Goldpath's CI and shipped inside the package, which refuses to pack without it. The
+  cross-service registry is configuration (`AddService(name, adminBaseUrl)`), not a file
+  beside the dist.
+- **The console itself** (`ui/console`, `ui/kit`): a TODAY triage screen across every
+  configured service, then panels for all five modules — runs (trigger/pause/rerun/replay),
+  bulk intake (upload → the engine's validation report → the four-eyes gate), the campaign
+  governor (pacer numbers + live throttle + pause/resume/abort), notification evidence
+  (masked recipients, three lenses, no verbs by contract) and archival (chain verification,
+  keyed retrieval, hold/lift/erase). Capability-lit: a module the app never composed has no
+  panel, and one that refuses says why in the SERVER's words.
+
+### Fixed
+- **Multi-tenancy is a MARKER, not "some `ITenantContext` exists".** Composing a broker
+  registers an `ITenantContext` for message-scoped propagation, and the admin seam read
+  that as "this app is multi-tenant" — so a SINGLE-tenant app that merely added messaging
+  had its admin surfaces refuse: 400 on the tenant-scoped ones, 403 on campaign. Shipped in
+  preview.3; invisible because the reference app composes multitenancy. `AddGoldpathMultiTenancy`
+  now registers `GoldpathMultiTenancyMarker` and the seam asks for that. Multi-tenant
+  behaviour is unchanged.
+
 ## [0.1.0-preview.3] - 2026-07-25
 
 The security train — every actionable finding of the 2026-07-21 independent audit's

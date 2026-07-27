@@ -47,7 +47,9 @@ jobs:
           # pack re-verifies each project's own Release output deterministically.
           for p in packages/*/*.csproj analyzers/Goldpath.Analyzers/Goldpath.Analyzers.csproj \
                    tools/Goldpath.Cli/Goldpath.Cli.csproj templates/Goldpath.Templates.csproj; do
-            dotnet pack "$p" --nologo -c Release -o out
+            # -p:GoldpathConsoleRequired=true arms the console package's own gate: this is
+            # the path that PUBLISHES, so this is where an empty console must stop the train.
+            dotnet pack "$p" --nologo -c Release -o out -p:GoldpathConsoleRequired=true
           done
           ls out
       # Login LAST-MINUTE: the exchanged key lives ~1 hour, so it must be born next to

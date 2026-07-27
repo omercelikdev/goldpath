@@ -38,7 +38,12 @@
     <None Include="README.md" Pack="true" PackagePath="/" />
   </ItemGroup>
 
-  <Target Name="RefuseAnEmptyConsole" BeforeTargets="GenerateNuspec">
+  <!-- The gate fires on the PUBLISHING path only (`release.yml` sets the property). Local
+       and CI tooling packs the whole solution to build a source feed — GM shapes do it on
+       every run — and demanding Node there would make an unrelated proof depend on a
+       toolchain it has no use for. What must never happen is PUBLISHING an empty console,
+       and that is exactly where this fires. -->
+  <Target Name="RefuseAnEmptyConsole" BeforeTargets="GenerateNuspec" Condition="'$(GoldpathConsoleRequired)' == 'true'">
     <Error Condition="!Exists('$(MSBuildProjectDirectory)/wwwroot/index.html')"
            Text="Goldpath.Console has no built console in wwwroot/. Run scripts/build-console.sh before packing — a package that maps an empty console would 404 in every adopter's face." />
   </Target>

@@ -41,7 +41,9 @@ echo "── postgres"
 docker rm -f "$PG_NAME" >/dev/null 2>&1 || true
 docker run -d --name "$PG_NAME" -e POSTGRES_PASSWORD=smoke -e POSTGRES_DB=smoke -p 55432:5432 postgres:17-alpine >/dev/null
 CONNECTION="Host=localhost;Port=55432;Database=smoke;Username=postgres;Password=smoke"
-for _ in $(seq 1 60); do docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+# 120s, not 60: a nightly runner is doing nine other things and a cold image pull plus
+# first-boot initdb has taken longer than a minute there (it did, on 2026-07-27).
+for _ in $(seq 1 120); do docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
 docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1 || { echo "postgres never came up:"; docker logs "$PG_NAME" 2>&1 | tail -20; exit 1; }
 
 echo "── rabbitmq (campaign RELEASES through a broker — campaign RFC D8, no stand-in)"
@@ -57,7 +59,7 @@ docker run -d --name "$MQ_NAME" -p 55672:5672 rabbitmq:4-alpine sh -c \
 BROKER="amqp://guest:guest@localhost:55672"
 # BOUNDED: an unbounded wait on a container that died turns a two-minute failure into a
 # hang with no output at all.
-for _ in $(seq 1 60); do
+for _ in $(seq 1 90); do
   docker exec "$MQ_NAME" rabbitmq-diagnostics -q check_port_connectivity >/dev/null 2>&1 && break
   sleep 2
 done
