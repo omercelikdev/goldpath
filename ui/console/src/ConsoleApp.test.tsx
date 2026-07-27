@@ -138,6 +138,21 @@ describe("the console across services", () => {
     expect(screen.queryByLabelText(/service/i)).toBeNull();
   });
 
+  it("a service that never answers is reported as unreachable, on Today and in its own screen", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("console.config.json")) return new Response("", { status: 404 });
+      throw new TypeError("network down");   // what a blocked or dead service looks like
+    }) as typeof fetch;
+
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+
+    // Today says it first — a blind spot outranks everything, including nothing.
+    expect(await screen.findByText(/did not answer at all/)).toBeInTheDocument();
+    // And there is no module nav to click into: every link would say the same thing.
+    expect(screen.queryByRole("button", { name: "Runs" })).toBeNull();
+  });
+
   it("a triage row opens the panel it belongs to, on the SERVICE it belongs to", async () => {
     const fetcher = (async (input: RequestInfo | URL) => {
       const url = String(input);

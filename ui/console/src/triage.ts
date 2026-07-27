@@ -1,6 +1,6 @@
 import { deadlineVerdict, humanizeSeconds } from "@goldpath/kit";
 import { MODULES, type AdminClient, type ModuleName } from "./adminClient";
-import type { Capabilities } from "./sections";
+import { isUnreachable, type Capabilities } from "./sections";
 
 /**
  * One thing worth an operator's attention. `tone` is the semantic ramp, not a priority
@@ -54,7 +54,7 @@ export async function collectServiceTriage(
   // identical "forbidden" rows would bury the estate's real problems under our own.
   const unreadable = MODULES.filter((module) => {
     const kind = capabilities[module].kind;
-    return kind === "forbidden" || kind === "refused";
+    return kind === "forbidden" || kind === "refused" || kind === "unreachable";
   });
 
   if (unreadable.length > 0) {
@@ -65,8 +65,18 @@ export async function collectServiceTriage(
       section: unreadable[0],
       tone: "danger",
       blind: true,
-      headline: `${unreadable.length} surface${unreadable.length === 1 ? "" : "s"} on ${service} cannot be read`,
-      detail: said ? `the service said: “${said}”` : "this operator may not see them, or the request cannot be scoped",
+      // "Did not answer AT ALL" must mean exactly that — EVERY probe threw. One dead
+      // probe among four honest refusals is not an outage, and reporting it as one is the
+      // same false confidence this row exists to prevent (review R1 on this PR). The
+      // shell's own predicate is reused rather than re-derived.
+      headline: isUnreachable(capabilities)
+        ? `${service} did not answer at all`
+        : `${unreadable.length} surface${unreadable.length === 1 ? "" : "s"} on ${service} cannot be read`,
+      detail: said
+        ? `the service said: “${said}”`
+        : isUnreachable(capabilities)
+          ? "it may be down, or blocking this console's origin — triage cannot speak for it"
+          : "this operator may not see them, or the request cannot be scoped",
     });
   }
 

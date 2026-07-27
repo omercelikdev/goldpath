@@ -304,6 +304,32 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
     expect(rows[0].detail).toContain("the 'goldpath-ops' role is required");
   });
 
+  it("a service that never answered is named as such, not as five unreadable surfaces", async () => {
+    const dead = Object.fromEntries(MODULES.map((module) => [module, { kind: "unreachable" }])) as Capabilities;
+
+    const rows = await collectServiceTriage("claims", client({}), dead, NOW);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0]).toMatchObject({ blind: true, tone: "danger" });
+    expect(rows[0].headline).toBe("claims did not answer at all");
+    expect(rows[0].detail).toContain("blocking this console's origin");
+  });
+
+  it("ONE dead probe among honest refusals is not an outage — the count is told, not dramatised", async () => {
+    const mixed = Object.fromEntries(
+      MODULES.map((module, index) => [
+        module,
+        index === 0 ? { kind: "unreachable" } : { kind: "forbidden", message: "the 'goldpath-ops' role is required" },
+      ]),
+    ) as Capabilities;
+
+    const rows = await collectServiceTriage("payments", client({}), mixed, NOW);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].headline).toBe("5 surfaces on payments cannot be read");
+    expect(rows[0].headline).not.toContain("did not answer at all");
+  });
+
   it("one unreadable surface reads in the singular, and without a message says what it can", async () => {
     const rows = await collectServiceTriage(
       "payments",

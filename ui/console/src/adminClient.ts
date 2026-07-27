@@ -34,7 +34,15 @@ export type Capability =
   | { kind: "present" }
   | { kind: "absent" }
   | { kind: "forbidden"; message?: string }
-  | { kind: "refused"; message?: string };
+  | { kind: "refused"; message?: string }
+  /**
+   * The probe never got an answer: the service is down, the network is in the way, or the
+   * browser blocked the call (a cross-origin service whose CORS does not allow this
+   * console's origin looks EXACTLY like this from here — fetch reports nothing more).
+   * Distinct from `absent` on purpose: "the app does not have this module" and "we could
+   * not ask" are different sentences, and only one of them is a reason to stop looking.
+   */
+  | { kind: "unreachable" };
 
 /**
  * Pulls the human sentence out of a refusal. Goldpath's own envelope says `message`;
@@ -336,6 +344,7 @@ export class AdminClient {
    *   revision R1). Reading that as "absent" would tell the operator the module is not
    *   composed, which is a lie the console must never tell.
    * - anything else non-ok → `absent`, honestly: nothing usable answered.
+   * - a call that THREW → `unreachable`: down, blocked, or cross-origin without CORS.
    */
   async discoverCapabilities(): Promise<Record<ModuleName, Capability>> {
     const entries = await Promise.all(
@@ -356,7 +365,7 @@ export class AdminClient {
 
           return [module, { kind: response.ok ? "present" : "absent" } as Capability] as const;
         } catch {
-          return [module, { kind: "absent" } as Capability] as const;   // unreachable: no panel, no crash
+          return [module, { kind: "unreachable" } as Capability] as const;   // asked, never answered
         }
       }),
     );

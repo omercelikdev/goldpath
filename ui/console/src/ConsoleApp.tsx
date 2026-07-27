@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { AppShell, Banner } from "@goldpath/kit";
 import type { ShellNavItem } from "@goldpath/kit";
 import { AdminClient, type ModuleName } from "./adminClient";
-import { composedSections, SECTION_LABEL, ServicePanels, type Capabilities } from "./sections";
+import { composedSections, isUnreachable, SECTION_LABEL, ServicePanels, type Capabilities } from "./sections";
 import { TriageHome } from "./TriageHome";
 import { loadRegistry, SAME_ORIGIN, type ServiceEntry } from "./registry";
 
@@ -79,7 +79,9 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
 
   const nav: ShellNavItem[] = [
     { id: TODAY, label: "Today", onSelect: () => setSection(TODAY) },
-    ...composedSections(capabilities).map((module) => ({
+    // A service that never answered has no sections to offer: the nav would be a list of
+    // links that each say the same thing.
+    ...(isUnreachable(capabilities) ? [] : composedSections(capabilities)).map((module) => ({
       id: module,
       label: SECTION_LABEL[module],
       onSelect: () => setSection(module),
