@@ -37,8 +37,14 @@ if [ ! -d "$FEED" ] || [ -z "$(ls -A "$FEED" 2>/dev/null)" ]; then
     echo "── build the console (its assets ship inside Goldpath.Console)"
     bash "$ROOT/scripts/build-console.sh" >/dev/null
   else
-    echo "── pnpm not found: the local feed's console will carry NO assets"
-    echo "   a shape composing an operational module will fail on its console page — install pnpm"
+    # Warning-then-carry-on is how the 500 came back under a different trigger: the feed
+    # would ship an asset-less console and every shape that renders a page would fail far
+    # from here (review R3 on the fix that added this).
+    echo "── pnpm not found, so the console cannot be built"
+    echo "   this lane packs a local feed that SHADOWS nuget.org, so it would ship an"
+    echo "   asset-less console and every shape composing an operational module would fail"
+    echo "   on its console page. Install pnpm (10.x) and re-run."
+    exit 1
   fi
 
   echo "── pack repo packages -> local feed"
