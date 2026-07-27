@@ -273,6 +273,16 @@ static async Task RunConsoleHostAsync(
     app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: unsecured);
     app.MapGoldpathNotificationAdmin<ClusterDb>(exposeUnsecured: unsecured);
     app.MapGoldpathArchivalAdmin<ClusterDb>(exposeUnsecured: unsecured);
+    // The console SERVED BY THE APP — the shape adopters actually deploy (console RFC D1).
+    // Same origin as the admin surfaces, so no CORS is involved in this path at all.
+    app.MapGoldpathConsole(exposeUnsecured: unsecured, configure: console =>
+    {
+        foreach (var entry in (Environment.GetEnvironmentVariable("GOLDPATH_CONSOLE_SERVICES") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))
+        {
+            var parts = entry.Split('=', 2);
+            console.AddService(parts[0], parts.Length > 1 ? parts[1] : "");
+        }
+    });
     // The webhook channel's destination: a real endpoint that really answers 200.
     app.MapPost("/smoke/hook", () => Results.Ok());
     if (brokerUri is not null)

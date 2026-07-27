@@ -34,6 +34,9 @@ cleanup() {
 }
 trap cleanup EXIT
 
+echo "── the console dist (this is the ONLY place Node is needed — adopters never run it)"
+bash "$ROOT/scripts/build-console.sh" >/dev/null
+
 echo "── postgres"
 docker rm -f "$PG_NAME" >/dev/null 2>&1 || true
 docker run -d --name "$PG_NAME" -e POSTGRES_PASSWORD=smoke -e POSTGRES_DB=smoke -p 55432:5432 postgres:17-alpine >/dev/null
@@ -64,6 +67,7 @@ docker exec "$MQ_NAME" rabbitmq-diagnostics -q check_port_connectivity >/dev/nul
 
 echo "── the app (real packages, real Quartz, real broker, the FROZEN admin surface)"
 GOLDPATH_CONSOLE_ORIGIN="$CONSOLE_URL" \
+  GOLDPATH_CONSOLE_SERVICES="open=$SERVICE_URL;auth-floored=$SECURED_URL;tenant-scoped=$TENANT_URL" \
   dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- "$CONNECTION" --console "$SERVICE_URL" --broker "$BROKER" --fleet console-smoke > /tmp/console-smoke-host.log 2>&1 &
 HOST_PID=$!
 for _ in $(seq 1 60); do
@@ -118,5 +122,6 @@ curl -sf "$CONSOLE_URL" >/dev/null || { echo "the console never came up:"; tail 
 echo "── playwright"
 cd "$ROOT/ui/console"
 GOLDPATH_CONSOLE_URL="$CONSOLE_URL" GOLDPATH_SERVICE_URL="$SERVICE_URL" \
+  GOLDPATH_SERVED_CONSOLE_URL="$SERVICE_URL/goldpath/console/" \
   GOLDPATH_SECURED_URL="$SECURED_URL" GOLDPATH_TENANT_URL="$TENANT_URL" \
   pnpm exec playwright test
