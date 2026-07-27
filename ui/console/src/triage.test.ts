@@ -175,21 +175,27 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
     ]);
   });
 
-  it("orders danger before warning, then by service — the worst row is always first", () => {
-    const row = (tone: "danger" | "warning", service: string): TriageRow => ({
+  it("orders BLIND first, then danger, then warning — a partial picture must say so above the picture", () => {
+    const row = (tone: "danger" | "warning", service: string, blind?: true): TriageRow => ({
       service,
       section: "jobs",
       tone,
-      headline: `${tone} on ${service}`,
+      ...(blind ? { blind } : {}),
+      headline: `${blind ? "blind" : tone} on ${service}`,
       detail: "",
     });
 
-    expect(headlines(orderTriage([row("warning", "b"), row("danger", "z"), row("warning", "a"), row("danger", "a")]))).toEqual([
-      "danger on a",
-      "danger on z",
-      "warning on a",
-      "warning on b",
-    ]);
+    expect(
+      headlines(
+        orderTriage([
+          row("warning", "b"),
+          row("danger", "z"),
+          row("danger", "m", true),
+          row("warning", "a"),
+          row("danger", "a"),
+        ]),
+      ),
+    ).toEqual(["blind on m", "danger on a", "danger on z", "warning on a", "warning on b"]);
   });
 
   it("failed campaign items are reported with what did land", async () => {
@@ -293,7 +299,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
     const rows = await collectServiceTriage("auth-floored", api, blind, NOW);
 
     expect(rows).toHaveLength(1);
-    expect(rows[0]).toMatchObject({ tone: "warning", service: "auth-floored", section: "jobs" });
+    expect(rows[0]).toMatchObject({ tone: "danger", blind: true, service: "auth-floored", section: "jobs" });
     expect(rows[0].headline).toBe("5 surfaces on auth-floored cannot be read");
     expect(rows[0].detail).toContain("the 'goldpath-ops' role is required");
   });

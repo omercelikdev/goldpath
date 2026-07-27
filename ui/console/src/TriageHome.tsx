@@ -86,7 +86,10 @@ export function TriageHome({ services, onOpen, now }: TriageHomeProps) {
             >
               {/* The word carries the meaning; the tone only reinforces it. Colour alone
                   would leave the row unreadable to whoever cannot see the difference. */}
-              <StateBadge state={row.tone === "danger" ? "went wrong" : "will, unless"} tone={row.tone} />
+              <StateBadge
+                state={row.blind ? "cannot see" : row.tone === "danger" ? "went wrong" : "will, unless"}
+                tone={row.tone}
+              />
               <button
                 className="text-sm font-medium underline-offset-2 hover:underline"
                 onClick={() => onOpen(row.service, row.section)}

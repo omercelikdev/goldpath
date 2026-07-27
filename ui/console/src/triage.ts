@@ -11,6 +11,13 @@ export interface TriageRow {
   service: string;
   section: ModuleName;
   tone: "danger" | "warning";
+  /**
+   * A BLIND row is not another problem in the list — it says the list itself is
+   * incomplete, which qualifies everything else on the screen. That is why it sorts ahead
+   * even of failures (review R1: the tone alone put it below them, contradicting the very
+   * claim the screen makes).
+   */
+  blind?: true;
   headline: string;
   detail: string;
 }
@@ -51,13 +58,13 @@ export async function collectServiceTriage(
   });
 
   if (unreadable.length > 0) {
-    const said = capabilities[unreadable[0]].kind === "forbidden" || capabilities[unreadable[0]].kind === "refused"
-      ? (capabilities[unreadable[0]] as { message?: string }).message
-      : undefined;
+    // The filter above already established the kind; the message is all that is left to read.
+    const said = (capabilities[unreadable[0]] as { message?: string }).message;
     rows.push({
       service,
       section: unreadable[0],
-      tone: "warning",
+      tone: "danger",
+      blind: true,
       headline: `${unreadable.length} surface${unreadable.length === 1 ? "" : "s"} on ${service} cannot be read`,
       detail: said ? `the service said: “${said}”` : "this operator may not see them, or the request cannot be scoped",
     });
@@ -225,10 +232,15 @@ export async function collectServiceTriage(
   return rows;
 }
 
-/** Danger before warning, then by service, so the worst row is always the first one. */
+/**
+ * Blind spots first, then danger, then warning, then by service. A row that says "this
+ * list is incomplete" belongs above every row IN the list — otherwise the screen quietly
+ * invites an operator to trust a picture it knows is partial.
+ */
 export function orderTriage(rows: TriageRow[]): TriageRow[] {
+  const rank = (row: TriageRow) => (row.blind ? 0 : row.tone === "danger" ? 1 : 2);
   return [...rows].sort((left, right) => {
-    if (left.tone !== right.tone) return left.tone === "danger" ? -1 : 1;
-    return left.service.localeCompare(right.service);
+    const difference = rank(left) - rank(right);
+    return difference !== 0 ? difference : left.service.localeCompare(right.service);
   });
 }
