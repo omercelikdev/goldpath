@@ -16,8 +16,12 @@
   --background: #ffffff;     /* cards / panels */
   --foreground: #18181b;     /* text primary */
   --muted: #ececef;          /* segmented control / hover / chips — a touch darker than the surface so it reads on it */
-  --muted-foreground: #71717a;
-  --faint: #a1a1aa;
+  /* Both secondary inks clear WCAG AA (4.5:1) against the SURFACE, which is the darker
+     of the two backgrounds they sit on — measured by the a11y gate, not chosen by eye:
+     the old pair read 4.44 and 2.56, so half the console's supporting text was below the
+     threshold on a normal screen, never mind a glare-lit one at 3am. */
+  --muted-foreground: #65656c;   /* 5.78 on cards · 5.31 on the surface */
+  --faint: #6a6a72;              /* 5.36 on cards · 4.92 on the surface */
   --border: #e6e6e9;
   --border-strong: #d7d7db;
   --input: #e6e6e9;
@@ -50,8 +54,8 @@
   --background: #17171c;     /* cards / panels — lifted above the surface */
   --foreground: #f4f4f5;
   --muted: #202027;
-  --muted-foreground: #a1a1aa;
-  --faint: #71717a;
+  --muted-foreground: #a1a1aa;   /* 6.97 on cards · 7.41 on the surface */
+  --faint: #8f8f99;              /* 5.58 on cards · 5.93 on the surface — the old #71717a was 3.70 */
   --border: #26262b;
   --border-strong: #37373e;
   --input: #26262b;
