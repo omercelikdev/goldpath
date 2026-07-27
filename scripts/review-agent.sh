@@ -28,7 +28,9 @@ fi
 command -v claude >/dev/null || { echo "review-agent: claude not found — the agent thinks with the Claude CLI; install it (or run this step only where it exists)." >&2; exit 1; }
 
 WORK=$(mktemp -d "${TMPDIR:-/tmp}/goldpath-review.XXXXXX")
-trap 'rm -rf "$WORK"' EXIT
+# On a clean exit the scratch dir goes; on a FAILURE it stays, because the message below
+# promises the raw output is there — and a promise the script breaks is worse than none.
+trap '[ "$?" = "0" ] && rm -rf "$WORK"' EXIT
 
 if [ -n "$LOCAL_DIFF" ]; then
   echo "── review-agent: local mode ($LOCAL_DIFF)"

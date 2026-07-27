@@ -192,12 +192,17 @@ test.describe("the run console against a real Goldpath app", () => {
     await page.getByRole("alertdialog", { name: "confirm resume" }).getByRole("button", { name: "resume" }).click();
     await expect(page.getByRole("button", { name: "pause" })).toBeVisible();
 
-    // Abort names the cost, demands a reason, and ends the campaign for good.
+    // Abort names the cost, demands a reason, and ends the campaign for good. The verb
+    // buttons swap with the state, so the dialog is asserted OPEN before it is filled —
+    // otherwise a click that raced the resume's refresh would fail far away from here.
     await page.getByRole("button", { name: "abort" }).click();
     const aborting = page.getByRole("alertdialog", { name: "confirm abort" });
+    await expect(aborting).toBeVisible();
     await expect(aborting).toContainText("stamped Aborted");
     await aborting.getByLabel("reason (required)").fill("smoke run finished");
     await aborting.getByRole("button", { name: "abort" }).click();
+    // The pacer's own answer, before any reload: proof the verb LANDED.
+    await expect(page.getByTestId("campaign-detail").getByRole("status")).toBeVisible();
 
     await expect(async () => {
       await openCampaigns();

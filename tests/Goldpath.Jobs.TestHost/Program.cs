@@ -255,15 +255,17 @@ static async Task RunConsoleHostAsync(
 
     app.Urls.Add(url);
     app.UseCors();
-    if (secured)
-    {
-        app.UseAuthentication();
-        app.UseAuthorization();
-    }
-
+    // The module's OWN primitives, in the order they document: tenant resolution first,
+    // so the auth floor sees a resolved ambient tenant (ADR-0003 — compose, never rewrite;
+    // hand-copying UseGoldpathAuth's body is how a host drifts from what adopters run).
     if (multiTenant)
     {
         app.UseGoldpathMultiTenancy();
+    }
+
+    if (secured)
+    {
+        app.UseGoldpathAuth();
     }
 
     var unsecured = !secured;   // secured mode keeps the ops guard ON — that is the point
