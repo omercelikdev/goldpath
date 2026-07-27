@@ -20,14 +20,13 @@ internal static class AdminTenantScope
 
     internal static async Task<Resolution> ResolveAsync(HttpContext http, string? requested)
     {
-        var tenantContext = http.RequestServices.GetService<ITenantContext>();
-        if (tenantContext is null)
+        if (http.RequestServices.GetService<GoldpathMultiTenancyMarker>() is null)
         {
             // multiTenancy is off: the request's tenant parameter passes through untouched.
             return new Resolution(null, requested);
         }
 
-        var ambient = tenantContext.Current?.ToString();
+        var ambient = http.RequestServices.GetService<ITenantContext>()?.Current?.ToString();
         var authorization = http.RequestServices.GetService<IAuthorizationService>();
         var crossTenant = authorization is not null
             && (await authorization.AuthorizeAsync(http.User, GoldpathPolicies.OpsAllTenants)).Succeeded;
@@ -69,8 +68,7 @@ internal static class AdminTenantScope
     /// </summary>
     internal static async Task<IResult?> RequireAllTenantsAsync(HttpContext http)
     {
-        var tenantContext = http.RequestServices.GetService<ITenantContext>();
-        if (tenantContext is null)
+        if (http.RequestServices.GetService<GoldpathMultiTenancyMarker>() is null)
         {
             return null;
         }

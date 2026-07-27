@@ -1,1 +1,3 @@
 #nullable enable
+Goldpath.GoldpathMultiTenancyMarker
+Goldpath.GoldpathMultiTenancyMarker.GoldpathMultiTenancyMarker() -> void

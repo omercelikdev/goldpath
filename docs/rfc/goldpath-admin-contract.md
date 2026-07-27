@@ -107,7 +107,12 @@ lets any operator read every tenant's batches, evidence and archives.
    privilege-gated — and every crossing is logged with the actor, the requested tenant
    and the ambient one (structured warning on `Goldpath.AdminSurface`).
 3. **Single-tenant apps are untouched.** `multiTenancy: false` keeps today's behavior
-   byte-for-byte; the scoping layer compiles to a pass-through.
+   byte-for-byte; the scoping layer compiles to a pass-through. The signal is the marker
+   `AddGoldpathMultiTenancy` registers (`GoldpathMultiTenancyMarker`) — NOT the presence
+   of an `ITenantContext`, which other modules register for their own flow (messaging
+   propagates the tenant of a consumed message). Amended 2026-07-27 after the console
+   gate caught a single-tenant app whose admin surfaces began refusing the moment a
+   broker joined the composition.
 4. **One shared seam.** The scoping lives in ONE shared-source file
    (`packages/shared/AdminTenantScope.cs`, compile-linked like the auth floor) that the
    endpoints call — not per-module reimplementations. The ADR-0005 companion analyzer

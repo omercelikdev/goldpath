@@ -34,6 +34,8 @@ public class AdminTenantScopeTests
         services.AddSingleton<Microsoft.Extensions.Logging.ILoggerFactory>(NullLoggerFactory.Instance);
         if (ambient is not null || privileged is not null)
         {
+            // A multi-tenant app: the MARKER is what says so; the context supplies the value.
+            services.AddSingleton<GoldpathMultiTenancyMarker>();
             services.AddSingleton<ITenantContext>(new FakeTenantContext(ambient is null ? null : TenantId.Create(ambient)));
         }
 
@@ -100,5 +102,40 @@ public class AdminTenantScopeTests
         Assert.Equal(StatusCodes.Status403Forbidden,
             StatusOf(await AdminTenantScope.RequireAllTenantsAsync(Http("acme", privileged: false))));
         Assert.Null(await AdminTenantScope.RequireAllTenantsAsync(Http("acme", privileged: true)));
+    }
+
+    /// <summary>
+    /// The regression the console gate found: composing a BROKER registers an
+    /// <see cref="ITenantContext"/> for message-scoped propagation. If that counted as
+    /// "this app is multi-tenant", every admin surface of a single-tenant app would start
+    /// refusing — 400 on the tenant-scoped ones, 403 on campaign — the moment messaging
+    /// joined the composition.
+    /// </summary>
+    [Fact]
+    public async Task A_single_tenant_app_that_composes_messaging_is_still_single_tenant()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<Microsoft.Extensions.Logging.ILoggerFactory>(NullLoggerFactory.Instance);
+        services.AddSingleton<ITenantContext>(new FakeTenantContext(null));   // messaging's own
+        var http = new DefaultHttpContext { RequestServices = services.BuildServiceProvider() };
+
+        var scope = await AdminTenantScope.ResolveAsync(http, "anything");
+        Assert.Null(scope.Refusal);
+        Assert.Equal("anything", scope.Tenant);
+
+        Assert.Null(await AdminTenantScope.RequireAllTenantsAsync(http));
+    }
+
+    [Fact]
+    public async Task A_marked_multi_tenant_app_still_gates_the_tenant_less_surfaces()
+    {
+        var services = new ServiceCollection();
+        services.AddSingleton<Microsoft.Extensions.Logging.ILoggerFactory>(NullLoggerFactory.Instance);
+        services.AddSingleton<GoldpathMultiTenancyMarker>();
+        services.AddSingleton<ITenantContext>(new FakeTenantContext(TenantId.Create("acme")));
+        services.AddSingleton<IAuthorizationService>(new FakeAuthorization(false));
+        var http = new DefaultHttpContext { RequestServices = services.BuildServiceProvider() };
+
+        Assert.Equal(403, StatusOf(await AdminTenantScope.RequireAllTenantsAsync(http)));
     }
 }

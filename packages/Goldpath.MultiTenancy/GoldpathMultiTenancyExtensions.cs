@@ -132,6 +132,9 @@ public static class GoldpathMultiTenancyExtensions
         configure?.Invoke(options);
         builder.Services.AddSingleton(options);
 
+        // The marker IS the multi-tenancy signal for everything downstream (R1): an
+        // ITenantContext alone cannot say it, because other modules register one too.
+        builder.Services.TryAddSingleton<GoldpathMultiTenancyMarker>();
         builder.Services.TryAddScoped<ITenantContext, AmbientTenantContext>();
         builder.Services.AddScoped<IEntitySaveContributor, TenantStampContributor>();
         return builder;
