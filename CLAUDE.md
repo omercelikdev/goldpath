@@ -29,5 +29,7 @@ reference app (`samples/corpay`, proven nightly against the published packages).
 phase is active (`docs/rfc/goldpath-console.md`: U1–U3 met — all five module
 panels are proven nightly by the console smoke against one real app; U4 next). Live status ledgers —
 keep them updated in the same PR that changes reality: `docs/strategy/ai-sdlc-status.md`
-(AI-assisted SDLC vs reality) and `docs/strategy/coverage-matrix.md` (capability × sample).
+(AI-assisted SDLC vs reality), `docs/strategy/coverage-matrix.md` (capability × sample),
+and `docs/strategy/open-threads.md` (deferred work with its TRIGGER and the proof that
+must run before the thread closes — nothing is postponed without landing there).
 Roadmap gates: `docs/strategy/foundation.md` §12.
