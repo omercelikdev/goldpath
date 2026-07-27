@@ -45,13 +45,22 @@ function estate(options: { registry?: unknown; registryStatus?: number } = {}) {
 }
 
 describe("the console across services", () => {
-  it("lists the registry's services and lands on the first", async () => {
+  it("lands on TODAY — the operator's question is 'is anything wrong', not 'what exists'", async () => {
+    const { fetcher } = estate();
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+
+    expect(await screen.findByTestId("triage-home")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Today" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("lists the registry's services and navigates the first one's modules", async () => {
     const { fetcher } = estate();
     render(<ConsoleApp fetcher={fetcher} search="" />);
 
     const picker = await screen.findByLabelText(/service/i);
     expect(picker).toHaveValue("payments");
-    expect(await screen.findByRole("button", { name: "Bulk intake" })).toBeInTheDocument();
+    await userEvent.click(await screen.findByRole("button", { name: "Bulk intake" }));
+    expect(await screen.findByTestId("bulk-panel")).toBeInTheDocument();
   });
 
   it("switching service RE-DISCOVERS — one service's panels never appear under another's name", async () => {
@@ -70,6 +79,52 @@ describe("the console across services", () => {
     expect(asked.some((url) => url.startsWith("https://claims.internal"))).toBe(true);
   });
 
+  it("a forbidden capability is NAMED with the server's words", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("console.config.json")) return new Response("", { status: 404 });
+      return new Response(JSON.stringify({ message: "the 'goldpath-ops' role is required" }), {
+        status: 403,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    expect(await screen.findByText(/lacks the ops role/)).toHaveTextContent("the 'goldpath-ops' role is required");
+  });
+
+  it("a REFUSED capability is named too — composed, reachable, and saying no", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("console.config.json")) return new Response("", { status: 404 });
+      return new Response(JSON.stringify({ title: "Tenant could not be resolved." }), {
+        status: 400,
+        headers: { "content-type": "application/json" },
+      });
+    }) as typeof fetch;
+
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    expect(await screen.findByText(/composed here but refused this request/)).toHaveTextContent("Tenant could not be resolved.");
+  });
+
+  it("a service with NO Goldpath surface says so instead of an empty frame", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      if (url.includes("console.config.json")) return new Response("", { status: 404 });
+      return new Response("", { status: 404 });
+    }) as typeof fetch;
+
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+
+    // Today still answers — it just has nothing to report from a service that composes none.
+    expect(await screen.findByTestId("triage-home")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Runs" })).toBeNull();
+  });
+
   it("a single-service console shows no picker at all — nothing to choose between", async () => {
     const fetcher = (async (input: RequestInfo | URL) => {
       const url = String(input);
@@ -81,6 +136,43 @@ describe("the console across services", () => {
 
     await screen.findByRole("button", { name: "Runs" });
     expect(screen.queryByLabelText(/service/i)).toBeNull();
+  });
+
+  it("a triage row opens the panel it belongs to, on the SERVICE it belongs to", async () => {
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (url.includes("console.config.json")) {
+        return json({
+          services: [
+            { name: "payments", adminBaseUrl: "https://payments.internal" },
+            { name: "claims", adminBaseUrl: "https://claims.internal" },
+          ],
+        });
+      }
+
+      // Only CLAIMS has something wrong: a batch waiting at its four-eyes gate.
+      if (url.startsWith("https://claims.internal")) {
+        if (url.includes("/bulk/definitions")) {
+          return json([{ name: "payouts", batchesByState: { Validated: 1 }, awaitingApproval: 1, oldestAwaitingApprovalSeconds: 7200 }]);
+        }
+
+        if (url.includes("/bulk/batches")) return json([]);
+        return new Response("", { status: 404 });
+      }
+
+      if (url.includes("/jobs/fleets")) return json([]);
+      return new Response("", { status: 404 });
+    }) as typeof fetch;
+
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+
+    const row = await screen.findByRole("button", { name: /awaiting approval in payouts/ });
+    await userEvent.click(row);
+
+    // The console switched service AND section — the row is a deep link, not a label.
+    expect(await screen.findByTestId("bulk-panel")).toBeInTheDocument();
+    expect(screen.getByLabelText(/service/i)).toHaveValue("claims");
   });
 
   it("a registry that failed to load is ANNOUNCED — an operator who configured four services must not silently see one", async () => {

@@ -13,6 +13,8 @@ import { expect, test } from "@playwright/test";
 const service = process.env.GOLDPATH_SERVICE_URL ?? "http://localhost:5310";
 
 const PANELS = [
+  // The landing screen is checked too: it is the one an operator sees first, at 3am.
+  { nav: "Today", ready: "triage-home" },
   { nav: "Runs", ready: "run-console" },
   { nav: "Bulk intake", ready: "bulk-panel" },
   { nav: "Campaigns", ready: "campaign-panel" },
@@ -40,6 +42,7 @@ test.describe("the console is operable without a mouse or a perfect screen", () 
 
   test("a confirm dialog is opened, dismissed and handed back by keyboard alone", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByRole("button", { name: "Runs" }).click();
     await expect(page.getByTestId("run-console")).toBeVisible();
 
     // Opened from the KEYBOARD — the mouse is not assumed anywhere in this journey.
