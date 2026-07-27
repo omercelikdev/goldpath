@@ -41,10 +41,16 @@ describe("the console shell (capability discovery decides what EXISTS)", () => {
   });
 
   it("a composed-but-unbuilt panel is honest instead of faking a screen", async () => {
-    render(<Console fetcher={service({ "/campaign/": 200 })} />);
+    render(<Console fetcher={service({ "/archival/definitions": 200 })} />);
 
     expect(await screen.findByText(/its panel is not built yet/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "Campaigns" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("button", { name: "Archival" })).toHaveAttribute("aria-current", "page");
+  });
+
+  it("lands on the campaign governor when campaign is the only composed module", async () => {
+    render(<Console fetcher={service({ "/campaign/": 200 })} />);
+
+    expect(await screen.findByTestId("campaign-panel")).toBeInTheDocument();
   });
 
   it("lands on the bulk panel when bulk is the only composed module", async () => {

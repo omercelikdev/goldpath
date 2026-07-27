@@ -111,6 +111,68 @@ export interface BulkRowError {
   message: string;
 }
 
+/** A campaign as the governor sees it: pacer counters + the live policy in force. */
+export interface CampaignInfo {
+  id: string;
+  type: string;
+  name: string;
+  state: string;
+  enumeratedThrough: number;
+  enumerationComplete: boolean;
+  releasedThrough: number;
+  succeededCount: number;
+  failedCount: number;
+  inFlight: number;
+  remaining: number;
+  tps: number;
+  dailyQuota?: number | null;
+  releasedToday: number;
+  maxInFlight: number;
+  windowStart?: string | null;
+  windowEnd?: string | null;
+  timeZoneId: string;
+  windowOpenNow: boolean;
+  etaSecondsAtCurrentTps?: number | null;
+  createdAt: string;
+  createdBy: string;
+  completedAt?: string | null;
+  lastVerb?: string | null;
+  tenant?: string | null;
+}
+
+/** One failed item — the drill-down; REPLAY belongs to the jobs console. */
+export interface CampaignFailedItem {
+  seq: number;
+  error?: string | null;
+  completedAt?: string | null;
+}
+
+/** One audited verb against a campaign (who did what, newest first). */
+export interface CampaignAuditEntry {
+  id: number;
+  at: string;
+  actor: string;
+  action: string;
+  campaignId: string;
+  detail?: string | null;
+}
+
+/**
+ * The LIVE policy patch: every field is optional and a null one KEEPS its current value,
+ * so the console sends only what the operator actually changed. Clearing is explicit —
+ * `clearDailyQuota` / `clearWindow` exist because "no quota" cannot be said with a null.
+ */
+export interface CampaignThrottle {
+  tps?: number;
+  dailyQuota?: number;
+  maxInFlight?: number;
+  windowStart?: string;
+  windowEnd?: string;
+  timeZoneId?: string;
+  clearDailyQuota?: boolean;
+  clearWindow?: boolean;
+}
+
 export interface AdminResult {
   ok: boolean;
   message: string;
@@ -289,5 +351,46 @@ export class AdminClient {
 
   batch(batchId: string): Promise<BulkBatchInfo> {
     return this.get<BulkBatchInfo>(`/goldpath/admin/bulk/batches/${encodeURIComponent(batchId)}`);
+  }
+
+  campaigns(options: { state?: string; take?: number } = {}): Promise<CampaignInfo[]> {
+    const query = new URLSearchParams();
+    if (options.state) query.set("state", options.state);
+    query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
+    return this.get<CampaignInfo[]>(`/goldpath/admin/campaign/?${query.toString()}`);
+  }
+
+  campaign(id: string): Promise<CampaignInfo> {
+    return this.get<CampaignInfo>(`/goldpath/admin/campaign/${encodeURIComponent(id)}`);
+  }
+
+  /** Execution failures — one noun across modules (bulk's `/errors` is validation). */
+  campaignFailures(id: string, take = 100): Promise<CampaignFailedItem[]> {
+    return this.get<CampaignFailedItem[]>(
+      `/goldpath/admin/campaign/${encodeURIComponent(id)}/failures?take=${Math.min(500, Math.max(1, take))}`,
+    );
+  }
+
+  campaignAudit(id: string, take = 100): Promise<CampaignAuditEntry[]> {
+    return this.get<CampaignAuditEntry[]>(
+      `/goldpath/admin/campaign/${encodeURIComponent(id)}/audit?take=${Math.min(500, Math.max(1, take))}`,
+    );
+  }
+
+  pauseCampaign(id: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/campaign/${encodeURIComponent(id)}/pause`, {});
+  }
+
+  resumeCampaign(id: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/campaign/${encodeURIComponent(id)}/resume`, {});
+  }
+
+  abortCampaign(id: string, reason: string): Promise<AdminResult> {
+    // The reason is the evidence — the contract binds the body, so it is never optional.
+    return this.verb(`/goldpath/admin/campaign/${encodeURIComponent(id)}/abort`, { reason });
+  }
+
+  throttleCampaign(id: string, patch: CampaignThrottle): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/campaign/${encodeURIComponent(id)}/throttle`, patch);
   }
 }

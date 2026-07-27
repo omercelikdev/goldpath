@@ -17,6 +17,10 @@ const MAP: Record<string, StatusTone> = {
   Executing: "info",
   CompletedWithFailures: "danger",
   Rejected: "danger",
+  // campaign
+  Enumerating: "info",    // the leader is materializing targets
+  Paused: "warning",      // an operator stopped the release; nothing is wrong yet
+  Aborted: "danger",
   // notification
   Requested: "info",
   Sent: "success",

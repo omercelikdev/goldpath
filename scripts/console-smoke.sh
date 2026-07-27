@@ -11,6 +11,7 @@ ROOT=$(cd "$(dirname "$0")/.." && pwd)
 if [ -d "$HOME/.dotnet/sdk" ]; then export DOTNET_ROOT="$HOME/.dotnet"; export PATH="$HOME/.dotnet:$PATH"; fi
 
 PG_NAME="goldpath-console-smoke-pg"
+MQ_NAME="goldpath-console-smoke-mq"
 SERVICE_URL="http://localhost:5310"
 CONSOLE_URL="http://localhost:5201"
 HOST_PID=""
@@ -20,6 +21,7 @@ cleanup() {
   [ -n "$HOST_PID" ] && kill "$HOST_PID" 2>/dev/null || true
   [ -n "$VITE_PID" ] && kill "$VITE_PID" 2>/dev/null || true
   docker rm -f "$PG_NAME" >/dev/null 2>&1 || true
+  docker rm -f "$MQ_NAME" >/dev/null 2>&1 || true
 }
 trap cleanup EXIT
 
@@ -27,11 +29,33 @@ echo "── postgres"
 docker rm -f "$PG_NAME" >/dev/null 2>&1 || true
 docker run -d --name "$PG_NAME" -e POSTGRES_PASSWORD=smoke -e POSTGRES_DB=smoke -p 55432:5432 postgres:17-alpine >/dev/null
 CONNECTION="Host=localhost;Port=55432;Database=smoke;Username=postgres;Password=smoke"
-until docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1; do sleep 1; done
+for _ in $(seq 1 60); do docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
+docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1 || { echo "postgres never came up:"; docker logs "$PG_NAME" 2>&1 | tail -20; exit 1; }
 
-echo "── the app (real packages, real Quartz, the FROZEN admin surface)"
+echo "── rabbitmq (campaign RELEASES through a broker — campaign RFC D8, no stand-in)"
+docker rm -f "$MQ_NAME" >/dev/null 2>&1 || true
+# The cookie is seeded before the server starts: on some Docker hosts /var/lib/rabbitmq
+# is mounted so that the rabbitmq user cannot create .erlang.cookie itself, and the node
+# dies with "eacces" before it ever listens. Writing it as root costs nothing elsewhere.
+docker run -d --name "$MQ_NAME" -p 55672:5672 rabbitmq:4-alpine sh -c \
+  'echo smokecookie > /var/lib/rabbitmq/.erlang.cookie \
+   && chmod 400 /var/lib/rabbitmq/.erlang.cookie \
+   && chown rabbitmq:rabbitmq /var/lib/rabbitmq/.erlang.cookie \
+   && exec docker-entrypoint.sh rabbitmq-server' >/dev/null
+BROKER="amqp://guest:guest@localhost:55672"
+# BOUNDED: an unbounded wait on a container that died turns a two-minute failure into a
+# hang with no output at all.
+for _ in $(seq 1 60); do
+  docker exec "$MQ_NAME" rabbitmq-diagnostics -q check_port_connectivity >/dev/null 2>&1 && break
+  sleep 2
+done
+docker exec "$MQ_NAME" rabbitmq-diagnostics -q check_port_connectivity >/dev/null 2>&1 || {
+  echo "the broker never came up:"; docker logs "$MQ_NAME" 2>&1 | tail -20; exit 1;
+}
+
+echo "── the app (real packages, real Quartz, real broker, the FROZEN admin surface)"
 GOLDPATH_CONSOLE_ORIGIN="$CONSOLE_URL" \
-  dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- "$CONNECTION" --console "$SERVICE_URL" > /tmp/console-smoke-host.log 2>&1 &
+  dotnet run --project "$ROOT/tests/Goldpath.Jobs.TestHost" -- "$CONNECTION" --console "$SERVICE_URL" --broker "$BROKER" > /tmp/console-smoke-host.log 2>&1 &
 HOST_PID=$!
 for _ in $(seq 1 60); do
   grep -q "CONSOLEHOST-READY" /tmp/console-smoke-host.log && break
