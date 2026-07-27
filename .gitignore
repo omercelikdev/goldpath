@@ -19,3 +19,8 @@ coverage/
 
 # The console's registry is per-DEPLOYMENT config; the smoke writes its own.
 ui/console/public/console.config.json
+
+# The console dist is BUILT (scripts/build-console.sh), never committed: it changes with
+# every UI edit and CI lays it before packing.
+packages/Goldpath.Console/wwwroot/*
+!packages/Goldpath.Console/wwwroot/.gitkeep

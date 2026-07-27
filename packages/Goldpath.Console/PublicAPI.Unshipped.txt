@@ -1,0 +1,13 @@
+#nullable enable
+Goldpath.GoldpathConsoleEndpoints
+Goldpath.GoldpathConsoleOptions
+Goldpath.GoldpathConsoleOptions.AddService(string! name, string! adminBaseUrl) -> Goldpath.GoldpathConsoleOptions!
+Goldpath.GoldpathConsoleOptions.GoldpathConsoleOptions() -> void
+Goldpath.GoldpathConsoleOptions.Services.get -> System.Collections.Generic.IList<Goldpath.GoldpathConsoleService!>!
+Goldpath.GoldpathConsoleService
+Goldpath.GoldpathConsoleService.AdminBaseUrl.get -> string!
+Goldpath.GoldpathConsoleService.AdminBaseUrl.init -> void
+Goldpath.GoldpathConsoleService.GoldpathConsoleService(string! Name, string! AdminBaseUrl) -> void
+Goldpath.GoldpathConsoleService.Name.get -> string!
+Goldpath.GoldpathConsoleService.Name.init -> void
+static Goldpath.GoldpathConsoleEndpoints.MapGoldpathConsole(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/console", bool exposeUnsecured = false, System.Action<Goldpath.GoldpathConsoleOptions!>? configure = null) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!

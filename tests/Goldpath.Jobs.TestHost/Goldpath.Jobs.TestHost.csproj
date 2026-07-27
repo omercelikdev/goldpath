@@ -19,6 +19,7 @@
     <ProjectReference Include="../../packages/Goldpath.Archival/Goldpath.Archival.csproj" />
     <ProjectReference Include="../../packages/Goldpath.DataProtection/Goldpath.DataProtection.csproj" />
     <ProjectReference Include="../../packages/Goldpath.Auth/Goldpath.Auth.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Console/Goldpath.Console.csproj" />
     <ProjectReference Include="../../packages/Goldpath.MultiTenancy/Goldpath.MultiTenancy.csproj" />
   </ItemGroup>
 

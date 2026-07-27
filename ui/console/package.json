@@ -9,7 +9,8 @@
     "test": "vitest run --coverage --coverage.thresholds.statements=97 --coverage.thresholds.branches=85 --coverage.thresholds.functions=75 --coverage.thresholds.lines=97",
     "typecheck": "tsc --noEmit",
     "dev": "vite",
-    "e2e": "playwright test"
+    "e2e": "playwright test",
+    "build": "vite build"
   },
   "peerDependencies": {
     "react": "^19.0.0",

@@ -23,6 +23,20 @@ jobs:
           dotnet-version: |
             8.0.x
             10.0.x
+      # The console dist is BUILT here and embedded by Goldpath.Console: this is the ONLY
+      # place Node is needed, and it is why adopters never run it. The package refuses to
+      # pack without it (see its `RefuseAnEmptyConsole` target).
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ui/console/pnpm-lock.yaml
+      - name: build the console
+        run: bash scripts/build-console.sh
+
       - name: sanity build
         run: dotnet build Goldpath.sln --nologo -c Release
       - name: pack the train

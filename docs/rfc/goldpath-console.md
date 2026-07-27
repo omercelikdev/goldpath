@@ -58,7 +58,14 @@ custom-develop ON, with the same kit, the same way they add features to the back
 - **D1 — Stack: React + Tailwind, dist-shipped (supersedes the earlier RCL wording).**
   One design system and one stack across the product family (Mockifyr/Praxis lineage);
   adopters NEVER run Node — CI builds the dist, `Goldpath.Console` ships it as embedded
-  static assets served by `MapGoldpathConsole()` on the management head. The "no Node
+  static assets served by `MapGoldpathConsole()` on the management head. SHIPPED (U4,
+  2026-07-27): the package refuses to PACK without a built console; the registry comes
+  from the app's own configuration (`AddService`), not a JSON file someone has to copy
+  beside the dist; the console sits behind the same ops floor as the admin surfaces; a
+  missing asset 404s rather than being answered with the page (a blank screen with a green
+  status code is the worst failure a console can have); and an unknown path 404s too,
+  because the console has no client-side routes YET — when it gains them, the server must
+  also inject a `<base href>` (open-threads T9). The "no Node
   in generated apps" principle holds by construction. Custom pages: the kit npm package
   for teams that build UI, and a config-driven link/iframe-free tile row for those that
   do not.

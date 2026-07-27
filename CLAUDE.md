@@ -26,8 +26,9 @@ not propose anything that contradicts them; changes only via a superseding ADR).
 Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.3` train is on
 nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Phase D shipped the CorPay
 reference app (`samples/corpay`, proven nightly against the published packages). The UI
-phase is active (`docs/rfc/goldpath-console.md`: U1–U3 met — all five module
-panels are proven nightly by the console smoke against one real app; U4 next). Live status ledgers —
+phase is active (`docs/rfc/goldpath-console.md`: U1–U3 met, U4 in flight —
+the registry, the triage home and `MapGoldpathConsole()` ship; the console smoke drives
+three real apps and the app-SERVED console). Live status ledgers —
 keep them updated in the same PR that changes reality: `docs/strategy/ai-sdlc-status.md`
 (AI-assisted SDLC vs reality), `docs/strategy/coverage-matrix.md` (capability × sample),
 and `docs/strategy/open-threads.md` (deferred work with its TRIGGER and the proof that
