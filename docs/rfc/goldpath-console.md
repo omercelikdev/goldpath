@@ -119,8 +119,12 @@ custom-develop ON, with the same kit, the same way they add features to the back
   is REFUSED is as much a claim as how it behaves when it is welcome; plus a service that
   dies mid-session. Runnable on demand (`.github/workflows/console-smoke.yml`), not only
   nightly. Playwright smoke against a REAL generated
-  app (a `GmConsole` shape joins the GM matrix: generate → run AppHost → drive triage →
-  trigger a run → watch it complete → replay a repair item). No screenshot-diff theater;
+  app: SHIPPED (U4, 2026-07-27) as TWO golden-manifest shapes, because one could not say
+  it — `GmConsole` (a module, no auth) proves the generated app serves the console AND its
+  own bundle, and `GmConsoleAuthed` (the same shape with the floor up) proves the page
+  answers 401. The matrix had no shape combining auth with an operational module, so the
+  guarded branch would have shipped unexecuted. DRIVING that generated console in a
+  browser stays with the console smoke, which owns Playwright. No screenshot-diff theater;
   behavior only.
 
 ## 5. Phases

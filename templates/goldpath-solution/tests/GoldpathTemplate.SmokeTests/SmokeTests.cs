@@ -54,7 +54,27 @@ public class SmokeTests
         var unauthorized = await client.PostAsJsonAsync("/api/v1/orders",
             new { reference = "smoke-001", amount = 42.50m }, timeout.Token);
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+        // The console rides the same floor: an operator without a principal is refused the
+        // PAGE, not just the calls behind it. This app cannot ship an unauthenticated
+        // console by accident.
+        var console = await client.GetAsync("/goldpath/console/", timeout.Token);
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, console.StatusCode);
+//#endif
 //#else
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+        // No auth in this shape, so the console SERVES — and its embedded bundle must come
+        // with it. A page that loads without its assets is a blank screen with a green
+        // status code, which is the worst failure a console can have.
+        var console = await client.GetAsync("/goldpath/console/", timeout.Token);
+        console.EnsureSuccessStatusCode();
+        var consoleHtml = await console.Content.ReadAsStringAsync(timeout.Token);
+        var bundle = System.Text.RegularExpressions.Regex.Match(consoleHtml, @"src=""\./(assets/[^""]+)""").Groups[1].Value;
+        Assert.False(string.IsNullOrEmpty(bundle), "the served console must reference its own bundle");
+        (await client.GetAsync($"/goldpath/console/{bundle}", timeout.Token)).EnsureSuccessStatusCode();
+//#endif
+
         // 1. Create — walking-skeleton command (Mediant [HttpEndpoint] + outbox publish).
         var create = await client.PostAsJsonAsync("/api/v1/orders",
             new { reference = "smoke-001", amount = 42.50m }, timeout.Token);

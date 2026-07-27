@@ -257,6 +257,19 @@ app.MapGoldpathCampaignAdmin<OrdersDbContext>(exposeUnsecured: true);       // a
 #endif
 //#endif
 
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+// The console over those surfaces — served by THIS head from the package's embedded
+// assets (no Node in this solution, by construction). One line to remove if your ops team
+// drives the API directly; it adds no capability the surfaces above do not already expose.
+#if (UseAuth)
+app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathConsole(exposeUnsecured: true);
+#endif
+//#endif
+
 // Skip schema work under the build-time OpenAPI generator (no database there).
 var isDocGen = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
 if (app.Environment.IsDevelopment() && !isDocGen)

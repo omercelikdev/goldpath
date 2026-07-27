@@ -24,6 +24,16 @@ jobs:
           # Dotted solution names are the .NET norm (Company.Product) — issue #24's regression shape.
           - name: Gm.Dotted
             args: "--broker none --auth none"
+          # The console's shape: an operational module composes it, and the generated
+          # smoke proves it SERVES with its own bundle (no auth here, so the page is
+          # reachable — the authed shapes below assert the 401 instead).
+          - name: GmConsole
+            args: "--features bulk --auth none"
+          # The SAME shape with the auth floor up: the console's page must answer 401.
+          # Without this row the guarded branch of the generated smoke is never executed —
+          # the matrix had no shape combining auth with an operational module.
+          - name: GmConsoleAuthed
+            args: "--features bulk"
           - name: GmEverything
             args: "--features multitenancy --features audittrail --features softdelete --features idempotency --features dataprotection --features caching --features locking --features archival --features bulk --features notification --features campaign --auth none"
           - name: GmWorkerQueue
