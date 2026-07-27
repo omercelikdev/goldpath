@@ -40,7 +40,13 @@ custom-develop ON, with the same kit, the same way they add features to the back
   for every fleet. CorPay proves it: api + payments + eod under one console today.
 - **Across services**: a registry of entries `{ name, adminBaseUrl }` — config-file or
   Aspire service discovery. Each service contributes its capability panels under its
-  name; cross-service home aggregates them.
+  name; cross-service home aggregates them. SHIPPED (U4, 2026-07-27): the console reads
+  `console.config.json` from where it is served — adding a service is a config change,
+  never a rebuild — with `?base=` as the dev override and same-origin as the default.
+  Switching service re-runs discovery from scratch: one service's panels must never
+  appear under another's name. A registry that fails to load is ANNOUNCED, because an
+  operator who configured four services and silently sees one is looking at the wrong
+  console.
 - **Auth**: the console signs in ONCE against the adopter's IdP and carries the token
   to every service — all surfaces demand `goldpath-ops` (H2); the console is just a
   well-dressed client of that floor. The login-gate primitive exists in the kit.

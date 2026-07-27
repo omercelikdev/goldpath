@@ -30,6 +30,7 @@ cleanup() {
   [ -n "$VITE_PID" ] && kill "$VITE_PID" 2>/dev/null || true
   docker rm -f "$PG_NAME" >/dev/null 2>&1 || true
   docker rm -f "$MQ_NAME" >/dev/null 2>&1 || true
+  rm -f "$ROOT/ui/console/public/console.config.json" 2>/dev/null || true
 }
 trap cleanup EXIT
 
@@ -90,6 +91,20 @@ for _ in $(seq 1 90); do
 done
 grep -q "CONSOLEHOST-READY" /tmp/console-smoke-secured.log || { echo "the secured app never came up:"; tail -20 /tmp/console-smoke-secured.log; exit 1; }
 grep -q "CONSOLEHOST-READY" /tmp/console-smoke-tenanted.log || { echo "the tenant-scoped app never came up:"; tail -20 /tmp/console-smoke-tenanted.log; exit 1; }
+
+# The cross-service registry the console reads at runtime (console RFC §3). Written here
+# rather than committed: it names the three apps THIS run started, and an adopter's file
+# names theirs. Vite serves public/ at the root, which is where the console looks.
+mkdir -p "$ROOT/ui/console/public"
+cat > "$ROOT/ui/console/public/console.config.json" <<JSON
+{
+  "services": [
+    { "name": "open", "adminBaseUrl": "$SERVICE_URL" },
+    { "name": "auth-floored", "adminBaseUrl": "$SECURED_URL" },
+    { "name": "tenant-scoped", "adminBaseUrl": "$TENANT_URL" }
+  ]
+}
+JSON
 
 echo "── the console"
 (cd "$ROOT/ui/console" && pnpm dev --port 5201 --strictPort > /tmp/console-smoke-vite.log 2>&1) &
