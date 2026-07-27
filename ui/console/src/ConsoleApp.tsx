@@ -21,7 +21,7 @@ export interface ConsoleAppProps {
  */
 export function ConsoleApp({ fetcher, search, now }: ConsoleAppProps) {
   const [services, setServices] = useState<ServiceEntry[] | null>(null);
-  const [problem, setProblem] = useState<string | null>(null);
+  const [problem, setProblem] = useState<{ text: string; fellBack: boolean } | null>(null);
   const [active, setActive] = useState<string | null>(null);
 
   useEffect(() => {
@@ -29,7 +29,7 @@ export function ConsoleApp({ fetcher, search, now }: ConsoleAppProps) {
     void loadRegistry(fetcher, search).then((result) => {
       if (!live) return;
       setServices(result.services);
-      setProblem(result.problem ?? null);
+      setProblem(result.problem ? { text: result.problem, fellBack: result.fellBack === true } : null);
       setActive((current) => current ?? result.services[0]?.name ?? null);
     });
     return () => {
@@ -49,7 +49,8 @@ export function ConsoleApp({ fetcher, search, now }: ConsoleAppProps) {
         // Config that failed to load is NOT a quiet fallback: an operator who configured
         // four services and sees one is looking at the wrong console.
         <Banner tone="warning" live="alert">
-          {problem} — showing this service only.
+          {problem.text}
+          {problem.fellBack ? " — showing this service only." : " — the console is missing a service you configured."}
         </Banner>
       )}
       <Console

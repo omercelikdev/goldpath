@@ -35,10 +35,18 @@ export const SAME_ORIGIN: ServiceEntry = { name: "this service", adminBaseUrl: "
  * so: a console that silently shows one service when the operator configured four would
  * hide exactly the outage they came to find.
  */
+export interface Registry {
+  services: ServiceEntry[];
+  /** What went wrong, in words the console shows verbatim. */
+  problem?: string;
+  /** True when the problem cost us the registry entirely and we fell back to same-origin. */
+  fellBack?: boolean;
+}
+
 export async function loadRegistry(
   fetcher: typeof fetch = (input, init) => globalThis.fetch(input, init),
   search: string = globalThis.location?.search ?? "",
-): Promise<{ services: ServiceEntry[]; problem?: string }> {
+): Promise<Registry> {
   const base = new URLSearchParams(search).get("base");
   if (base !== null) {
     return { services: [{ name: base || "same-origin", adminBaseUrl: base }] };
@@ -48,7 +56,7 @@ export async function loadRegistry(
     const response = await fetcher("console.config.json", { headers: { accept: "application/json" } });
     if (response.status === 404) return { services: [SAME_ORIGIN] };   // no registry: one service
     if (!response.ok) {
-      return { services: [SAME_ORIGIN], problem: `the service registry answered ${response.status}` };
+      return { services: [SAME_ORIGIN], problem: `the service registry answered ${response.status}`, fellBack: true };
     }
 
     const file = (await response.json()) as RegistryFile;
@@ -60,11 +68,16 @@ export async function loadRegistry(
       .filter((entry) => entry.name.length > 0);
 
     if (services.length === 0) {
-      return { services: [SAME_ORIGIN], problem: "the service registry lists no service with a name" };
+      return { services: [SAME_ORIGIN], problem: "the service registry lists no service with a name", fellBack: true };
     }
 
-    return { services };
+    // A PARTIAL drop is the dangerous one: the console still works, still looks right, and
+    // is quietly missing a service the operator configured (review R1 on this PR).
+    const dropped = (file.services ?? []).length - services.length;
+    return dropped > 0
+      ? { services, problem: `${dropped} registry entr${dropped === 1 ? "y has" : "ies have"} no name and ${dropped === 1 ? "was" : "were"} skipped` }
+      : { services };
   } catch {
-    return { services: [SAME_ORIGIN], problem: "the service registry could not be read" };
+    return { services: [SAME_ORIGIN], problem: "the service registry could not be read", fellBack: true };
   }
 }

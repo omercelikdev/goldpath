@@ -90,6 +90,18 @@ describe("the console across services", () => {
     expect(await screen.findByRole("alert")).toHaveTextContent(/service registry answered 500 — showing this service only/);
   });
 
+  it("a partially broken registry names the loss — the console did NOT fall back, it is incomplete", async () => {
+    const { fetcher } = estate({
+      registry: { services: [{ name: "payments", adminBaseUrl: "https://payments.internal" }, { adminBaseUrl: "https://nameless.internal" }] },
+    });
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+
+    const banner = await screen.findByRole("alert");
+    expect(banner).toHaveTextContent("1 registry entry has no name and was skipped");
+    expect(banner).toHaveTextContent("missing a service you configured");
+    expect(banner).not.toHaveTextContent("showing this service only");
+  });
+
   it("?base= drives one named service, whatever the registry says", async () => {
     const { fetcher } = estate();
     render(<ConsoleApp fetcher={fetcher} search="?base=https://payments.internal" />);

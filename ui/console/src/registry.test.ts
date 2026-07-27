@@ -77,6 +77,33 @@ describe("the service registry (config across services, discovery within one)", 
     expect(problem).toMatch(/no service with a name/);
   });
 
+  it("a PARTIAL drop is reported — the console still works and is quietly missing a service", async () => {
+    const { services, problem } = await loadRegistry(
+      fetcherFor(
+        json({
+          services: [
+            { name: "payments", adminBaseUrl: "https://payments.internal" },
+            { adminBaseUrl: "https://nameless.internal" },
+            { name: "  ", adminBaseUrl: "https://blank.internal" },
+          ],
+        }),
+      ),
+      "",
+    );
+
+    expect(services).toEqual([{ name: "payments", adminBaseUrl: "https://payments.internal" }]);
+    expect(problem).toBe("2 registry entries have no name and were skipped");
+  });
+
+  it("one dropped entry is reported in the singular — the count is the point", async () => {
+    const { problem } = await loadRegistry(
+      fetcherFor(json({ services: [{ name: "payments" }, { adminBaseUrl: "https://nameless.internal" }] })),
+      "",
+    );
+
+    expect(problem).toBe("1 registry entry has no name and was skipped");
+  });
+
   it("a same-origin entry is legitimate: the console's own app, listed beside the others", async () => {
     const { services } = await loadRegistry(
       fetcherFor(json({ services: [{ name: "this app", adminBaseUrl: "" }, { name: "claims", adminBaseUrl: "https://claims.internal" }] })),
