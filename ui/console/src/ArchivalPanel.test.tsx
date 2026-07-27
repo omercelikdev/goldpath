@@ -230,4 +230,35 @@ describe("the archival panel (chain health, retrieval, lifecycle)", () => {
 
     expect((await screen.findAllByRole("alert"))[0]).toHaveTextContent(/archive definitions could not be loaded/i);
   });
+
+  it("a verification that cannot RUN says so — it never leaves the old verdict standing", async () => {
+    let verifies = 0;
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (init?.method === "POST" && url.includes("/verify")) {
+        verifies += 1;
+        // The first verification succeeds; the second cannot reach the server.
+        return verifies === 1 ? json([]) : new Response("", { status: 503 });
+      }
+
+      if (url.includes("/holds") || url.includes("/erasures")) return json([]);
+      return json([{ name: "policies", entries: 10, dueBacklog: 0, activeHolds: 0, chainHead: 10, purgedThrough: 0 }]);
+    }) as typeof fetch;
+
+    render(<ArchivalPanel client={new AdminClient({ fetcher })} now={NOW} />);
+
+    const runVerify = async () => {
+      await userEvent.click(await screen.findByRole("button", { name: "verify policies" }));
+      await userEvent.click(within(screen.getByRole("alertdialog")).getByRole("button", { name: "verify policies" }));
+    };
+
+    await runVerify();
+    expect(await screen.findByTestId("chain-findings")).toHaveTextContent("the chain verifies");
+
+    await runVerify();
+    expect(await screen.findByText(/the verification could not be run/)).toBeInTheDocument();
+    // The previous "verifies" verdict is GONE — an unknown chain must not read as a proven one.
+    expect(screen.queryByTestId("chain-findings")).toBeNull();
+  });
 });

@@ -36,6 +36,8 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
   const [lookedUp, setLookedUp] = useState<string | null>(null);
   const [revealDocument, setRevealDocument] = useState(false);
   const [findings, setFindings] = useState<{ definition: string; findings: ChainFinding[] } | null>(null);
+  // A verification that could not RUN is its own state: neither "verifies" nor "broken".
+  const [verifyFailed, setVerifyFailed] = useState<string | null>(null);
   const [includeLifted, setIncludeLifted] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
@@ -97,6 +99,9 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
   };
 
   const verify = async (name: string): Promise<VerbOutcome> => {
+    // Clear FIRST: a stale verdict from the previous run must never stand in for this one.
+    setFindings(null);
+    setVerifyFailed(null);
     try {
       const found = await client.verifyChain(name);
       setFindings({ definition: name, findings: found });
@@ -105,6 +110,7 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
         ? { kind: "ok", message: `${name}: the chain verifies — no findings` }
         : { kind: "refused", message: `${name}: ${found.length} chain finding(s) — see below` };
     } catch {
+      setVerifyFailed(name);
       return { kind: "error", status: 0 };
     }
   };
@@ -142,6 +148,12 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
           {definitions?.length === 0 && <li className="text-xs text-faint">No archives are defined in this app.</li>}
         </ul>
       </section>
+
+      {verifyFailed && (
+        <Banner tone="warning" live="alert">
+          {verifyFailed}: the verification could not be run — the chain's state is unknown, not proven good.
+        </Banner>
+      )}
 
       {findings && (
         <section data-testid="chain-findings">
