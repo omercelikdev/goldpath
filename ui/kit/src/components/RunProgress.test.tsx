@@ -116,7 +116,7 @@ describe("the run progress composite (ui-standard-v1 §4)", () => {
     const overrun = render(
       <RunProgress
         run={{
-          id: "r1", jobName: "eod", status: "Running", startedAt: "2026-07-27T00:00:00Z",
+          status: "Running", startedAt: "2026-07-27T00:00:00Z",
           deadlineAt: "2026-07-27T01:00:00Z", totalChunks: 10, completedChunks: 3, failedChunks: 0, itemFailures: 0,
         }}
         now={new Date("2026-07-27T02:00:00Z")}
@@ -128,7 +128,7 @@ describe("the run progress composite (ui-standard-v1 §4)", () => {
     const predicted = render(
       <RunProgress
         run={{
-          id: "r2", jobName: "eod", status: "Running", startedAt: "2026-07-27T00:00:00Z",
+          status: "Running", startedAt: "2026-07-27T00:00:00Z",
           deadlineAt: "2026-07-27T01:00:00Z", predictedFinishAt: "2026-07-27T01:30:00Z",
           totalChunks: 10, completedChunks: 3, failedChunks: 0, itemFailures: 0,
         }}

@@ -131,6 +131,7 @@ describe("the app shell (ui-standard-v1 §3 — the surface scrolls, never the p
       <AppShell
         title="Goldpath console"
         nav={[]}
+        activeId=""
         services={[
           { name: "payments", onSelect: () => chosen.push("payments") },
           { name: "claims", onSelect: () => chosen.push("claims") },
