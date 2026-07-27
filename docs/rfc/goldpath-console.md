@@ -85,7 +85,8 @@ custom-develop ON, with the same kit, the same way they add features to the back
 | U1 | `ui/kit`: tokens + primitives + composites | component tests green; kit gallery page |
 | U2 | Run console over the registry (single-app path) | **MET** (2026-07-26): `scripts/console-smoke.sh` drives the real console against a real Goldpath app (Postgres + Quartz + the frozen surface) — capability discovery, confirm gate, run reaching terminal, repair queue replayed; runs nightly |
 | U3 | Module panels (bulk/campaign/notification/archival), capability-lit | **MET** (2026-07-27): all four panels ship, and the console smoke drives every module's real verbs against one app — bulk's four-eyes gate (including the engine's refusal on invalid rows), the campaign governor over a real broker (release, throttle, pause, resume, abort), the notification evidence in all three kinds (sent, failed, suppressed, recipients masked), and archival's chain verification, keyed retrieval, legal hold, the hold's refusal of an erasure, and the erasure itself — after which the chain still verifies |
-| U4 | Cross-service registry + triage home + auth story + `MapGoldpathConsole()` + GmConsole in nightly | the full D3 bar; CorPay screenshots into the README |
+| U4 | Cross-service registry + triage home + auth story + `MapGoldpathConsole()` + GmConsole in nightly | the full D3 bar; the console driven against CorPay and its screenshots into the README (open-threads T1) |
+| U5 | The styling pass — one sweep over spacing, density, filter layout, panel rhythm | deliberately LAST (open-threads T2): cosmetics before the flows settle get done twice. The axe and smoke gates must stay green through it, and the tokens change in `ui-standard-v1`, not per panel |
 
 ## 6. Non-goals
 
