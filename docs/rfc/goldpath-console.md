@@ -66,6 +66,14 @@ custom-develop ON, with the same kit, the same way they add features to the back
   Red/overrun-predicted runs, repair-queue depths, gates awaiting four-eyes, DLQ depth —
   each row deep-links into its panel. Fleet browsing is one click away, never the
   landing page: operators open consoles to answer "is anything wrong", not to browse.
+  SHIPPED (U4, 2026-07-27). Three properties it must keep, because each was a decision:
+  (a) every number comes from the contract's own take-bounded lists — the console invents
+  no aggregate the API does not expose — so the screen PRINTS its scope instead of
+  implying completeness; (b) a surface the console cannot read (no ops role, or a call it
+  cannot scope) is itself a row: blindness during an incident is the most important thing
+  an operator can be told, and it is grouped per service so it cannot bury the estate's
+  real problems; (c) a surface that dies mid-read is a row too — triage never drops a
+  service quietly.
 - **D3 — Proof bar (UI is claims-are-proofs too).**
   Kit: component tests (vitest) on the composites (keyset table paging, verb button's
   refusal surface, state mapping), under a COVERAGE FLOOR that CI enforces (kit 95/90,

@@ -1,28 +1,34 @@
-import { useEffect, useState } from "react";
-import { Banner } from "@goldpath/kit";
-import { Console } from "./Console";
+import { useEffect, useMemo, useState } from "react";
+import { AppShell, Banner } from "@goldpath/kit";
+import type { ShellNavItem } from "@goldpath/kit";
+import { AdminClient, type ModuleName } from "./adminClient";
+import { composedSections, SECTION_LABEL, ServicePanels, type Capabilities } from "./sections";
+import { TriageHome } from "./TriageHome";
 import { loadRegistry, SAME_ORIGIN, type ServiceEntry } from "./registry";
 
 export interface ConsoleAppProps {
+  title?: string;
   fetcher?: typeof fetch;
   /** Injected in tests; defaults to the browser's own query string. */
   search?: string;
   now?: Date;
 }
 
+/** The landing section is the estate, not a module — hence its own id. */
+const TODAY = "today";
+type Section = typeof TODAY | ModuleName;
+
 /**
- * The console, across services (console RFC §3 + D2). It owns exactly two things the
- * per-service screen must not: WHICH services exist (config, not discovery) and which one
- * the operator is looking at.
- *
- * Each service gets its own `Console` instance, keyed by name, so switching re-runs
- * capability discovery from scratch — a payments service's panels must never be shown
- * under a claims service's name because the shell happened to reuse the component.
+ * The console (console RFC §3 + D2). It owns what a single service cannot: WHICH services
+ * exist (config, not discovery), which one the operator is looking at, and the triage home
+ * that answers "is anything wrong" across all of them before any of them is opened.
  */
-export function ConsoleApp({ fetcher, search, now }: ConsoleAppProps) {
+export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }: ConsoleAppProps) {
   const [services, setServices] = useState<ServiceEntry[] | null>(null);
   const [problem, setProblem] = useState<{ text: string; fellBack: boolean } | null>(null);
   const [active, setActive] = useState<string | null>(null);
+  const [section, setSection] = useState<Section>(TODAY);
+  const [collapsed, setCollapsed] = useState(false);
 
   useEffect(() => {
     let live = true;
@@ -37,14 +43,64 @@ export function ConsoleApp({ fetcher, search, now }: ConsoleAppProps) {
     };
   }, [fetcher, search]);
 
+  // One client per service, kept STABLE across renders: the capability hook keys off it,
+  // and a fresh client every render would re-probe every service forever.
+  const clients = useMemo(() => {
+    const map = new Map<string, AdminClient>();
+    for (const service of services ?? []) {
+      map.set(service.name, new AdminClient({ baseUrl: service.adminBaseUrl, fetcher }));
+    }
+
+    return map;
+  }, [services, fetcher]);
+
+  // EVERY service is probed, not just the open one: the triage home speaks for the whole
+  // estate, and a service whose capabilities are unknown is a service it cannot speak for.
+  const [discovered, setDiscovered] = useState<Map<string, Capabilities>>(new Map());
+
+  useEffect(() => {
+    let live = true;
+    setDiscovered(new Map());
+    void Promise.all(
+      [...clients].map(async ([name, entry]) => [name, await entry.discoverCapabilities()] as const),
+    ).then((entries) => live && setDiscovered(new Map(entries)));
+    return () => {
+      live = false;
+    };
+  }, [clients]);
+
+  const service = (services ?? []).find((entry) => entry.name === active) ?? services?.[0] ?? SAME_ORIGIN;
+  const client = clients.get(service.name) ?? new AdminClient({ baseUrl: service.adminBaseUrl, fetcher });
+  const capabilities = discovered.get(service.name) ?? null;
+
   if (services === null) {
     return <p className="p-6 text-sm text-muted-foreground">Reading the service registry…</p>;
   }
 
-  const service = services.find((entry) => entry.name === active) ?? services[0] ?? SAME_ORIGIN;
+  const nav: ShellNavItem[] = [
+    { id: TODAY, label: "Today", onSelect: () => setSection(TODAY) },
+    ...composedSections(capabilities).map((module) => ({
+      id: module,
+      label: SECTION_LABEL[module],
+      onSelect: () => setSection(module),
+    })),
+  ];
+
+  const open = (target: string, targetSection: ModuleName) => {
+    setActive(target);
+    setSection(targetSection);
+  };
 
   return (
-    <>
+    <AppShell
+      title={title}
+      nav={nav}
+      activeId={section}
+      services={services.length > 1 ? services.map((entry) => ({ name: entry.name, onSelect: () => setActive(entry.name) })) : undefined}
+      activeService={service.name}
+      collapsed={collapsed}
+      onToggleCollapsed={() => setCollapsed(!collapsed)}
+    >
       {problem && (
         // Config that failed to load is NOT a quiet fallback: an operator who configured
         // four services and sees one is looking at the wrong console.
@@ -53,16 +109,20 @@ export function ConsoleApp({ fetcher, search, now }: ConsoleAppProps) {
           {problem.fellBack ? " — showing this service only." : " — the console is missing a service you configured."}
         </Banner>
       )}
-      <Console
-        key={service.name}
-        baseUrl={service.adminBaseUrl}
-        title={service.name}
-        fetcher={fetcher}
-        now={now}
-        services={services.length > 1 ? services.map((entry) => entry.name) : undefined}
-        activeService={service.name}
-        onSelectService={setActive}
-      />
-    </>
+
+      {section === TODAY ? (
+        <TriageHome
+          services={services.map((entry) => ({
+            name: entry.name,
+            client: clients.get(entry.name)!,
+            capabilities: discovered.get(entry.name) ?? null,
+          }))}
+          onOpen={open}
+          now={now}
+        />
+      ) : (
+        <ServicePanels client={client} capabilities={capabilities} section={section} now={now} />
+      )}
+    </AppShell>
   );
 }

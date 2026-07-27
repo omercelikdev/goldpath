@@ -24,6 +24,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
   test("triggers a job, watches the run finish, and replays its repair item", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByRole("button", { name: "Runs" }).click();
 
     // The fleet appears because the executor exists (zero-config discovery).
     await expect(page.getByRole("button", { name: /console-smoke/ })).toBeVisible();
@@ -41,6 +42,7 @@ test.describe("the run console against a real Goldpath app", () => {
     const smokeRun = page.getByRole("row", { name: /SmokeJob/ }).first();
     await expect(async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
+      await page.getByRole("button", { name: "Runs" }).click();
       await expect(smokeRun).toContainText("Completed", { timeout: 5_000 });
     }).toPass({ timeout: 60_000 });
 
@@ -323,10 +325,16 @@ test.describe("the run console against a real Goldpath app", () => {
   test("behind the auth floor: every surface is NAMED as forbidden, never hidden", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(secured)}`);
 
+    // TRIAGE says it first: the console cannot see this service, which during an incident
+    // is the most important thing an operator can be told.
+    await expect(page.getByTestId("triage-home")).toContainText("surfaces on");
+    await expect(page.getByTestId("triage-home")).toContainText("cannot be read");
+
     // The modules ARE composed here; the operator simply has no principal. Hiding them
     // would tell the operator this app has no admin surface, which is false.
     await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
+    await page.getByRole("button", { name: "Runs" }).click();
     await expect(page.getByRole("alert")).toContainText("lacks the ops role");
     await expect(page.getByTestId("run-console")).toHaveCount(0);
     await expect(page.getByText(/No Goldpath admin surface answered here/)).toHaveCount(0);
@@ -337,7 +345,9 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // R1: no ambient tenant → the app refuses (400). The console must repeat that, not
     // silently downgrade a composed module to "absent".
+    await expect(page.getByTestId("triage-home")).toContainText("cannot be read");
     await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
+    await page.getByRole("button", { name: "Runs" }).click();
     const banner = page.getByRole("alert");
     await expect(banner).toContainText("composed here but refused this request");
     await expect(banner).toContainText(/tenant/i);
@@ -346,6 +356,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
   test("a service that dies MID-SESSION is reported, not papered over", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByRole("button", { name: "Runs" }).click();
     await expect(page.getByTestId("run-console")).toBeVisible();
 
     // The console discovered a healthy service; now the service stops answering.
@@ -365,6 +376,10 @@ test.describe("the run console against a real Goldpath app", () => {
     // console reads theirs.
     await page.goto("/");
 
+    // The landing screen is TODAY; the modules are one click away, never the front door.
+    await expect(page.getByTestId("triage-home")).toBeVisible();
+    await page.getByRole("button", { name: "Runs" }).click();
+
     const picker = page.getByLabel(/service/i);
     await expect(picker).toHaveValue("open");
     await expect(page.getByTestId("run-console")).toBeVisible();
@@ -383,5 +398,31 @@ test.describe("the run console against a real Goldpath app", () => {
     // Back to the open app: its panels come back, freshly discovered.
     await picker.selectOption("open");
     await expect(page.getByTestId("run-console")).toBeVisible();
+  });
+
+  test("triage: the first screen answers 'is anything wrong' and its rows are deep links", async ({ page }) => {
+    // Give the estate something to report: a batch waiting at the four-eyes gate.
+    const csv = "EndToEndId,Amount\nE2E-T1,10.00\nE2E-T2,20.00\n";
+    const uploaded = await page.request.post(`${service}/goldpath/admin/bulk/batches/payments?fileName=triage.csv`, {
+      headers: { "content-type": "application/octet-stream" },
+      data: csv,
+    });
+    expect(uploaded.ok()).toBeTruthy();
+
+    // The validate job is real; poll the TRIAGE screen until it reports the gate.
+    const gate = page.getByRole("button", { name: /awaiting approval in payments/ });
+    await expect(async () => {
+      await page.goto("/");
+      await expect(page.getByTestId("triage-home")).toBeVisible({ timeout: 5_000 });
+      await expect(gate).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 90_000 });
+
+    // The screen says WHAT it read, so the numbers cannot be mistaken for the whole truth.
+    await expect(page.getByTestId("triage-home")).toContainText("most recent 50 rows");
+
+    // A row is a deep link: it opens the panel that owns it, on the service that owns it.
+    await gate.click();
+    await expect(page.getByTestId("bulk-panel")).toBeVisible();
+    await expect(page.getByLabel(/service/i)).toHaveValue("open");
   });
 });
