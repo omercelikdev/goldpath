@@ -154,4 +154,32 @@ describe("the verb button (ui-standard-v1 §3/§4 — confirm-before-verb, verba
     // something unexpected — two different stories, told differently.
     expect(await screen.findByText(/unexpected 503 — check the service logs/)).toBeInTheDocument();
   });
+
+  it("Escape backs out of the confirm — and forgets the reason typed into it", async () => {
+    let fired = 0;
+    render(
+      <VerbButton
+        label="erase"
+        confirm="Erase?"
+        note={{ label: "subject key (required)", required: true }}
+        execute={() => {
+          fired += 1;
+          return Promise.resolve(ok("erased"));
+        }}
+      />,
+    );
+
+    await userEvent.click(screen.getByRole("button", { name: "erase" }));
+    await userEvent.type(within(screen.getByRole("alertdialog")).getByLabelText("subject key (required)"), "customer:9");
+    await userEvent.keyboard("{Escape}");
+
+    expect(screen.queryByRole("alertdialog")).toBeNull();
+    expect(fired).toBe(0);
+    // Focus goes back where the operator was — not to <body>, at the top of the page.
+    await waitFor(() => expect(screen.getByRole("button", { name: "erase" })).toHaveFocus());
+
+    // Re-opening starts clean: a half-typed subject must not ride along on the next try.
+    await userEvent.click(screen.getByRole("button", { name: "erase" }));
+    expect(within(screen.getByRole("alertdialog")).getByLabelText("subject key (required)")).toHaveValue("");
+  });
 });

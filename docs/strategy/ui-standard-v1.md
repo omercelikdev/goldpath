@@ -13,7 +13,10 @@ Lifted verbatim from Mockifyr `ui/src/index.css` — the kit vendors the same st
 
 - **Layered neutrals**, light: `--app #ffffff` (frame) → `--surface #f5f5f7` (body) →
   `--background #ffffff` (cards) → `--muted #ececef` → borders `#e6e6e9/#d7d7db`.
-  Text: `--foreground #18181b`, `--muted-foreground #71717a`, `--faint #a1a1aa`.
+  Text: `--foreground #18181b`, `--muted-foreground #65656c`, `--faint #6a6a72`.
+  Both secondary inks clear WCAG AA (4.5:1) against the SURFACE, not just against white —
+  the axe gate in the console smoke is what says so, and it is what corrected the original
+  pair (4.44 and 2.56) on 2026-07-27.
 - **Accent = near-black**: `--primary #18181b` on light, `#fafafa` on dark — actions,
   active states, CTA. Swap `--primary` to re-skin; NOTHING else changes.
 - **Semantic status ramp is deliberately separate from the accent**: success/warning/
