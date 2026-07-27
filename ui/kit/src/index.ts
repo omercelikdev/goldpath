@@ -6,4 +6,5 @@ export { RunProgress, itemsPerSecond, deadlineVerdict, type RunProgressProps, ty
 export { AuditBlock, isClassified, SYSTEM_ACTOR, type AuditBlockProps, type AuditEntry } from "./components/AuditBlock";
 export { AppShell, type AppShellProps, type ShellNavItem, type ShellService } from "./components/AppShell";
 export { statusTone, KNOWN_STATES, type StatusTone } from "./status";
+export { humanizeSeconds } from "./duration";
 export { executeVerb, type GoldpathAdminResult, type VerbOutcome } from "./adminResult";

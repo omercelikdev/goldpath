@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banner, KeysetTable, StateBadge } from "@goldpath/kit";
+import { Banner, humanizeSeconds, KeysetTable, StateBadge } from "@goldpath/kit";
 import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
 
 export interface NotificationPanelProps {
@@ -17,13 +17,6 @@ const LENSES = [
 ] as const;
 
 type Lens = (typeof LENSES)[number]["key"];
-
-function ageWords(seconds: number): string {
-  if (seconds < 90) return `${Math.round(seconds)}s`;
-  if (seconds < 5400) return `${Math.round(seconds / 60)}m`;
-  if (seconds < 172_800) return `${Math.round(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86_400)}d`;
-}
 
 /**
  * .NET serializes a TimeSpan as `d.hh:mm:ss` — shown as-is would read like a timestamp,
@@ -93,7 +86,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
       {waiting.length > 0 && (
         <Banner tone="info" live="status">
           {waiting
-            .map((entry) => `${entry.key}: oldest request waiting ${ageWords(entry.oldestRequestedSeconds ?? 0)}`)
+            .map((entry) => `${entry.key}: oldest request waiting ${humanizeSeconds(entry.oldestRequestedSeconds ?? 0)}`)
             .join(" · ")}
         </Banner>
       )}

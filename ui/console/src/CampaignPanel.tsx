@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banner, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, humanizeSeconds, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type {
   AdminClient,
@@ -24,13 +24,6 @@ const STATES = ["Created", "Enumerating", "Running", "Paused", "Completed", "Com
 
 /** Only a live campaign can be paused, resumed or aborted; the rest already ended. */
 const LIVE = new Set(["Created", "Enumerating", "Running"]);
-
-function etaWords(seconds: number): string {
-  if (seconds < 90) return `${Math.round(seconds)}s`;
-  if (seconds < 5400) return `${Math.round(seconds / 60)}m`;
-  if (seconds < 172_800) return `${Math.round(seconds / 3600)}h`;
-  return `${Math.round(seconds / 86_400)}d`;
-}
 
 /** The throttle form's raw text; empty means "leave this as it is" (the patch's null). */
 interface ThrottleDraft {
@@ -307,7 +300,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                 {selected.remaining}
                 {selected.etaSecondsAtCurrentTps != null && (
                   // Honest label: this is the arithmetic at the CURRENT rate, not a promise.
-                  <span className="text-faint"> · ~{etaWords(selected.etaSecondsAtCurrentTps)} at {selected.tps} tps</span>
+                  <span className="text-faint"> · ~{humanizeSeconds(selected.etaSecondsAtCurrentTps)} at {selected.tps} tps</span>
                 )}
               </dd>
             </div>

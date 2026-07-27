@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Banner, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, humanizeSeconds, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type { AdminClient, BulkBatchInfo, BulkDefinitionStatus, BulkRowError } from "./adminClient";
 
@@ -27,12 +27,6 @@ const STATES = [
 
 /** The gate only opens on a validated batch; everywhere else the decision is already made. */
 const GATED = "Validated";
-
-function ageWords(seconds: number): string {
-  if (seconds < 90) return `${Math.round(seconds)}s`;
-  if (seconds < 5400) return `${Math.round(seconds / 60)}m`;
-  return `${Math.round(seconds / 3600)}h`;
-}
 
 /**
  * The bulk intake panel (console RFC §3): upload → validation report → the four-eyes gate.
@@ -152,7 +146,7 @@ export function BulkPanel({ client }: BulkPanelProps) {
           {waiting
             .map((definition) => {
               const age = definition.oldestAwaitingApprovalSeconds;
-              return `${definition.name}: ${definition.awaitingApproval} awaiting approval${age ? ` (oldest ${ageWords(age)})` : ""}`;
+              return `${definition.name}: ${definition.awaitingApproval} awaiting approval${age ? ` (oldest ${humanizeSeconds(age)})` : ""}`;
             })
             .join(" · ")}
         </Banner>
