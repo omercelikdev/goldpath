@@ -53,5 +53,10 @@ var app = builder.Build();
 
 app.MapGoldpathDefaultEndpoints();
 app.MapGoldpathJobsAdmin<ReportsDbContext>(exposeUnsecured: true);   // internal fleet console — keep it behind the cluster boundary (H2 opt-out, visible)
+// The console over that same internal surface, with the SAME visible opt-out: this head
+// has no auth floor of its own, so the cluster boundary is what protects both. The API's
+// console (Program.cs there) is the shape to copy for anything an operator reaches from
+// outside — it is guarded, and answers 401 without a principal.
+app.MapGoldpathConsole(exposeUnsecured: true);
 
 app.Run();

@@ -11,6 +11,7 @@
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <PackageReference Include="Goldpath.Jobs" />
+    <PackageReference Include="Goldpath.Console" />
     <PackageReference Include="Goldpath.Analyzers" PrivateAssets="all" />
   </ItemGroup>
 

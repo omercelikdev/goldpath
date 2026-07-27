@@ -121,6 +121,10 @@ app.MapMediantEndpoints(typeof(Program).Assembly);
 app.MapGoldpathJobsAdmin<OrdersDbContext>();        // run console API: trigger/pause/reschedule/audit — ops policy REQUIRED (H2)
 app.MapGoldpathArchivalAdmin<OrdersDbContext>();    // lifecycle verbs: retrieve/hold/erase/verify — ops policy REQUIRED (H2)
 app.MapGoldpathBulkAdmin<OrdersDbContext>();        // intake verbs: upload/report/approve/reject — ops policy REQUIRED (H2)
+// The console the ops team actually opens — served by THIS head, from the package's
+// embedded assets, behind the same ops floor as the surfaces above. No Node anywhere in
+// CorPay: `MapGoldpathConsole` is the whole integration.
+app.MapGoldpathConsole();
 
 // Skip schema work under the build-time OpenAPI generator (no database there).
 var isDocGen = System.Reflection.Assembly.GetEntryAssembly()?.GetName().Name == "GetDocument.Insider";
