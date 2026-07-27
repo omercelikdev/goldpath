@@ -359,4 +359,29 @@ test.describe("the run console against a real Goldpath app", () => {
     // thing it must never do here is imply the trigger landed.
     await expect(page.getByText(/did not reach the server/)).toBeVisible();
   });
+
+  test("one console, three services: the registry switches between them and re-discovers each", async ({ page }) => {
+    // No ?base= — the console reads the registry the smoke wrote, exactly as an adopter's
+    // console reads theirs.
+    await page.goto("/");
+
+    const picker = page.getByLabel(/service/i);
+    await expect(picker).toHaveValue("open");
+    await expect(page.getByTestId("run-console")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
+
+    // The auth-floored app composes the same modules but refuses this operator: the
+    // sections stay NAMED and the reason is the server's.
+    await picker.selectOption("auth-floored");
+    await expect(page.getByRole("alert")).toContainText("lacks the ops role");
+    await expect(page.getByTestId("run-console")).toHaveCount(0);
+
+    // And the tenant-scoped app refuses differently — a call it cannot scope.
+    await picker.selectOption("tenant-scoped");
+    await expect(page.getByRole("alert")).toContainText("composed here but refused this request");
+
+    // Back to the open app: its panels come back, freshly discovered.
+    await picker.selectOption("open");
+    await expect(page.getByTestId("run-console")).toBeVisible();
+  });
 });

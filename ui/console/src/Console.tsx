@@ -14,6 +14,10 @@ export interface ConsoleProps {
   title?: string;
   fetcher?: typeof fetch;
   now?: Date;
+  /** The registry's other services — omitted entirely when there is only one. */
+  services?: string[];
+  activeService?: string;
+  onSelectService?: (name: string) => void;
 }
 
 type Capabilities = Record<ModuleName, Capability>;
@@ -33,7 +37,15 @@ const SECTION_LABEL: Record<ModuleName, string> = {
  * role, or no tenant to scope the call to — says exactly that, in the server's words:
  * "absent" is reserved for a module the app genuinely does not compose.
  */
-export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: ConsoleProps) {
+export function Console({
+  baseUrl,
+  title = "Goldpath console",
+  fetcher,
+  now,
+  services,
+  activeService,
+  onSelectService,
+}: ConsoleProps) {
   const client = useMemo(() => new AdminClient({ baseUrl, fetcher }), [baseUrl, fetcher]);
   const [capabilities, setCapabilities] = useState<Capabilities | null>(null);
   const [section, setSection] = useState<ModuleName>("jobs");
@@ -65,6 +77,8 @@ export function Console({ baseUrl, title = "Goldpath console", fetcher, now }: C
       title={title}
       nav={nav}
       activeId={section}
+      services={services?.map((name) => ({ name, onSelect: () => onSelectService?.(name) }))}
+      activeService={activeService}
       collapsed={collapsed}
       onToggleCollapsed={() => setCollapsed(!collapsed)}
     >
