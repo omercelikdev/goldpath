@@ -175,6 +175,8 @@ describe("the verb button (ui-standard-v1 §3/§4 — confirm-before-verb, verba
 
     expect(screen.queryByRole("alertdialog")).toBeNull();
     expect(fired).toBe(0);
+    // Focus goes back where the operator was — not to <body>, at the top of the page.
+    await waitFor(() => expect(screen.getByRole("button", { name: "erase" })).toHaveFocus());
 
     // Re-opening starts clean: a half-typed subject must not ride along on the next try.
     await userEvent.click(screen.getByRole("button", { name: "erase" }));

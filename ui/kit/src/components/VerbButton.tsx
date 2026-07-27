@@ -43,13 +43,19 @@ type Phase =
 export function VerbButton({ label, confirm, execute, onDone, destructive = false, note, quiet = false }: VerbButtonProps) {
   const [phase, setPhase] = useState<Phase>({ at: "rest" });
   const dialog = useRef<HTMLSpanElement>(null);
+  const trigger = useRef<HTMLButtonElement>(null);
   const [reason, setReason] = useState("");
   const missingReason = note?.required === true && reason.trim().length === 0;
 
-  /** Leaving the confirm without firing — the same exit whichever way the operator took. */
+  /**
+   * Leaving the confirm without firing — the same exit whichever way the operator took.
+   * Focus goes BACK to the button that opened it: the dialog is about to unmount, and a
+   * keyboard operator whose focus falls to <body> has lost their place on the page.
+   */
   const cancel = () => {
     setPhase({ at: "rest" });
     setReason("");
+    requestAnimationFrame(() => trigger.current?.focus());
   };
 
   // Focus moves to the dialog ONCE, when it opens: re-focusing on every render would
@@ -119,6 +125,7 @@ export function VerbButton({ label, confirm, execute, onDone, destructive = fals
   return (
     <span className="inline-flex items-center gap-2">
       <button
+        ref={trigger}
         className={`rounded-md border px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${destructive ? "border-danger-border text-danger hover:bg-danger-bg" : "border-border bg-background hover:bg-accent"}`}
         disabled={phase.at === "executing"}
         onClick={() => setPhase({ at: "confirming" })}

@@ -38,11 +38,14 @@ test.describe("the console is operable without a mouse or a perfect screen", () 
     });
   }
 
-  test("a confirm dialog traps nothing and is reachable by keyboard alone", async ({ page }) => {
+  test("a confirm dialog is opened, dismissed and handed back by keyboard alone", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
     await expect(page.getByTestId("run-console")).toBeVisible();
 
-    await page.locator("li", { hasText: "SmokeJob" }).getByRole("button", { name: "trigger" }).first().click();
+    // Opened from the KEYBOARD — the mouse is not assumed anywhere in this journey.
+    const trigger = page.locator("li", { hasText: "SmokeJob" }).getByRole("button", { name: "trigger" }).first();
+    await trigger.focus();
+    await page.keyboard.press("Enter");
     const dialog = page.getByRole("alertdialog");
     await expect(dialog).toBeVisible();
 
@@ -50,8 +53,12 @@ test.describe("the console is operable without a mouse or a perfect screen", () 
     expect(await violations(page)).toEqual([]);
 
     // And it must be dismissible from the keyboard: an operator who opened it by mistake
-    // should not have to hunt for the mouse.
+    // should not have to hunt for the mouse. (The dialog is inline, not a modal overlay,
+    // so there is no focus TRAP to assert — the page behind it stays reachable by design.)
     await page.keyboard.press("Escape");
     await expect(dialog).toHaveCount(0);
+
+    // And focus lands back on the button that opened it: the operator keeps their place.
+    await expect(trigger).toBeFocused();
   });
 });
