@@ -36,4 +36,32 @@ if broken:
         print(f"  {b}")
     sys.exit(1)
 print("── docs freshness: all relative links resolve")
+
+# RETIRED NAMES. A tool we no longer use may not quietly reappear in the docs, the
+# schema or the templates: the strategy documents carried "WireMock" for four months
+# after Mockifyr had overtaken it on every axis we care about, and every reader of
+# foundation.md was told to reach for it. Removing a name once is a cleanup; keeping it
+# gone is a gate. Add a name here the day a decision retires it.
+retired = {
+    "wiremock": "Mockifyr is the mock system (foundation.md 5.1, decided 2026-07-28)",
+}
+exts = {".md", ".json", ".yaml", ".yml", ".cs", ".ts", ".tsx", ".sh", ".props", ".csproj"}
+skip = {"node_modules", "bin", "obj", "dist", ".pnpm", ".git", ".next"}
+offences = []
+for base, dirs, names in os.walk(root):
+    dirs[:] = [d for d in dirs if d not in skip]
+    for name in names:
+        path = os.path.join(base, name)
+        if os.path.splitext(name)[1] not in exts or os.path.samefile(path, os.path.join(root, "scripts/docs-freshness.sh")):
+            continue
+        text = open(path, encoding="utf-8", errors="replace").read().lower()
+        for word, why in retired.items():
+            if word in text:
+                offences.append(f"{os.path.relpath(path, root)}: '{word}' is retired — {why}")
+if offences:
+    print("── retired names: a name we stopped using is back:")
+    for o in offences:
+        print(f"  {o}")
+    sys.exit(1)
+print("── retired names: none of the retired tools are mentioned")
 PY

@@ -5,6 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Fixed
+- **`Goldpath.Console`: an app that configures no service no longer warns its operator
+  about a missing one.** `console.config.json` answered `{"services":[]}` for an
+  unconfigured registry; the console reads an empty registry as a BROKEN one, so every
+  single-app adopter — the common case — met “the service registry lists no service with a
+  name” on their first screen. The endpoint now answers **404** (no registry), which the
+  console has always read as “this service only”, silently. No configuration changes.
+- **A paused job looked exactly like a running one.** The console read `job.paused` and
+  `job.nextFireTime`, which `GoldpathJobInfo` has never carried. Both are now derived from
+  the job's triggers, where the truth lives.
+
 ### Added
 - **The scheduling surface (`Goldpath.Jobs`, admin contract revision R2).** The console
   could drive what the modules DO but only half of what a fleet IS. Now on the contract:
@@ -21,18 +32,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 - **`GoldpathJobRun.TriggeredBy`** — `Scheduled`, `Manual`, `Rerun` or `Replay`. An
   unstamped fire is `Scheduled` by definition, so the column never invents an operator who
   was not there.
-
 - **The console's scheduling surface (U5).** The Runs section opens into four: the fleet
   (state, cluster members, and the durable `pause-all`), its jobs with the triggers that
   decide when they run (add, remove, reschedule, and a read-only job data map), its
   calendars, and a run history filterable by state and date over a keyset walk. Reaching
   `pause-all` from a screen is new — it is the verb an operator wants at 03:00 and the
   console could not send it before.
-
-### Fixed
-- **A paused job looked exactly like a running one.** The console read `job.paused` and
-  `job.nextFireTime`, which `GoldpathJobInfo` has never carried. Both are now derived from
-  the job's triggers, where the truth lives.
 
 ### Migration required
 One nullable column (`TriggeredBy` on the runs table). Generate it with

@@ -7,13 +7,22 @@ Attacked as a hostile caller through the public handler seams only; no `src/` so
 - `tests/CorPay.Api.Tests/BreakerFourEyesStateMachineTests.cs`
 - `tests/CorPay.Api.Tests/BreakerSubmitAndPagingTests.cs`
 
-## Suite status after this run: RED
+## Suite status after this run: RED — **resolved the same day, see below**
 
 `Failed: 1, Passed: 51, Skipped: 0, Total: 52` (full `tests/CorPay.Api.Tests` run).
-The single red is the breaker finding below and is left FAILING on purpose (breaker does
-not fix product code or `Skip` — the orchestrator decides).
+The single red is the breaker finding below and was left FAILING on purpose by the breaker
+(it does not fix product code or `Skip` — the orchestrator decides).
 
-## Failure found (1) — genuine gap, left failing
+> **RESOLUTION (same commit, `a68d391`, 2026-07-23).** The orchestrator took the finding:
+> `SubmitPaymentInstruction.Validate` now rejects any amount with more than two decimal
+> places, because every whitelisted currency settles in two minor units.
+> `Breaker_subcent_amount_scale_probe` has been GREEN since. This note was added 2026-07-28
+> after a review agent read the document, found it still declaring the suite red, and
+> flagged the live ledger for contradicting it — the ledger was right and this record was
+> four days stale. A verdict is a record of a run; when the run's finding is closed, the
+> record says so rather than leaving a fixed defect looking open.
+
+## Failure found (1) — genuine gap, FIXED (see the resolution above)
 
 ### `Breaker_subcent_amount_scale_probe` — submit accepts sub-minor-unit amounts (G1)
 `SubmitPaymentInstructionHandler.Validate` enforces amount **positivity**
