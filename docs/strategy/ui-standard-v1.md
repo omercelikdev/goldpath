@@ -72,3 +72,50 @@ Inherited from Mockifyr's proven set, extended with Goldpath-specific composites
 No custom DSL over the CSS layer (Tailwind per the console RFC's D1), no per-screen color invention, no accent-colored status,
 no webfonts, no page-owned scrolling. A screen that needs a token that does not exist
 is a design conversation, not a hex code in a component.
+
+
+## 7. v1.1 — the family alignment (owner feedback batch, 2026-07-29; drives console U7)
+
+The owner reviewed the live console against the Mockifyr dashboard side by side and set
+one rule above the items: **everything below becomes a STANDARD** — defined once in the
+kit, swept everywhere, no screen updated alone. Extracted from the running Mockifyr
+dashboard and its source (not from memory):
+
+1. **Icons: lucide-react**, the family's one set. Sparse by design — nav items, stat
+   cards, empty states; never decoration on prose. (Mockifyr already ships it.)
+2. **Sidebar**: brand head (mark + product word + subtitle) · **⌘K search** ·
+   **GROUPED nav with small-caps group labels** — the console groups by concern:
+   `OVERVIEW` (Today) · `EXECUTION` (Runs) · `INTAKE` (Bulk) · `OUTBOUND`
+   (Campaigns, Notifications) · `COMPLIANCE` (Archival) — future modules land in a
+   group instead of growing a flat list. Active item = soft fill + **2px left border**
+   in the accent. Footer: tenant/service switcher card + preferences row.
+3. **Collapse**: icons REMAIN when collapsed (icon-only rail, centered, tooltips),
+   state persists (localStorage), and the toggle is a proper icon button — all three
+   exactly as the reference behaves.
+4. **Tables**: one kit Table pattern — header tone, zebra-less rows with hover, row
+   click opens a **right-side Sheet** (drawer) titled with the entity and its
+   one-line description; the inline-below detail pattern retires everywhere.
+5. **Filters**: selects give way to **search-box + facet-filter** (multi-select chips
+   with counts) on every take-bounded list; date windows keep native inputs styled by
+   the kit.
+6. **Tabs are pills** (`bg-muted` rail, `rounded` triggers) — the underline strip
+   retires.
+7. **Stat cards** on Today and section overviews: icon + label + number (+ small
+   trend where the API already carries the numbers — the console still invents no
+   aggregate).
+8. **Page headers**: every screen opens with title + one-line purpose sentence
+   (Mockifyr's "Here's what's happening…" pattern); banner-ish summary strips become
+   header cards.
+9. **Cross-screen context**: rows that reference another screen's entity LINK to it
+   (a run's job name → Jobs; a triage row already deep-links — that becomes the norm),
+   so the relationships read on the screen instead of in the docs.
+10. **Search**: global ⌘K over nav + entity ids; per-table search only where a list
+    is take-bounded (it narrows SERVER-side via the existing filters, never a loaded
+    page).
+11. **Family conformance**: tokens/type/radii re-checked against the reference each
+    U7 batch; divergence is a defect. Extraction of the family into a shared package
+    (the `@qorpe/ui` question) is DEFERRED with a written trigger: the third consumer.
+    Two consumers copy; three justify a package.
+
+Verification unchanged in kind: axe + console smoke green through every batch, and the
+row-click/Sheet change updates the smoke's locators in the same PR.
