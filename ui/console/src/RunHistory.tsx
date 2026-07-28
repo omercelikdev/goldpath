@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { KeysetTable, RunProgress, StateBadge, VerbButton } from "@goldpath/kit";
+import { KeysetTable, RunProgress, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
 import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
 import { asOutcome } from "./verbs";
 
@@ -76,7 +76,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
           <label htmlFor="run-state">State</label>
           <select
             id="run-state"
-            className="rounded border border-border px-2 py-1"
+            className="control"
             value={status}
             onChange={(event) => setStatus(event.target.value)}
           >
@@ -88,15 +88,15 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
         </span>
         <label className="flex flex-col gap-1">
           From
-          <input type="date" className="rounded border border-border px-2 py-1" value={from} onChange={(event) => setFrom(event.target.value)} />
+          <input type="date" className="control" value={from} onChange={(event) => setFrom(event.target.value)} />
         </label>
         <label className="flex flex-col gap-1">
           To
-          <input type="date" className="rounded border border-border px-2 py-1" value={to} onChange={(event) => setTo(event.target.value)} />
+          <input type="date" className="control" value={to} onChange={(event) => setTo(event.target.value)} />
         </label>
         {(status || from || to) && (
           <button
-            className="underline underline-offset-2"
+            className="link-action"
             onClick={() => {
               setStatus("");
               setFrom("");
@@ -124,12 +124,18 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
           // Who put this run on the schedule, and which node ran it: the two questions a
           // run list is asked the morning after (contract R2.3).
           { header: "Started by", cell: (run) => (
-            <span className="text-xs">
+            <span className="flex items-baseline gap-1 text-xs">
               {run.triggeredBy ?? "not recorded"}
-              {run.startedBy && <span className="text-faint"> · {run.startedBy}</span>}
+              {run.startedBy && (
+                // The instance name is an identity, not prose: it truncates rather than
+                // wrapping the row, and the full name stays a hover away.
+                <span className="inline-block max-w-[14ch] truncate align-bottom text-faint" title={run.startedBy}>
+                  {run.startedBy}
+                </span>
+              )}
             </span>
           ) },
-          { header: "Started", cell: (run) => <span className="text-xs">{run.startedAt}</span> },
+          { header: "Started", cell: (run) => <time className="text-xs" title={run.startedAt}>{shortStamp(run.startedAt)}</time> },
           { header: "Chunks", align: "right", cell: (run) => `${run.completedChunks}/${run.totalChunks}` },
         ]}
         loadPage={loadRuns}
@@ -140,7 +146,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
       {problem && <p className="text-sm text-danger">{problem}</p>}
 
       {selectedRun && (
-        <section data-testid="run-detail" className="rounded-lg border border-border p-4">
+        <section data-testid="run-detail" className="card">
           <div className="mb-3 flex items-center justify-between">
             <h3 className="text-sm font-medium">Run {selectedRun.run.id} · {selectedRun.run.jobName}</h3>
             <span className="flex gap-2">
@@ -165,16 +171,16 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
 
           <RunProgress run={selectedRun.run} now={now} />
 
-          <h4 className="mb-1 mt-4 text-xs text-muted-foreground">Chunks by status</h4>
+          <h4 className="control-label mb-1 mt-4 block">Chunks by status</h4>
           <div className="flex flex-wrap gap-1">
             {Object.entries(selectedRun.chunksByStatus).map(([state, count]) => (
-              <span key={state} className="rounded border border-border px-1.5 py-0.5 text-[11px]">
+              <span key={state} className="chip">
                 {state}: {count}
               </span>
             ))}
           </div>
 
-          <h4 className="mb-1 mt-4 text-xs text-muted-foreground">
+          <h4 className="control-label mb-1 mt-4 block">
             Repair queue{selectedRun.openFailures.length === 0 ? " — empty" : ` (${selectedRun.openFailures.length} shown)`}
           </h4>
           <ul className="space-y-1">

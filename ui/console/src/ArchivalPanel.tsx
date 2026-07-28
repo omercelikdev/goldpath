@@ -122,10 +122,10 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
       {error && <Banner tone="danger">{error}</Banner>}
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Archives</h2>
+        <h2 className="section-title">Archives</h2>
         <ul className="space-y-2">
           {(definitions ?? []).map((archive) => (
-            <li key={archive.name} className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 px-3 py-2">
+            <li key={archive.name} className="row-card flex flex-wrap items-center gap-3">
               <span className="text-sm font-medium">{archive.name}</span>
               <span className="text-xs text-faint">{archive.entries} entries</span>
               <span className={`text-xs ${archive.dueBacklog > 0 ? "text-warning" : "text-faint"}`}>
@@ -181,13 +181,13 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
       )}
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Retrieve</h2>
+        <h2 className="section-title">Retrieve</h2>
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Archive
             <select
               aria-label="archive"
-              className="rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
+              className="control"
               value={definition}
               onChange={(event) => {
                 setDefinition(event.target.value);
@@ -206,14 +206,14 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
             Aggregate key
             <input
               aria-label="aggregate key"
-              className="w-64 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
+              className="control w-64"
               value={key}
               onChange={(event) => setKey(event.target.value)}
               onKeyDown={(event) => event.key === "Enter" && lookUp()}
             />
           </label>
           <button
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent"
+            className="btn-quiet"
             onClick={lookUp}
           >
             retrieve
@@ -232,7 +232,7 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
       )}
 
       {entry && (
-        <section data-testid="archive-entry" className="rounded-lg border border-border p-4">
+        <section data-testid="archive-entry" className="card">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <h2 className="text-sm font-medium">
               {entry.definition} · <span className="font-mono">{entry.aggregateKey}</span>
@@ -318,7 +318,7 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
 
           <div className="mt-4">
             <button
-              className="rounded-md border border-border bg-background px-3 py-1 text-xs hover:bg-accent"
+              className="btn-quiet"
               onClick={() => setRevealDocument((shown) => !shown)}
             >
               {revealDocument ? "hide document" : "reveal document"}
@@ -367,7 +367,7 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Erasures</h2>
+        <h2 className="section-title">Erasures</h2>
         <KeysetTable<ErasureRecord>
           key={`erasures-${refreshToken}`}
           columns={[

@@ -3,6 +3,15 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [Unreleased]
+
+### Changed
+- **The console's styling pass (U6).** One component vocabulary in the kit's single token
+  file — cards, row cards, controls, chips — swept across every panel; timestamps quiet to
+  wall-clock seconds (full value on hover), long instance names truncate instead of
+  wrapping the row. No behavioral change; the axe gate and the 30-test console smoke ran
+  green through the sweep. Ships inside `Goldpath.Console` with the next train.
+
 ## [0.1.0-preview.5] - 2026-07-28
 
 The scheduling train. The admin contract's Revision R2 gives the console the other half

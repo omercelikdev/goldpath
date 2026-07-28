@@ -105,7 +105,7 @@ export function VerbButton({ label, confirm, execute, onDone, destructive = fals
             placeholder={note.label}
             value={reason}
             onChange={(event) => setReason(event.target.value)}
-            className="w-56 rounded-md border border-border bg-background px-2 py-0.5 text-xs"
+            className="control w-56 h-6 text-xs"
           />
         )}
         <button
@@ -115,7 +115,7 @@ export function VerbButton({ label, confirm, execute, onDone, destructive = fals
         >
           {label}
         </button>
-        <button className="rounded-md border border-border px-2 py-0.5 text-xs hover:bg-accent" onClick={cancel}>
+        <button className="btn-quiet px-2 py-0.5 text-xs" onClick={cancel}>
           cancel
         </button>
       </span>

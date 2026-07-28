@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
 import type { AdminAuditRow, AdminClient, FleetStatus } from "./adminClient";
 import { asOutcome } from "./verbs";
 
@@ -48,7 +48,7 @@ export function FleetOverview({ client, fleet, refreshToken, onChanged }: FleetO
       {problem && <Banner tone="danger">{problem}</Banner>}
 
       {status && (
-        <section className="rounded-lg border border-border p-4">
+        <section className="card">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <h3 className="text-sm font-medium">{status.schedulerName}</h3>
             <StateBadge state={status.isPaused ? "Suppressed" : "Running"} />
@@ -91,18 +91,18 @@ export function FleetOverview({ client, fleet, refreshToken, onChanged }: FleetO
                 operator their fleet was holding fires when it was not.
               */}
               <dt className="text-xs text-muted-foreground">This console is connected through</dt>
-              <dd className="font-mono text-xs">{status.connection.instanceId}</dd>
+              <dd className="max-w-full truncate font-mono text-xs" title={status.connection.instanceId}>{status.connection.instanceId}</dd>
             </div>
           </dl>
 
-          <h4 className="mb-1 mt-4 text-xs text-muted-foreground">
+          <h4 className="control-label mb-1 mt-4 block">
             Cluster {status.nodes.length === 0 ? "— no member has checked in" : `(${status.nodes.length})`}
           </h4>
           <ul className="space-y-1">
             {status.nodes.map((node) => (
               <li key={node.instanceName} className="flex flex-wrap items-baseline gap-3 text-xs">
-                <span className="font-mono">{node.instanceName}</span>
-                <span className="text-faint">last check-in {node.lastCheckin}</span>
+                <span className="inline-block max-w-[28ch] truncate font-mono align-bottom" title={node.instanceName}>{node.instanceName}</span>
+                <span className="text-faint" title={node.lastCheckin}>last check-in {shortStamp(node.lastCheckin)}</span>
                 <span className="text-faint">every {node.checkinInterval}</span>
               </li>
             ))}
@@ -111,7 +111,7 @@ export function FleetOverview({ client, fleet, refreshToken, onChanged }: FleetO
       )}
 
       <section>
-        <h3 className="mb-2 text-sm font-medium text-muted-foreground">Recent admin crossings</h3>
+        <h3 className="section-title">Recent admin crossings</h3>
         {/*
           Rendered in the audit's OWN shape rather than through the kit's AuditBlock: that
           component models entity CHANGES (entity type, property, old value, new value),
@@ -126,9 +126,9 @@ export function FleetOverview({ client, fleet, refreshToken, onChanged }: FleetO
           <ul className="space-y-1">
             {audit.map((row) => (
               <li key={row.id} className="flex flex-wrap items-baseline gap-2 text-xs">
-                <span className="text-faint">{row.at}</span>
+                <time className="text-faint" title={row.at}>{shortStamp(row.at)}</time>
                 <span className="font-medium">{row.actor}</span>
-                <span className="rounded border border-border px-1 py-0.5">{row.action}</span>
+                <span className="chip">{row.action}</span>
                 <span className="font-mono">{row.fleet}/{row.target}</span>
                 {row.detail && <span className="text-faint">{row.detail}</span>}
               </li>

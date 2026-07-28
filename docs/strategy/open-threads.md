@@ -12,7 +12,6 @@ pending forever.
 | # | Thread | Why it waits | Trigger — when it comes up | What must be PROVEN then |
 |---|---|---|---|---|
 | T1 | The console driven against **CorPay** (the real sample) | The README pictures are done and honest — captured by `scripts/console-screenshots.sh` from a real app driving real modules — so what is left is narrower: CorPay is the ADOPTER-shaped proof, and its own workers cannot reach ready yet (T12) | T12 closes | `scripts/console-smoke.sh` (or its CorPay twin) drives CorPay's own admin surface end to end, including the console its internal head serves |
-| T2 | **The UI styling pass** (U6) — one sweep over spacing, density, filter layout and the panel rhythm | Cosmetics before the flows are settled means doing them twice; the owner's call is to change them TOGETHER, once the flows are done | after U5 (all flows complete, scheduling included) | the axe gate stays green (contrast is part of the style), the console smoke stays green (no locator is a style accident), and the tokens change in `ui-standard-v1` — one place, not per panel |
 | T3 | **Mutation testing for the TypeScript side** | .NET has Stryker; the UI has none. Today's answer is the coverage floor (kit 95/90, console 97/85) plus an adversarial e2e that drives real services | a UI regression that BOTH the coverage floor and the console smoke miss | whatever we adopt must catch that specific regression, replayed |
 | T4 | The **review agent as a CI step** (it is a manual script today) | It needs an agent-in-CI story; the same one the LLM-half evals wait on | agent-in-CI exists | the agent's findings gate a PR the way the hooks gate a turn |
 | T5 | **LLM-half skill evals** — running the skills themselves per fixture | Deterministic acceptance runs nightly; running the skills needs agent-in-CI | agent-in-CI exists | a skill that fails its evals cannot be released ([ai-sdlc-status.md](ai-sdlc-status.md) §2) |
@@ -36,6 +35,10 @@ Kept short on purpose — the point of the list is what is still open.
   fixed a deadline verdict that called an overrunning run "on track".
 - **Accessibility** — closed 2026-07-27 by the axe gate; found and fixed the secondary
   text's contrast and a confirm dialog Escape could not close.
+- **T2 — the UI styling pass (U6)** — closed 2026-07-28. One component vocabulary in the
+  kit's token file, every panel swept onto it, density fixes (quiet stamps, truncated
+  identities) — with axe and the console smoke green through the whole sweep, which is
+  the only proof cosmetics can offer.
 - **T13 — the frozen jobs verbs with no screen** — closed 2026-07-28 by U5.
   `pause-all`/`resume-all`, `reschedule`, the calendar CRUD and the admin audit are all
   driven from the console now, and the console smoke exercises each against a real fleet.
