@@ -11,7 +11,7 @@ pending forever.
 
 | # | Thread | Why it waits | Trigger — when it comes up | What must be PROVEN then |
 |---|---|---|---|---|
-| T1 | The console driven against **CorPay** (the real sample) | The README pictures are done and honest — captured by `scripts/console-screenshots.sh` from a real app driving real modules — so what is left is narrower: CorPay is the ADOPTER-shaped proof, and its own workers cannot reach ready yet (T12) | T12 closes | `scripts/console-smoke.sh` (or its CorPay twin) drives CorPay's own admin surface end to end, including the console its internal head serves |
+| T1 | The console driven against **CorPay** (the real sample), and CorPay screenshots in the README | The gate drives a purpose-built host that composes all five modules; CorPay is the adopter-shaped proof, and it needs U4's cross-service registry to be worth wiring | U4 | `scripts/console-smoke.sh` (or its CorPay twin) drives CorPay's own admin surface end to end; the README screenshots come from that run, not from a mock |
 | T2 | **The UI styling pass** (U6) — one sweep over spacing, density, filter layout and the panel rhythm | Cosmetics before the flows are settled means doing them twice; the owner's call is to change them TOGETHER, once the flows are done | after U5 (all flows complete, scheduling included) | the axe gate stays green (contrast is part of the style), the console smoke stays green (no locator is a style accident), and the tokens change in `ui-standard-v1` — one place, not per panel |
 | T3 | **Mutation testing for the TypeScript side** | .NET has Stryker; the UI has none. Today's answer is the coverage floor (kit 95/90, console 97/85) plus an adversarial e2e that drives real services | a UI regression that BOTH the coverage floor and the console smoke miss | whatever we adopt must catch that specific regression, replayed |
 | T4 | The **review agent as a CI step** (it is a manual script today) | It needs an agent-in-CI story; the same one the LLM-half evals wait on | agent-in-CI exists | the agent's findings gate a PR the way the hooks gate a turn |
@@ -36,10 +36,9 @@ Kept short on purpose — the point of the list is what is still open.
   fixed a deadline verdict that called an overrunning run "on track".
 - **Accessibility** — closed 2026-07-27 by the axe gate; found and fixed the secondary
   text's contrast and a confirm dialog Escape could not close.
-- **The README's console pictures** — closed 2026-07-28 by
-  `scripts/console-screenshots.sh` (a real app, a real file, real jobs). Capturing them
-  found the defect no test could: the package served an unconfigured registry as an EMPTY
-  list, which the console reads as a BROKEN one, so every single-app adopter's first
-  screen carried a warning that a service they never configured had gone missing. Each
-  half had been tested alone; the seam between them had not. It is now — in the package's
-  own tests and against a running app in `served.spec.ts`.
+- **T13 — the frozen jobs verbs with no screen** — closed 2026-07-28 by U5.
+  `pause-all`/`resume-all`, `reschedule`, the calendar CRUD and the admin audit are all
+  driven from the console now, and the console smoke exercises each against a real fleet.
+  Opening them up also exposed the console reading `job.paused` and `job.nextFireTime` —
+  two fields the contract has NEVER sent, so a paused job had always looked exactly like a
+  running one. Both are derived from the job's triggers now.

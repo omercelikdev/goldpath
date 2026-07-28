@@ -29,12 +29,13 @@ test.describe("the run console against a real Goldpath app", () => {
     // The fleet appears because the executor exists (zero-config discovery).
     await expect(page.getByRole("button", { name: /console-smoke/ })).toBeVisible();
 
-    // Scope the verb to ITS job row: this fleet also carries the bulk validate/execute
+    await page.getByRole("tab", { name: "Jobs" }).click();
+    // Scope the verb to ITS job section: this fleet also carries the bulk validate/execute
     // jobs, so an unscoped "trigger" would be three buttons and one ambiguous click.
-    const smokeJob = page.locator("li", { hasText: "SmokeJob" });
+    const smokeJob = page.locator("section", { hasText: "SmokeJob" }).first();
     await smokeJob.getByRole("button", { name: "trigger" }).click();
     const dialog = page.getByRole("alertdialog");
-    await expect(dialog).toContainText("audited");
+    await expect(dialog).toContainText("recorded as started by hand");
     await dialog.getByRole("button", { name: "trigger" }).click();
     await expect(page.getByRole("status")).toBeVisible();
 
@@ -43,8 +44,12 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
       await page.getByRole("button", { name: "Runs" }).click();
+      await page.getByRole("tab", { name: "History" }).click();
       await expect(smokeRun).toContainText("Completed", { timeout: 5_000 });
     }).toPass({ timeout: 60_000 });
+
+    // The run says a HUMAN started it — the stamp the contract's R2.3 column carries.
+    await expect(smokeRun).toContainText("Manual");
 
     await smokeRun.getByRole("button").first().click();
     const detail = page.getByTestId("run-detail");
@@ -59,6 +64,125 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(replayDialog).toContainText("Replay all open repair items");
     await replayDialog.getByRole("button", { name: "replay-items" }).click();
     await expect(page.getByRole("status")).toBeVisible();
+  });
+
+  test("the scheduling surface: fleet state, the 03:00 verb, and a schedule an operator changes", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByRole("button", { name: "Runs" }).click();
+
+    // ── Overview: what the fleet IS (contract R2.1)
+    const overview = page.getByTestId("fleet-overview");
+    // True of the FLEET. The member that answers this call is the management head, which
+    // Quartz reports as in standby with an idle pool — reading that as the fleet's state
+    // told an operator their running fleet was holding fires (caught by this very smoke).
+    await expect(overview).toContainText("accepting fires");
+    await expect(overview).toContainText("This console is connected through");
+
+    // ── pause-all: the verb an operator reaches for at 03:00 and could not reach until U5
+    //
+    // It is also the most DANGEROUS verb to exercise in a shared smoke: it is durable and
+    // cluster-wide, so a failure between pausing and resuming leaves every later test
+    // waiting on jobs that will never fire. The finally is that safety net — it goes
+    // through the API rather than the UI precisely because it must run even when the UI
+    // assertions are what failed.
+    try {
+      await page.getByRole("button", { name: "pause every job" }).click();
+      const pauseDialog = page.getByRole("alertdialog");
+      await expect(pauseDialog).toContainText("cluster-wide and survives a restart");
+      await pauseDialog.getByRole("button", { name: "pause every job" }).click();
+      await expect(page.getByRole("status")).toBeVisible();
+
+      // The fleet itself now reads as stopped — from the STORE's paused trigger group,
+      // which is where pause-all wrote it.
+      await expect(overview).toContainText("nothing will fire until someone resumes it");
+
+      // And the same truth reaches the JOBS screen, which derives it from the TRIGGERS.
+      // Asserted on a scheduled job: SmokeJob is fired by hand and carries no trigger, so
+      // it is not paused by this — it is unscheduled, which the screen says differently
+      // and on purpose.
+      await page.getByRole("tab", { name: "Jobs" }).click();
+      await expect(page.getByRole("button", { name: "resume" }).first()).toBeVisible();
+
+      await page.getByRole("tab", { name: "Overview" }).click();
+      await page.getByRole("button", { name: "resume every job" }).click();
+      await page.getByRole("alertdialog").getByRole("button", { name: "resume every job" }).click();
+      await expect(page.getByRole("status")).toBeVisible();
+      await expect(overview).toContainText("accepting fires");
+    } finally {
+      await page.request.post(`${service}/goldpath/admin/jobs/fleets/console-smoke/resume-all`);
+    }
+
+    // ── a second schedule on a DECLARED job, then removed again (R2.5)
+    await page.getByRole("tab", { name: "Jobs" }).click();
+    const job = page.locator("section", { hasText: "SmokeJob" }).first();
+    await job.getByRole("button", { name: "SmokeJob" }).click();
+    await job.getByRole("button", { name: "add a trigger" }).click();
+    await job.getByLabel("Name").fill("month-end");
+    await job.getByLabel("Cron").fill("0 0 2 L * ?");
+    await job.getByRole("button", { name: "schedule it" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "schedule it" }).click();
+    await expect(page.getByRole("status")).toBeVisible();
+
+    await page.reload();
+    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByRole("tab", { name: "Jobs" }).click();
+    const reopened = page.locator("section", { hasText: "SmokeJob" }).first();
+    await reopened.getByRole("button", { name: "SmokeJob" }).click();
+    await expect(reopened).toContainText("month-end");
+    await expect(reopened).toContainText("0 0 2 L * ?");
+
+    await reopened.locator("li", { hasText: "month-end" }).getByRole("button", { name: "remove" }).click();
+    const removeDialog = page.getByRole("alertdialog");
+    await expect(removeDialog).toContainText("The JOB stays");
+    await removeDialog.getByRole("button", { name: "remove" }).click();
+    await expect(page.getByRole("status")).toBeVisible();
+
+    // ── a calendar, created and deleted through the frozen CRUD (T13)
+    await page.getByRole("tab", { name: "Calendars" }).click();
+    await page.getByRole("button", { name: "add a calendar" }).click();
+    await page.getByLabel("Name").fill("smoke-holidays");
+    await page.getByLabel(/Excluded dates/).fill("2026-01-01");
+    await page.getByRole("button", { name: "create it" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "create it" }).click();
+    await expect(page.getByRole("status")).toBeVisible();
+
+    await page.reload();
+    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByRole("tab", { name: "Calendars" }).click();
+    const calendar = page.locator("li", { hasText: "smoke-holidays" });
+    await expect(calendar).toBeVisible();
+    await calendar.getByRole("button", { name: "delete" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "delete" }).click();
+    await expect(page.getByRole("status")).toBeVisible();
+
+    // ── the history answers a QUESTION rather than being scrolled (R2.4)
+    await page.getByRole("tab", { name: "History" }).click();
+    await page.getByLabel("State").selectOption("Completed");
+    await expect(page.getByRole("row", { name: /Completed/ }).first()).toBeVisible();
+    await page.getByLabel("State").selectOption("Running");
+    // Either there is a running row or the screen says the filters emptied it — both are
+    // answers; a stale Completed row would not be.
+    await expect(page.getByTestId("run-history")).not.toContainText("Completed:");
+
+    // ── and every crossing above is on the audit, with the actor
+    await page.getByRole("tab", { name: "Overview" }).click();
+    const audit = page.getByTestId("fleet-overview");
+    await expect(audit).toContainText("pause-all");
+    await expect(audit).toContainText("add-trigger");
+    await expect(audit).toContainText("remove-trigger");
+  });
+
+  test("a job cannot be CREATED from the console — the constitution has no button", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByRole("tab", { name: "Jobs" }).click();
+    await expect(page.getByTestId("jobs-tab")).toBeVisible();
+
+    // ADR-0001: composition is the manifest's. The API has no route for this and the
+    // screen offers no affordance — asserted here so a future panel cannot quietly grow
+    // one against a server that would refuse it anyway.
+    await expect(page.getByRole("button", { name: /add a job|new job|create job/i })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: /delete job|remove job/i })).toHaveCount(0);
   });
 
   test("uploads a batch, reads the real validation report, and works the four-eyes gate", async ({ page }) => {
@@ -359,10 +483,16 @@ test.describe("the run console against a real Goldpath app", () => {
     await page.getByRole("button", { name: "Runs" }).click();
     await expect(page.getByTestId("run-console")).toBeVisible();
 
-    // The console discovered a healthy service; now the service stops answering.
+    // Reach the verb while the service is still healthy...
+    await page.getByRole("tab", { name: "Jobs" }).click();
+    const job = page.locator("section", { hasText: "SmokeJob" }).first();
+    await expect(job).toBeVisible();
+
+    // ...and only THEN let the service stop answering: the point is a verb that dies in
+    // flight, not a screen that never loaded.
     await page.route(`${service}/goldpath/admin/**`, (route) => route.abort("failed"));
 
-    await page.locator("li", { hasText: "SmokeJob" }).getByRole("button", { name: "trigger" }).first().click();
+    await job.getByRole("button", { name: "trigger" }).first().click();
     const dialog = page.getByRole("alertdialog");
     await dialog.getByRole("button", { name: "trigger" }).click();
 

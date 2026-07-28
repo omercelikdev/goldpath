@@ -12,12 +12,18 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   single-app adopter — the common case — met “the service registry lists no service with a
   name” on their first screen. The endpoint now answers **404** (no registry), which the
   console has always read as “this service only”, silently. No configuration changes.
+- **A paused job looked exactly like a running one.** The console read `job.paused` and
+  `job.nextFireTime`, which `GoldpathJobInfo` has never carried. Both are now derived from
+  the job's triggers, where the truth lives.
 
 ### Added
 - **The scheduling surface (`Goldpath.Jobs`, admin contract revision R2).** The console
   could drive what the modules DO but only half of what a fleet IS. Now on the contract:
-  `GET /fleets/{fleet}/status` (running since, thread pool, jobs executed, standby,
-  shutdown, cluster nodes); a trigger payload that carries what a cron string cannot
+  `GET /fleets/{fleet}/status` — the fleet as the STORE sees it (job count, cluster
+  members with their check-ins, and whether `pause-all` has stopped it), plus the instance
+  the caller is connected THROUGH, named separately because Quartz's metadata is
+  per-instance and a management head reports standby while the executors run; a trigger
+  payload that carries what a cron string cannot
   explain (type, timezone, misfire instruction, priority, start/end, and a simple
   trigger's interval, repeat count and times-triggered); runs filterable by `?status=`,
   `?from=`, `?to=` with keyset paging via `?afterId=`; `POST`/`DELETE` on
@@ -26,6 +32,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 - **`GoldpathJobRun.TriggeredBy`** — `Scheduled`, `Manual`, `Rerun` or `Replay`. An
   unstamped fire is `Scheduled` by definition, so the column never invents an operator who
   was not there.
+- **The console's scheduling surface (U5).** The Runs section opens into four: the fleet
+  (state, cluster members, and the durable `pause-all`), its jobs with the triggers that
+  decide when they run (add, remove, reschedule, and a read-only job data map), its
+  calendars, and a run history filterable by state and date over a keyset walk. Reaching
+  `pause-all` from a screen is new — it is the verb an operator wants at 03:00 and the
+  console could not send it before.
 
 ### Migration required
 One nullable column (`TriggeredBy` on the runs table). Generate it with

@@ -40,13 +40,39 @@ test.describe("the console is operable without a mouse or a perfect screen", () 
     });
   }
 
+  // Each SECTION of the scheduling surface is its own screen behind a tab; scanning only
+  // whichever one happens to be active would leave three unchecked.
+  for (const tab of ["Overview", "Jobs", "Calendars", "History"]) {
+    test(`the ${tab} section of Runs has no serious accessibility violation`, async ({ page }) => {
+      await page.goto(`/?base=${encodeURIComponent(service)}`);
+      await page.getByRole("button", { name: "Runs" }).click();
+      await page.getByRole("tab", { name: tab }).click();
+      await expect(page.getByRole("tabpanel")).toBeVisible();
+
+      expect(await violations(page)).toEqual([]);
+    });
+  }
+
+  test("the tab strip is walkable by arrow keys, with focus following the panel", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByRole("tab", { name: "Overview" }).focus();
+
+    await page.keyboard.press("ArrowRight");
+
+    // Six presses of Tab to reach the last section is the failure this pattern prevents.
+    await expect(page.getByRole("tab", { name: "Jobs" })).toBeFocused();
+    await expect(page.getByTestId("jobs-tab")).toBeVisible();
+  });
+
   test("a confirm dialog is opened, dismissed and handed back by keyboard alone", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
     await page.getByRole("button", { name: "Runs" }).click();
     await expect(page.getByTestId("run-console")).toBeVisible();
 
     // Opened from the KEYBOARD — the mouse is not assumed anywhere in this journey.
-    const trigger = page.locator("li", { hasText: "SmokeJob" }).getByRole("button", { name: "trigger" }).first();
+    await page.getByRole("tab", { name: "Jobs" }).click();
+    const trigger = page.locator("section", { hasText: "SmokeJob" }).getByRole("button", { name: "trigger" }).first();
     await trigger.focus();
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("alertdialog");
