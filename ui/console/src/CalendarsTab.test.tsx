@@ -124,6 +124,24 @@ describe("the calendars tab (frozen CRUD, first screened in U5)", () => {
     expect(sent[0].body).toMatchObject({ type: "cron", cronExpression: "0 0 0-6 * * ?", excludedDates: null, excludedDays: null });
   });
 
+  it("an ANNUAL calendar says the year is ignored, because the engine ignores it", async () => {
+    const user = userEvent.setup();
+    const { client, sent } = api([]);
+    render(<CalendarsTab client={client} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
+
+    await user.click(await screen.findByRole("button", { name: "add a calendar" }));
+    await user.type(screen.getByLabelText("Name"), "new-year");
+    await user.selectOptions(screen.getByLabelText("Type"), "annual");
+    // An annual calendar recurs on the day and month; letting an operator believe they
+    // excluded one particular 1 January would be a quiet lie.
+    await user.type(screen.getByLabelText(/the year is ignored/), "2026-01-01");
+    await user.click(screen.getByRole("button", { name: "create it" }));
+    await user.click(screen.getByRole("alertdialog").querySelector("button")!);
+
+    await waitFor(() => expect(sent).toHaveLength(1));
+    expect(sent[0].body).toMatchObject({ type: "annual", excludedDates: ["2026-01-01"] });
+  });
+
   it("offers nothing to send until the shape is complete", async () => {
     const user = userEvent.setup();
     const { client } = api([]);

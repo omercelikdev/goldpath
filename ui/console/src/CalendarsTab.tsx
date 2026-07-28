@@ -51,16 +51,17 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
     };
   }, [client, fleet, refreshToken]);
 
-  if (problem) {
-    return <Banner tone="danger">{problem}</Banner>;
-  }
-
   if (calendars === null) {
-    return <p className="text-sm text-muted-foreground">Reading the calendars…</p>;
+    return problem
+      ? <Banner tone="danger">{problem}</Banner>
+      : <p className="text-sm text-muted-foreground">Reading the calendars…</p>;
   }
 
   return (
     <div data-testid="calendars-tab" className="space-y-4">
+      {/* Same rule as the jobs tab: a later failure marks the rows, it does not erase
+          them — and it must not take a verb's outcome with it. */}
+      {problem && <Banner tone="danger">{problem} — the rows below are the last ones it did answer with.</Banner>}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted-foreground">Calendars</h3>
         <button className="text-xs underline underline-offset-2" onClick={() => setAdding(!adding)}>
@@ -174,9 +175,22 @@ function AddCalendar({ client, fleet, onDone }: { client: AdminClient; fleet: st
 
       <p className="text-faint">{TYPES.find((entry) => entry.id === type)!.hint}</p>
 
-      {(type === "holiday" || type === "annual") && (
+      {type === "holiday" && (
         <label className="flex flex-col gap-1">
           Excluded dates (comma separated, ISO)
+          <input className="rounded border border-border px-2 py-1 font-mono" value={dates} onChange={(event) => setDates(event.target.value)} placeholder="2026-01-01, 2026-04-23" />
+        </label>
+      )}
+
+      {type === "annual" && (
+        <label className="flex flex-col gap-1">
+          {/*
+            An annual calendar excludes a DAY AND MONTH every year, so the year in these
+            dates is ignored by the engine. The field still takes a full ISO date because
+            the contract's payload is a date list — saying so beats letting an operator
+            believe they excluded one particular new year (review R5).
+          */}
+          Excluded dates — the year is ignored, only the day and month recur
           <input className="rounded border border-border px-2 py-1 font-mono" value={dates} onChange={(event) => setDates(event.target.value)} placeholder="2026-01-01, 2026-04-23" />
         </label>
       )}

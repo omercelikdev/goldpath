@@ -40,16 +40,22 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
     };
   }, [client, fleet, refreshToken]);
 
-  if (problem) {
-    return <Banner tone="danger">{problem}</Banner>;
-  }
-
   if (jobs === null) {
-    return <p className="text-sm text-muted-foreground">Reading the jobs…</p>;
+    return problem
+      ? <Banner tone="danger">{problem}</Banner>
+      : <p className="text-sm text-muted-foreground">Reading the jobs…</p>;
   }
 
   return (
     <div data-testid="jobs-tab" className="space-y-3">
+      {/*
+        A read that fails AFTER the panel has content does not blank it. Replacing the
+        whole tab with an error would also destroy the outcome strip of the verb the
+        operator just sent — which is exactly when a service tends to stop answering. The
+        rows stay, marked as possibly stale, and the failure is said out loud.
+      */}
+      {problem && <Banner tone="danger">{problem} — the rows below are the last ones it did answer with.</Banner>}
+
       {jobs.length === 0 && <p className="text-sm text-muted-foreground">This fleet declares no job.</p>}
 
       {jobs.map((job) => {
@@ -233,15 +239,22 @@ function Reschedule({
   job: JobInfo;
   onDone: (outcome: VerbOutcome) => void;
 }) {
-  const current = job.triggers.find((trigger) => trigger.type === "cron");
+  // The frozen verb acts on ONE trigger, `{job}-cron`, and creates it if it is missing.
+  // Showing "the first cron trigger" instead would put another trigger's expression in
+  // front of an operator while the server moved a different one — and since this PR lets
+  // a job carry several cron triggers, that is not hypothetical (review R3).
+  const targetName = `${job.name}-cron`;
+  const current = job.triggers.find((trigger) => trigger.name === targetName);
   const [cron, setCron] = useState(current?.cronExpression ?? "");
   const [timeZoneId, setTimeZoneId] = useState(current?.timeZoneId ?? "");
 
   return (
     <div className="mb-3 space-y-2 rounded-md border border-border/60 p-3 text-xs">
       <p className="text-muted-foreground">
-        Changes the cron of this job's schedule. The job itself stays exactly as the code
-        declares it, and the change is written to the audit.
+        Changes the schedule of <span className="font-mono">{targetName}</span>
+        {current ? "" : " — which does not exist yet, so this creates it"}. The job itself
+        stays exactly as the code declares it, and the change is written to the audit.
+        {job.triggers.length > 1 && " Other triggers on this job are untouched; remove or add those individually."}
       </p>
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1">
@@ -257,8 +270,8 @@ function Reschedule({
             label="reschedule"
             confirm={
               current?.cronExpression
-                ? `Move ${job.name} from ${current.cronExpression} to ${cron}?`
-                : `Schedule ${job.name} at ${cron}?`
+                ? `Move ${targetName} from ${current.cronExpression} to ${cron}?`
+                : `Create ${targetName} at ${cron}?`
             }
             execute={() => asOutcome(client.reschedule(fleet, job.name, cron, timeZoneId || null))}
             onDone={onDone}

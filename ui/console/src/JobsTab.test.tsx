@@ -213,12 +213,44 @@ describe("the jobs tab", () => {
     await user.click(screen.getByRole("button", { name: "reschedule" }));
 
     const dialog = screen.getByRole("alertdialog");
-    expect(dialog).toHaveTextContent("Move eod from 0 0 3 * * ? to 0 0 4 * * ?");
+    expect(dialog).toHaveTextContent("Move eod-cron from 0 0 3 * * ? to 0 0 4 * * ?");
     await user.click(dialog.querySelector("button")!);
 
     await waitFor(() => expect(sent).toHaveLength(1));
     expect(sent[0].url).toContain("/jobs/eod/reschedule");
     expect(sent[0].body).toEqual({ cron: "0 0 4 * * ?", timeZoneId: "Europe/Istanbul" });
+  });
+
+  it("reschedule shows the trigger the SERVER will move, not the first cron it finds", async () => {
+    const user = userEvent.setup();
+    // Two cron triggers, and the one the frozen verb acts on is NOT first in the list.
+    const { client } = api([{
+      name: "eod",
+      triggers: [
+        trigger({ name: "month-end", cronExpression: "0 0 2 L * ?" }),
+        trigger({ name: "eod-cron", cronExpression: "0 0 3 * * ?" }),
+      ],
+    }]);
+    render(<JobsTab client={client} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
+
+    await user.click(await screen.findByRole("button", { name: "eod" }));
+    await user.click(screen.getByRole("button", { name: "change the schedule" }));
+
+    // Showing month-end's expression while the server moves eod-cron would hand the
+    // operator a confident, wrong answer.
+    expect((screen.getByLabelText("Cron") as HTMLInputElement).value).toBe("0 0 3 * * ?");
+    expect(screen.getByText(/Other triggers on this job are untouched/)).toBeInTheDocument();
+  });
+
+  it("rescheduling a job that has no {job}-cron trigger says it will CREATE one", async () => {
+    const user = userEvent.setup();
+    const { client } = api([{ name: "eod", triggers: [trigger({ name: "month-end" })] }]);
+    render(<JobsTab client={client} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
+
+    await user.click(await screen.findByRole("button", { name: "eod" }));
+    await user.click(screen.getByRole("button", { name: "change the schedule" }));
+
+    expect(screen.getByText(/does not exist yet, so this creates it/)).toBeInTheDocument();
   });
 
   it("resuming a paused job posts the frozen route", async () => {
@@ -302,6 +334,32 @@ describe("the jobs tab", () => {
     render(<JobsTab client={new AdminClient({ fetcher })} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
 
     expect(await screen.findByRole("alert")).toHaveTextContent(/could not be read/);
+  });
+
+  it("a service that dies AFTER the panel loaded keeps the rows and the verb's outcome", async () => {
+    const user = userEvent.setup();
+    let alive = true;
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (!alive) throw new TypeError("network down");
+      if (init?.method && init.method !== "GET") {
+        alive = false;   // the verb lands, and the service dies immediately after
+        return json({ ok: true, message: "triggered" });
+      }
+
+      return json([{ name: "eod", triggers: [trigger()] }]);
+    }) as typeof fetch;
+    const { rerender } = render(<JobsTab client={new AdminClient({ fetcher })} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
+
+    await user.click(await screen.findByRole("button", { name: "trigger" }));
+    await user.click(screen.getByRole("alertdialog").querySelector("button")!);
+    rerender(<JobsTab client={new AdminClient({ fetcher })} fleet="it-cluster" refreshToken={1} onChanged={() => {}} />);
+
+    // Blanking the panel here would erase the very message the operator is reading —
+    // and a service tends to stop answering exactly when a verb has just been sent.
+    expect(await screen.findByText(/last ones it did answer with/)).toBeInTheDocument();
+    expect(screen.getByText("eod")).toBeInTheDocument();
+    expect(screen.getByText("triggered")).toBeInTheDocument();
   });
 
   it("a fleet that declares no job says that, rather than showing an empty page", async () => {
