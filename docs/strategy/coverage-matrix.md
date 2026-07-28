@@ -56,7 +56,8 @@ for planning · — deliberately absent (the card does not trigger it).
 | db bundle (prod story) | 🟡 no sample story | Telco: bundle-first deploy slice with runbook |
 | goldpath check | ✅ every slice | — |
 | Skills: goldpath-feature | ✅ drove S2 | — |
-| Skills: manifest / test-gen / breaker | 🟡 never fielded | manifest→Insurance toggle; test-gen→Insurance NFRs; breaker→Telco callback chaos |
+| Skills: test-gen / breaker | ✅ both fielded on CorPay 2026-07-23 — `tests/SPEC-GAPS.md` (8 spec-derived tests + a 7-item gap report) and `tests/BREAKER-VERDICT.md` (15 attacks, 1 genuine finding, fixed) | widen: test-gen→Insurance NFRs; breaker→Telco callback chaos |
+| Skills: manifest | 🟡 never fielded | manifest→Insurance toggle |
 | specdrift CLI path | ✅ | — |
 | specdrift MCP path (from skills) | 🟡 not exercised in a sample flow | Insurance build runs it |
 
