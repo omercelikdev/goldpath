@@ -21,12 +21,19 @@ export const SECTION_LABEL: Record<ModuleName, string> = {
  * The rail's grouping (ui-standard v1.1 §7.2) — by CONCERN, not by package, so a future
  * module lands in a group instead of growing a flat list.
  */
+/**
+ * The rail's grouping (v1.1 §7.2, amended by the owner): the five modules are ONE family
+ * and share ONE group — a heading must own several items to earn its place (the reference
+ * does the same: its whole core domain is a single MOCKING group). A future surface for a
+ * DIFFERENT audience (an API portal, platform settings) becomes its own group; a new
+ * operations module simply joins this one.
+ */
 export const SECTION_GROUP: Record<ModuleName, string> = {
-  jobs: "Execution",
-  bulk: "Intake",
-  campaign: "Outbound",
-  notification: "Outbound",
-  archival: "Compliance",
+  jobs: "Operations",
+  bulk: "Operations",
+  campaign: "Operations",
+  notification: "Operations",
+  archival: "Operations",
 };
 
 /** One lucide icon per section — sparse by design; the icon IS the item when collapsed. */
