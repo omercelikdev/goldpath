@@ -45,7 +45,6 @@ print("── docs freshness: all relative links resolve")
 retired = {
     "wiremock": "Mockifyr is the mock system (foundation.md 5.1, decided 2026-07-28)",
 }
-gate = os.path.abspath(__file__) if "__file__" in dir() else ""
 exts = {".md", ".json", ".yaml", ".yml", ".cs", ".ts", ".tsx", ".sh", ".props", ".csproj"}
 skip = {"node_modules", "bin", "obj", "dist", ".pnpm", ".git", ".next"}
 offences = []
