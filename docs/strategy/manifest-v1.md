@@ -121,7 +121,7 @@ externalSystems:
     direction: outbound                # outbound | inbound | both
     mock:
       strategy: stub                   # stub | record-replay | passthrough
-      stubs: mocks/payment/            # WireMock JSON is canonical (Mockifyr/WireMock provider)
+      stubs: mocks/payment/            # a Mockifyr stub bundle
     criticality: high                  # selects the resilience defaults (timeout/retry/CB profile)
 ```
 
