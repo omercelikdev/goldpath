@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppShell, Banner } from "@goldpath/kit";
+import { AppShell, Banner, PageHeader, initialCollapsed } from "@goldpath/kit";
 import type { ShellNavItem } from "@goldpath/kit";
 import { AdminClient, type ModuleName } from "./adminClient";
-import { composedSections, isUnreachable, SECTION_LABEL, ServicePanels, type Capabilities } from "./sections";
+import { composedSections, isUnreachable, SECTION_GROUP, SECTION_ICON, SECTION_LABEL, SECTION_PURPOSE, ServicePanels, type Capabilities } from "./sections";
 import { TriageHome } from "./TriageHome";
 import { loadRegistry, SAME_ORIGIN, type ServiceEntry } from "./registry";
 
@@ -16,6 +16,8 @@ export interface ConsoleAppProps {
 
 /** The landing section is the estate, not a module — hence its own id. */
 const TODAY = "today";
+
+const GROUP_ORDER = ["Execution", "Intake", "Outbound", "Compliance"];
 type Section = typeof TODAY | ModuleName;
 
 /**
@@ -28,7 +30,7 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
   const [problem, setProblem] = useState<{ text: string; fellBack: boolean } | null>(null);
   const [active, setActive] = useState<string | null>(null);
   const [section, setSection] = useState<Section>(TODAY);
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(initialCollapsed);
 
   useEffect(() => {
     let live = true;
@@ -78,12 +80,19 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
   }
 
   const nav: ShellNavItem[] = [
-    { id: TODAY, label: "Today", onSelect: () => setSection(TODAY) },
+    { id: TODAY, label: "Today", icon: SECTION_ICON.today, group: "Overview", onSelect: () => setSection(TODAY) },
     // A service that never answered has no sections to offer: the nav would be a list of
     // links that each say the same thing.
-    ...(isUnreachable(capabilities) ? [] : composedSections(capabilities)).map((module) => ({
+    // Groups follow the STANDARD's order (v1.1 §7.2), not the module registry's: a rail
+    // whose Compliance sits above Intake reads as accidental.
+    ...(isUnreachable(capabilities) ? [] : composedSections(capabilities))
+      .slice()
+      .sort((a, b) => GROUP_ORDER.indexOf(SECTION_GROUP[a]) - GROUP_ORDER.indexOf(SECTION_GROUP[b]))
+      .map((module) => ({
       id: module,
       label: SECTION_LABEL[module],
+      icon: SECTION_ICON[module],
+      group: SECTION_GROUP[module],
       onSelect: () => setSection(module),
     })),
   ];
@@ -96,6 +105,7 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
   return (
     <AppShell
       title={title}
+      subtitle="Operations"
       nav={nav}
       activeId={section}
       services={services.length > 1 ? services.map((entry) => ({ name: entry.name, onSelect: () => setActive(entry.name) })) : undefined}
@@ -123,7 +133,10 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
           now={now}
         />
       ) : (
-        <ServicePanels client={client} capabilities={capabilities} section={section} now={now} />
+        <>
+          <PageHeader title={SECTION_LABEL[section]} purpose={SECTION_PURPOSE[section]} />
+          <ServicePanels client={client} capabilities={capabilities} section={section} now={now} />
+        </>
       )}
     </AppShell>
   );

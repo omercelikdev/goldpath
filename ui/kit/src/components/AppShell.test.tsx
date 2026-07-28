@@ -1,6 +1,6 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { AppShell, type ShellNavItem } from "./AppShell";
+import { AppShell, COLLAPSE_KEY, initialCollapsed, type ShellNavItem } from "./AppShell";
 
 const nav = (over: Partial<ShellNavItem> = {}): ShellNavItem => ({
   id: "runs",
@@ -147,5 +147,44 @@ describe("the app shell (ui-standard-v1 §3 — the surface scrolls, never the p
 
     await userEvent.selectOptions(picker, "claims");
     expect(chosen).toEqual(["claims"]);
+  });
+});
+
+describe("the v1.1 rail (u7-b1)", () => {
+  const item = (id: string, group?: string) => ({ id, label: id, group, icon: <svg data-icon={id} />, onSelect: () => {} });
+
+  it("groups render in the order GIVEN, with their headings", () => {
+    render(<AppShell title="t" nav={[item("a", "Execution"), item("b", "Intake"), item("c", "Execution")]} activeId="a">x</AppShell>);
+    const rail = screen.getByTestId("shell-rail");
+    const text = rail.textContent!;
+    // One heading per group, and Execution precedes Intake because the caller said so.
+    expect(text.indexOf("Execution")).toBeGreaterThan(-1);
+    expect(text.indexOf("Execution")).toBeLessThan(text.indexOf("Intake"));
+    expect(within(rail).getAllByText(/^Execution$/)).toHaveLength(1);
+  });
+
+  it("collapsed keeps the ICON as the item, with the label as tooltip + sr-only", () => {
+    render(<AppShell title="t" nav={[item("runs", "Execution")]} activeId="runs" collapsed>x</AppShell>);
+    const button = screen.getByRole("button", { name: "runs" });   // sr-only label keeps the name
+    expect(button).toHaveAttribute("title", "runs");
+    expect(button.querySelector("[data-icon=runs]")).not.toBeNull();
+  });
+
+  it("persists the rail state, and initialCollapsed reads it back", () => {
+    localStorage.removeItem(COLLAPSE_KEY);
+    expect(initialCollapsed()).toBe(false);
+    render(<AppShell title="t" nav={[item("a")]} activeId="a" collapsed>x</AppShell>);
+    expect(localStorage.getItem(COLLAPSE_KEY)).toBe("1");
+    expect(initialCollapsed()).toBe(true);
+  });
+
+  it("a throwing localStorage never breaks the shell", () => {
+    const real = Storage.prototype.getItem;
+    Storage.prototype.getItem = () => { throw new Error("private mode"); };
+    try {
+      expect(initialCollapsed()).toBe(false);   // falls back rather than crashing the app
+    } finally {
+      Storage.prototype.getItem = real;
+    }
   });
 });
