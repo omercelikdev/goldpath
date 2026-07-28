@@ -36,6 +36,12 @@ throttle), progress/ETA that an operator can trust, admin API + ops pack.
   rider seam is the plan of record, constraint 5/6; v1 ships RabbitMQ).
 - Cross-campaign global rate governance (per-PROVIDER ceilings shared by campaigns —
   trigger: the first tenant running concurrent campaigns against one SMS gateway).
+  *Boundary note (added with R1, after a review asked):* this non-goal is about
+  respecting a THIRD PARTY's ceiling — dividing one gateway's 1000 TPS fairly among
+  campaigns, which needs per-provider accounting and a fairness policy. R1.4's
+  `GlobalTps` is the other direction: protecting OUR OWN platform with one blunt total
+  across everything the pacer releases. Same word, different owner of the limit; the
+  non-goal's trigger stands untouched.
 - Audience/segmentation tooling (the app's selector answers "who"; marketing segmentation
   is a product, not a module).
 - A/B testing, multi-step journeys (drip sequences) — campaign orchestration products
@@ -228,7 +234,7 @@ governor panel simply grows the fields.
 | R1.1 | `ExcludedDays` (set of `DayOfWeek`, evaluated in the policy's `TimeZoneId`) | "weekends are off-limits" — today's workaround is pausing Friday night and REMEMBERING Monday |
 | R1.2 | `EndDate` (date, policy timezone; pacer stops releasing past it, campaign reports `ExpiredIncomplete` rather than silently running forever) | "this push has 7 days, then whatever is left is a report, not a background surprise" |
 | R1.3 | Per-item auto-retry: `MaxAttempts` (default 1 = today's behavior) + fixed backoff ladder (30s → 2m); an item that exhausts attempts lands where failures already land — the repair queue, replayable | "transient device timeouts should not need a human before breakfast" — the repair queue stays the terminal truth, retry only precedes it |
-| R1.4 | A GLOBAL release gate: `GoldpathCampaignOptions.GlobalTps` (per-process ceiling across ALL running campaigns, enforced at the pacer; null = off) | "five campaigns at once must not melt the platform" — per-campaign limits cannot see each other |
+| R1.4 | A GLOBAL release gate: `GoldpathCampaignOptions.GlobalTps` (per-process ceiling across ALL running campaigns, enforced at the pacer; null = off). PLATFORM protection, not provider fairness — the per-provider governance non-goal in §1 keeps its own trigger (see the boundary note there) | "five campaigns at once must not melt the platform" — per-campaign limits cannot see each other |
 
 ### Deliberately NOT in this revision
 
