@@ -39,12 +39,16 @@ internal sealed class GoldpathQuartzAdapter<TJob> : IJob
         var traceParent = context.MergedJobDataMap.TryGetValue(GoldpathJobsExtensions.TraceParentKey, out var stamped)
             ? stamped?.ToString()
             : null;
+        var triggeredBy = context.MergedJobDataMap.TryGetValue(GoldpathJobsExtensions.TriggeredByKey, out var by)
+            ? by?.ToString()
+            : null;
         var fire = new GoldpathFireFacts(
             context.Scheduler.SchedulerName,
             context.Scheduler.SchedulerInstanceId,
             context.FireInstanceId,
             context.Recovering,
-            traceParent);
+            traceParent,
+            triggeredBy);
 
         try
         {

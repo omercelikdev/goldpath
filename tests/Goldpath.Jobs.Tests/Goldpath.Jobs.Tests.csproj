@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <!-- The package maps endpoints; its own tests must be able to READ the route table
+         (the constitution's no-job-authoring rule is asserted there, not just documented). -->
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
     <PackageReference Include="Microsoft.EntityFrameworkCore.Sqlite" />
     <!-- Direct reference lifts the vulnerable transitive native lib (NU1903, GHSA-2m69-gcr7-jv3q). -->
     <PackageReference Include="SQLitePCLRaw.bundle_e_sqlite3" />
