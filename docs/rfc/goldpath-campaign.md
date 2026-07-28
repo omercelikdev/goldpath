@@ -220,7 +220,7 @@ operator's single screen per campaign (progress, rate governor, failure rate, ET
 - **D8 — `features.campaign` REQUIRES a broker** (schema cross-field rule, like outbox);
   the schema key lands WITH S3. Accept?
 
-## Revision R1 — device-fleet parity parameters (PROPOSED 2026-07-28)
+## Revision R1 — device-fleet parity parameters (ACCEPTED 2026-07-29 — owner direction: "complete the gaps"; implementation lands with the next train)
 
 **Finding.** A device-management-class adopter (tens of millions of targets, multi-day
 pushes) plans a campaign with SIX dials. The policy carries four of them — TPS,
