@@ -3,6 +3,32 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [Unreleased]
+
+### Added
+- **The scheduling surface (`Goldpath.Jobs`, admin contract revision R2).** The console
+  could drive what the modules DO but only half of what a fleet IS. Now on the contract:
+  `GET /fleets/{fleet}/status` (running since, thread pool, jobs executed, standby,
+  shutdown, cluster nodes); a trigger payload that carries what a cron string cannot
+  explain (type, timezone, misfire instruction, priority, start/end, and a simple
+  trigger's interval, repeat count and times-triggered); runs filterable by `?status=`,
+  `?from=`, `?to=` with keyset paging via `?afterId=`; `POST`/`DELETE` on
+  `/fleets/{fleet}/jobs/{job}/triggers[/{name}]` so a declared job can carry a second
+  schedule; and the job's data map, read-only.
+- **`GoldpathJobRun.TriggeredBy`** — `Scheduled`, `Manual`, `Rerun` or `Replay`. An
+  unstamped fire is `Scheduled` by definition, so the column never invents an operator who
+  was not there.
+
+### Migration required
+One nullable column (`TriggeredBy` on the runs table). Generate it with
+`goldpath db add AddJobTriggeredBy` after taking this train; existing rows keep `null`,
+which the console reads as "not recorded" rather than guessing.
+
+### Refused, deliberately
+No route creates or deletes a JOB, and there is no endpoint that lists job classes —
+composition is the manifest's and the code's (ADR-0001). The refusal is asserted by a test
+over the route table, not just written down.
+
 ## [0.1.0-preview.4] - 2026-07-27
 
 The console train. Goldpath ships an operations console — served by the adopter's own

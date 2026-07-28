@@ -21,7 +21,7 @@ public interface IGoldpathJobRunner
 /// request) across the Quartz boundary — the run span links to it, so one trace id walks
 /// from the HTTP entry to every chunk.
 /// </summary>
-public sealed record GoldpathFireFacts(string SchedulerName, string InstanceName, string FireInstanceId, bool Recovering, string? TraceParent = null);
+public sealed record GoldpathFireFacts(string SchedulerName, string InstanceName, string FireInstanceId, bool Recovering, string? TraceParent = null, string? TriggeredBy = null);
 
 /// <summary>
 /// The run engine (jobs RFC §2): plans once, executes chunk by chunk with a persisted
@@ -180,6 +180,9 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
             StartedAt = now,
             DeadlineAt = definition.Deadline is { } deadline ? now + deadline : null,
             StartedBy = fire.InstanceName,
+            // An unstamped fire IS a scheduled one: only the admin verbs stamp, so the
+            // default cannot lie about a human who was not there.
+            TriggeredBy = fire.TriggeredBy ?? GoldpathJobTriggeredBy.Scheduled,
             InputVersion = definition.InputVersionFactory?.Invoke(scope.ServiceProvider),
             Executions = 1,
         };

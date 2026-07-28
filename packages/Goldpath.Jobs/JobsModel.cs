@@ -15,6 +15,26 @@ public static class GoldpathJobRunStatus
     public const string Failed = "Failed";
 }
 
+/// <summary>
+/// What put a run on the schedule. Contract R2.3: a run list without this column cannot
+/// answer "did anyone touch this last night?", which is the first question after an
+/// incident. `Scheduled` is the absence of a human — it is what a fire with no stamp is.
+/// </summary>
+public static class GoldpathJobTriggeredBy
+{
+    /// <summary>The scheduler fired it: no operator involved.</summary>
+    public const string Scheduled = "Scheduled";
+
+    /// <summary>An operator hit trigger.</summary>
+    public const string Manual = "Manual";
+
+    /// <summary>An operator re-fired a run that had already finished.</summary>
+    public const string Rerun = "Rerun";
+
+    /// <summary>An operator redrove a run's repair queue.</summary>
+    public const string Replay = "Replay";
+}
+
 /// <summary>Chunk states — the checkpoint vocabulary.</summary>
 public static class GoldpathJobChunkStatus
 {
@@ -75,6 +95,13 @@ public class GoldpathJobRun
 
     /// <summary>The instance that STARTED the run (resume may continue elsewhere).</summary>
     public string? StartedBy { get; set; }
+
+    /// <summary>
+    /// See <see cref="GoldpathJobTriggeredBy"/> — null on runs written before the column
+    /// existed, which the console reads as "not recorded" rather than inventing
+    /// `Scheduled` for a run nobody watched.
+    /// </summary>
+    public string? TriggeredBy { get; set; }
 
     /// <summary>Pinned input version (mid-run deploys never mix inputs).</summary>
     public string? InputVersion { get; set; }

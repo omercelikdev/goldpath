@@ -164,7 +164,7 @@ Additive only: no route is renamed, no envelope changes shape, and every field b
 |---|---|---|
 | R2.1 | `GET /fleets/{fleet}/status` → scheduler state: `runningSince`, `threadPoolSize`, `jobsExecuted`, `isShutdown`, plus the `nodes` already on `GoldpathFleetInfo` | "Is this fleet alive, and how big is it?" is the first question of an incident, and today it is answered by inference from whether runs appear |
 | R2.2 | `GoldpathTriggerInfo` widens: `type` (cron\|simple), `priority`, `misfireInstruction`, `timeZoneId`, `startAt`, `endAt`, `timesTriggered`, `repeatInterval`, `repeatCount` | A cron string alone does not explain a fire time. Timezone and misfire policy are the two fields that make a "why did it not run?" answerable |
-| R2.3 | `GoldpathJobRun` gains `triggeredBy` (`Scheduled`\|`Manual`\|`Rerun`) and `instanceName` | The two columns every run list needs and neither exists today: who started this, and which node ran it. **Cost: a migration** (two nullable columns) — the only schema change in R2 |
+| R2.3 | `GoldpathJobRun` gains `triggeredBy` (`Scheduled`\|`Manual`\|`Rerun`\|`Replay`) | Who started this run. **Cost: a migration** (one nullable column) — the only schema change in R2. *Amended during implementation on both counts: the instance that ran it was already there as `StartedBy` and only needed showing, and `Replay` earned its own value — labelling a repair-queue redrive as a plain `Rerun` would have been the sort of small lie this column exists to prevent.* |
 | R2.4 | `GET /fleets/{fleet}/runs` gains `?status=`, `?from=`, `?to=`, and keyset `?afterId=` | "Yesterday's failures" must not be a scroll. Keyset follows the bulk validation report's precedent (`afterRow`), not offset paging |
 | R2.5 | `POST /fleets/{fleet}/jobs/{job}/triggers` (add) · `DELETE /fleets/{fleet}/jobs/{job}/triggers/{trigger}` (remove) | A declared job may legitimately need a second schedule (month-end as well as nightly). `reschedule` stays the frozen shorthand for the 90% case: changing the one cron a job has |
 | R2.6 | Job detail exposes its **job data map, read-only** | Diagnosis needs to see the parameters a run was given. Editing them is drift (see §3) |
@@ -206,8 +206,11 @@ Owner decision, 2026-07-28: adopt this three-way split as written.
 ### Test plan (the DoD for the implementation step)
 
 1. **Unit**: the widened DTO carries every Quartz fact for both a cron and a simple
-   trigger; `triggeredBy` is stamped `Manual` by the trigger verb, `Rerun` by rerun and
-   `Scheduled` by the scheduler path; the run filter's clamp and keyset boundary.
+   trigger; `triggeredBy` is stamped `Manual` by the trigger verb, `Rerun` by rerun,
+   `Replay` by the repair redrive and `Scheduled` by the scheduler path.
+   *(The run list moved to integration: it orders by `DateTimeOffset`, which SQLite cannot
+   translate at all — proving it on the package's own sqlite fixture would have proven it
+   on a store Goldpath does not ship on.)*
 2. **Integration (real Postgres + real Quartz)**: two-instance fleet — a run stamped with
    the instance that executed it; `?from`/`?to`/`?status` against a seeded window;
    `afterId` walks the whole set with no gap and no repeat; a second trigger added to a

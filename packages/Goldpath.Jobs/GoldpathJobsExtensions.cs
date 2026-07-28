@@ -29,6 +29,13 @@ public static class GoldpathJobsExtensions
     public const string TraceParentKey = "goldpath:traceparent";
 
     /// <summary>
+    /// Data-map key carrying WHO put this fire on the schedule (R2.3). Stamped by the
+    /// admin verbs; its absence is the definition of a scheduled fire, so the scheduler
+    /// path needs no stamp of its own.
+    /// </summary>
+    public const string TriggeredByKey = "goldpath:triggered-by";
+
+    /// <summary>
     /// Executor mode: registers the clustered scheduler, the run engine, the history
     /// listener and every configured job with its schedule.
     /// </summary>

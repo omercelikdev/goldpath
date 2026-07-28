@@ -6,11 +6,58 @@ using Quartz.Impl.Matchers;
 
 namespace Goldpath;
 
-/// <summary>One registered job as the store sees it, with its live triggers.</summary>
-public sealed record GoldpathJobInfo(string Name, string? Description, bool RequestsRecovery, IReadOnlyList<GoldpathTriggerInfo> Triggers);
+/// <summary>
+/// One registered job as the store sees it, with its live triggers and — read-only —
+/// its data map (R2.6). Diagnosis needs to see the parameters a run was given; editing
+/// them at runtime would make the job behave differently from the code that declares it,
+/// which is the drift ADR-0001 exists to prevent.
+/// </summary>
+public sealed record GoldpathJobInfo(
+    string Name,
+    string? Description,
+    bool RequestsRecovery,
+    IReadOnlyList<GoldpathTriggerInfo> Triggers,
+    IReadOnlyDictionary<string, string>? DataMap = null);
 
-/// <summary>One trigger's live state.</summary>
-public sealed record GoldpathTriggerInfo(string Name, string State, string? CronExpression, string? CalendarName, DateTimeOffset? NextFireAt, DateTimeOffset? PreviousFireAt);
+/// <summary>
+/// One trigger's live state (R2.2). A cron string alone does not explain a fire time —
+/// the timezone it is read in and the misfire policy are the two facts that make "why did
+/// it not run last night?" answerable, so they travel with it.
+/// </summary>
+public sealed record GoldpathTriggerInfo(
+    string Name,
+    string State,
+    string? CronExpression,
+    string? CalendarName,
+    DateTimeOffset? NextFireAt,
+    DateTimeOffset? PreviousFireAt,
+    string Type = "unknown",
+    int Priority = 0,
+    int MisfireInstruction = 0,
+    string? TimeZoneId = null,
+    DateTimeOffset? StartAt = null,
+    DateTimeOffset? EndAt = null,
+    int? TimesTriggered = null,
+    TimeSpan? RepeatInterval = null,
+    int? RepeatCount = null);
+
+/// <summary>
+/// A fleet's scheduler as it sees itself (R2.1) — the first question of an incident is
+/// whether the thing is alive and how big it is, and today that is answered by inferring
+/// from whether runs appear.
+/// </summary>
+public sealed record GoldpathFleetStatus(
+    string SchedulerName,
+    string InstanceId,
+    DateTimeOffset? RunningSince,
+    int ThreadPoolSize,
+    int JobsExecuted,
+    bool IsShutdown,
+    bool InStandbyMode,
+    IReadOnlyList<GoldpathFleetNode> Nodes);
+
+/// <summary>A trigger to add to a DECLARED job (R2.5): cron or simple, never a new job.</summary>
+public sealed record GoldpathTriggerSpec(string? Cron, string? TimeZoneId, TimeSpan? Interval, int? RepeatCount, string? CalendarName, int Priority = 5);
 
 /// <summary>A run with its chunk breakdown and open repair items.</summary>
 public sealed record GoldpathRunDetail(GoldpathJobRun Run, IReadOnlyDictionary<string, int> ChunksByStatus, IReadOnlyList<GoldpathJobItemFailure> OpenFailures);
@@ -61,29 +108,231 @@ public sealed class GoldpathJobsAdminService<TContext>
             foreach (var trigger in await scheduler.GetTriggersOfJob(key, ct))
             {
                 var state = await scheduler.GetTriggerState(trigger.Key, ct);
-                triggers.Add(new GoldpathTriggerInfo(
-                    trigger.Key.Name,
-                    state.ToString(),
-                    (trigger as ICronTrigger)?.CronExpressionString,
-                    trigger.CalendarName,
-                    trigger.GetNextFireTimeUtc(),
-                    trigger.GetPreviousFireTimeUtc()));
+                triggers.Add(Describe(trigger, state));
             }
 
-            jobs.Add(new GoldpathJobInfo(key.Name, detail?.Description, detail?.RequestsRecovery ?? false, triggers));
+            // ToString() rather than the raw object: a data map value may be any type the
+            // job put there, and the console renders text. Values are declared in code
+            // (ADR-0001), so this is a window onto the composition, never a lever on it.
+            var data = detail?.JobDataMap.Count > 0
+                ? detail.JobDataMap.ToDictionary(entry => entry.Key, entry => entry.Value?.ToString() ?? "", StringComparer.Ordinal)
+                : null;
+            jobs.Add(new GoldpathJobInfo(key.Name, detail?.Description, detail?.RequestsRecovery ?? false, triggers, data));
         }
 
         return jobs;
     }
 
-    /// <summary>Latest runs of a fleet (optionally one job), newest first.</summary>
-    public async Task<IReadOnlyList<GoldpathJobRun>> GetRunsAsync(string fleet, string? job, int take, CancellationToken ct)
+    /// <summary>
+    /// One trigger, as the store holds it. Cron and simple triggers answer different
+    /// halves of this shape — a simple trigger has no cron string, a cron trigger no
+    /// repeat count — and the reader is told WHICH by <c>Type</c> rather than having to
+    /// infer it from which fields came back null.
+    /// </summary>
+    private static GoldpathTriggerInfo Describe(ITrigger trigger, TriggerState state)
+    {
+        var cron = trigger as ICronTrigger;
+        var simple = trigger as ISimpleTrigger;
+        return new GoldpathTriggerInfo(
+            trigger.Key.Name,
+            state.ToString(),
+            cron?.CronExpressionString,
+            trigger.CalendarName,
+            trigger.GetNextFireTimeUtc(),
+            trigger.GetPreviousFireTimeUtc(),
+            cron is not null ? "cron" : simple is not null ? "simple" : "unknown",
+            trigger.Priority,
+            trigger.MisfireInstruction,
+            cron?.TimeZone?.Id,
+            trigger.StartTimeUtc,
+            trigger.EndTimeUtc,
+            simple?.TimesTriggered,
+            simple?.RepeatInterval,
+            simple?.RepeatCount);
+    }
+
+    /// <summary>The fleet's scheduler as it sees itself, with its live cluster nodes (R2.1).</summary>
+    public async Task<GoldpathFleetStatus?> GetFleetStatusAsync(string fleet, CancellationToken ct)
+    {
+        var fleets = await _registry.GetFleetsAsync(ct);
+        var known = fleets.FirstOrDefault(f => f.SchedulerName == fleet);
+        if (known is null)
+        {
+            return null;
+        }
+
+        var scheduler = await _registry.GetSchedulerAsync(fleet, ct);
+        var meta = await scheduler.GetMetaData(ct);
+        return new GoldpathFleetStatus(
+            scheduler.SchedulerName,
+            scheduler.SchedulerInstanceId,
+            meta.RunningSince,
+            meta.ThreadPoolSize,
+            meta.NumberOfJobsExecuted,
+            meta.Shutdown,
+            meta.InStandbyMode,
+            known.Nodes);
+    }
+
+    /// <summary>
+    /// Adds a trigger to a DECLARED job (R2.5). Scheduling is not authoring: this cannot
+    /// bring a job into existence — an unknown job name is refused, which is the whole
+    /// point (ADR-0001 keeps job definitions in the manifest and the code).
+    /// </summary>
+    public async Task<GoldpathAdminResult> AddTriggerAsync(string fleet, string job, string name, GoldpathTriggerSpec spec, string actor, CancellationToken ct)
+    {
+        if (string.IsNullOrWhiteSpace(name))
+        {
+            return new GoldpathAdminResult(false, "a trigger needs a name");
+        }
+
+        if ((spec.Cron is null) == (spec.Interval is null))
+        {
+            return new GoldpathAdminResult(false, "give exactly one of cron or interval — a trigger is one kind or the other");
+        }
+
+        if (spec.Cron is { } cron && !CronExpression.IsValidExpression(cron))
+        {
+            return new GoldpathAdminResult(false, $"'{cron}' is not a valid Quartz cron expression");
+        }
+
+        var scheduler = await _registry.GetSchedulerAsync(fleet, ct);
+        var jobKey = new JobKey(job, GoldpathJobsExtensions.JobGroup);
+        if (!await scheduler.CheckExists(jobKey, ct))
+        {
+            return new GoldpathAdminResult(false, $"no job '{job}' in fleet '{fleet}' — a trigger schedules a DECLARED job, it does not create one");
+        }
+
+        var triggerKey = new TriggerKey(name, GoldpathJobsExtensions.JobGroup);
+        if (await scheduler.CheckExists(triggerKey, ct))
+        {
+            return new GoldpathAdminResult(false, $"trigger '{name}' already exists — remove it or reschedule it");
+        }
+
+        var builder = TriggerBuilder.Create().WithIdentity(triggerKey).ForJob(jobKey).WithPriority(spec.Priority);
+        if (spec.Cron is { } expression)
+        {
+            builder = builder.WithCronSchedule(expression, schedule =>
+            {
+                if (spec.TimeZoneId is not null)
+                {
+                    schedule.InTimeZone(TimeZoneInfo.FindSystemTimeZoneById(spec.TimeZoneId));
+                }
+            });
+        }
+        else
+        {
+            builder = builder.WithSimpleSchedule(schedule =>
+            {
+                schedule.WithInterval(spec.Interval!.Value);
+                // No repeat count means "forever" — the Quartz default an operator
+                // expects from an interval trigger.
+                if (spec.RepeatCount is { } repeats)
+                {
+                    schedule.WithRepeatCount(repeats);
+                }
+                else
+                {
+                    schedule.RepeatForever();
+                }
+            });
+        }
+
+        if (spec.CalendarName is { } calendar)
+        {
+            builder = builder.ModifiedByCalendar(calendar);
+        }
+
+        await scheduler.ScheduleJob(builder.Build(), ct);
+        await AuditAsync(actor, "add-trigger", fleet, job, $"{name}: {spec.Cron ?? spec.Interval?.ToString()}", ct);
+        return new GoldpathAdminResult(true, $"trigger '{name}' scheduled");
+    }
+
+    /// <summary>Removes one trigger from a declared job (R2.5). The JOB is untouched.</summary>
+    public async Task<GoldpathAdminResult> RemoveTriggerAsync(string fleet, string job, string name, string actor, CancellationToken ct)
+    {
+        var scheduler = await _registry.GetSchedulerAsync(fleet, ct);
+        var triggerKey = new TriggerKey(name, GoldpathJobsExtensions.JobGroup);
+        var trigger = await scheduler.GetTrigger(triggerKey, ct);
+        if (trigger is null)
+        {
+            return new GoldpathAdminResult(false, $"no trigger '{name}' in fleet '{fleet}'");
+        }
+
+        // A trigger names its job; removing one through another job's route would let a
+        // typo unschedule something else entirely.
+        if (!string.Equals(trigger.JobKey.Name, job, StringComparison.Ordinal))
+        {
+            return new GoldpathAdminResult(false, $"trigger '{name}' belongs to job '{trigger.JobKey.Name}', not '{job}'");
+        }
+
+        await scheduler.UnscheduleJob(triggerKey, ct);
+        await AuditAsync(actor, "remove-trigger", fleet, job, name, ct);
+        return new GoldpathAdminResult(true, $"trigger '{name}' removed — the job itself is untouched");
+    }
+
+    /// <summary>
+    /// Runs of a fleet, newest first (R2.4). Filters answer the questions an operator
+    /// actually asks — "yesterday's failures", "this job since 06:00" — instead of making
+    /// them scroll a take-bounded list until the rows run out.
+    /// <para>
+    /// Paging is KEYSET, not offset: runs are inserted at the head while the list is being
+    /// read, and every offset page after the first would then skip or repeat rows.
+    /// <paramref name="afterId"/> names the last row the caller saw; the walk continues
+    /// strictly after it in (StartedAt desc, Id desc) order — the tuple, not StartedAt
+    /// alone, because two runs of a fleet can start in the same instant and a single-column
+    /// cursor would drop one of them for good.
+    /// </para>
+    /// </summary>
+    public async Task<IReadOnlyList<GoldpathJobRun>> GetRunsAsync(
+        string fleet,
+        string? job,
+        int take,
+        CancellationToken ct,
+        string? status = null,
+        DateTimeOffset? from = null,
+        DateTimeOffset? to = null,
+        Guid? afterId = null)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
-        return await db.Set<GoldpathJobRun>().AsNoTracking()
-            .Where(r => r.SchedulerName == fleet && (job == null || r.JobName == job))
-            .OrderByDescending(r => r.StartedAt)
+        var runs = db.Set<GoldpathJobRun>().AsNoTracking()
+            .Where(r => r.SchedulerName == fleet && (job == null || r.JobName == job));
+
+        if (status is not null)
+        {
+            runs = runs.Where(r => r.Status == status);
+        }
+
+        if (from is { } start)
+        {
+            runs = runs.Where(r => r.StartedAt >= start);
+        }
+
+        if (to is { } end)
+        {
+            runs = runs.Where(r => r.StartedAt <= end);
+        }
+
+        if (afterId is { } cursor)
+        {
+            var anchor = await db.Set<GoldpathJobRun>().AsNoTracking()
+                .Where(r => r.Id == cursor)
+                .Select(r => new { r.StartedAt, r.Id })
+                .FirstOrDefaultAsync(ct);
+            // A cursor that names no row would otherwise silently return page one again,
+            // which reads as "the list restarted" — an empty page says the walk is over.
+            if (anchor is null)
+            {
+                return [];
+            }
+
+            runs = runs.Where(r => r.StartedAt < anchor.StartedAt
+                || (r.StartedAt == anchor.StartedAt && r.Id.CompareTo(anchor.Id) < 0));
+        }
+
+        return await runs
+            .OrderByDescending(r => r.StartedAt).ThenByDescending(r => r.Id)
             .Take(AdminPaging.Clamp(take))
             .ToListAsync(ct);
     }
@@ -131,7 +380,10 @@ public sealed class GoldpathJobsAdminService<TContext>
                 : "dry-run: would fire now; no scheduled trigger (ad-hoc job)");
         }
 
-        await scheduler.TriggerJob(key, StampTraceParent(new JobDataMap()), ct);
+        await scheduler.TriggerJob(key, StampTraceParent(new JobDataMap
+        {
+            [GoldpathJobsExtensions.TriggeredByKey] = GoldpathJobTriggeredBy.Manual,
+        }), ct);
         await AuditAsync(actor, "trigger", fleet, job, null, ct);
         return new GoldpathAdminResult(true, "triggered");
     }
@@ -257,7 +509,10 @@ public sealed class GoldpathJobsAdminService<TContext>
         }
 
         var scheduler = await _registry.GetSchedulerAsync(run.SchedulerName, ct);
-        await scheduler.TriggerJob(new JobKey(run.JobName, GoldpathJobsExtensions.JobGroup), ct);
+        await scheduler.TriggerJob(new JobKey(run.JobName, GoldpathJobsExtensions.JobGroup), StampTraceParent(new JobDataMap
+        {
+            [GoldpathJobsExtensions.TriggeredByKey] = GoldpathJobTriggeredBy.Rerun,
+        }), ct);
         await AuditAsync(actor, "rerun", run.SchedulerName, run.JobName, $"after run {runId}", ct);
         return new GoldpathAdminResult(true, "triggered a fresh run");
     }
@@ -291,6 +546,7 @@ public sealed class GoldpathJobsAdminService<TContext>
         var data = StampTraceParent(new JobDataMap
         {
             [GoldpathJobsExtensions.ReplayRunKey] = runId.ToString(),
+            [GoldpathJobsExtensions.TriggeredByKey] = GoldpathJobTriggeredBy.Replay,
         });
         await scheduler.TriggerJob(new JobKey(run.JobName, GoldpathJobsExtensions.JobGroup), data, ct);
         await AuditAsync(actor, "replay-items", run.SchedulerName, run.JobName, $"{openItems.Count} items of run {runId}", ct);
