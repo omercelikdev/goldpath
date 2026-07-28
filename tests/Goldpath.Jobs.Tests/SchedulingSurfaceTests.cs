@@ -192,6 +192,30 @@ public class SchedulingSurfaceTests
     }
 
     [Fact]
+    public async Task An_unknown_TIMEZONE_is_refused_by_both_scheduling_verbs_never_thrown()
+    {
+        using var fixture = new RunnerFixture();
+        var scheduler = await InMemorySchedulerAsync();
+        var admin = AdminOver(fixture, scheduler);
+        await DeclareJobAsync(scheduler, "nightly");
+
+        var added = await admin.AddTriggerAsync("fleet", "nightly", "bad-zone",
+            new GoldpathTriggerSpec("0 0 3 * * ?", "Mars/Olympus", null, null, null), "ops@acme", default);
+        var rescheduled = await admin.RescheduleAsync("fleet", "nightly", "0 0 3 * * ?", "Mars/Olympus", "ops@acme", default);
+
+        // A typo in a form field is CALLER error: it answers 400 with the reason, like
+        // every other refusal on this surface. Letting TimeZoneNotFoundException escape
+        // would render as a 500 with nothing an operator could act on — and `reschedule`
+        // has been frozen with that hole since it shipped (found by the R2 review).
+        Assert.False(added.Ok);
+        Assert.Contains("Mars/Olympus", added.Message, StringComparison.Ordinal);
+        Assert.False(rescheduled.Ok);
+        Assert.Contains("not a timezone this host knows", rescheduled.Message, StringComparison.Ordinal);
+        // And nothing was scheduled on the way out.
+        Assert.Empty((await admin.GetJobsAsync("fleet", default)).Single().Triggers);
+    }
+
+    [Fact]
     public async Task Removing_a_trigger_THROUGH_THE_WRONG_JOB_is_refused()
     {
         using var fixture = new RunnerFixture();

@@ -151,6 +151,34 @@ public sealed class GoldpathJobsAdminService<TContext>
             simple?.RepeatCount);
     }
 
+    /// <summary>
+    /// Resolves an operator-supplied timezone id. Unknown and malformed ids are CALLER
+    /// error, so they answer like every other refusal — 400 with the reason — instead of
+    /// escaping as an unhandled <see cref="TimeZoneNotFoundException"/> that the platform
+    /// renders as a 500 with nothing an operator can act on. (Found on the R2 PR; the
+    /// already-frozen `reschedule` verb had the same hole since it shipped.)
+    /// </summary>
+    private static bool TryResolveZone(string? timeZoneId, out TimeZoneInfo? zone, out string? refusal)
+    {
+        zone = null;
+        refusal = null;
+        if (timeZoneId is null)
+        {
+            return true;
+        }
+
+        try
+        {
+            zone = TimeZoneInfo.FindSystemTimeZoneById(timeZoneId);
+            return true;
+        }
+        catch (Exception exception) when (exception is TimeZoneNotFoundException or InvalidTimeZoneException)
+        {
+            refusal = $"'{timeZoneId}' is not a timezone this host knows";
+            return false;
+        }
+    }
+
     /// <summary>The fleet's scheduler as it sees itself, with its live cluster nodes (R2.1).</summary>
     public async Task<GoldpathFleetStatus?> GetFleetStatusAsync(string fleet, CancellationToken ct)
     {
@@ -196,6 +224,11 @@ public sealed class GoldpathJobsAdminService<TContext>
             return new GoldpathAdminResult(false, $"'{cron}' is not a valid Quartz cron expression");
         }
 
+        if (!TryResolveZone(spec.TimeZoneId, out var zone, out var zoneRefusal))
+        {
+            return new GoldpathAdminResult(false, zoneRefusal!);
+        }
+
         var scheduler = await _registry.GetSchedulerAsync(fleet, ct);
         var jobKey = new JobKey(job, GoldpathJobsExtensions.JobGroup);
         if (!await scheduler.CheckExists(jobKey, ct))
@@ -214,9 +247,9 @@ public sealed class GoldpathJobsAdminService<TContext>
         {
             builder = builder.WithCronSchedule(expression, schedule =>
             {
-                if (spec.TimeZoneId is not null)
+                if (zone is not null)
                 {
-                    schedule.InTimeZone(TimeZoneInfo.FindSystemTimeZoneById(spec.TimeZoneId));
+                    schedule.InTimeZone(zone);
                 }
             });
         }
@@ -446,6 +479,11 @@ public sealed class GoldpathJobsAdminService<TContext>
             return new GoldpathAdminResult(false, $"'{cron}' is not a valid Quartz cron expression");
         }
 
+        if (!TryResolveZone(timeZoneId, out var zone, out var zoneRefusal))
+        {
+            return new GoldpathAdminResult(false, zoneRefusal!);
+        }
+
         var scheduler = await _registry.GetSchedulerAsync(fleet, ct);
         var jobKey = new JobKey(job, GoldpathJobsExtensions.JobGroup);
         if (!await scheduler.CheckExists(jobKey, ct))
@@ -460,9 +498,9 @@ public sealed class GoldpathJobsAdminService<TContext>
             .ForJob(jobKey)
             .WithCronSchedule(cron, s =>
             {
-                if (timeZoneId is not null)
+                if (zone is not null)
                 {
-                    s.InTimeZone(TimeZoneInfo.FindSystemTimeZoneById(timeZoneId));
+                    s.InTimeZone(zone);
                 }
             });
         if (existing?.CalendarName is { } calendar)
