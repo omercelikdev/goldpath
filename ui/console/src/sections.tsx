@@ -1,4 +1,6 @@
+import { createElement, type ReactNode } from "react";
 import { Banner } from "@goldpath/kit";
+import { Archive, Bell, CalendarClock, FileUp, LayoutDashboard, Megaphone } from "lucide-react";
 import { MODULES, type AdminClient, type Capability, type ModuleName } from "./adminClient";
 import { RunConsole } from "./RunConsole";
 import { BulkPanel } from "./BulkPanel";
@@ -13,6 +15,38 @@ export const SECTION_LABEL: Record<ModuleName, string> = {
   bulk: "Bulk intake",
   notification: "Notifications",
   campaign: "Campaigns",
+};
+
+/**
+ * The rail's grouping (ui-standard v1.1 §7.2) — by CONCERN, not by package, so a future
+ * module lands in a group instead of growing a flat list.
+ */
+export const SECTION_GROUP: Record<ModuleName, string> = {
+  jobs: "Execution",
+  bulk: "Intake",
+  campaign: "Outbound",
+  notification: "Outbound",
+  archival: "Compliance",
+};
+
+/** One lucide icon per section — sparse by design; the icon IS the item when collapsed. */
+export const SECTION_ICON: Record<ModuleName | "today", ReactNode> = {
+  today: createElement(LayoutDashboard),
+  jobs: createElement(CalendarClock),
+  bulk: createElement(FileUp),
+  notification: createElement(Bell),
+  campaign: createElement(Megaphone),
+  archival: createElement(Archive),
+};
+
+/** The one-line purpose sentence every screen opens with (v1.1 §7.8). */
+export const SECTION_PURPOSE: Record<ModuleName | "today", string> = {
+  today: "What is wrong across the estate, before you open anything.",
+  jobs: "The fleet's scheduler: what runs, when, on which node — and the levers to stop it.",
+  bulk: "Files in, validated row by row, executed only after a second pair of eyes.",
+  notification: "Evidence for every send: delivered, suppressed, or failed — in the transport's own words.",
+  campaign: "Paced fan-out under your hand: throttle, quota, window, stop.",
+  archival: "The legal memory: sealed chains, holds, and erasures that leave a receipt.",
 };
 
 export type Capabilities = Record<ModuleName, Capability>;
