@@ -17,7 +17,7 @@ export interface ConsoleAppProps {
 /** The landing section is the estate, not a module — hence its own id. */
 const TODAY = "today";
 
-const GROUP_ORDER = ["Execution", "Intake", "Outbound", "Compliance"];
+const GROUP_ORDER = ["Operations"];
 type Section = typeof TODAY | ModuleName;
 
 /**
@@ -83,8 +83,8 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
     { id: TODAY, label: "Today", icon: SECTION_ICON.today, group: "Overview", onSelect: () => setSection(TODAY) },
     // A service that never answered has no sections to offer: the nav would be a list of
     // links that each say the same thing.
-    // Groups follow the STANDARD's order (v1.1 §7.2), not the module registry's: a rail
-    // whose Compliance sits above Intake reads as accidental.
+    // One family, one group (v1.1 §7.2 as amended); the sort stays for the day a second
+    // group exists.
     ...(isUnreachable(capabilities) ? [] : composedSections(capabilities))
       .slice()
       .sort((a, b) => GROUP_ORDER.indexOf(SECTION_GROUP[a]) - GROUP_ORDER.indexOf(SECTION_GROUP[b]))

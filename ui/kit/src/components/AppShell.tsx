@@ -147,12 +147,15 @@ export function AppShell({
                     key={item.id}
                     aria-current={active ? "page" : undefined}
                     title={collapsed ? item.label : undefined}
-                    className={`mb-0.5 flex w-full items-center rounded-md border-l-2 py-2 text-sm ${
+                    // Reference-exact (owner: "birebir Mockifyr"): items carry NO border;
+                    // the active one gets the fill plus a short accent bar INSET at its
+                    // left edge — a highlight, not a border.
+                    className={`relative mb-0.5 flex w-full items-center rounded-md py-2 text-sm ${
                       collapsed ? "justify-center px-0" : "gap-2.5 px-2.5"
                     } ${
                       active
-                        ? "border-l-primary bg-accent font-medium text-accent-foreground"
-                        : "border-l-transparent text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                        ? "bg-accent font-medium text-accent-foreground before:absolute before:left-0 before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary before:content-['']"
+                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
                     }`}
                     onClick={item.onSelect}
                   >

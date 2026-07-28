@@ -84,11 +84,14 @@ dashboard and its source (not from memory):
 1. **Icons: lucide-react**, the family's one set. Sparse by design — nav items, stat
    cards, empty states; never decoration on prose. (Mockifyr already ships it.)
 2. **Sidebar**: brand head (mark + product word + subtitle) · **⌘K search** ·
-   **GROUPED nav with small-caps group labels** — the console groups by concern:
-   `OVERVIEW` (Today) · `EXECUTION` (Runs) · `INTAKE` (Bulk) · `OUTBOUND`
-   (Campaigns, Notifications) · `COMPLIANCE` (Archival) — future modules land in a
-   group instead of growing a flat list. Active item = soft fill + **2px left border**
-   in the accent. Footer: tenant/service switcher card + preferences row.
+   **GROUPED nav with small-caps group labels** — amended after the owner reviewed B1:
+   the five modules are ONE family and share ONE `OPERATIONS` group under `OVERVIEW`
+   (Today), exactly as the reference keeps its whole core domain in a single group. A
+   heading must own several items to earn its place. A surface for a DIFFERENT audience
+   (an API portal, platform settings) becomes its own group; a new operations module
+   joins the existing one. Active item = soft fill + a short **inset accent bar** at its left edge (a
+   highlight, not a border — items carry no borders at all; amended to match the
+   reference exactly after the owner reviewed B1). Footer: tenant/service switcher card + preferences row.
 3. **Collapse**: icons REMAIN when collapsed (icon-only rail, centered, tooltips),
    state persists (localStorage), and the toggle is a proper icon button — all three
    exactly as the reference behaves.
