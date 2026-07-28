@@ -61,7 +61,7 @@ export function RunConsole({ client, now }: RunConsoleProps) {
       {error && <Banner tone="danger">{error}</Banner>}
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Fleets</h2>
+        <h2 className="section-title">Fleets</h2>
         <div className="flex flex-wrap gap-2">
           {fleets.map((entry) => (
             <button

@@ -64,7 +64,7 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
       {problem && <Banner tone="danger">{problem} — the rows below are the last ones it did answer with.</Banner>}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted-foreground">Calendars</h3>
-        <button className="text-xs underline underline-offset-2" onClick={() => setAdding(!adding)}>
+        <button className="link-action" onClick={() => setAdding(!adding)}>
           {adding ? "cancel" : "add a calendar"}
         </button>
       </div>
@@ -73,7 +73,7 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
 
       <ul className="space-y-2">
         {calendars.map((calendar) => (
-          <li key={calendar.name} className="flex flex-wrap items-baseline gap-3 rounded-md border border-border/60 px-3 py-2 text-sm">
+          <li key={calendar.name} className="row-card flex flex-wrap items-baseline gap-3 text-sm">
             <span className="font-medium">{calendar.name}</span>
             {calendar.description && <span className="text-xs text-muted-foreground">{calendar.description}</span>}
             <span className="text-xs text-faint">
@@ -148,17 +148,17 @@ function AddCalendar({ client, fleet, onDone }: { client: AdminClient; fleet: st
     ((type === "holiday" || type === "annual") ? parsedDates.length > 0 : type === "weekly" ? days.length > 0 : cron.trim().length > 0);
 
   return (
-    <div className="space-y-2 rounded-md border border-border/60 p-3 text-xs">
+    <div className="row-card space-y-2 text-xs">
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1">
           Name
-          <input className="rounded border border-border px-2 py-1" value={name} onChange={(event) => setName(event.target.value)} />
+          <input className="control" value={name} onChange={(event) => setName(event.target.value)} />
         </label>
         <span className="flex flex-col gap-1">
           <label htmlFor="calendar-type">Type</label>
           <select
             id="calendar-type"
-            className="rounded border border-border px-2 py-1"
+            className="control"
             value={type}
             onChange={(event) => setType(event.target.value as typeof type)}
           >
@@ -169,7 +169,7 @@ function AddCalendar({ client, fleet, onDone }: { client: AdminClient; fleet: st
         </span>
         <label className="flex flex-col gap-1">
           Description
-          <input className="rounded border border-border px-2 py-1" value={description} onChange={(event) => setDescription(event.target.value)} />
+          <input className="control" value={description} onChange={(event) => setDescription(event.target.value)} />
         </label>
       </div>
 
@@ -178,7 +178,7 @@ function AddCalendar({ client, fleet, onDone }: { client: AdminClient; fleet: st
       {type === "holiday" && (
         <label className="flex flex-col gap-1">
           Excluded dates (comma separated, ISO)
-          <input className="rounded border border-border px-2 py-1 font-mono" value={dates} onChange={(event) => setDates(event.target.value)} placeholder="2026-01-01, 2026-04-23" />
+          <input className="control font-mono" value={dates} onChange={(event) => setDates(event.target.value)} placeholder="2026-01-01, 2026-04-23" />
         </label>
       )}
 
@@ -191,7 +191,7 @@ function AddCalendar({ client, fleet, onDone }: { client: AdminClient; fleet: st
             believe they excluded one particular new year (review R5).
           */}
           Excluded dates — the year is ignored, only the day and month recur
-          <input className="rounded border border-border px-2 py-1 font-mono" value={dates} onChange={(event) => setDates(event.target.value)} placeholder="2026-01-01, 2026-04-23" />
+          <input className="control font-mono" value={dates} onChange={(event) => setDates(event.target.value)} placeholder="2026-01-01, 2026-04-23" />
         </label>
       )}
 
@@ -214,7 +214,7 @@ function AddCalendar({ client, fleet, onDone }: { client: AdminClient; fleet: st
       {type === "cron" && (
         <label className="flex flex-col gap-1">
           Excluded times (cron)
-          <input className="rounded border border-border px-2 py-1 font-mono" value={cron} onChange={(event) => setCron(event.target.value)} placeholder="0 0 0-6 * * ?" />
+          <input className="control font-mono" value={cron} onChange={(event) => setCron(event.target.value)} placeholder="0 0 0-6 * * ?" />
         </label>
       )}
 

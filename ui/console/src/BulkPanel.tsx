@@ -153,10 +153,10 @@ export function BulkPanel({ client }: BulkPanelProps) {
       )}
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Definitions</h2>
+        <h2 className="section-title">Definitions</h2>
         <ul className="space-y-2">
           {(definitions ?? []).map((definition) => (
-            <li key={definition.name} className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 px-3 py-2">
+            <li key={definition.name} className="row-card flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium">{definition.name}</span>
               {Object.entries(definition.batchesByState).map(([batchState, count]) => (
                 <span key={batchState} className="text-xs text-faint">
@@ -172,14 +172,14 @@ export function BulkPanel({ client }: BulkPanelProps) {
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Upload</h2>
+        <h2 className="section-title">Upload</h2>
         <div className="flex flex-wrap items-center gap-2">
           <label className="text-xs text-muted-foreground" htmlFor="bulk-definition">
             Definition
           </label>
           <select
             id="bulk-definition"
-            className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+            className="control"
             value={uploadInto}
             onChange={(event) => setUploadInto(event.target.value)}
           >
@@ -213,14 +213,14 @@ export function BulkPanel({ client }: BulkPanelProps) {
       </section>
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Batches</h2>
+        <h2 className="section-title">Batches</h2>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <label className="text-xs text-muted-foreground" htmlFor="bulk-state">
             State
           </label>
           <select
             id="bulk-state"
-            className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+            className="control"
             value={state}
             onChange={(event) => {
               setState(event.target.value);
@@ -259,7 +259,7 @@ export function BulkPanel({ client }: BulkPanelProps) {
       </section>
 
       {selected && (
-        <section data-testid="batch-detail" className="rounded-lg border border-border p-4">
+        <section data-testid="batch-detail" className="card">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <h2 className="text-sm font-medium">
               Batch {selected.id} · {selected.definition}
@@ -334,7 +334,7 @@ export function BulkPanel({ client }: BulkPanelProps) {
             </p>
           )}
 
-          <h3 className="mb-1 mt-4 text-xs text-muted-foreground">
+          <h3 className="control-label mb-1 mt-4 block">
             Validation report{selected.invalidRows === 0 ? " — no findings" : ""}
           </h3>
           {selected.invalidRows > 0 && (

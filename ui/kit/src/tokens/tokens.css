@@ -149,6 +149,43 @@ body {
 .scroll-area:hover::-webkit-scrollbar-thumb, .scroll-area:focus-within::-webkit-scrollbar-thumb { background: var(--border-strong); }
 .scroll-area::-webkit-scrollbar-track { background: transparent; }
 
+/*
+  Component classes — the U6 styling pass. One vocabulary for the shapes every panel
+  repeats, defined HERE so the next re-skin stays a one-file change (ui-standard-v1 §1)
+  and no screen invents its own paddings again. Composed entirely from the tokens above:
+  a class that needed a new hex would be a design conversation, not a line here (§6).
+*/
+
+/* A card: content lifted onto --background above the surface, with the one soft shadow. */
+.card { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow-surface); }
+
+/* A row card: one entity in a list — same lift, tighter rhythm, quieter border. */
+.row-card { background: var(--background); border: 1px solid color-mix(in srgb, var(--border) 60%, transparent); border-radius: calc(var(--radius) - 2px); padding: 0.5rem 0.75rem; }
+
+/* The section title above a card or list — one size, one tone, everywhere. */
+.section-title { font-size: 0.875rem; font-weight: 500; color: var(--muted-foreground); margin-bottom: 0.5rem; }
+
+/* A form control (input/select/textarea): §3's focus rule lives here — fields take a
+   border tint instead of the heavy ring, and every panel gets it by classname. */
+.control { height: 2rem; background: var(--background); border: 1px solid var(--input); border-radius: calc(var(--radius) - 2px); padding: 0 0.625rem; font-size: 0.875rem; color: var(--foreground); }
+.control:focus-visible { border-color: var(--border-strong); box-shadow: 0 0 0 1px var(--border-strong); }
+textarea.control { height: auto; padding: 0.375rem 0.625rem; }
+
+/* The label over a control. */
+.control-label { font-size: 0.75rem; color: var(--muted-foreground); }
+
+/* A secondary button — an action that is not a verb (refresh, reveal, retrieve). */
+.btn-quiet { background: var(--background); border: 1px solid var(--border); border-radius: calc(var(--radius) - 2px); padding: 0.375rem 0.75rem; font-size: 0.875rem; }
+.btn-quiet:hover { background: var(--accent); }
+.btn-quiet:disabled { opacity: 0.5; }
+
+/* A tiny fact chip: a chunk count, an audit action — data, never an action. */
+.chip { display: inline-flex; align-items: center; border: 1px solid var(--border); border-radius: calc(var(--radius) - 4px); padding: 0.125rem 0.375rem; font-size: 11px; }
+
+/* A quiet action that is not a verb: "add a trigger", "clear filters". */
+.link-action { font-size: 0.75rem; text-decoration: underline; text-underline-offset: 2px; color: var(--muted-foreground); }
+.link-action:hover { color: var(--foreground); }
+
 :focus-visible { outline: 2px solid var(--ring); outline-offset: 2px; border-radius: 6px; }
 /* Form fields carry their own subtle focus (a border tint), so drop the heavy global ring on them —
    it reads as an ugly black box on inputs. Buttons/links keep the ring for keyboard accessibility. */

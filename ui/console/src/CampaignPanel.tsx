@@ -160,7 +160,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
           </label>
           <select
             id="campaign-state"
-            className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+            className="control"
             value={state}
             onChange={(event) => {
               setState(event.target.value);
@@ -179,7 +179,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             and the open campaign drift apart until a verb happens to refresh them.
           */}
           <button
-            className="ml-auto rounded-md border border-border bg-background px-3 py-1 text-sm hover:bg-accent"
+            className="btn-quiet ml-auto"
             onClick={refresh}
           >
             refresh
@@ -211,7 +211,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
       </section>
 
       {selected && (
-        <section data-testid="campaign-detail" className="rounded-lg border border-border p-4">
+        <section data-testid="campaign-detail" className="card">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <h2 className="text-sm font-medium">
               {selected.name} · {selected.type}
@@ -333,8 +333,8 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
           </dl>
 
           {LIVE.has(selected.state) && (
-            <div className="mt-4 rounded-md border border-border/60 p-3">
-              <h3 className="mb-2 text-xs text-muted-foreground">
+            <div className="row-card mt-4">
+              <h3 className="control-label mb-2 block">
                 Throttle — takes effect on the next pacer tick; an empty box keeps its current value
               </h3>
               <div className="flex flex-wrap items-end gap-3">
@@ -351,7 +351,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                       type="number"
                       min={0}
                       aria-label={label}
-                      className="w-28 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
+                      className="control w-28"
                       value={draft[field]}
                       onChange={(event) => setDraft({ ...draft, [field]: event.target.value })}
                     />
@@ -368,7 +368,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                     <input
                       type="time"
                       aria-label={label}
-                      className="rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
+                      className="control"
                       value={draft[field]}
                       onChange={(event) => setDraft({ ...draft, [field]: event.target.value })}
                     />
@@ -380,7 +380,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                     type="text"
                     aria-label="time zone"
                     placeholder={selected.timeZoneId}
-                    className="w-40 rounded-md border border-border bg-background px-2 py-1 text-sm text-foreground"
+                    className="control w-40"
                     value={draft.timeZoneId}
                     onChange={(event) => setDraft({ ...draft, timeZoneId: event.target.value })}
                   />
@@ -417,7 +417,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             </div>
           )}
 
-          <h3 className="mb-1 mt-4 text-xs text-muted-foreground">
+          <h3 className="control-label mb-1 mt-4 block">
             Failed items{failures.length === 0 ? " — none" : ` (${failures.length} shown)`}
           </h3>
           {failures.length > 0 && (
@@ -437,7 +437,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             </>
           )}
 
-          <h3 className="mb-1 mt-4 text-xs text-muted-foreground">Verb log</h3>
+          <h3 className="control-label mb-1 mt-4 block">Verb log</h3>
           {/*
             NOT the AuditBlock: that composite renders property-level old→new rows of the
             audit-trail module. A campaign's audit is verb-level (who ran what, why), so

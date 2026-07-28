@@ -111,10 +111,10 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
       )}
 
       <section>
-        <h2 className="mb-2 text-sm font-medium text-muted-foreground">Templates</h2>
+        <h2 className="section-title">Templates</h2>
         <ul className="space-y-2">
           {(templates ?? []).map((entry) => (
-            <li key={entry.key} className="flex flex-wrap items-center gap-2 rounded-md border border-border/60 px-3 py-2">
+            <li key={entry.key} className="row-card flex flex-wrap items-center gap-2">
               <span className="text-sm font-medium">{entry.key}</span>
               {/* The hash is what proves WHICH text was sent — truncated for the eye, whole in the row. */}
               <span className="font-mono text-xs text-faint" title={entry.hash}>
@@ -160,7 +160,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
               </label>
               <select
                 id="notification-state"
-                className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+                className="control"
                 value={state}
                 onChange={(event) => {
                   setState(event.target.value);
@@ -180,7 +180,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
               </label>
               <select
                 id="notification-template"
-                className="rounded-md border border-border bg-background px-2 py-1 text-sm"
+                className="control"
                 value={template}
                 onChange={(event) => {
                   setTemplate(event.target.value);
@@ -198,7 +198,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
           )}
 
           <button
-            className="ml-auto rounded-md border border-border bg-background px-3 py-1 text-sm hover:bg-accent"
+            className="btn-quiet ml-auto"
             onClick={refresh}
           >
             refresh
@@ -239,7 +239,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
       </section>
 
       {selected && (
-        <section data-testid="notification-detail" className="rounded-lg border border-border p-4">
+        <section data-testid="notification-detail" className="card">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <h2 className="text-sm font-medium">
               {selected.template} → <span className="font-mono">{selected.maskedRecipient}</span>

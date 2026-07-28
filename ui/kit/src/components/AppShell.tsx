@@ -70,7 +70,7 @@ export function AppShell({
               <button
                 aria-label={collapsed ? "expand navigation" : "collapse navigation"}
                 aria-expanded={!collapsed}
-                className="rounded-md border border-border px-2 py-0.5 text-xs hover:bg-accent"
+                className="btn-quiet px-2 py-0.5 text-xs"
                 onClick={onToggleCollapsed}
               >
                 {collapsed ? "»" : "«"}
@@ -80,10 +80,10 @@ export function AppShell({
 
           {services && services.length > 0 && !collapsed && (
             <div className="mb-2 px-2">
-              <label className="text-[11px] text-faint" htmlFor="goldpath-service">service</label>
+              <label className="control-label" htmlFor="goldpath-service">service</label>
               <select
                 id="goldpath-service"
-                className="mt-1 w-full rounded-md border border-border bg-background px-2 py-1 text-sm"
+                className="control mt-1 w-full"
                 value={activeService ?? services[0].name}
                 onChange={(event) => services.find((s) => s.name === event.target.value)?.onSelect()}
               >

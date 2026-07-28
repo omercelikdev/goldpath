@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import { isPaused, nextFireAt, type AdminClient, type JobInfo, type TriggerInfo } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -62,7 +62,7 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
         const paused = isPaused(job);
         const next = nextFireAt(job);
         return (
-          <section key={job.name} className="rounded-md border border-border/60 p-3">
+          <section key={job.name} className="row-card">
             <div className="flex flex-wrap items-center gap-3">
               <button
                 className="text-sm font-medium underline-offset-2 hover:underline"
@@ -77,7 +77,7 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
                 // trigger will never fire and no amount of resuming will change that.
                 <span className="text-xs text-warning">no trigger — nothing will fire it</span>
               )}
-              {next && <span className="text-xs text-faint">next {next}</span>}
+              {next && <span className="text-xs text-faint" title={next}>next {shortStamp(next)}</span>}
               <span className="text-xs text-faint">
                 {job.triggers.length} trigger{job.triggers.length === 1 ? "" : "s"}
               </span>
@@ -116,7 +116,7 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
 
                 {job.dataMap && Object.keys(job.dataMap).length > 0 && (
                   <div>
-                    <h4 className="mb-1 text-xs text-muted-foreground">
+                    <h4 className="control-label mb-1 block">
                       Job data — read-only: these come from the code that declares the job
                     </h4>
                     <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
@@ -165,12 +165,12 @@ function Triggers({
   return (
     <div>
       <div className="mb-1 flex items-center justify-between">
-        <h4 className="text-xs text-muted-foreground">Triggers</h4>
+        <h4 className="control-label">Triggers</h4>
         <span className="flex gap-3">
-          <button className="text-xs underline underline-offset-2" onClick={() => setRescheduling(!rescheduling)}>
+          <button className="link-action" onClick={() => setRescheduling(!rescheduling)}>
             {rescheduling ? "cancel" : "change the schedule"}
           </button>
-          <button className="text-xs underline underline-offset-2" onClick={() => setAdding(!adding)}>
+          <button className="link-action" onClick={() => setAdding(!adding)}>
             {adding ? "cancel" : "add a trigger"}
           </button>
         </span>
@@ -198,7 +198,7 @@ function Triggers({
             <Schedule trigger={trigger} />
             {trigger.calendarName && <span className="text-faint">calendar {trigger.calendarName}</span>}
             <span className="text-faint">priority {trigger.priority}</span>
-            {trigger.nextFireAt && <span className="text-faint">next {trigger.nextFireAt}</span>}
+            {trigger.nextFireAt && <span className="text-faint" title={trigger.nextFireAt}>next {shortStamp(trigger.nextFireAt)}</span>}
             <span className="ml-auto">
               <VerbButton
                 label="remove"
@@ -249,7 +249,7 @@ function Reschedule({
   const [timeZoneId, setTimeZoneId] = useState(current?.timeZoneId ?? "");
 
   return (
-    <div className="mb-3 space-y-2 rounded-md border border-border/60 p-3 text-xs">
+    <div className="row-card mb-3 space-y-2 text-xs">
       <p className="text-muted-foreground">
         Changes the schedule of <span className="font-mono">{targetName}</span>
         {current ? "" : " — which does not exist yet, so this creates it"}. The job itself
@@ -259,11 +259,11 @@ function Reschedule({
       <div className="flex flex-wrap items-end gap-2">
         <label className="flex flex-col gap-1">
           Cron
-          <input className="rounded border border-border px-2 py-1 font-mono" value={cron} onChange={(event) => setCron(event.target.value)} placeholder="0 0 3 * * ?" />
+          <input className="control font-mono" value={cron} onChange={(event) => setCron(event.target.value)} placeholder="0 0 3 * * ?" />
         </label>
         <label className="flex flex-col gap-1">
           Timezone
-          <input className="rounded border border-border px-2 py-1" value={timeZoneId} onChange={(event) => setTimeZoneId(event.target.value)} placeholder="Europe/Istanbul" />
+          <input className="control" value={timeZoneId} onChange={(event) => setTimeZoneId(event.target.value)} placeholder="Europe/Istanbul" />
         </label>
         {cron.trim().length > 0 && (
           <VerbButton
@@ -335,20 +335,20 @@ function AddTrigger({
   const ready = name.trim().length > 0 && (kind === "cron" ? cron.trim().length > 0 : interval.trim().length > 0);
 
   return (
-    <div className="mt-3 space-y-2 rounded-md border border-border/60 p-3">
+    <div className="row-card mt-3 space-y-2">
       <p className="text-xs text-muted-foreground">
         A trigger schedules a job the code already declares. It cannot create one.
       </p>
       <div className="flex flex-wrap items-end gap-2 text-xs">
         <label className="flex flex-col gap-1">
           Name
-          <input className="rounded border border-border px-2 py-1" value={name} onChange={(event) => setName(event.target.value)} />
+          <input className="control" value={name} onChange={(event) => setName(event.target.value)} />
         </label>
         <span className="flex flex-col gap-1">
           <label htmlFor={`kind-${job}`}>Kind</label>
           <select
             id={`kind-${job}`}
-            className="rounded border border-border px-2 py-1"
+            className="control"
             value={kind}
             onChange={(event) => setKind(event.target.value as "cron" | "simple")}
           >
@@ -360,17 +360,17 @@ function AddTrigger({
           <>
             <label className="flex flex-col gap-1">
               Cron
-              <input className="rounded border border-border px-2 py-1 font-mono" value={cron} onChange={(event) => setCron(event.target.value)} placeholder="0 0 3 * * ?" />
+              <input className="control font-mono" value={cron} onChange={(event) => setCron(event.target.value)} placeholder="0 0 3 * * ?" />
             </label>
             <label className="flex flex-col gap-1">
               Timezone
-              <input className="rounded border border-border px-2 py-1" value={timeZoneId} onChange={(event) => setTimeZoneId(event.target.value)} placeholder="Europe/Istanbul" />
+              <input className="control" value={timeZoneId} onChange={(event) => setTimeZoneId(event.target.value)} placeholder="Europe/Istanbul" />
             </label>
           </>
         ) : (
           <label className="flex flex-col gap-1">
             Interval
-            <input className="rounded border border-border px-2 py-1 font-mono" value={interval} onChange={(event) => setInterval(event.target.value)} placeholder="00:15:00" />
+            <input className="control font-mono" value={interval} onChange={(event) => setInterval(event.target.value)} placeholder="00:15:00" />
           </label>
         )}
         {ready && (

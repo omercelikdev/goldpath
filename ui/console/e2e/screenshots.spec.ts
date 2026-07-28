@@ -22,8 +22,10 @@ test("the console, as an operator sees it", async ({ page }) => {
   await page.screenshot({ path: `${out}/console-today.png` });
 
   // 2. The run console — fleets discovered from the store, a run with its repair queue.
+  // Since U5 the Runs section opens on the fleet OVERVIEW; the run list lives in History.
   await page.getByRole("button", { name: "Runs" }).click();
   await expect(page.getByTestId("run-console")).toBeVisible();
+  await page.getByRole("tab", { name: "History" }).click();
   await page.locator("table button").first().click();
   const runDetail = page.getByTestId("run-detail");
   await expect(runDetail).toBeVisible();

@@ -54,7 +54,7 @@ export function TriageHome({ services, onOpen, now }: TriageHomeProps) {
         <h2 className="text-sm font-medium">Today</h2>
         <span className="text-xs text-faint">across {services.length} service{services.length === 1 ? "" : "s"} · {TRIAGE_SCOPE}</span>
         <button
-          className="ml-auto rounded-md border border-border bg-background px-3 py-1 text-sm hover:bg-accent"
+          className="btn-quiet ml-auto"
           onClick={() => setRefreshToken((token) => token + 1)}
         >
           refresh
@@ -82,7 +82,7 @@ export function TriageHome({ services, onOpen, now }: TriageHomeProps) {
           {rows.map((row, index) => (
             <li
               key={`${row.service}-${row.section}-${row.headline}-${index}`}
-              className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 px-3 py-2"
+              className="row-card flex flex-wrap items-center gap-3"
             >
               {/* The word carries the meaning; the tone only reinforces it. Colour alone
                   would leave the row unreadable to whoever cannot see the difference. */}

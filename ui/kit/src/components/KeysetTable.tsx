@@ -101,7 +101,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
           <Banner tone="danger">
             The page could not be loaded.
             <button
-              className="ml-3 rounded-md border border-border bg-background px-2 py-0.5 text-xs hover:bg-accent"
+              className="btn-quiet ml-3 px-2 py-0.5 text-xs"
               onClick={() => void fetchPage(rows.length === 0 ? null : cursor, rows.length === 0)}
             >
               retry
@@ -117,7 +117,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
         </span>
         {!ended && state !== "error" && (
           <button
-            className="rounded-md border border-border bg-background px-3 py-1.5 text-sm hover:bg-accent disabled:opacity-50"
+            className="btn-quiet"
             disabled={state === "loading"}
             onClick={() => void fetchPage(cursor, false)}
           >
