@@ -34,6 +34,29 @@ test.describe("the console served by the app itself", () => {
     await expect(picker.locator("option")).toHaveText(["open", "auth-floored", "tenant-scoped"]);
   });
 
+  test("an app that configures NO service shows one service and NO warning at all", async ({ page }) => {
+    // The single-app default — by far the most common adopter — and the seam that was
+    // never tested: the package proved WHAT it serves for an unconfigured registry, the
+    // console proved how it reads each answer, and nobody proved the two agreed. They did
+    // not: an empty list read as a BROKEN registry, so every single-app operator's first
+    // screen carried a warning that a service they configured had gone missing.
+    //
+    // The tenant-scoped host is that app: it runs without GOLDPATH_CONSOLE_SERVICES.
+    const tenant = process.env.GOLDPATH_TENANT_URL ?? "http://localhost:5313";
+    await page.goto(`${tenant}/goldpath/console/`);
+
+    await expect(page.getByTestId("triage-home")).toBeVisible();
+    // "registry" is the console's own word for EVERY registry problem it can report, so
+    // its absence is the claim: not one of them fired. (This app does refuse its tenant-
+    // scoped surfaces, and triage says so — that is a true statement about the service,
+    // which is exactly what the false one was crowding out.)
+    await expect(page.getByText(/registry/i)).toHaveCount(0);
+    // One service needs no picker: there is nothing to pick between.
+    await expect(page.getByLabel(/service/i)).toHaveCount(0);
+    // And the answer underneath it, from the running app: absent, not empty.
+    expect((await page.request.get(`${tenant}/goldpath/console/console.config.json`)).status()).toBe(404);
+  });
+
   test("an unknown path 404s instead of serving a page that would render blank", async ({ page }) => {
     // The console has no client-side routes yet: sections are state, not URLs. Answering
     // this with the page would be 200 + a blank screen, because the page's relative asset

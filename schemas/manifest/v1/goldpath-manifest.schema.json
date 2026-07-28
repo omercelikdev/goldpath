@@ -719,7 +719,7 @@
         },
         "mock": {
           "type": "object",
-          "description": "Stub format is canonical WireMock JSON (provider: WireMock or Mockifyr). Absence triggers rule V6 warning.",
+          "description": "Stub format is a Mockifyr bundle. Absence triggers rule V6 warning.",
           "properties": {
             "strategy": {
               "enum": [

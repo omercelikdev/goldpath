@@ -65,14 +65,19 @@ public class MapGoldpathConsoleTests
     }
 
     [Fact]
-    public async Task An_app_that_configures_no_service_serves_an_EMPTY_registry_which_the_console_reads_as_this_service_only()
+    public async Task An_app_that_configures_no_service_has_NO_registry_and_answers_404()
     {
         var client = await HostAsync();
 
-        var registry = await client.GetFromJsonAsync<Registry>("/goldpath/console/console.config.json");
+        var response = await client.GetAsync("/goldpath/console/console.config.json");
 
-        Assert.NotNull(registry);
-        Assert.Empty(registry!.Services);
+        // 404 is the one answer the console reads as "this service only" in SILENCE. An
+        // empty list is not the same thing and must never come back here: the console's
+        // reader (ui/console/src/registry.ts) treats an empty registry as a BROKEN one and
+        // warns that a configured service went missing — which is true of a mangled config
+        // file and false of an app that simply has one service. The seam is proven for real
+        // against a running app in ui/console/e2e/served.spec.ts.
+        Assert.Equal(HttpStatusCode.NotFound, response.StatusCode);
     }
 
     [Fact]
