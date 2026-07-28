@@ -213,3 +213,52 @@ operator's single screen per campaign (progress, rate governor, failure rate, ET
   human-send-without-notification-seam info). Accept?
 - **D8 — `features.campaign` REQUIRES a broker** (schema cross-field rule, like outbox);
   the schema key lands WITH S3. Accept?
+
+## Revision R1 — device-fleet parity parameters (PROPOSED 2026-07-28)
+
+**Finding.** A device-management-class adopter (tens of millions of targets, multi-day
+pushes) plans a campaign with SIX dials. The policy carries four of them — TPS,
+max-in-flight, daily quota, window(+timezone) — and the console adjusts all four live.
+The missing two, and two operational behaviors around them, are this revision. Every
+addition is a POLICY field or a pacer rule: no new module, no new screen concept — the
+governor panel simply grows the fields.
+
+| # | Addition | The operator's sentence for it |
+|---|---|---|
+| R1.1 | `ExcludedDays` (set of `DayOfWeek`, evaluated in the policy's `TimeZoneId`) | "weekends are off-limits" — today's workaround is pausing Friday night and REMEMBERING Monday |
+| R1.2 | `EndDate` (date, policy timezone; pacer stops releasing past it, campaign reports `ExpiredIncomplete` rather than silently running forever) | "this push has 7 days, then whatever is left is a report, not a background surprise" |
+| R1.3 | Per-item auto-retry: `MaxAttempts` (default 1 = today's behavior) + fixed backoff ladder (30s → 2m); an item that exhausts attempts lands where failures already land — the repair queue, replayable | "transient device timeouts should not need a human before breakfast" — the repair queue stays the terminal truth, retry only precedes it |
+| R1.4 | A GLOBAL release gate: `GoldpathCampaignOptions.GlobalTps` (per-process ceiling across ALL running campaigns, enforced at the pacer; null = off) | "five campaigns at once must not melt the platform" — per-campaign limits cannot see each other |
+
+### Deliberately NOT in this revision
+
+- **Free-form target queries from the console.** The filter (`make=X AND fw=Y`) stays an
+  enumerator in CODE. A UI that turns operator text into a 30M-row query is the same
+  constitution breach as a UI that creates jobs (ADR-0001), and it is one privilege
+  escalation away from a full-table export.
+- **A distributed global limiter.** `GlobalTps` is per-process (the pacer is already a
+  cluster singleton per app, so per-process IS per-app). A cross-APP limiter is an
+  infrastructure product; adopters who need one put it where the industry does — at the
+  gateway.
+- **Kafka rider.** Unchanged from D4: written 30M-scale trigger stands.
+
+### Compatibility
+
+All four are additive policy fields with defaults equal to today's behavior
+(`ExcludedDays` empty, `EndDate` null, `MaxAttempts` 1, `GlobalTps` null). Existing
+campaigns and the frozen admin contract's routes are untouched; `throttle` learns the new
+fields the way it learned the old ones (omitted = keep). One migration: three nullable
+columns + one small retry-bookkeeping column on items.
+
+### Test plan (DoD when implemented)
+
+1. Unit: an excluded day releases nothing and the day AFTER resumes without a human;
+   quota-day and excluded-day both respect the policy timezone across a DST boundary;
+   `EndDate` passing mid-flight flips to `ExpiredIncomplete` and the remaining count is
+   the report; attempt 2 fires after the first rung, attempt 3 after the second, and
+   exhaustion lands in the repair queue with the LAST error kept.
+2. Integration (real broker + pg): two campaigns under one `GlobalTps` never jointly
+   exceed it in any one-second window; the console's throttle changes `ExcludedDays`
+   live and the pacer honors it on the next tick.
+3. Console: the governor grows the fields; the smoke drives an excluded-day flip and an
+   end-date expiry against a real campaign.
