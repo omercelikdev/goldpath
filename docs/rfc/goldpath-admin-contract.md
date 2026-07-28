@@ -134,3 +134,93 @@ Routes, nouns, envelopes and paging are unchanged. What changes is authorization
 semantics (`?tenant=` becomes privilege-gated) and default scope (ambient, not "all") —
 a behavioral break permitted at a preview boundary per the H7 versioning promise, shipped
 with an upgrade-guide entry. The UI phase (U2+) is written against THIS revision.
+
+## Revision R2 — the scheduling surface (PROPOSED 2026-07-28)
+
+**Finding.** The console covers what the five modules *do*, but only half of what the
+fleet *is*. An operator can trigger a job and read its runs; they cannot see why a job
+will fire at 03:00, which node ran the last one, whether a run was scheduled or triggered
+by hand, or what a trigger's misfire policy is — and they cannot answer "show me
+yesterday's failures" without walking a take-bounded list. A comparable Quartz management
+screen carries all of it, and an adopter who has seen one will read the gaps as missing
+capability rather than deliberate scope.
+
+The gap splits three ways, and only the middle one is a contract change.
+
+### 1. Already frozen, never put on screen (no contract change — U6 work)
+
+`pause-all` / `resume-all`, `reschedule`, the calendar CRUD, and the global `/audit` are
+all in the inventory above and none of them has a screen. `pause-all` is the one that
+matters at 03:00: it is the single verb an operator reaches for during an incident, and
+today the console cannot reach it. Booked as **open-threads T13**; the screens land in
+U5 with the routes below.
+
+### 2. Facts the store holds and the contract does not carry (ADDITIVE — this revision)
+
+Additive only: no route is renamed, no envelope changes shape, and every field below is
+*added* to a payload the console already reads. A client written against R1 keeps working.
+
+| # | Addition | Why an operator needs it |
+|---|---|---|
+| R2.1 | `GET /fleets/{fleet}/status` → scheduler state: `runningSince`, `threadPoolSize`, `jobsExecuted`, `isShutdown`, plus the `nodes` already on `GoldpathFleetInfo` | "Is this fleet alive, and how big is it?" is the first question of an incident, and today it is answered by inference from whether runs appear |
+| R2.2 | `GoldpathTriggerInfo` widens: `type` (cron\|simple), `priority`, `misfireInstruction`, `timeZoneId`, `startAt`, `endAt`, `timesTriggered`, `repeatInterval`, `repeatCount` | A cron string alone does not explain a fire time. Timezone and misfire policy are the two fields that make a "why did it not run?" answerable |
+| R2.3 | `GoldpathJobRun` gains `triggeredBy` (`Scheduled`\|`Manual`\|`Rerun`) and `instanceName` | The two columns every run list needs and neither exists today: who started this, and which node ran it. **Cost: a migration** (two nullable columns) — the only schema change in R2 |
+| R2.4 | `GET /fleets/{fleet}/runs` gains `?status=`, `?from=`, `?to=`, and keyset `?afterId=` | "Yesterday's failures" must not be a scroll. Keyset follows the bulk validation report's precedent (`afterRow`), not offset paging |
+| R2.5 | `POST /fleets/{fleet}/jobs/{job}/triggers` (add) · `DELETE /fleets/{fleet}/jobs/{job}/triggers/{trigger}` (remove) | A declared job may legitimately need a second schedule (month-end as well as nightly). `reschedule` stays the frozen shorthand for the 90% case: changing the one cron a job has |
+| R2.6 | Job detail exposes its **job data map, read-only** | Diagnosis needs to see the parameters a run was given. Editing them is drift (see §3) |
+
+Derived facts stay derived: a job's health rollup ("healthy / failing / mixed") and its
+"last run 3 minutes ago" are computed by the console from runs it already reads. The
+contract gains no aggregate endpoint it would then have to keep true.
+
+### 3. Deliberately REFUSED — runtime authoring (the constitution decides this)
+
+A comparable screen lets an operator pick a job class from a server-provided list, fill a
+data map, and create a job; and delete one. **Goldpath will not**, at any layer:
+
+- **Creating or deleting a JOB is a manifest change** (ADR-0001: the manifest is the
+  single source of truth; composition is compile-time). A job created at runtime is a
+  production behaviour that exists in no manifest, no review and no repository — the exact
+  drift the constitution exists to prevent. There is no `available-classes` endpoint,
+  because reflecting the assembly's job types into a picker is the first half of that
+  feature.
+- **Changing a job's data map at runtime is the same drift, quietly**: the job would then
+  behave differently from the code that declares it. Read-only, per R2.6.
+- **SCHEDULING is not authoring, and stays open**: triggers, calendars, pause/resume and
+  reschedule are configuration about *when* a declared job runs. They are already audited
+  server-side (iron rule 2), they survive restart in the Quartz store, and an operator
+  who cannot move a run out of a maintenance window will move it by editing the database.
+
+Owner decision, 2026-07-28: adopt this three-way split as written.
+
+### Rejected, with the reason recorded
+
+- **Quartz `standby`/`start` at the scheduler level.** It looks like the natural "stop
+  everything" button and is a footgun in a cluster: standby applies to the node that
+  received the call, so an operator who "stopped the fleet" has stopped one instance while
+  the others keep firing — and it is lost on restart. `pause-all` is durable, cluster-wide
+  and already frozen. One way to stop a fleet, and it is the one that works.
+- **Offset paging on runs.** Ordered sets that grow while being read are exactly where
+  offset paging skips and duplicates rows; keyset is the house rule.
+
+### Test plan (the DoD for the implementation step)
+
+1. **Unit**: the widened DTO carries every Quartz fact for both a cron and a simple
+   trigger; `triggeredBy` is stamped `Manual` by the trigger verb, `Rerun` by rerun and
+   `Scheduled` by the scheduler path; the run filter's clamp and keyset boundary.
+2. **Integration (real Postgres + real Quartz)**: two-instance fleet — a run stamped with
+   the instance that executed it; `?from`/`?to`/`?status` against a seeded window;
+   `afterId` walks the whole set with no gap and no repeat; a second trigger added to a
+   declared job fires and is removed again; the migration applies to a database written by
+   the previous train.
+3. **Refusal proofs**: there is no route that creates a job (the absence is asserted, so
+   nobody adds one quietly); the scheduling verbs stay behind the ops floor and write
+   audit rows; on a multi-tenant app they obey R1's scoping.
+4. **Console (U5)**: every route above is driven in `scripts/console-smoke.sh` against a
+   real fleet, and the axe gate stays green.
+
+### Why this is a revision, not a break
+
+Additive fields on existing payloads, new routes alongside the frozen ones, and one
+migration that adds two nullable columns. R1 clients keep working unchanged. Ships in the
+train after preview.5, with an upgrade-guide entry for the migration.

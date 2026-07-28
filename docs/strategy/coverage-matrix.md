@@ -77,7 +77,7 @@ for planning · — deliberately absent (the card does not trigger it).
 1. CorPay completion slice: SoftDelete story + Caching slice + Archival slice + the real
    worker-consumer via the Contracts idiom.
 2. Insurance is built LEAN then grown by `add feature` — the verb's field proof.
-3. The three unfielded skills distribute per the tooling table.
+3. `goldpath-manifest` is the one unfielded skill left; it distributes per the tooling table.
 4. Telco doubles as the VARIANT sample (sqlserver/apikey/subdomain/redis-lock).
 5. Campaign single-sector proof: accept, or revise the insurance card with winback.
 6. `db bundle` production story lands in Telco.
