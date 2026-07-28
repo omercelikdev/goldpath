@@ -15,24 +15,6 @@ Goldpath.GoldpathAddTriggerRequest.RepeatCount.get -> int?
 Goldpath.GoldpathAddTriggerRequest.RepeatCount.init -> void
 Goldpath.GoldpathAddTriggerRequest.TimeZoneId.get -> string?
 Goldpath.GoldpathAddTriggerRequest.TimeZoneId.init -> void
-Goldpath.GoldpathFleetStatus
-Goldpath.GoldpathFleetStatus.GoldpathFleetStatus(string! SchedulerName, string! InstanceId, System.DateTimeOffset? RunningSince, int ThreadPoolSize, int JobsExecuted, bool IsShutdown, bool InStandbyMode, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathFleetNode!>! Nodes) -> void
-Goldpath.GoldpathFleetStatus.InStandbyMode.get -> bool
-Goldpath.GoldpathFleetStatus.InStandbyMode.init -> void
-Goldpath.GoldpathFleetStatus.InstanceId.get -> string!
-Goldpath.GoldpathFleetStatus.InstanceId.init -> void
-Goldpath.GoldpathFleetStatus.IsShutdown.get -> bool
-Goldpath.GoldpathFleetStatus.IsShutdown.init -> void
-Goldpath.GoldpathFleetStatus.JobsExecuted.get -> int
-Goldpath.GoldpathFleetStatus.JobsExecuted.init -> void
-Goldpath.GoldpathFleetStatus.Nodes.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathFleetNode!>!
-Goldpath.GoldpathFleetStatus.Nodes.init -> void
-Goldpath.GoldpathFleetStatus.RunningSince.get -> System.DateTimeOffset?
-Goldpath.GoldpathFleetStatus.RunningSince.init -> void
-Goldpath.GoldpathFleetStatus.SchedulerName.get -> string!
-Goldpath.GoldpathFleetStatus.SchedulerName.init -> void
-Goldpath.GoldpathFleetStatus.ThreadPoolSize.get -> int
-Goldpath.GoldpathFleetStatus.ThreadPoolSize.init -> void
 Goldpath.GoldpathJobInfo.DataMap.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
 Goldpath.GoldpathJobInfo.DataMap.init -> void
 Goldpath.GoldpathJobInfo.GoldpathJobInfo(string! Name, string? Description, bool RequestsRecovery, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathTriggerInfo!>! Triggers, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? DataMap = null) -> void
@@ -80,7 +62,6 @@ Goldpath.GoldpathFireFacts.TriggeredBy.get -> string?
 Goldpath.GoldpathFireFacts.TriggeredBy.init -> void
 Goldpath.GoldpathFireFacts.GoldpathFireFacts(string! SchedulerName, string! InstanceName, string! FireInstanceId, bool Recovering, string? TraceParent = null, string? TriggeredBy = null) -> void
 const Goldpath.GoldpathJobsExtensions.TriggeredByKey = "goldpath:triggered-by" -> string!
-Goldpath.GoldpathJobsAdminService<TContext>.GetFleetStatusAsync(string! fleet, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathFleetStatus?>!
 Goldpath.GoldpathJobsAdminService<TContext>.AddTriggerAsync(string! fleet, string! job, string! name, Goldpath.GoldpathTriggerSpec! spec, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathJobsAdminService<TContext>.RemoveTriggerAsync(string! fleet, string! job, string! name, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathJobsAdminService<TContext>.GetRunsAsync(string! fleet, string? job, int take, System.Threading.CancellationToken ct, string? status = null, System.DateTimeOffset? from = null, System.DateTimeOffset? to = null, System.Guid? afterId = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathJobRun!>!>!
@@ -88,3 +69,30 @@ Goldpath.GoldpathJobsAdminService<TContext>.GetRunsAsync(string! fleet, string? 
 *REMOVED*Goldpath.GoldpathJobInfo.GoldpathJobInfo(string! Name, string? Description, bool RequestsRecovery, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathTriggerInfo!>! Triggers) -> void
 *REMOVED*Goldpath.GoldpathFireFacts.GoldpathFireFacts(string! SchedulerName, string! InstanceName, string! FireInstanceId, bool Recovering, string? TraceParent = null) -> void
 *REMOVED*Goldpath.GoldpathJobsAdminService<TContext>.GetRunsAsync(string! fleet, string? job, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathJobRun!>!>!
+Goldpath.GoldpathFleetConnection
+Goldpath.GoldpathFleetConnection.GoldpathFleetConnection(string! InstanceId, System.DateTimeOffset? RunningSince, int ThreadPoolSize, int JobsExecuted, bool IsShutdown, bool InStandbyMode) -> void
+Goldpath.GoldpathFleetConnection.InStandbyMode.get -> bool
+Goldpath.GoldpathFleetConnection.InStandbyMode.init -> void
+Goldpath.GoldpathFleetConnection.InstanceId.get -> string!
+Goldpath.GoldpathFleetConnection.InstanceId.init -> void
+Goldpath.GoldpathFleetConnection.IsShutdown.get -> bool
+Goldpath.GoldpathFleetConnection.IsShutdown.init -> void
+Goldpath.GoldpathFleetConnection.JobsExecuted.get -> int
+Goldpath.GoldpathFleetConnection.JobsExecuted.init -> void
+Goldpath.GoldpathFleetConnection.RunningSince.get -> System.DateTimeOffset?
+Goldpath.GoldpathFleetConnection.RunningSince.init -> void
+Goldpath.GoldpathFleetConnection.ThreadPoolSize.get -> int
+Goldpath.GoldpathFleetConnection.ThreadPoolSize.init -> void
+Goldpath.GoldpathFleetStatus
+Goldpath.GoldpathFleetStatus.Connection.get -> Goldpath.GoldpathFleetConnection!
+Goldpath.GoldpathFleetStatus.Connection.init -> void
+Goldpath.GoldpathFleetStatus.GoldpathFleetStatus(string! SchedulerName, int JobCount, bool IsPaused, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathFleetNode!>! Nodes, Goldpath.GoldpathFleetConnection! Connection) -> void
+Goldpath.GoldpathFleetStatus.IsPaused.get -> bool
+Goldpath.GoldpathFleetStatus.IsPaused.init -> void
+Goldpath.GoldpathFleetStatus.JobCount.get -> int
+Goldpath.GoldpathFleetStatus.JobCount.init -> void
+Goldpath.GoldpathFleetStatus.Nodes.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathFleetNode!>!
+Goldpath.GoldpathFleetStatus.Nodes.init -> void
+Goldpath.GoldpathFleetStatus.SchedulerName.get -> string!
+Goldpath.GoldpathFleetStatus.SchedulerName.init -> void
+Goldpath.GoldpathJobsAdminService<TContext>.GetFleetStatusAsync(string! fleet, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathFleetStatus?>!

@@ -236,21 +236,53 @@ public class SchedulingSurfaceTests
     }
 
     [Fact]
-    public async Task The_fleet_reports_the_state_of_its_scheduler()
+    public async Task The_fleet_reports_the_STORE_s_truth_and_names_the_connection_separately()
     {
         using var fixture = new RunnerFixture();
         var scheduler = await InMemorySchedulerAsync();
         var admin = AdminOver(fixture, scheduler);
+        await DeclareJobAsync(scheduler, "nightly");
 
         var status = await admin.GetFleetStatusAsync("fleet", default);
         var unknown = await admin.GetFleetStatusAsync("no-such-fleet", default);
 
         Assert.NotNull(status);
-        Assert.False(status!.IsShutdown);
-        Assert.True(status.ThreadPoolSize > 0);
-        Assert.NotNull(status.RunningSince);
+        // Cluster facts come from the registry's view of the store...
+        Assert.Equal("fleet", status!.SchedulerName);
+        Assert.Single(status.Nodes);
+        Assert.False(status.IsPaused);
+        // ...while the per-instance numbers are named for the member that answered. On a
+        // management-mode head those read as standby with an idle pool, and reporting
+        // them as the FLEET's told an operator their running fleet was holding fires
+        // (found by the console smoke on this PR).
+        Assert.NotNull(status.Connection);
+        Assert.True(status.Connection.ThreadPoolSize > 0);
+
         // A fleet nobody registered is absent, not an empty status that reads as healthy.
         Assert.Null(unknown);
+    }
+
+    [Fact]
+    public async Task A_fleet_stopped_by_pause_all_reports_ITSELF_as_paused()
+    {
+        using var fixture = new RunnerFixture();
+        var scheduler = await InMemorySchedulerAsync();
+        var admin = AdminOver(fixture, scheduler);
+        await DeclareJobAsync(scheduler, "nightly");
+        await admin.AddTriggerAsync("fleet", "nightly", "nightly-cron",
+            new GoldpathTriggerSpec("0 0 3 * * ?", null, null, null, null), "ops@acme", default);
+
+        var before = (await admin.GetFleetStatusAsync("fleet", default))!.IsPaused;
+        await admin.SetFleetPausedAsync("fleet", paused: true, "ops@acme", default);
+        var after = (await admin.GetFleetStatusAsync("fleet", default))!.IsPaused;
+        await admin.SetFleetPausedAsync("fleet", paused: false, "ops@acme", default);
+        var resumed = (await admin.GetFleetStatusAsync("fleet", default))!.IsPaused;
+
+        // Read back from the store's own paused trigger groups — durable and cluster-wide,
+        // which is exactly what pause-all promises and what a per-instance standby is not.
+        Assert.False(before);
+        Assert.True(after);
+        Assert.False(resumed);
     }
 
     // ── harness ────────────────────────────────────────────────────────────────

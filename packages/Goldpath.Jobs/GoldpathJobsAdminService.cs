@@ -42,19 +42,36 @@ public sealed record GoldpathTriggerInfo(
     int? RepeatCount = null);
 
 /// <summary>
-/// A fleet's scheduler as it sees itself (R2.1) — the first question of an incident is
-/// whether the thing is alive and how big it is, and today that is answered by inferring
-/// from whether runs appear.
+/// The instance THIS console is talking through, and nothing more.
+/// <para>
+/// Quartz's metadata is per-instance: asked through a management-mode member it reports
+/// that member — standby, an empty thread pool, zero jobs executed — while the executors
+/// are firing normally. Reporting those numbers as the fleet's told an operator their
+/// fleet was holding fires when it was not (found by the console smoke on the R2 PR), so
+/// they are named for what they are and kept out of the fleet's own answer.
+/// </para>
 /// </summary>
-public sealed record GoldpathFleetStatus(
-    string SchedulerName,
+public sealed record GoldpathFleetConnection(
     string InstanceId,
     DateTimeOffset? RunningSince,
     int ThreadPoolSize,
     int JobsExecuted,
     bool IsShutdown,
-    bool InStandbyMode,
-    IReadOnlyList<GoldpathFleetNode> Nodes);
+    bool InStandbyMode);
+
+/// <summary>
+/// A fleet as the STORE sees it (R2.1) — the first question of an incident is whether the
+/// thing is alive, how big it is, and whether somebody stopped it. All three are facts
+/// about the cluster, not about whichever member answered. <c>IsPaused</c> is what
+/// <c>pause-all</c> leaves behind: durable, cluster-wide, and read back from the store's
+/// own paused trigger groups.
+/// </summary>
+public sealed record GoldpathFleetStatus(
+    string SchedulerName,
+    int JobCount,
+    bool IsPaused,
+    IReadOnlyList<GoldpathFleetNode> Nodes,
+    GoldpathFleetConnection Connection);
 
 /// <summary>A trigger to add to a DECLARED job (R2.5): cron or simple, never a new job.</summary>
 public sealed record GoldpathTriggerSpec(string? Cron, string? TimeZoneId, TimeSpan? Interval, int? RepeatCount, string? CalendarName, int Priority = 5);
@@ -191,15 +208,22 @@ public sealed class GoldpathJobsAdminService<TContext>
 
         var scheduler = await _registry.GetSchedulerAsync(fleet, ct);
         var meta = await scheduler.GetMetaData(ct);
+        // The paused state is read from the STORE's trigger groups, which is where
+        // pause-all wrote it — durable, cluster-wide, and true no matter which member
+        // answers this call.
+        var paused = (await scheduler.GetPausedTriggerGroups(ct)).Contains(GoldpathJobsExtensions.JobGroup);
         return new GoldpathFleetStatus(
-            scheduler.SchedulerName,
-            scheduler.SchedulerInstanceId,
-            meta.RunningSince,
-            meta.ThreadPoolSize,
-            meta.NumberOfJobsExecuted,
-            meta.Shutdown,
-            meta.InStandbyMode,
-            known.Nodes);
+            known.SchedulerName,
+            known.JobCount,
+            paused,
+            known.Nodes,
+            new GoldpathFleetConnection(
+                scheduler.SchedulerInstanceId,
+                meta.RunningSince,
+                meta.ThreadPoolSize,
+                meta.NumberOfJobsExecuted,
+                meta.Shutdown,
+                meta.InStandbyMode));
     }
 
     /// <summary>

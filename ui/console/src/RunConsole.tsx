@@ -1,7 +1,10 @@
-import { useCallback, useEffect, useState } from "react";
-import { Banner, KeysetTable, RunProgress, StateBadge, VerbButton } from "@goldpath/kit";
-import type { VerbOutcome } from "@goldpath/kit";
-import type { AdminClient, FleetInfo, JobInfo, RunDetail, RunSummary } from "./adminClient";
+import { useEffect, useState } from "react";
+import { Banner, TabPanel, TabStrip } from "@goldpath/kit";
+import type { AdminClient, FleetInfo } from "./adminClient";
+import { FleetOverview } from "./FleetOverview";
+import { JobsTab } from "./JobsTab";
+import { CalendarsTab } from "./CalendarsTab";
+import { RunHistory } from "./RunHistory";
 
 export interface RunConsoleProps {
   client: AdminClient;
@@ -9,23 +12,26 @@ export interface RunConsoleProps {
   now?: Date;
 }
 
-/** The verb envelope, adapted to the kit's outcome type — refusals stay data. */
-async function asOutcome(call: Promise<{ ok: boolean; message: string }>): Promise<VerbOutcome> {
-  const result = await call;
-  return result.ok ? { kind: "ok", message: result.message } : { kind: "refused", message: result.message };
-}
+const TABS = [
+  { id: "overview", label: "Overview" },
+  { id: "jobs", label: "Jobs" },
+  { id: "calendars", label: "Calendars" },
+  { id: "history", label: "History" },
+];
 
 /**
- * The run console (console RFC §2, the core screen): fleets → jobs → runs → chunk
- * breakdown → repair queue. Everything is a client of the frozen contract; the screen
- * holds no state the API does not own.
+ * The scheduling surface (console RFC U5, admin contract R2): fleets, then what a fleet
+ * IS (overview), what it runs and when (jobs and their triggers), what it excludes
+ * (calendars), and what it has done (history).
+ *
+ * Everything here is a client of the frozen contract; the screen holds no state the API
+ * does not own, and offers no verb the API does not have — notably, no way to create or
+ * delete a job, because composition belongs to the manifest (ADR-0001).
  */
 export function RunConsole({ client, now }: RunConsoleProps) {
   const [fleets, setFleets] = useState<FleetInfo[]>([]);
   const [fleet, setFleet] = useState<string | null>(null);
-  const [jobs, setJobs] = useState<JobInfo[]>([]);
-  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
-  const [selectedRun, setSelectedRun] = useState<RunDetail | null>(null);
+  const [tab, setTab] = useState("overview");
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
 
@@ -44,49 +50,6 @@ export function RunConsole({ client, now }: RunConsoleProps) {
     };
   }, [client]);
 
-  useEffect(() => {
-    if (!fleet) return;
-    let live = true;
-    client
-      .jobs(fleet)
-      .then((found) => live && setJobs(found))
-      .catch(() => live && setError(`the jobs of ${fleet} could not be loaded`));
-    return () => {
-      live = false;
-    };
-  }, [client, fleet, refreshToken]);
-
-  const loadRuns = useCallback(
-    async (_cursor: string | null, take: number) => {
-      // The runs surface is take-bounded, not cursor-paged (frozen contract): one page,
-      // honestly ended — the table's walk stops immediately instead of faking a cursor.
-      const runs = fleet ? await client.runs(fleet, { take }) : [];
-      return { items: runs, nextCursor: null };
-    },
-    [client, fleet, refreshToken],
-  );
-
-  const openRun = (run: RunSummary) => setSelectedRunId(run.id);
-
-  // The open run RE-FETCHES on every refresh instead of closing: a verb's outcome strip
-  // lives inside the panel, so tearing the panel down would hide the very message the
-  // operator just triggered (found by the U2 Playwright gate).
-  useEffect(() => {
-    if (!selectedRunId) {
-      setSelectedRun(null);
-      return;
-    }
-
-    let live = true;
-    client
-      .run(selectedRunId)
-      .then((detail) => live && setSelectedRun(detail))
-      .catch(() => live && setError(`run ${selectedRunId} could not be opened`));
-    return () => {
-      live = false;
-    };
-  }, [client, selectedRunId, refreshToken]);
-
   const refresh = () => setRefreshToken((token) => token + 1);
 
   if (fleets.length === 0 && !error) {
@@ -94,7 +57,7 @@ export function RunConsole({ client, now }: RunConsoleProps) {
   }
 
   return (
-    <div data-testid="run-console" className="space-y-6">
+    <div data-testid="run-console" className="space-y-4">
       {error && <Banner tone="danger">{error}</Banner>}
 
       <section>
@@ -107,127 +70,41 @@ export function RunConsole({ client, now }: RunConsoleProps) {
               className={`rounded-md border px-3 py-1.5 text-sm ${
                 entry.schedulerName === fleet ? "border-border bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent"
               }`}
-              onClick={() => {
-                setFleet(entry.schedulerName);
-                setSelectedRunId(null);
-              }}
+              onClick={() => setFleet(entry.schedulerName)}
             >
               {entry.schedulerName}
-              <span className="ml-2 text-xs opacity-70">{entry.jobCount} jobs · {entry.nodes?.length ?? 0} nodes</span>
+              <span className="ml-2 text-xs opacity-70">
+                {entry.jobCount} jobs · {entry.nodes?.length ?? 0} nodes
+              </span>
             </button>
           ))}
         </div>
       </section>
 
       {fleet && (
-        <section>
-          <h2 className="mb-2 text-sm font-medium text-muted-foreground">Jobs in {fleet}</h2>
-          <ul className="space-y-2">
-            {jobs.map((job) => (
-              <li key={job.name} className="flex flex-wrap items-center gap-3 rounded-md border border-border/60 px-3 py-2">
-                <span className="text-sm font-medium">{job.name}</span>
-                {job.paused && <StateBadge state="Suppressed" />}
-                {job.nextFireTime && <span className="text-xs text-faint">next {job.nextFireTime}</span>}
-                <span className="ml-auto flex gap-2">
-                  <VerbButton
-                    label="trigger"
-                    confirm={`Trigger ${job.name} now?`}
-                    execute={() => asOutcome(client.triggerJob(fleet, job.name))}
-                    onDone={refresh}
-                  />
-                  {job.paused ? (
-                    <VerbButton
-                      label="resume"
-                      confirm={`Resume ${job.name}?`}
-                      execute={() => asOutcome(client.resumeJob(fleet, job.name))}
-                      onDone={refresh}
-                    />
-                  ) : (
-                    <VerbButton
-                      label="pause"
-                      confirm={`Pause ${job.name}?`}
-                      execute={() => asOutcome(client.pauseJob(fleet, job.name))}
-                      onDone={refresh}
-                      destructive
-                    />
-                  )}
-                </span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+        <>
+          <TabStrip label={`Sections of ${fleet}`} items={TABS} activeId={tab} onSelect={setTab} />
 
-      {fleet && (
-        <section>
-          <h2 className="mb-2 text-sm font-medium text-muted-foreground">Runs</h2>
-          <KeysetTable<RunSummary>
-            key={`${fleet}-${refreshToken}`}
-            columns={[
-              { header: "Run", cell: (run) => (
-                <button className="font-mono text-xs underline-offset-2 hover:underline" onClick={() => openRun(run)}>
-                  {run.id}
-                </button>
-              ) },
-              { header: "Job", cell: (run) => run.jobName },
-              { header: "State", cell: (run) => <StateBadge state={run.status} /> },
-              { header: "Chunks", align: "right", cell: (run) => `${run.completedChunks}/${run.totalChunks}` },
-            ]}
-            loadPage={loadRuns}
-            rowKey={(run) => run.id}
-            emptyMessage="No runs recorded for this fleet yet."
-          />
-        </section>
-      )}
-
-      {selectedRun && (
-        <section data-testid="run-detail" className="rounded-lg border border-border p-4">
-          <div className="mb-3 flex items-center justify-between">
-            <h2 className="text-sm font-medium">Run {selectedRun.run.id} · {selectedRun.run.jobName}</h2>
-            <span className="flex gap-2">
-              <VerbButton
-                label="rerun"
-                confirm={`Rerun ${selectedRun.run.id}?`}
-                execute={() => asOutcome(client.rerun(selectedRun.run.id))}
-                onDone={refresh}
-              />
-              {selectedRun.openFailures.length > 0 && (
-                <VerbButton
-                  label="replay-items"
-                  // The verb redrives ALL open items; the listed failures are a capped
-                  // VIEW, so a count here would understate what the operator triggers.
-                  confirm="Replay all open repair items of this run?"
-                  execute={() => asOutcome(client.replayItems(selectedRun.run.id))}
-                  onDone={refresh}
-                />
-              )}
-            </span>
-          </div>
-
-          <RunProgress run={selectedRun.run} now={now} />
-
-          <h3 className="mb-1 mt-4 text-xs text-muted-foreground">Chunks by status</h3>
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(selectedRun.chunksByStatus).map(([status, count]) => (
-              <span key={status} className="rounded border border-border px-1.5 py-0.5 text-[11px]">
-                {status}: {count}
-              </span>
-            ))}
-          </div>
-
-          <h3 className="mb-1 mt-4 text-xs text-muted-foreground">
-            Repair queue{selectedRun.openFailures.length === 0 ? " — empty" : ` (${selectedRun.openFailures.length} shown)`}
-          </h3>
-          <ul className="space-y-1">
-            {selectedRun.openFailures.map((failure) => (
-              <li key={failure.id} className="flex items-baseline gap-2 text-xs">
-                <span className="font-mono">{failure.itemKey}</span>
-                <span className="text-faint">chunk {failure.chunkIndex}</span>
-                <span className="text-danger">{failure.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
+          {/*
+            Panels are keyed by FLEET only, and refresh travels as a prop.
+            Keying them by the refresh token too would remount a panel after every verb —
+            and a remounted panel takes the verb's outcome strip with it, so a REFUSAL
+            would vanish the instant it arrived. That is the U2 teardown lesson: the
+            operator must keep reading the server's own sentence after acting.
+          */}
+          <TabPanel id="overview" activeId={tab}>
+            <FleetOverview key={fleet} client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} />
+          </TabPanel>
+          <TabPanel id="jobs" activeId={tab}>
+            <JobsTab key={fleet} client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} />
+          </TabPanel>
+          <TabPanel id="calendars" activeId={tab}>
+            <CalendarsTab key={fleet} client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} />
+          </TabPanel>
+          <TabPanel id="history" activeId={tab}>
+            <RunHistory client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} now={now} />
+          </TabPanel>
+        </>
       )}
     </div>
   );

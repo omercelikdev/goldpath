@@ -1,0 +1,193 @@
+import { useCallback, useEffect, useState } from "react";
+import { KeysetTable, RunProgress, StateBadge, VerbButton } from "@goldpath/kit";
+import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
+import { asOutcome } from "./verbs";
+
+export interface RunHistoryProps {
+  client: AdminClient;
+  fleet: string;
+  refreshToken: number;
+  onChanged: () => void;
+  now?: Date;
+}
+
+const STATES = ["Running", "Completed", "Failed"];
+
+/**
+ * The run history (contract R2.4): the same list as before, but answerable — "yesterday's
+ * failures" is a filter now rather than a scroll, and the walk is a real KEYSET one.
+ *
+ * Why the cursor matters here specifically: runs are inserted at the HEAD while an
+ * operator reads, so an offset-paged second page would skip rows that shifted down. The
+ * server continues strictly after the last row we were given.
+ */
+export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunHistoryProps) {
+  const [status, setStatus] = useState("");
+  const [from, setFrom] = useState("");
+  const [to, setTo] = useState("");
+  const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
+  const [selectedRun, setSelectedRun] = useState<RunDetail | null>(null);
+  const [problem, setProblem] = useState<string | null>(null);
+
+  const loadRuns = useCallback(
+    async (cursor: string | null, take: number) => {
+      const runs = await client.runs(fleet, {
+        take,
+        status: status || undefined,
+        // The inputs are date-only; the window an operator means by "from the 27th" runs
+        // to the END of the 27th, so the upper bound is stretched to that day's last
+        // instant rather than its first — otherwise "from X to X" returns nothing.
+        from: from ? `${from}T00:00:00Z` : undefined,
+        to: to ? `${to}T23:59:59Z` : undefined,
+        afterId: cursor ?? undefined,
+      });
+      // A short page is the end of the walk; a full one may have more behind it.
+      return { items: runs, nextCursor: runs.length < take ? null : (runs[runs.length - 1]?.id ?? null) };
+    },
+    [client, fleet, status, from, to, refreshToken],
+  );
+
+  useEffect(() => {
+    if (!selectedRunId) {
+      setSelectedRun(null);
+      return;
+    }
+
+    let live = true;
+    client
+      .run(selectedRunId)
+      // The open run RE-FETCHES rather than closing on refresh: the verb outcome strip
+      // lives inside this panel, and tearing it down would hide the message the operator
+      // just produced (the U2 lesson).
+      .then((detail) => live && setSelectedRun(detail))
+      .catch(() => live && setProblem(`run ${selectedRunId} could not be opened`));
+    return () => {
+      live = false;
+    };
+  }, [client, selectedRunId, refreshToken]);
+
+  return (
+    <div data-testid="run-history" className="space-y-4">
+      <div className="flex flex-wrap items-end gap-3 text-xs">
+        <span className="flex flex-col gap-1">
+          {/* Explicit binding: a select INSIDE its label answers to the label text plus
+              every option, which is neither what a screen reader should say nor what a
+              caller can address. */}
+          <label htmlFor="run-state">State</label>
+          <select
+            id="run-state"
+            className="rounded border border-border px-2 py-1"
+            value={status}
+            onChange={(event) => setStatus(event.target.value)}
+          >
+            <option value="">all states</option>
+            {STATES.map((state) => (
+              <option key={state} value={state}>{state}</option>
+            ))}
+          </select>
+        </span>
+        <label className="flex flex-col gap-1">
+          From
+          <input type="date" className="rounded border border-border px-2 py-1" value={from} onChange={(event) => setFrom(event.target.value)} />
+        </label>
+        <label className="flex flex-col gap-1">
+          To
+          <input type="date" className="rounded border border-border px-2 py-1" value={to} onChange={(event) => setTo(event.target.value)} />
+        </label>
+        {(status || from || to) && (
+          <button
+            className="underline underline-offset-2"
+            onClick={() => {
+              setStatus("");
+              setFrom("");
+              setTo("");
+            }}
+          >
+            clear filters
+          </button>
+        )}
+      </div>
+
+      <KeysetTable<RunSummary>
+        key={`${fleet}-${status}-${from}-${to}-${refreshToken}`}
+        columns={[
+          {
+            header: "Run",
+            cell: (run) => (
+              <button className="font-mono text-xs underline-offset-2 hover:underline" onClick={() => setSelectedRunId(run.id)}>
+                {run.id}
+              </button>
+            ),
+          },
+          { header: "Job", cell: (run) => run.jobName },
+          { header: "State", cell: (run) => <StateBadge state={run.status} /> },
+          // Who put this run on the schedule, and which node ran it: the two questions a
+          // run list is asked the morning after (contract R2.3).
+          { header: "Started by", cell: (run) => (
+            <span className="text-xs">
+              {run.triggeredBy ?? "not recorded"}
+              {run.startedBy && <span className="text-faint"> · {run.startedBy}</span>}
+            </span>
+          ) },
+          { header: "Started", cell: (run) => <span className="text-xs">{run.startedAt}</span> },
+          { header: "Chunks", align: "right", cell: (run) => `${run.completedChunks}/${run.totalChunks}` },
+        ]}
+        loadPage={loadRuns}
+        rowKey={(run) => run.id}
+        emptyMessage={status || from || to ? "No run matches these filters." : "No runs recorded for this fleet yet."}
+      />
+
+      {problem && <p className="text-sm text-danger">{problem}</p>}
+
+      {selectedRun && (
+        <section data-testid="run-detail" className="rounded-lg border border-border p-4">
+          <div className="mb-3 flex items-center justify-between">
+            <h3 className="text-sm font-medium">Run {selectedRun.run.id} · {selectedRun.run.jobName}</h3>
+            <span className="flex gap-2">
+              <VerbButton
+                label="rerun"
+                confirm={`Rerun ${selectedRun.run.id}?`}
+                execute={() => asOutcome(client.rerun(selectedRun.run.id))}
+                onDone={onChanged}
+              />
+              {selectedRun.openFailures.length > 0 && (
+                <VerbButton
+                  label="replay-items"
+                  // The verb redrives ALL open items; the listed failures are a capped
+                  // VIEW, so a count here would understate what the operator triggers.
+                  confirm="Replay all open repair items of this run?"
+                  execute={() => asOutcome(client.replayItems(selectedRun.run.id))}
+                  onDone={onChanged}
+                />
+              )}
+            </span>
+          </div>
+
+          <RunProgress run={selectedRun.run} now={now} />
+
+          <h4 className="mb-1 mt-4 text-xs text-muted-foreground">Chunks by status</h4>
+          <div className="flex flex-wrap gap-1">
+            {Object.entries(selectedRun.chunksByStatus).map(([state, count]) => (
+              <span key={state} className="rounded border border-border px-1.5 py-0.5 text-[11px]">
+                {state}: {count}
+              </span>
+            ))}
+          </div>
+
+          <h4 className="mb-1 mt-4 text-xs text-muted-foreground">
+            Repair queue{selectedRun.openFailures.length === 0 ? " — empty" : ` (${selectedRun.openFailures.length} shown)`}
+          </h4>
+          <ul className="space-y-1">
+            {selectedRun.openFailures.map((failure) => (
+              <li key={failure.id} className="flex items-baseline gap-2 text-xs">
+                <span className="font-mono">{failure.itemKey}</span>
+                <span className="text-faint">chunk {failure.chunkIndex}</span>
+                <span className="text-danger">{failure.reason}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}

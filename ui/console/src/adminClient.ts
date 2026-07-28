@@ -58,18 +58,131 @@ async function refusalMessage(response: Response): Promise<string | undefined> {
   }
 }
 
+/** One cluster member's heartbeat, exactly as `GoldpathFleetNode` sends it. */
+export interface FleetNode {
+  instanceName: string;
+  lastCheckin: string;
+  checkinInterval: string;
+}
+
 export interface FleetInfo {
   schedulerName: string;
   jobCount: number;
-  nodes: { instanceId: string; isClustered?: boolean }[];
+  nodes: FleetNode[];
 }
 
+/**
+ * The instance this console talks THROUGH — not the fleet. Quartz metadata is
+ * per-instance, and a management-mode member reports standby with an idle thread pool
+ * while the executors fire normally.
+ */
+export interface FleetConnection {
+  instanceId: string;
+  runningSince: string | null;
+  threadPoolSize: number;
+  jobsExecuted: number;
+  isShutdown: boolean;
+  inStandbyMode: boolean;
+}
+
+/** The fleet as the STORE sees it (contract R2.1) — cluster facts, not one member's. */
+export interface FleetStatus {
+  schedulerName: string;
+  jobCount: number;
+  /** What `pause-all` leaves behind: durable and cluster-wide. */
+  isPaused: boolean;
+  nodes: FleetNode[];
+  connection: FleetConnection;
+}
+
+/** One trigger's live state (contract R2.2). */
+export interface TriggerInfo {
+  name: string;
+  state: string;
+  cronExpression: string | null;
+  calendarName: string | null;
+  nextFireAt: string | null;
+  previousFireAt: string | null;
+  type: string;
+  priority: number;
+  misfireInstruction: number;
+  timeZoneId: string | null;
+  startAt: string | null;
+  endAt: string | null;
+  timesTriggered: number | null;
+  repeatInterval: string | null;
+  repeatCount: number | null;
+}
+
+/**
+ * One job, as `GoldpathJobInfo` actually sends it.
+ *
+ * This type used to carry `paused` and `nextFireTime`, which the contract has never
+ * returned — so the console's paused badge could not light no matter what an operator
+ * did, and "next fire" never appeared. The unit test agreed, because its fixture was
+ * shaped from this type rather than from the payload. Whether a job is paused is a fact
+ * about its TRIGGERS, and that is where it is read from now (`isPaused` below).
+ */
 export interface JobInfo {
   name: string;
-  group?: string;
+  description?: string | null;
   requestsRecovery?: boolean;
-  paused?: boolean;
-  nextFireTime?: string | null;
+  triggers: TriggerInfo[];
+  dataMap?: Record<string, string> | null;
+}
+
+/**
+ * A job is paused when every trigger it has is paused — one live trigger means it still
+ * fires. A job with NO trigger is not paused; it is unscheduled, which the screen says in
+ * its own words rather than dressing as a pause.
+ */
+export function isPaused(job: JobInfo): boolean {
+  return job.triggers.length > 0 && job.triggers.every((trigger) => trigger.state === "Paused");
+}
+
+/** The soonest a job will fire, or null when nothing is scheduled to. */
+export function nextFireAt(job: JobInfo): string | null {
+  const times = job.triggers.map((trigger) => trigger.nextFireAt).filter((at): at is string => at !== null);
+  return times.length === 0 ? null : times.reduce((soonest, at) => (at < soonest ? at : soonest));
+}
+
+/** A calendar as the contract holds it (frozen route, first screened in U5). */
+export interface CalendarInfo {
+  name: string;
+  description: string | null;
+  usedByTriggers: string[];
+}
+
+/** The four calendar shapes the contract accepts; exactly one shape per type. */
+export interface CalendarSpec {
+  type: string;
+  description?: string | null;
+  excludedDates?: string[] | null;
+  excludedDays?: number[] | null;
+  cronExpression?: string | null;
+}
+
+/** One admin crossing, as the audit read returns it. */
+export interface AdminAuditRow {
+  id: number;
+  at: string;
+  actor: string;
+  action: string;
+  fleet: string;
+  /** The job, calendar or run the verb targeted — the row's own word is `target`. */
+  target: string;
+  detail: string | null;
+}
+
+/** A trigger an operator adds to a DECLARED job (contract R2.5). */
+export interface AddTriggerRequest {
+  name: string;
+  cron?: string | null;
+  timeZoneId?: string | null;
+  interval?: string | null;
+  repeatCount?: number | null;
+  calendarName?: string | null;
+  priority?: number | null;
 }
 
 export interface RunSummary {
@@ -85,6 +198,10 @@ export interface RunSummary {
   failedChunks: number;
   totalItems?: number | null;
   itemFailures: number;
+  /** The instance that STARTED the run — it was always on the payload, never on screen. */
+  startedBy?: string | null;
+  /** Scheduled | Manual | Rerun | Replay; null on runs written before the column (R2.3). */
+  triggeredBy?: string | null;
 }
 
 /**
@@ -380,9 +497,26 @@ export class AdminClient {
     return this.get<JobInfo[]>(`/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/jobs`);
   }
 
-  runs(fleet: string, options: { job?: string; take?: number } = {}): Promise<RunSummary[]> {
+  /** The fleet's own state (R2.1) — absent fleets 404, which surfaces as an error. */
+  fleetStatus(fleet: string): Promise<FleetStatus> {
+    return this.get<FleetStatus>(`/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/status`);
+  }
+
+  /**
+   * Runs, filtered and keyset-paged (R2.4). `afterId` names the last row the caller saw;
+   * the server continues strictly after it, so a run inserted at the head mid-walk cannot
+   * shift the page under the reader.
+   */
+  runs(
+    fleet: string,
+    options: { job?: string; take?: number; status?: string; from?: string; to?: string; afterId?: string } = {},
+  ): Promise<RunSummary[]> {
     const query = new URLSearchParams();
     if (options.job) query.set("job", options.job);
+    if (options.status) query.set("status", options.status);
+    if (options.from) query.set("from", options.from);
+    if (options.to) query.set("to", options.to);
+    if (options.afterId) query.set("afterId", options.afterId);
     // The contract clamps take to [1,500]; the console never asks for more.
     query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
     return this.get<RunSummary[]>(
@@ -390,14 +524,33 @@ export class AdminClient {
     );
   }
 
+  /** Calendars of a fleet (frozen route — first screened in U5). */
+  calendars(fleet: string): Promise<CalendarInfo[]> {
+    return this.get<CalendarInfo[]>(`/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/calendars`);
+  }
+
+  /** The admin crossings of this service, newest first (frozen route). */
+  jobsAudit(take = 100): Promise<AdminAuditRow[]> {
+    return this.get<AdminAuditRow[]>(`/goldpath/admin/jobs/audit?take=${Math.min(500, Math.max(1, take))}`);
+  }
+
   run(runId: string): Promise<RunDetail> {
     return this.get<RunDetail>(`/goldpath/admin/jobs/runs/${encodeURIComponent(runId)}`);
   }
 
   /** Every mutating verb answers the frozen envelope — 200 ok, 400 refusal, both typed. */
-  async verb(route: string, body?: unknown): Promise<AdminResult> {
+  verb(route: string, body?: unknown): Promise<AdminResult> {
+    return this.send("POST", route, body);
+  }
+
+  /**
+   * The envelope is the same whichever method carries it: verbs are POSTs, but the
+   * contract reserves PUT and DELETE for true upserts and removals (calendars, triggers),
+   * and those answer `GoldpathAdminResult` exactly like a POST does.
+   */
+  async send(method: "POST" | "PUT" | "DELETE", route: string, body?: unknown): Promise<AdminResult> {
     const response = await this.fetcher(`${this.baseUrl}${route}`, {
-      method: "POST",
+      method,
       credentials: "include",
       headers: body === undefined ? { accept: "application/json" } : { accept: "application/json", "content-type": "application/json" },
       body: body === undefined ? undefined : JSON.stringify(body),
@@ -419,6 +572,53 @@ export class AdminClient {
 
   resumeJob(fleet: string, job: string): Promise<AdminResult> {
     return this.verb(`/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/jobs/${encodeURIComponent(job)}/resume`);
+  }
+
+  /**
+   * Fleet-wide stop and go. This is the verb an operator reaches for at 03:00, and until
+   * U5 the console had no way to send it (open-threads T13). It is durable and
+   * cluster-wide — every trigger in the store, not just this node's.
+   */
+  pauseFleet(fleet: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/pause-all`);
+  }
+
+  resumeFleet(fleet: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/resume-all`);
+  }
+
+  /** The audited schedule override (frozen D7 verb): the DEFINITION stays in code. */
+  reschedule(fleet: string, job: string, cron: string, timeZoneId?: string | null): Promise<AdminResult> {
+    return this.verb(
+      `/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/jobs/${encodeURIComponent(job)}/reschedule`,
+      { cron, timeZoneId: timeZoneId ?? null },
+    );
+  }
+
+  /** Adds a trigger to a DECLARED job (R2.5) — it cannot create a job. */
+  addTrigger(fleet: string, job: string, request: AddTriggerRequest): Promise<AdminResult> {
+    return this.verb(
+      `/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/jobs/${encodeURIComponent(job)}/triggers`,
+      request,
+    );
+  }
+
+  /** Removes one trigger; the JOB is untouched (R2.5). */
+  removeTrigger(fleet: string, job: string, name: string): Promise<AdminResult> {
+    return this.send(
+      "DELETE",
+      `/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/jobs/${encodeURIComponent(job)}/triggers/${encodeURIComponent(name)}`,
+    );
+  }
+
+  /** Creates or replaces a calendar (frozen PUT route). */
+  putCalendar(fleet: string, name: string, spec: CalendarSpec): Promise<AdminResult> {
+    return this.send("PUT", `/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/calendars/${encodeURIComponent(name)}`, spec);
+  }
+
+  /** Deletes a calendar (frozen DELETE route). */
+  deleteCalendar(fleet: string, name: string): Promise<AdminResult> {
+    return this.send("DELETE", `/goldpath/admin/jobs/fleets/${encodeURIComponent(fleet)}/calendars/${encodeURIComponent(name)}`);
   }
 
   rerun(runId: string): Promise<AdminResult> {
