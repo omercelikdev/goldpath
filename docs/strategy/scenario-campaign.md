@@ -1,0 +1,112 @@
+# Scenario campaign — every claim retold as a business story, then executed
+
+Status: LIVING plan (owner + agent co-author; started 2026-07-29). This is the program the
+owner set: **finish the UI, then walk EVERY capability through real business scenarios,
+step by step, nothing skipped.** The unit/integration/smoke gates prove the mechanics;
+this campaign proves the STORIES a buyer or an operator would actually tell.
+
+## How this file works
+
+- Anyone adds a scenario with the template below. A scenario is not "done" when the code
+  exists — it is done when the **evidence** column points at a run someone can replay.
+- Scenarios that need scale hardware say so in `needs` and wait for it rather than being
+  quietly downgraded.
+- Sector-specific numbers are fine; CUSTOMER names are not (public repo — the private
+  briefs stay outside).
+
+### Template
+
+```
+S-<AREA>-<NN> — <one-line business sentence>
+  modules:  <which of the ladder + cross-cutting it exercises>
+  given:    <starting state, in business words>
+  when:     <what the operator/system does — step by step>
+  then:     <what must be observably true, including on the CONSOLE>
+  needs:    <local | scale-rig (spec) | second-service | nothing special>
+  evidence: <empty until the run exists: script/test name + where its output lives>
+```
+
+## Phase order (the owner's sequence)
+
+1. **UI finalization** — the owner's style feedback batches on the live console +
+   campaign R1's governor fields. UI is DONE when the owner says so, not before.
+2. **Scenario execution** — the table below, top to bottom, each scenario driven for
+   real and its evidence linked.
+3. **Scale block last** — the 30M-class scenarios on a sized rig, because their numbers
+   only mean something once the functional stories all pass.
+
+## Seeded scenarios (v0 — owner extends)
+
+S-FLEET-01 — A 2.3M-device config push finishes in five working days without melting anything
+  modules:  campaign (R1 fields), jobs, console governor
+  given:    2.3M enumerable targets; policy tps=800, dailyQuota=500000, window 10:00-21:00
+            Europe/Istanbul, excludedDays=[Sat,Sun], endDate=+7d
+  when:     operator creates the campaign, watches day 1, throttles to 300 mid-day when the
+            downstream complains, restores to 800, lets it run
+  then:     daily released never exceeds the quota; nothing releases outside the window or
+            on the weekend; the governor shows the live numbers; day-5 completion; the verb
+            log carries every throttle with its actor
+  needs:    scale-rig (targets can be synthetic; timing compressed via clock control where honest)
+  evidence: —
+
+S-FLEET-02 — 30M inventory: one campaign sustains the configured TPS for an hour, flat
+  modules:  campaign, jobs, broker, store
+  given:    30M synthetic targets; tps=2000; sized rig (the CI profile cannot host this)
+  when:     release for 60 minutes under measurement
+  then:     p95 release jitter within bound; store and broker headroom recorded; the numbers
+            published as a bench report the way H6 benches are
+  needs:    scale-rig — SPEC TO BE WRITTEN WITH THE OWNER before any claim
+  evidence: —
+
+S-FLEET-03 — Two campaigns under one GlobalTps never jointly exceed it
+  modules:  campaign R1.4
+  given:    GlobalTps=1000; two campaigns tps=800 each
+  when:     both run concurrently
+  then:     no one-second window releases >1000 across the pair (this is R1's own DoD,
+            promoted to a story)
+  needs:    local
+  evidence: —
+
+S-FIN-01 — A salary file with one bad row pays everyone except that row, after a second pair of eyes
+  modules:  bulk, jobs, notification, console
+  given:    a 10K-row payment file, row 4 121 malformed
+  when:     upload → validation report → a DIFFERENT user approves → execute → the bad row's
+            owner is notified
+  then:     9 999 executed exactly once; row 4 121 in the repair queue with the reason; the
+            approver identity on the audit; the notification evidenced
+  needs:    local
+  evidence: —
+
+S-FIN-02 — A litigation hold survives an erasure request, and the chain still verifies
+  modules:  archival
+  given:    an archived instruction under legal hold
+  when:     a KVKK erasure arrives for it → refused; hold lifted → erasure runs
+  then:     the refusal is explicit while held; after erasure the document is gone, the
+            chain verifies, and the erasure receipt names actor+time
+  needs:    local
+  evidence: —
+
+S-OPS-01 — The 03:00 incident: stop the world, fix, resume, answer for it
+  modules:  jobs, console
+  given:    a fleet mid-run
+  when:     pause-all → verify nothing fires → resume-all → morning-after audit read
+  then:     durable cluster-wide stop (survives a host restart while paused); the audit
+            answers "who stopped the night"
+  needs:    local
+  evidence: —
+
+S-OPS-02 — A mid-flight operator mistake is refused in the server's words, not a 500
+  modules:  every admin surface
+  given:    the live console
+  when:     bad cron, unknown timezone, double-approve, erase-under-hold — each attempted
+            from the SCREEN
+  then:     every refusal arrives as the server's sentence in the UI; zero 500s
+  needs:    local
+  evidence: —
+
+## Scale-rig note (for S-FLEET-02 class)
+
+The CI reference profile proves mechanics, not telco scale. Before any 30M claim: the
+owner and the agent write the rig spec TOGETHER (hardware, dataset shape, clock policy,
+pass thresholds) into this file, and the run publishes its numbers like the H6 benches —
+a claim without its rig spec does not get made.
