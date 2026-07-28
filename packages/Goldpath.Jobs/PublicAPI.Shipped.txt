@@ -27,7 +27,6 @@ Goldpath.GoldpathCalendarSpec.Type.get -> string!
 Goldpath.GoldpathCalendarSpec.Type.init -> void
 Goldpath.GoldpathCalendars
 Goldpath.GoldpathFireFacts
-Goldpath.GoldpathFireFacts.GoldpathFireFacts(string! SchedulerName, string! InstanceName, string! FireInstanceId, bool Recovering, string? TraceParent = null) -> void
 Goldpath.GoldpathFireFacts.TraceParent.get -> string?
 Goldpath.GoldpathFireFacts.TraceParent.init -> void
 Goldpath.GoldpathFireFacts.FireInstanceId.get -> string!
@@ -138,7 +137,6 @@ Goldpath.GoldpathJobExecution.SchedulerName.set -> void
 Goldpath.GoldpathJobInfo
 Goldpath.GoldpathJobInfo.Description.get -> string?
 Goldpath.GoldpathJobInfo.Description.init -> void
-Goldpath.GoldpathJobInfo.GoldpathJobInfo(string! Name, string? Description, bool RequestsRecovery, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathTriggerInfo!>! Triggers) -> void
 Goldpath.GoldpathJobInfo.Name.get -> string!
 Goldpath.GoldpathJobInfo.Name.init -> void
 Goldpath.GoldpathJobInfo.RequestsRecovery.get -> bool
@@ -241,7 +239,6 @@ Goldpath.GoldpathJobsAdminService<TContext>.GetCalendarsAsync(string! fleet, Sys
 Goldpath.GoldpathJobsAdminService<TContext>.GetFleetsAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathFleetInfo!>!>!
 Goldpath.GoldpathJobsAdminService<TContext>.GetJobsAsync(string! fleet, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathJobInfo!>!>!
 Goldpath.GoldpathJobsAdminService<TContext>.GetRunAsync(System.Guid runId, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathRunDetail?>!
-Goldpath.GoldpathJobsAdminService<TContext>.GetRunsAsync(string! fleet, string? job, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathJobRun!>!>!
 Goldpath.GoldpathJobsAdminService<TContext>.PauseJobAsync(string! fleet, string! job, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathJobsAdminService<TContext>.PutCalendarAsync(string! fleet, string! name, Goldpath.GoldpathCalendarSpec! spec, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathJobsAdminService<TContext>.ReplayItemsAsync(System.Guid runId, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
@@ -295,7 +292,6 @@ Goldpath.GoldpathTriggerInfo.CalendarName.get -> string?
 Goldpath.GoldpathTriggerInfo.CalendarName.init -> void
 Goldpath.GoldpathTriggerInfo.CronExpression.get -> string?
 Goldpath.GoldpathTriggerInfo.CronExpression.init -> void
-Goldpath.GoldpathTriggerInfo.GoldpathTriggerInfo(string! Name, string! State, string? CronExpression, string? CalendarName, System.DateTimeOffset? NextFireAt, System.DateTimeOffset? PreviousFireAt) -> void
 Goldpath.GoldpathTriggerInfo.Name.get -> string!
 Goldpath.GoldpathTriggerInfo.Name.init -> void
 Goldpath.GoldpathTriggerInfo.NextFireAt.get -> System.DateTimeOffset?
@@ -333,3 +329,96 @@ static Goldpath.GoldpathJobsAdminEndpoints.MapGoldpathJobsAdmin<TContext>(this M
 static Goldpath.GoldpathJobsExtensions.AddGoldpathJobs<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathJobsOptions!>? configure = null) -> TBuilder
 static Goldpath.GoldpathJobsExtensions.AddGoldpathJobsManagement<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathJobsOptions!>? configure = null) -> TBuilder
 static Goldpath.GoldpathJobsModelExtensions.AddGoldpathJobs(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder, bool excludeFromMigrations = false) -> Microsoft.EntityFrameworkCore.ModelBuilder!
+Goldpath.GoldpathAddTriggerRequest
+Goldpath.GoldpathAddTriggerRequest.CalendarName.get -> string?
+Goldpath.GoldpathAddTriggerRequest.CalendarName.init -> void
+Goldpath.GoldpathAddTriggerRequest.Cron.get -> string?
+Goldpath.GoldpathAddTriggerRequest.Cron.init -> void
+Goldpath.GoldpathAddTriggerRequest.GoldpathAddTriggerRequest(string! Name, string? Cron = null, string? TimeZoneId = null, System.TimeSpan? Interval = null, int? RepeatCount = null, string? CalendarName = null, int? Priority = null) -> void
+Goldpath.GoldpathAddTriggerRequest.Interval.get -> System.TimeSpan?
+Goldpath.GoldpathAddTriggerRequest.Interval.init -> void
+Goldpath.GoldpathAddTriggerRequest.Name.get -> string!
+Goldpath.GoldpathAddTriggerRequest.Name.init -> void
+Goldpath.GoldpathAddTriggerRequest.Priority.get -> int?
+Goldpath.GoldpathAddTriggerRequest.Priority.init -> void
+Goldpath.GoldpathAddTriggerRequest.RepeatCount.get -> int?
+Goldpath.GoldpathAddTriggerRequest.RepeatCount.init -> void
+Goldpath.GoldpathAddTriggerRequest.TimeZoneId.get -> string?
+Goldpath.GoldpathAddTriggerRequest.TimeZoneId.init -> void
+Goldpath.GoldpathJobInfo.DataMap.get -> System.Collections.Generic.IReadOnlyDictionary<string!, string!>?
+Goldpath.GoldpathJobInfo.DataMap.init -> void
+Goldpath.GoldpathJobInfo.GoldpathJobInfo(string! Name, string? Description, bool RequestsRecovery, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathTriggerInfo!>! Triggers, System.Collections.Generic.IReadOnlyDictionary<string!, string!>? DataMap = null) -> void
+Goldpath.GoldpathJobRun.TriggeredBy.get -> string?
+Goldpath.GoldpathJobRun.TriggeredBy.set -> void
+Goldpath.GoldpathJobTriggeredBy
+const Goldpath.GoldpathJobTriggeredBy.Manual = "Manual" -> string!
+const Goldpath.GoldpathJobTriggeredBy.Replay = "Replay" -> string!
+const Goldpath.GoldpathJobTriggeredBy.Rerun = "Rerun" -> string!
+const Goldpath.GoldpathJobTriggeredBy.Scheduled = "Scheduled" -> string!
+Goldpath.GoldpathTriggerInfo.EndAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathTriggerInfo.EndAt.init -> void
+Goldpath.GoldpathTriggerInfo.GoldpathTriggerInfo(string! Name, string! State, string? CronExpression, string? CalendarName, System.DateTimeOffset? NextFireAt, System.DateTimeOffset? PreviousFireAt, string! Type = "unknown", int Priority = 0, int MisfireInstruction = 0, string? TimeZoneId = null, System.DateTimeOffset? StartAt = null, System.DateTimeOffset? EndAt = null, int? TimesTriggered = null, System.TimeSpan? RepeatInterval = null, int? RepeatCount = null) -> void
+Goldpath.GoldpathTriggerInfo.MisfireInstruction.get -> int
+Goldpath.GoldpathTriggerInfo.MisfireInstruction.init -> void
+Goldpath.GoldpathTriggerInfo.Priority.get -> int
+Goldpath.GoldpathTriggerInfo.Priority.init -> void
+Goldpath.GoldpathTriggerInfo.RepeatCount.get -> int?
+Goldpath.GoldpathTriggerInfo.RepeatCount.init -> void
+Goldpath.GoldpathTriggerInfo.RepeatInterval.get -> System.TimeSpan?
+Goldpath.GoldpathTriggerInfo.RepeatInterval.init -> void
+Goldpath.GoldpathTriggerInfo.StartAt.get -> System.DateTimeOffset?
+Goldpath.GoldpathTriggerInfo.StartAt.init -> void
+Goldpath.GoldpathTriggerInfo.TimeZoneId.get -> string?
+Goldpath.GoldpathTriggerInfo.TimeZoneId.init -> void
+Goldpath.GoldpathTriggerInfo.TimesTriggered.get -> int?
+Goldpath.GoldpathTriggerInfo.TimesTriggered.init -> void
+Goldpath.GoldpathTriggerInfo.Type.get -> string!
+Goldpath.GoldpathTriggerInfo.Type.init -> void
+Goldpath.GoldpathTriggerSpec
+Goldpath.GoldpathTriggerSpec.CalendarName.get -> string?
+Goldpath.GoldpathTriggerSpec.CalendarName.init -> void
+Goldpath.GoldpathTriggerSpec.Cron.get -> string?
+Goldpath.GoldpathTriggerSpec.Cron.init -> void
+Goldpath.GoldpathTriggerSpec.GoldpathTriggerSpec(string? Cron, string? TimeZoneId, System.TimeSpan? Interval, int? RepeatCount, string? CalendarName, int Priority = 5) -> void
+Goldpath.GoldpathTriggerSpec.Interval.get -> System.TimeSpan?
+Goldpath.GoldpathTriggerSpec.Interval.init -> void
+Goldpath.GoldpathTriggerSpec.Priority.get -> int
+Goldpath.GoldpathTriggerSpec.Priority.init -> void
+Goldpath.GoldpathTriggerSpec.RepeatCount.get -> int?
+Goldpath.GoldpathTriggerSpec.RepeatCount.init -> void
+Goldpath.GoldpathTriggerSpec.TimeZoneId.get -> string?
+Goldpath.GoldpathTriggerSpec.TimeZoneId.init -> void
+Goldpath.GoldpathFireFacts.TriggeredBy.get -> string?
+Goldpath.GoldpathFireFacts.TriggeredBy.init -> void
+Goldpath.GoldpathFireFacts.GoldpathFireFacts(string! SchedulerName, string! InstanceName, string! FireInstanceId, bool Recovering, string? TraceParent = null, string? TriggeredBy = null) -> void
+const Goldpath.GoldpathJobsExtensions.TriggeredByKey = "goldpath:triggered-by" -> string!
+Goldpath.GoldpathJobsAdminService<TContext>.AddTriggerAsync(string! fleet, string! job, string! name, Goldpath.GoldpathTriggerSpec! spec, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathJobsAdminService<TContext>.RemoveTriggerAsync(string! fleet, string! job, string! name, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
+Goldpath.GoldpathJobsAdminService<TContext>.GetRunsAsync(string! fleet, string? job, int take, System.Threading.CancellationToken ct, string? status = null, System.DateTimeOffset? from = null, System.DateTimeOffset? to = null, System.Guid? afterId = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathJobRun!>!>!
+Goldpath.GoldpathFleetConnection
+Goldpath.GoldpathFleetConnection.GoldpathFleetConnection(string! InstanceId, System.DateTimeOffset? RunningSince, int ThreadPoolSize, int JobsExecuted, bool IsShutdown, bool InStandbyMode) -> void
+Goldpath.GoldpathFleetConnection.InStandbyMode.get -> bool
+Goldpath.GoldpathFleetConnection.InStandbyMode.init -> void
+Goldpath.GoldpathFleetConnection.InstanceId.get -> string!
+Goldpath.GoldpathFleetConnection.InstanceId.init -> void
+Goldpath.GoldpathFleetConnection.IsShutdown.get -> bool
+Goldpath.GoldpathFleetConnection.IsShutdown.init -> void
+Goldpath.GoldpathFleetConnection.JobsExecuted.get -> int
+Goldpath.GoldpathFleetConnection.JobsExecuted.init -> void
+Goldpath.GoldpathFleetConnection.RunningSince.get -> System.DateTimeOffset?
+Goldpath.GoldpathFleetConnection.RunningSince.init -> void
+Goldpath.GoldpathFleetConnection.ThreadPoolSize.get -> int
+Goldpath.GoldpathFleetConnection.ThreadPoolSize.init -> void
+Goldpath.GoldpathFleetStatus
+Goldpath.GoldpathFleetStatus.Connection.get -> Goldpath.GoldpathFleetConnection!
+Goldpath.GoldpathFleetStatus.Connection.init -> void
+Goldpath.GoldpathFleetStatus.GoldpathFleetStatus(string! SchedulerName, int JobCount, bool IsPaused, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathFleetNode!>! Nodes, Goldpath.GoldpathFleetConnection! Connection) -> void
+Goldpath.GoldpathFleetStatus.IsPaused.get -> bool
+Goldpath.GoldpathFleetStatus.IsPaused.init -> void
+Goldpath.GoldpathFleetStatus.JobCount.get -> int
+Goldpath.GoldpathFleetStatus.JobCount.init -> void
+Goldpath.GoldpathFleetStatus.Nodes.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathFleetNode!>!
+Goldpath.GoldpathFleetStatus.Nodes.init -> void
+Goldpath.GoldpathFleetStatus.SchedulerName.get -> string!
+Goldpath.GoldpathFleetStatus.SchedulerName.init -> void
+Goldpath.GoldpathJobsAdminService<TContext>.GetFleetStatusAsync(string! fleet, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathFleetStatus?>!
