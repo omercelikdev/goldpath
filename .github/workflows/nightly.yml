@@ -173,6 +173,16 @@ jobs:
         run: |
           dotnet build CorPay.sln --nologo
           dotnet test tests/CorPay.Api.Tests/CorPay.Api.Tests.csproj --no-build --nologo
+      - name: goldpath check (SPEC0212 — committed contract == built contract)
+        working-directory: samples/corpay
+        # Absent from this lane, the committed spec sat a full train behind the built
+        # one — the preview.4 export-completeness fix changed four responses and nothing
+        # noticed until a release review read the diff. The reference app runs the same
+        # verb it tells adopters to run.
+        run: |
+          dotnet tool install -g Goldpath.Cli --prerelease
+          dotnet tool install -g specdrift
+          goldpath check
       - name: smoke (real AppHost + containers)
         working-directory: samples/corpay
         run: dotnet test tests/CorPay.SmokeTests/CorPay.SmokeTests.csproj --no-build --nologo

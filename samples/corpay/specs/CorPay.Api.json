@@ -11,6 +11,16 @@
           "CorPay.Api"
         ],
         "operationId": "CorPay.Api.Payments.Features.ApprovePaymentInstructionCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ApprovePaymentInstructionCommand"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "201": {
             "description": "Created",
@@ -56,6 +66,15 @@
           "CorPay.Api"
         ],
         "operationId": "CorPay.Api.Payments.Features.GetDayReportQuery",
+        "parameters": [
+          {
+            "name": "day",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -96,6 +115,36 @@
           "CorPay.Api"
         ],
         "operationId": "CorPay.Api.Payments.Features.GetPaymentInstructionsQuery",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "Submitted",
+                "PendingApproval",
+                "Executed",
+                "Rejected",
+                "Failed"
+              ],
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -134,6 +183,16 @@
           "CorPay.Api"
         ],
         "operationId": "CorPay.Api.Payments.Features.SubmitPaymentInstructionCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/SubmitPaymentInstructionCommand"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "201": {
             "description": "Created",
@@ -179,6 +238,16 @@
           "CorPay.Api"
         ],
         "operationId": "CorPay.Api.Payments.Features.RejectPaymentInstructionCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/RejectPaymentInstructionCommand"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "201": {
             "description": "Created",
@@ -224,6 +293,16 @@
           "CorPay.Api"
         ],
         "operationId": "CorPay.Api.Orders.Features.CreateOrderCommand",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateOrderCommand"
+              }
+            }
+          },
+          "required": true
+        },
         "responses": {
           "201": {
             "description": "Created",
@@ -267,6 +346,22 @@
           "CorPay.Api"
         ],
         "operationId": "CorPay.Api.Orders.Features.GetOrdersQuery",
+        "parameters": [
+          {
+            "name": "cursor",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "size",
+            "in": "query",
+            "schema": {
+              "type": "integer"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK",
@@ -355,6 +450,28 @@
         }
       }
     },
+    "/goldpath/admin/jobs/fleets/{fleet}/status": {
+      "get": {
+        "tags": [
+          "CorPay.Api"
+        ],
+        "parameters": [
+          {
+            "name": "fleet",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
     "/goldpath/admin/jobs/fleets/{fleet}/runs": {
       "get": {
         "tags": [
@@ -386,6 +503,37 @@
                 "string"
               ],
               "format": "int32"
+            }
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "from",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "to",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "date-time"
+            }
+          },
+          {
+            "name": "afterId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "format": "uuid"
             }
           }
         ],
@@ -559,6 +707,84 @@
           },
           "required": true
         },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/goldpath/admin/jobs/fleets/{fleet}/jobs/{job}/triggers": {
+      "post": {
+        "tags": [
+          "CorPay.Api"
+        ],
+        "parameters": [
+          {
+            "name": "fleet",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "job",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/GoldpathAddTriggerRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/goldpath/admin/jobs/fleets/{fleet}/jobs/{job}/triggers/{name}": {
+      "delete": {
+        "tags": [
+          "CorPay.Api"
+        ],
+        "parameters": [
+          {
+            "name": "fleet",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "job",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "name",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
         "responses": {
           "200": {
             "description": "OK"
@@ -949,17 +1175,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GoldpathLegalHold"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -1025,17 +1241,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GoldpathErasureRecord"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -1165,17 +1371,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GoldpathBulkBatchInfo"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -1252,17 +1448,7 @@
         ],
         "responses": {
           "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "$ref": "#/components/schemas/GoldpathBulkRowError"
-                  }
-                }
-              }
-            }
+            "description": "OK"
           }
         }
       }
@@ -1344,10 +1530,80 @@
           }
         }
       }
+    },
+    "/goldpath/console/console.config.json": {
+      "get": {
+        "tags": [
+          "CorPay.Api"
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
+    },
+    "/goldpath/console/{path}": {
+      "get": {
+        "tags": [
+          "CorPay.Api"
+        ],
+        "parameters": [
+          {
+            "name": "path",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK"
+          }
+        }
+      }
     }
   },
   "components": {
     "schemas": {
+      "ApprovePaymentInstructionCommand": {
+        "required": [
+          "id"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          }
+        }
+      },
+      "CreateOrderCommand": {
+        "required": [
+          "reference",
+          "amount"
+        ],
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          }
+        }
+      },
       "DayOfWeek": {
         "enum": [
           "Sunday",
@@ -1401,6 +1657,60 @@
           "ledgerFeedRows": {
             "pattern": "^-?(?:0|[1-9]\\d*)$",
             "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          }
+        }
+      },
+      "GoldpathAddTriggerRequest": {
+        "required": [
+          "name"
+        ],
+        "type": "object",
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "cron": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "timeZoneId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "interval": {
+            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "repeatCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "calendarName": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "priority": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
               "integer",
               "string"
             ],
@@ -1464,129 +1774,6 @@
           }
         }
       },
-      "GoldpathBulkBatchInfo": {
-        "required": [
-          "id",
-          "definition",
-          "state",
-          "tenant",
-          "totalRows",
-          "validRows",
-          "invalidRows",
-          "executedRows",
-          "failedRows",
-          "runId",
-          "receivedAt",
-          "validatedAt",
-          "decidedAt",
-          "decidedBy",
-          "decisionNote",
-          "completedAt"
-        ],
-        "type": "object",
-        "properties": {
-          "id": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "definition": {
-            "type": "string"
-          },
-          "state": {
-            "type": "string"
-          },
-          "tenant": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "totalRows": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "validRows": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "invalidRows": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "executedRows": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "failedRows": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "runId": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "uuid"
-          },
-          "receivedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "validatedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
-          "decidedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          },
-          "decidedBy": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "decisionNote": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "completedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
-          }
-        }
-      },
       "GoldpathBulkDecisionRequest": {
         "required": [
           "note"
@@ -1640,37 +1827,6 @@
               "string"
             ],
             "format": "double"
-          }
-        }
-      },
-      "GoldpathBulkRowError": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64"
-          },
-          "batchId": {
-            "type": "string",
-            "format": "uuid"
-          },
-          "rowNumber": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "field": {
-            "type": "string"
-          },
-          "message": {
-            "type": "string"
           }
         }
       },
@@ -1770,43 +1926,6 @@
           },
           "problem": {
             "type": "string"
-          }
-        }
-      },
-      "GoldpathErasureRecord": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64"
-          },
-          "subjectKey": {
-            "type": "string"
-          },
-          "requestedBy": {
-            "type": "string"
-          },
-          "requestedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "entriesAffected": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int32"
-          },
-          "detail": {
-            "type": [
-              "null",
-              "string"
-            ]
           }
         }
       },
@@ -1948,6 +2067,15 @@
             "items": {
               "$ref": "#/components/schemas/GoldpathTriggerInfo"
             }
+          },
+          "dataMap": {
+            "type": [
+              "null",
+              "object"
+            ],
+            "additionalProperties": {
+              "type": "string"
+            }
           }
         }
       },
@@ -2039,6 +2167,12 @@
               "string"
             ]
           },
+          "triggeredBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
           "inputVersion": {
             "type": [
               "null",
@@ -2052,48 +2186,6 @@
               "string"
             ],
             "format": "int32"
-          }
-        }
-      },
-      "GoldpathLegalHold": {
-        "type": "object",
-        "properties": {
-          "id": {
-            "pattern": "^-?(?:0|[1-9]\\d*)$",
-            "type": [
-              "integer",
-              "string"
-            ],
-            "format": "int64"
-          },
-          "definition": {
-            "type": "string"
-          },
-          "aggregateKey": {
-            "type": "string"
-          },
-          "caseReference": {
-            "type": "string"
-          },
-          "placedBy": {
-            "type": "string"
-          },
-          "placedAt": {
-            "type": "string",
-            "format": "date-time"
-          },
-          "liftedBy": {
-            "type": [
-              "null",
-              "string"
-            ]
-          },
-          "liftedAt": {
-            "type": [
-              "null",
-              "string"
-            ],
-            "format": "date-time"
           }
         }
       },
@@ -2157,6 +2249,73 @@
               "string"
             ],
             "format": "date-time"
+          },
+          "type": {
+            "type": "string",
+            "default": "unknown"
+          },
+          "priority": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "misfireInstruction": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32",
+            "default": 0
+          },
+          "timeZoneId": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "startAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "endAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "timesTriggered": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "repeatInterval": {
+            "pattern": "^-?(\\d+\\.)?\\d{2}:\\d{2}:\\d{2}(\\.\\d{1,7})?$",
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "repeatCount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "null",
+              "integer",
+              "string"
+            ],
+            "format": "int32"
           }
         }
       },
@@ -2349,6 +2508,58 @@
               "null",
               "string"
             ]
+          }
+        }
+      },
+      "RejectPaymentInstructionCommand": {
+        "required": [
+          "id",
+          "reason"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "reason": {
+            "type": "string"
+          }
+        }
+      },
+      "SubmitPaymentInstructionCommand": {
+        "required": [
+          "reference",
+          "debtorIban",
+          "creditorIban",
+          "amount",
+          "currency"
+        ],
+        "type": "object",
+        "properties": {
+          "reference": {
+            "type": "string"
+          },
+          "debtorIban": {
+            "type": "string"
+          },
+          "creditorIban": {
+            "type": "string"
+          },
+          "amount": {
+            "pattern": "^-?(?:0|[1-9]\\d*)(?:\\.\\d+)?$",
+            "type": [
+              "number",
+              "string"
+            ],
+            "format": "double"
+          },
+          "currency": {
+            "type": "string"
           }
         }
       }
