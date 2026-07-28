@@ -85,7 +85,7 @@ dashboard and its source (not from memory):
    cards, empty states; never decoration on prose. (Mockifyr already ships it.)
 2. **Sidebar**: brand head (mark + product word + subtitle) · **⌘K search** ·
    **GROUPED nav with small-caps group labels** — amended after the owner reviewed B1:
-   the five modules are ONE family and share ONE `OPERATIONS` group under `OVERVIEW`
+   the five modules are ONE family and share ONE `MODULES` group (the subtitle already says Operations — the same word twice in one rail was the redundancy a test caught) under `OVERVIEW`
    (Today), exactly as the reference keeps its whole core domain in a single group. A
    heading must own several items to earn its place. A surface for a DIFFERENT audience
    (an API portal, platform settings) becomes its own group; a new operations module

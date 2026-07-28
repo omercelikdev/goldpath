@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, within, waitFor } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { ConsoleApp } from "./ConsoleApp";
 
@@ -215,5 +215,17 @@ describe("the console across services", () => {
 
     await screen.findByRole("button", { name: "Bulk intake" });
     expect(screen.queryByLabelText(/service/i)).toBeNull();   // one service: no picker
+  });
+
+  it("the rail renders ONE Modules group — the owner's amendment, pinned", async () => {
+    render(<ConsoleApp fetcher={estate().fetcher} search="" />);
+    const rail = await screen.findByTestId("shell-rail");
+    await screen.findByRole("button", { name: "Runs" });
+
+    // One family, one heading — and none of the four concern-groups B1 shipped with.
+    expect(within(rail).getAllByText(/^Modules$/)).toHaveLength(1);
+    for (const retired of ["Execution", "Intake", "Outbound", "Compliance"]) {
+      expect(within(rail).queryByText(new RegExp(`^${retired}$`))).toBeNull();
+    }
   });
 });
