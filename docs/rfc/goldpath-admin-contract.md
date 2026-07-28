@@ -147,7 +147,7 @@ capability rather than deliberate scope.
 
 The gap splits three ways, and only the middle one is a contract change.
 
-### 1. Already frozen, never put on screen (no contract change — U6 work)
+### 1. Already frozen, never put on screen (no contract change — U5 work)
 
 `pause-all` / `resume-all`, `reschedule`, the calendar CRUD, and the global `/audit` are
 all in the inventory above and none of them has a screen. `pause-all` is the one that
