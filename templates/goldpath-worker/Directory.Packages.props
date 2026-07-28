@@ -14,18 +14,18 @@
     <!--#if (UseQueue) -->
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.4.6" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.10" />
-    <PackageVersion Include="Goldpath.Messaging" Version="0.1.0-preview.4" />
+    <PackageVersion Include="Goldpath.Messaging" Version="0.1.0-preview.5" />
     <!--#endif -->
     <!--#if (UseQueue || UseJobs) -->
-    <PackageVersion Include="Goldpath.Data" Version="0.1.0-preview.4" />
+    <PackageVersion Include="Goldpath.Data" Version="0.1.0-preview.5" />
     <!--#endif -->
     <!--#if (UseJobs) -->
-    <PackageVersion Include="Goldpath.Jobs" Version="0.1.0-preview.4" />
+    <PackageVersion Include="Goldpath.Jobs" Version="0.1.0-preview.5" />
     <!--#endif -->
     <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
-    <PackageVersion Include="Goldpath.Abstractions" Version="0.1.0-preview.4" />
-    <PackageVersion Include="Goldpath.Analyzers" Version="0.1.0-preview.4" />
-    <PackageVersion Include="Goldpath.ServiceDefaults" Version="0.1.0-preview.4" />
+    <PackageVersion Include="Goldpath.Abstractions" Version="0.1.0-preview.5" />
+    <PackageVersion Include="Goldpath.Analyzers" Version="0.1.0-preview.5" />
+    <PackageVersion Include="Goldpath.ServiceDefaults" Version="0.1.0-preview.5" />
     <PackageVersion Include="Microsoft.NET.Test.Sdk" Version="17.12.0" />
     <PackageVersion Include="xunit" Version="2.9.2" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />

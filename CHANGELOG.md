@@ -3,7 +3,13 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
-## [Unreleased]
+## [0.1.0-preview.5] - 2026-07-28
+
+The scheduling train. The admin contract's Revision R2 gives the console the other half
+of what a fleet IS — its scheduler, its triggers, its calendars, its history — and the
+console grows the screens to drive it, `pause-all` included. Plus two fixes every
+single-app adopter feels on their first screen. Upgrade guide:
+`docs/upgrades/0.1.0-preview.5.md` (one migration, no breaking API changes).
 
 ### Fixed
 - **`Goldpath.Console`: an app that configures no service no longer warns its operator
