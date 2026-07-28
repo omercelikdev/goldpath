@@ -7,6 +7,10 @@ import { defineConfig } from "@playwright/test";
  */
 export default defineConfig({
   testDir: "./e2e",
+  // The screenshot capture is a DOCUMENT, not a gate: it writes the README's pictures from
+  // a real console and is run on demand by scripts/console-screenshots.sh. A gate that
+  // fails on pixels gets muted, and muting it would cost the behaviour proofs beside it.
+  testIgnore: process.env.GOLDPATH_SHOT_DIR ? [] : ["**/screenshots.spec.ts"],
   timeout: 60_000,
   expect: { timeout: 20_000 },
   fullyParallel: false,

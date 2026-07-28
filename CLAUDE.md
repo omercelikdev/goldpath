@@ -23,8 +23,8 @@ not propose anything that contradicts them; changes only via a superseding ADR).
 - Code style: `.editorconfig` + analyzers + `dotnet format`; XML summaries mandatory on public APIs.
 
 ## Status (2026-07-27)
-Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.3` train is on
-nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Phase D shipped the CorPay
+Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.4` train is on
+nuget.org — `Goldpath.Console` included (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Phase D shipped the CorPay
 reference app (`samples/corpay`, proven nightly against the published packages). The UI
 phase is active (`docs/rfc/goldpath-console.md`: U1–U3 met, U4 in flight — the
 registry, the triage home, `MapGoldpathConsole()` and the generated-app shapes ship; the

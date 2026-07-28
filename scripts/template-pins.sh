@@ -31,4 +31,16 @@ for props in "$ROOT"/templates/*/Directory.Packages.props; do
   done < <(grep -E 'PackageVersion Include="Goldpath\.' "$props" || true)
 done
 
-[ "$bad" = "0" ] && echo "── template pins: every Goldpath.* package is on the train" || exit 1
+# The DOCS are a pin too: an adopter installs the version the quickstart tells them to,
+# and a stale one hands them an old train on their very first command. Found on
+# 2026-07-28, when README and the getting-started guide still said preview.2.
+for doc in "$ROOT"/README.md "$ROOT"/docs/guide/getting-started.md; do
+  while IFS= read -r pinned; do
+    if [ "$pinned" != "$train" ]; then
+      echo "── STALE $(basename "$doc"): Goldpath.Templates@$pinned, train is $train"
+      bad=1
+    fi
+  done < <(grep -oE 'Goldpath\.Templates@[0-9][^ ]*' "$doc" | sed 's/.*@//' || true)
+done
+
+[ "$bad" = "0" ] && echo "── pins: templates and the adopter docs are all on the train" || exit 1

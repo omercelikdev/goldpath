@@ -3,6 +3,16 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [Unreleased]
+
+### Fixed
+- **`Goldpath.Console`: an app that configures no service no longer warns its operator
+  about a missing one.** `console.config.json` answered `{"services":[]}` for an
+  unconfigured registry; the console reads an empty registry as a BROKEN one, so every
+  single-app adopter — the common case — met “the service registry lists no service with a
+  name” on their first screen. The endpoint now answers **404** (no registry), which the
+  console has always read as “this service only”, silently. No configuration changes.
+
 ## [0.1.0-preview.4] - 2026-07-27
 
 The console train. Goldpath ships an operations console — served by the adopter's own

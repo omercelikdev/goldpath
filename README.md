@@ -18,13 +18,13 @@ templates + AI skills + guardrails + living documentation. Not a framework — a
 - ✔ Composable packages — added to an existing project in 5 minutes (L1) or scaffolded from scratch (L3)
 - ✔ Spec-driven: `.goldpath/manifest.yaml` + OpenAPI/AsyncAPI as the single source of truth
 - ✔ AI in the development layer: skills generate, guardrails verify, humans approve
-- ✔ Proof-driven: every claim below is a test/bench that runs in CI (nightly 7-shape matrix, real containers)
+- ✔ Proof-driven: every claim below is a test/bench that runs in CI (nightly 10-shape golden-manifest matrix, real containers)
 - ✘ Not a framework (imposes no structure), no custom DSL, no wrappers around Microsoft
 
 ## Quickstart
 
 ```bash
-dotnet new install Goldpath.Templates@0.1.0-preview.2    # preview: pin the version
+dotnet new install Goldpath.Templates@0.1.0-preview.4    # preview: pin the version
 dotnet tool install -g Goldpath.Cli --prerelease
 dotnet tool install -g specdrift                         # the deterministic engine behind goldpath check/add
 
@@ -40,6 +40,34 @@ audited and [contract-frozen](docs/rfc/goldpath-admin-contract.md); every module
 its Grafana board, runbooks and [measured performance](docs/ops/release-checklist.md)
 on a pinned CI profile.
 
+## The console
+
+One line — `app.MapGoldpathConsole()` — and the app serves its own operations console out
+of the `Goldpath.Console` package's embedded assets: no Node on the running system, behind
+the same fail-closed ops floor as `/goldpath/admin/*`, and lit only by the modules the app
+actually composes.
+
+**Today** answers the only question an operator opens a console to ask, across every
+service in the registry, before opening any of them:
+
+![The console's Today screen: a failed notification, a repair queue, a batch at the four-eyes gate](docs/assets/console-today.png)
+
+**Runs** discovers the fleets from the store — every run with its chunks, its repair queue
+and its deadline verdict, and `rerun` for the one that failed:
+
+![The run console: fleet jobs with trigger and pause, the run list, and one run's detail with its chunk states](docs/assets/console-runs.png)
+
+**Bulk intake** puts the engine's own validation report under the four-eyes gate, so the
+person approving sees exactly which row the file got wrong:
+
+![A validated batch: 3 rows, 2 valid, 1 invalid, the finding named per row, with approve and reject](docs/assets/console-gate.png)
+
+These are captured, never mocked: `scripts/console-screenshots.sh` brings up Postgres and
+RabbitMQ, runs a real app, uploads a real file, triggers real jobs, and photographs what
+comes back. The console is proven the same way — `scripts/console-smoke.sh` drives three
+real apps (open, auth-floored, tenant-scoped) plus the app-served console, under an axe
+accessibility gate.
+
 ## What's in the train
 
 | Layer | Packages |
@@ -47,6 +75,7 @@ on a pinned CI profile.
 | Floor (Ring A) | Abstractions · ServiceDefaults · ApiDefaults · Data · Messaging |
 | Cross-cutting (Ring B) | Auth · Idempotency · AuditTrail · MultiTenancy · SoftDelete · Locking (+SqlServer) · Caching · DataProtection |
 | Execution ladder (L2→L4) | Jobs (clustered, checkpointed, kill-9-recoverable) · Archival · Bulk (finance-grade intake→gate→execute→repair) · Notification · Campaign (paced fan-out, live throttle) |
+| Operations | Console (`MapGoldpathConsole()` — the app serves its own, from embedded assets) |
 | Tooling | Analyzers (GP#### executable standards) · `goldpath` CLI · `Goldpath.Templates` |
 
 ## Monorepo Layout
@@ -57,9 +86,10 @@ on a pinned CI profile.
 | `docs/guide/` · `docs/stories/` | The adopter's path (start here) · proof stories |
 | `docs/ops/` · `docs/upgrades/` | Migrations/trace/release runbooks · per-release upgrade guides |
 | `schemas/manifest/v1/` | Manifest JSON Schema + valid/invalid corpus (CI corpus gate: valid must pass, invalid must fail) |
-| `packages/` · `analyzers/` | The NuGet train (19 packages) · GP#### Roslyn rules |
+| `packages/` · `analyzers/` | The NuGet train (20 packages) · GP#### Roslyn rules |
 | `templates/` · `tools/` | `dotnet new` pack (solution + worker) · the `goldpath` CLI |
-| `tests/` | 592 unit + 34 integration proofs (Testcontainers) + bench suite |
+| `ui/kit/` · `ui/console/` | The console's primitives · the console itself (embedded into `Goldpath.Console`) |
+| `tests/` | 619 unit + 32 integration proofs (Testcontainers) + bench suite; 204 UI unit tests + a browser smoke against three real apps |
 | `skills/` · `rulesets/` · `samples/` | pointers — the shipped skill layer and rulesets live inside `templates/` · reference app (CorPay) |
 
 ## Language Policy

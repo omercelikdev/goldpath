@@ -171,10 +171,21 @@ Carrying structural template changes into generated solutions is the job of the 
 
 ### 5.1 First-party components (Mockifyr, Mediant) and the personal OSS policy
 
-- **Mockifyr (mock engine, github.com/omercelikdev/mockifyr, free):** Goldpath's mock module is
-  designed **provider-pluggable**: the mock contract in the manifest + stub format = WireMock
-  JSON canonical (portability). Providers: WireMock (today, mature) → Mockifyr (becomes the
-  default once its parity roadmap reaches Goldpath's needs: HTTP facade + admin API + scenarios).
+- **Mockifyr (mock engine, github.com/omercelikdev/mockifyr, free) — status: v0.17.0, THE mock
+  system of the golden path (decision 2026-07-28; there is no second provider and no
+  provider-pluggable seam to maintain):** an independent .NET mock engine + platform, not a
+  wrapper over anyone else's. What it covers, and why one system is enough: a
+  transport-agnostic matching/templating core with first-class multi-tenancy, behind thin
+  facades — in-process library, HTTP, gRPC, GraphQL, WebSocket — plus an admin REST surface
+  and a dashboard. Stateful scenarios, delay/fault injection, proxying, record & replay,
+  verify with near-miss diagnostics, and tenant-scoped environments. Beyond request/response
+  it also mocks the two channels enterprise flows always need and mock servers usually
+  ignore: **email** (an SMTP capture server with an inbox) and **SMS** (a Twilio-compatible
+  provider profile), both with verify and one-call OTP extraction. And an **integration
+  sandbox** — durable stateful resources, OpenAPI import, operator-issued API keys with
+  quotas — so a consumer team gets a working environment, not just canned replies.
+  The manifest's stub folder is a Mockifyr bundle. Deployment is one container image (Docker
+  or Aspire); the golden path never asks an adopter to run a second mock stack.
   Synergy: Mockifyr multi-tenancy = shared mock environments; the InfraOps "Mocks" page
   sits on the Mockifyr admin API; the differential testing infrastructure is shared with the transformation package.
 - **Mediant (MediatR alternative, free) — status: v1.0.0 STABLE, GATE MET (released 2026-07-03;
@@ -216,7 +227,7 @@ Carrying structural template changes into generated solutions is the job of the 
   | `diff` | spec v1↔v2, breaking-change classification → the machine makes the SemVer decision |
   | `generate` | the contract layer (DTO/client/server stubs) — Kiota/NSwag orchestration, 100% deterministic |
   | `test` | contract tests from the spec + executable scenarios from the approved example tables |
-  | `mock` | spec examples → Mockifyr/WireMock JSON stubs — the mock environment is ready the moment the spec is approved (consumer teams don't wait) |
+  | `mock` | spec examples → Mockifyr stubs — the mock environment is ready the moment the spec is approved (consumer teams don't wait) |
   | `docs` | spec → human-readable render (feeds the "generated" class of living documentation) |
   | `mcp` | all capabilities as agent tools — the CLI and the AI see the same rules/engine |
   Rulesets: declarative (YAML selector+assertion) + a C# plugin escape hatch; severity; justified
@@ -404,7 +415,9 @@ Strangler fig + differential testing, productized:
 3. Production on the golden path (the Phase 1-2 deliverables come into play here)
 4. `differential-test`: the old system as oracle — the same input into both systems, outputs compared.
    Input source: production traffic replay + recorded real data (anonymized).
-   The WireMock module equalizes external dependencies (the mock infrastructure is half of this scenario).
+   Mockifyr equalizes external dependencies (the mock infrastructure is half of this scenario) —
+   including the email and SMS channels a legacy flow usually reaches for, which a
+   request/response mock alone cannot stand in for.
 
    **Parity contract (naive equality is forbidden):** The comparison is rule-based; behaviors
    are classified per capability into three classes, and this classification is a versioned + business-approved
@@ -501,7 +514,7 @@ Each phase's exit is the next phase's entry gate; gates govern, not the calendar
   the `authoring` + `new-service` + `add-feature` + `docs-sync` skills + the eval harness + telemetry v1.
   *Gate: a feature flows from a business sentence to an MR in a single session (live demo ready).*
 - **Phase 3 — Transformation Package:** `reverse-engineer` + `differential-test` + the strangler guide +
-  WireMock integration. *Gate: an end-to-end pilot on a small legacy module + the first Delivery Report.*
+  Mockifyr integration. *Gate: an end-to-end pilot on a small legacy module + the first Delivery Report.*
 - **Phase 4 — Productization:** InfraOps portal expansion, advanced modules (via RFC), delivery
   report automation, training/onboarding material. *Gate: the first external customer project.*
 
