@@ -17,7 +17,7 @@ export interface ConsoleAppProps {
 /** The landing section is the estate, not a module — hence its own id. */
 const TODAY = "today";
 
-const GROUP_ORDER = ["Operations"];
+const GROUP_ORDER = ["Modules"];
 type Section = typeof TODAY | ModuleName;
 
 /**

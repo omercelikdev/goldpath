@@ -29,11 +29,11 @@ export const SECTION_LABEL: Record<ModuleName, string> = {
  * operations module simply joins this one.
  */
 export const SECTION_GROUP: Record<ModuleName, string> = {
-  jobs: "Operations",
-  bulk: "Operations",
-  campaign: "Operations",
-  notification: "Operations",
-  archival: "Operations",
+  jobs: "Modules",
+  bulk: "Modules",
+  campaign: "Modules",
+  notification: "Modules",
+  archival: "Modules",
 };
 
 /** One lucide icon per section — sparse by design; the icon IS the item when collapsed. */
