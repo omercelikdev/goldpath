@@ -204,4 +204,17 @@ describe("the run history (contract R2.4)", () => {
 
     expect(await screen.findByText(/could not be opened/)).toBeInTheDocument();
   });
+
+  it("the job search commits to the SERVER through the contract's ?job=", async () => {
+    const user = userEvent.setup();
+    const { client, asked } = api();
+    render(<RunHistory client={client} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
+    await screen.findByText("eod-reconciliation");
+
+    await user.type(screen.getByLabelText("Search by job"), "eod{Enter}");
+
+    // A client-side narrow of one loaded page would read as "no runs" while more sat
+    // behind the take bound — the search is a FILTER, so it travels.
+    await waitFor(() => expect(asked.at(-1)!.searchParams.get("job")).toBe("eod"));
+  });
 });
