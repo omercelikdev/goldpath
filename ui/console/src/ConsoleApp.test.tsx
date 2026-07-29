@@ -267,6 +267,28 @@ describe("the console across services", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Runs" })).not.toBeInTheDocument());
   });
 
+  it("a stat owned by TWO services is a plain card — a combined total deep-links nowhere", async () => {
+    // Both services compose jobs: the "Failed runs" number belongs to neither alone.
+    const fetcher = (async (input: RequestInfo | URL) => {
+      const url = String(input);
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (url.includes("console.config.json")) {
+        return json({ services: [
+          { name: "payments", adminBaseUrl: "https://payments.internal" },
+          { name: "claims", adminBaseUrl: "https://claims.internal" },
+        ] });
+      }
+      if (url.includes("/jobs/fleets")) return json([]);
+      return new Response("", { status: 404 });
+    }) as typeof fetch;
+
+    render(<ConsoleApp fetcher={fetcher} search="" />);
+    const cards = await screen.findByTestId("triage-cards");
+
+    expect(within(cards).getByText("Failed runs")).toBeInTheDocument();
+    expect(within(cards).queryByRole("button", { name: /Failed runs/ })).not.toBeInTheDocument();
+  });
+
   it("the rail renders ONE Modules group — the owner's amendment, pinned", async () => {
     render(<ConsoleApp fetcher={estate().fetcher} search="" />);
     const rail = await screen.findByTestId("shell-rail");

@@ -93,10 +93,13 @@ export function TriageHome({ services, onOpen, now }: TriageHomeProps) {
         return (
           <div data-testid="triage-cards" className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-5">
             {cards.map((module) => {
-              const value = collected.services.reduce((sum, service) => sum + (service.stats[module] ?? 0), 0);
-              // The card deep-links like every triage row: to the first service that
-              // contributed the number (with one service there is nothing to choose).
-              const owner = collected.services.find((service) => service.stats[module] !== undefined);
+              const owners = collected.services.filter((service) => service.stats[module] !== undefined);
+              const value = owners.reduce((sum, service) => sum + (service.stats[module] ?? 0), 0);
+              // The card deep-links ONLY when one service owns the whole number: a
+              // combined total belongs to no single service, and landing an operator on
+              // a screen that accounts for part of it would contradict the count they
+              // clicked (review R1). The rows below carry the per-service links.
+              const owner = owners.length === 1 ? owners[0] : undefined;
               return (
                 <StatCard
                   key={module}
