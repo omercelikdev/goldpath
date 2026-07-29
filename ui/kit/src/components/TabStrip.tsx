@@ -36,7 +36,7 @@ export function TabStrip({ items, activeId, onSelect, label }: TabStripProps) {
   };
 
   return (
-    <div ref={strip} role="tablist" aria-label={label} className="flex flex-wrap gap-1 border-b border-border">
+    <div ref={strip} role="tablist" aria-label={label} className="inline-flex flex-wrap gap-1 rounded-xl bg-muted p-1">
       {items.map((item, index) => {
         const active = item.id === activeId;
         return (
@@ -47,8 +47,9 @@ export function TabStrip({ items, activeId, onSelect, label }: TabStripProps) {
             aria-selected={active}
             aria-controls={`panel-${item.id}`}
             tabIndex={active ? 0 : -1}
-            className={`-mb-px rounded-t-md border-b-2 px-3 py-1.5 text-sm ${
-              active ? "border-foreground font-medium text-foreground" : "border-transparent text-muted-foreground hover:text-foreground"
+            // Pills, class-verbatim from the reference (v1.1 §7.6) — the underline strip retires.
+            className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+              active ? "bg-background text-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
             }`}
             onClick={() => onSelect(item.id)}
             onKeyDown={(event) => {

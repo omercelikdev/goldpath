@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { KeysetTable, RunProgress, Sheet, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
+import { KeysetTable, RunProgress, SearchBox, Sheet, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
 import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
 import { asOutcome } from "./verbs";
 
@@ -23,6 +23,7 @@ const STATES = ["Running", "Completed", "Failed"];
  */
 export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunHistoryProps) {
   const [status, setStatus] = useState("");
+  const [job, setJob] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
@@ -33,6 +34,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
     async (cursor: string | null, take: number) => {
       const runs = await client.runs(fleet, {
         take,
+        job: job || undefined,
         status: status || undefined,
         // The inputs are date-only; the window an operator means by "from the 27th" runs
         // to the END of the 27th, so the upper bound is stretched to that day's last
@@ -44,7 +46,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
       // A short page is the end of the walk; a full one may have more behind it.
       return { items: runs, nextCursor: runs.length < take ? null : (runs[runs.length - 1]?.id ?? null) };
     },
-    [client, fleet, status, from, to, refreshToken],
+    [client, fleet, job, status, from, to, refreshToken],
   );
 
   useEffect(() => {
@@ -69,6 +71,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
   return (
     <div data-testid="run-history" className="space-y-4">
       <div className="flex flex-wrap items-end gap-3 text-xs">
+        <SearchBox value={job} onCommit={setJob} label="Search by job" placeholder="job name…" />
         <span className="flex flex-col gap-1">
           {/* Explicit binding: a select INSIDE its label answers to the label text plus
               every option, which is neither what a screen reader should say nor what a
@@ -94,13 +97,14 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
           To
           <input type="date" className="control" value={to} onChange={(event) => setTo(event.target.value)} />
         </label>
-        {(status || from || to) && (
+        {(status || from || to || job) && (
           <button
             className="link-action"
             onClick={() => {
               setStatus("");
               setFrom("");
               setTo("");
+              setJob("");
             }}
           >
             clear filters
@@ -109,7 +113,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
       </div>
 
       <KeysetTable<RunSummary>
-        key={`${fleet}-${status}-${from}-${to}-${refreshToken}`}
+        key={`${fleet}-${job}-${status}-${from}-${to}-${refreshToken}`}
         columns={[
           {
             header: "Run",
