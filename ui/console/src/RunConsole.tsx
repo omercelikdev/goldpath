@@ -10,6 +10,10 @@ export interface RunConsoleProps {
   client: AdminClient;
   /** Injected in tests; the composite reads the clock only for rate/prediction display. */
   now?: Date;
+  /** Another SECTION asked for a run (a batch's run id) — open History with it. */
+  openRunRequest?: { id: string } | null;
+  /** Threaded to History's ack: the section OWNER clears the ask once it landed. */
+  onRunRequestConsumed?: () => void;
 }
 
 const TABS = [
@@ -28,10 +32,17 @@ const TABS = [
  * does not own, and offers no verb the API does not have — notably, no way to create or
  * delete a job, because composition belongs to the manifest (ADR-0001).
  */
-export function RunConsole({ client, now }: RunConsoleProps) {
+export function RunConsole({ client, now, openRunRequest, onRunRequestConsumed }: RunConsoleProps) {
   const [fleets, setFleets] = useState<FleetInfo[]>([]);
   const [fleet, setFleet] = useState<string | null>(null);
   const [tab, setTab] = useState("overview");
+  // Cross-screen intents (v1.1 §7.9): a history row asks for its JOB, another section
+  // asks for a RUN. Fresh objects each ask, so repeating an ask still lands.
+  const [jobRequest, setJobRequest] = useState<{ name: string } | null>(null);
+
+  useEffect(() => {
+    if (openRunRequest) setTab("history");
+  }, [openRunRequest]);
   const [error, setError] = useState<string | null>(null);
   const [refreshToken, setRefreshToken] = useState(0);
 
@@ -96,13 +107,34 @@ export function RunConsole({ client, now }: RunConsoleProps) {
             <FleetOverview key={fleet} client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} />
           </TabPanel>
           <TabPanel id="jobs" activeId={tab}>
-            <JobsTab key={fleet} client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} />
+            <JobsTab
+              key={fleet}
+              client={client}
+              fleet={fleet}
+              refreshToken={refreshToken}
+              onChanged={refresh}
+              openJobRequest={jobRequest}
+              onJobRequestConsumed={() => setJobRequest(null)}
+              onShowCalendars={() => setTab("calendars")}
+            />
           </TabPanel>
           <TabPanel id="calendars" activeId={tab}>
             <CalendarsTab key={fleet} client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} />
           </TabPanel>
           <TabPanel id="history" activeId={tab}>
-            <RunHistory client={client} fleet={fleet} refreshToken={refreshToken} onChanged={refresh} now={now} />
+            <RunHistory
+              client={client}
+              fleet={fleet}
+              refreshToken={refreshToken}
+              onChanged={refresh}
+              now={now}
+              openRunRequest={openRunRequest}
+              onRunRequestConsumed={onRunRequestConsumed}
+              onOpenJob={(name) => {
+                setJobRequest({ name });
+                setTab("jobs");
+              }}
+            />
           </TabPanel>
         </>
       )}

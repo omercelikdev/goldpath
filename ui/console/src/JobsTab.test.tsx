@@ -88,6 +88,35 @@ describe("the jobs tab", () => {
     expect(screen.getByRole("button", { name: "pause" })).toBeInTheDocument();
   });
 
+  it("§7.9: a trigger's calendar LINKS to the Calendars tab when the console can take you there", async () => {
+    const user = userEvent.setup();
+    const shown: string[] = [];
+    const { client } = api([{ name: "eod", triggers: [trigger({ calendarName: "tr-holidays" })] }]);
+    render(
+      <JobsTab
+        client={client}
+        fleet="it-cluster"
+        refreshToken={0}
+        onChanged={() => {}}
+        onShowCalendars={() => shown.push("calendars")}
+      />,
+    );
+
+    await user.click(await screen.findByRole("button", { name: "eod" }));
+    await user.click(await screen.findByRole("button", { name: /calendar tr-holidays/ }));
+    expect(shown).toEqual(["calendars"]);
+  });
+
+  it("§7.9: a job ask from History opens the sheet without a click", async () => {
+    const { client } = api([{ name: "eod", triggers: [trigger()] }]);
+    render(
+      <JobsTab client={client} fleet="it-cluster" refreshToken={0} onChanged={() => {}} openJobRequest={{ name: "eod" }} />,
+    );
+
+    const sheet = await screen.findByTestId("sheet");
+    expect(sheet).toHaveTextContent("0 0 3 * * ?");
+  });
+
   it("opening a job shows its triggers with the facts a cron string cannot carry", async () => {
     const user = userEvent.setup();
     const { client } = api([{ name: "eod", triggers: [trigger()], dataMap: { window: "eod", batchSize: "500" } }]);

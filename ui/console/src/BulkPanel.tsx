@@ -5,6 +5,8 @@ import type { AdminClient, BulkBatchInfo, BulkDefinitionStatus, BulkRowError } f
 
 export interface BulkPanelProps {
   client: AdminClient;
+  /** Cross-SECTION link (v1.1 §7.9): a batch's run id opens the run console's History. */
+  onOpenRun?: (runId: string) => void;
 }
 
 /** The verb envelope, adapted to the kit's outcome type — refusals stay data. */
@@ -33,7 +35,7 @@ const GATED = "Validated";
  * The run half of a batch lives in the RUN console (a batch executes as a run) — this
  * screen owns only what the intake surface owns, and links the two by run id.
  */
-export function BulkPanel({ client }: BulkPanelProps) {
+export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
   const [definitions, setDefinitions] = useState<BulkDefinitionStatus[] | null>(null);
   const [state, setState] = useState<string>("");
   const [selectedId, setSelectedId] = useState<string | null>(null);
@@ -274,7 +276,20 @@ export function BulkPanel({ client }: BulkPanelProps) {
             </h2>
             <StateBadge state={selected.state} />
             {selected.tenant && <span className="text-xs text-faint">tenant {selected.tenant}</span>}
-            {selected.runId && <span className="text-xs text-faint">run {selected.runId}</span>}
+            {selected.runId &&
+              // The run half of this batch lives in the RUN console — the id is the
+              // seam between the two screens, so it links there (v1.1 §7.9). Without a
+              // jobs surface to land on, it stays a plain fact.
+              (onOpenRun ? (
+                <button
+                  className="text-xs text-faint underline-offset-2 hover:underline"
+                  onClick={() => onOpenRun(selected.runId!)}
+                >
+                  run {selected.runId}
+                </button>
+              ) : (
+                <span className="text-xs text-faint">run {selected.runId}</span>
+              ))}
             {selected.state === GATED && (
               <span className="ml-auto flex flex-wrap gap-2">
                 <VerbButton

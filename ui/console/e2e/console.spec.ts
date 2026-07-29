@@ -14,17 +14,17 @@ test.describe("the run console against a real Goldpath app", () => {
   test("discovers the composed capability and hides what the app never composed", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
 
-    await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true })).toBeVisible();
     // This host composes jobs + bulk; the other three surfaces answer 404, so no panels.
-    await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Campaigns" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Notifications" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Archival" })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Bulk intake", exact: true })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Campaigns", exact: true })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Notifications", exact: true })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Archival", exact: true })).toBeVisible();
   });
 
   test("triggers a job, watches the run finish, and replays its repair item", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
-    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
 
     // The fleet appears because the executor exists (zero-config discovery).
     await expect(page.getByRole("button", { name: /console-smoke/ })).toBeVisible();
@@ -43,7 +43,7 @@ test.describe("the run console against a real Goldpath app", () => {
     const smokeRun = page.getByRole("row", { name: /SmokeJob/ }).first();
     await expect(async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
-      await page.getByRole("button", { name: "Runs" }).click();
+      await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
       await page.getByRole("tab", { name: "History" }).click();
       await expect(smokeRun).toContainText("Completed", { timeout: 5_000 });
     }).toPass({ timeout: 60_000 });
@@ -68,7 +68,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
   test("the scheduling surface: fleet state, the 03:00 verb, and a schedule an operator changes", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
-    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
 
     // ── Overview: what the fleet IS (contract R2.1)
     const overview = page.getByTestId("fleet-overview");
@@ -124,7 +124,7 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("status")).toBeVisible();
 
     await page.reload();
-    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
     await page.getByRole("tab", { name: "Jobs" }).click();
     await page.getByRole("button", { name: "SmokeJob" }).click();
     const reopened = page.getByTestId("sheet");
@@ -149,7 +149,7 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("status")).toBeVisible();
 
     await page.reload();
-    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
     await page.getByRole("tab", { name: "Calendars" }).click();
     const calendar = page.getByRole("row", { name: /smoke-holidays/ });
     await expect(calendar).toBeVisible();
@@ -182,7 +182,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
   test("the ⌘K palette: the rail's search opens it and a command navigates", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
-    await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true })).toBeVisible();
 
     // The rail trigger opens the palette; typing narrows it to one destination.
     await page.getByRole("button", { name: /Search/ }).click();
@@ -202,9 +202,28 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("dialog")).not.toBeVisible();
   });
 
+  test("§7.9: a history row's job links to its schedule; a trigger's calendar links on", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
+    await expect(page.getByRole("button", { name: /console-smoke/ })).toBeVisible();
+    await page.getByRole("tab", { name: "History" }).click();
+
+    // Earlier journeys left runs behind; the JOB cell is a link, not a name to remember.
+    const jobLink = page.getByTestId("run-history").getByRole("button", { name: "SmokeJob" }).first();
+    await expect(jobLink).toBeVisible();
+    await jobLink.click();
+
+    // Landed on Jobs with the job's own sheet already open.
+    const sheet = page.getByTestId("sheet");
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText("SmokeJob");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("tab", { name: "Jobs" })).toHaveAttribute("aria-selected", "true");
+  });
+
   test("a job cannot be CREATED from the console — the constitution has no button", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
-    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
     await page.getByRole("tab", { name: "Jobs" }).click();
     await expect(page.getByTestId("jobs-tab")).toBeVisible();
 
@@ -218,7 +237,7 @@ test.describe("the run console against a real Goldpath app", () => {
   test("uploads a batch, reads the real validation report, and works the four-eyes gate", async ({ page }) => {
     const openBulk = async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
-      await page.getByRole("button", { name: "Bulk intake" }).click();
+      await page.getByTestId("shell-rail").getByRole("button", { name: "Bulk intake", exact: true }).click();
       await expect(page.getByTestId("bulk-panel")).toBeVisible();
     };
 
@@ -314,7 +333,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
     const openCampaigns = async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
-      await page.getByRole("button", { name: "Campaigns" }).click();
+      await page.getByTestId("shell-rail").getByRole("button", { name: "Campaigns", exact: true }).click();
       await expect(page.getByTestId("campaign-panel")).toBeVisible();
     };
 
@@ -375,7 +394,7 @@ test.describe("the run console against a real Goldpath app", () => {
   test("reads the notification evidence: sent, suppressed and failed, each with its own words", async ({ page }) => {
     const openNotifications = async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
-      await page.getByRole("button", { name: "Notifications" }).click();
+      await page.getByTestId("shell-rail").getByRole("button", { name: "Notifications", exact: true }).click();
       await expect(page.getByTestId("notification-panel")).toBeVisible();
     };
 
@@ -415,7 +434,7 @@ test.describe("the run console against a real Goldpath app", () => {
   test("archival: verifies the chain, retrieves an entry, holds it, then erases it", async ({ page }) => {
     const openArchival = async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
-      await page.getByRole("button", { name: "Archival" }).click();
+      await page.getByTestId("shell-rail").getByRole("button", { name: "Archival", exact: true }).click();
       await expect(page.getByTestId("archival-panel")).toBeVisible();
     };
 
@@ -488,9 +507,9 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // The modules ARE composed here; the operator simply has no principal. Hiding them
     // would tell the operator this app has no admin surface, which is false.
-    await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
-    await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
-    await page.getByRole("button", { name: "Runs" }).click();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Bulk intake", exact: true })).toBeVisible();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
     await expect(page.getByRole("alert")).toContainText("lacks the ops role");
     await expect(page.getByTestId("run-console")).toHaveCount(0);
     await expect(page.getByText(/No Goldpath admin surface answered here/)).toHaveCount(0);
@@ -502,8 +521,8 @@ test.describe("the run console against a real Goldpath app", () => {
     // R1: no ambient tenant → the app refuses (400). The console must repeat that, not
     // silently downgrade a composed module to "absent".
     await expect(page.getByTestId("triage-home")).toContainText("cannot be read");
-    await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
-    await page.getByRole("button", { name: "Runs" }).click();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true })).toBeVisible();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
     const banner = page.getByRole("alert");
     await expect(banner).toContainText("composed here but refused this request");
     await expect(banner).toContainText(/tenant/i);
@@ -512,7 +531,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
   test("a service that dies MID-SESSION is reported, not papered over", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
-    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
     await expect(page.getByTestId("run-console")).toBeVisible();
 
     // Reach the verb while the service is still healthy...
@@ -539,12 +558,12 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // The landing screen is TODAY; the modules are one click away, never the front door.
     await expect(page.getByTestId("triage-home")).toBeVisible();
-    await page.getByRole("button", { name: "Runs" }).click();
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
 
     const picker = page.getByLabel(/service/i);
     await expect(picker).toHaveValue("open");
     await expect(page.getByTestId("run-console")).toBeVisible();
-    await expect(page.getByRole("button", { name: "Bulk intake" })).toBeVisible();
+    await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Bulk intake", exact: true })).toBeVisible();
 
     // The auth-floored app composes the same modules but refuses this operator: the
     // sections stay NAMED and the reason is the server's.

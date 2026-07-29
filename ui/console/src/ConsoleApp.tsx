@@ -31,6 +31,8 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
   const [active, setActive] = useState<string | null>(null);
   const [section, setSection] = useState<Section>(TODAY);
   const [collapsed, setCollapsed] = useState(initialCollapsed);
+  // A batch handed its run id across sections — carried as a fresh object per ask.
+  const [runRequest, setRunRequest] = useState<{ id: string } | null>(null);
 
   useEffect(() => {
     let live = true;
@@ -151,7 +153,18 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
       ) : (
         <>
           <PageHeader title={SECTION_LABEL[section]} purpose={SECTION_PURPOSE[section]} />
-          <ServicePanels client={client} capabilities={capabilities} section={section} now={now} />
+          <ServicePanels
+            client={client}
+            capabilities={capabilities}
+            section={section}
+            now={now}
+            openRunRequest={runRequest}
+            onRunRequestConsumed={() => setRunRequest(null)}
+            onOpenRun={(runId) => {
+              setRunRequest({ id: runId });
+              setSection("jobs");
+            }}
+          />
         </>
       )}
     </AppShell>

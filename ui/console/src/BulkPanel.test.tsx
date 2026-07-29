@@ -99,6 +99,25 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     expect(screen.queryByRole("status")).toBeNull();
   });
 
+  it("§7.9: the batch's run id LINKS to the run console when one exists to land on", async () => {
+    const opened: string[] = [];
+    const { client: api } = client({ batch: batch({ state: "Executed", runId: "r-42" }) });
+    render(<BulkPanel client={api} onOpenRun={(id) => opened.push(id)} />);
+
+    await openBatch();
+    await userEvent.click(await screen.findByRole("button", { name: "run r-42" }));
+    expect(opened).toEqual(["r-42"]);
+  });
+
+  it("§7.9: without a run console to land on, the run id stays a plain FACT", async () => {
+    const { client: api } = client({ batch: batch({ state: "Executed", runId: "r-42" }) });
+    render(<BulkPanel client={api} />);
+
+    await openBatch();
+    expect(await screen.findByText("run r-42")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "run r-42" })).not.toBeInTheDocument();
+  });
+
   it("filters batches by STATE only — the contract has no definition filter to send", async () => {
     const { client: api, fetched } = client();
     render(<BulkPanel client={api} />);

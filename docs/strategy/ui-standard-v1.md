@@ -119,7 +119,13 @@ dashboard and its source (not from memory):
    header cards.
 9. **Cross-screen context**: rows that reference another screen's entity LINK to it
    (a run's job name → Jobs; a triage row already deep-links — that becomes the norm),
-   so the relationships read on the screen instead of in the docs.
+   so the relationships read on the screen instead of in the docs. Shipped in b4b as
+   three links riding an INTENT pattern (a fresh `{ … }` object per ask, so asking
+   twice still lands): a history row's job opens the Jobs tab with the job's sheet;
+   a trigger's calendar opens the Calendars tab; a batch's run id crosses sections
+   into the run console's History with the run's sheet open. Each link lights only
+   when the console can actually take you there — a batch's run id on a service
+   that composes no jobs surface stays a plain fact.
 10. **Search**: global ⌘K over nav + entity ids; per-table search only where a list
     is take-bounded (it narrows SERVER-side via the existing filters, never a loaded
     page). Shipped in b3d as the kit `CommandPalette` (cmdk, reference-verbatim):
