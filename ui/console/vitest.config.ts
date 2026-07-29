@@ -13,6 +13,7 @@ export default defineConfig({
       "lucide-react": fileURLToPath(new URL("./node_modules/lucide-react", import.meta.url)),
       "@radix-ui/react-dialog": fileURLToPath(new URL("./node_modules/@radix-ui/react-dialog", import.meta.url)),
       "@radix-ui/react-dropdown-menu": fileURLToPath(new URL("./node_modules/@radix-ui/react-dropdown-menu", import.meta.url)),
+      "cmdk": fileURLToPath(new URL("./node_modules/cmdk", import.meta.url)),
     },
     dedupe: ["react", "react-dom"],
   },
@@ -20,7 +21,7 @@ export default defineConfig({
     environment: "jsdom",
     server: {
       // Externalized, lucide bypasses the alias above; inlined, it resolves through it.
-      deps: { inline: ["lucide-react", /@radix-ui/] },
+      deps: { inline: ["lucide-react", "cmdk", /@radix-ui/] },
     },
     coverage: {
       // Only the SOURCE is judged: the gallery and the dev entry point are worked

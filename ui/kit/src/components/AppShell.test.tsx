@@ -178,6 +178,29 @@ describe("the v1.1 rail (u7-b1)", () => {
     expect(initialCollapsed()).toBe(true);
   });
 
+  it("the search trigger shows the field + ⌘K hint expanded, and calls onSearch", async () => {
+    const onSearch = vi.fn();
+    render(<AppShell title="t" nav={[item("a")]} activeId="a" onSearch={onSearch}>x</AppShell>);
+    const trigger = screen.getByRole("button", { name: /Search/ });
+    expect(trigger.textContent).toContain("⌘K");
+    await userEvent.click(trigger);
+    expect(onSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it("collapsed, the search trigger is an icon — the hint goes, the reach stays", async () => {
+    const onSearch = vi.fn();
+    render(<AppShell title="t" nav={[item("a")]} activeId="a" collapsed onSearch={onSearch}>x</AppShell>);
+    const trigger = screen.getByRole("button", { name: "Search" });
+    expect(trigger.textContent).not.toContain("⌘K");
+    await userEvent.click(trigger);
+    expect(onSearch).toHaveBeenCalledTimes(1);
+  });
+
+  it("no onSearch, no trigger — a console without a palette shows no dead field", () => {
+    render(<AppShell title="t" nav={[item("a")]} activeId="a">x</AppShell>);
+    expect(screen.queryByRole("button", { name: /Search/ })).not.toBeInTheDocument();
+  });
+
   it("a throwing localStorage never breaks the shell", () => {
     const real = Storage.prototype.getItem;
     Storage.prototype.getItem = () => { throw new Error("private mode"); };

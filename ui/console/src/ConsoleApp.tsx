@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppShell, Banner, PageHeader, initialCollapsed } from "@goldpath/kit";
-import type { ShellNavItem } from "@goldpath/kit";
+import { AppShell, Banner, CommandPalette, PageHeader, initialCollapsed, openCommand } from "@goldpath/kit";
+import type { CommandGroup, ShellNavItem } from "@goldpath/kit";
 import { AdminClient, type ModuleName } from "./adminClient";
 import { composedSections, isUnreachable, SECTION_GROUP, SECTION_ICON, SECTION_LABEL, SECTION_PURPOSE, ServicePanels, type Capabilities } from "./sections";
 import { TriageHome } from "./TriageHome";
@@ -102,6 +102,19 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
     setSection(targetSection);
   };
 
+  // The palette offers exactly what the rail offers — same sections, same icons — plus
+  // the estate's service switch. Nothing here is a verb: commands GO places, and the
+  // places themselves own their actions (v1.1 §7.14).
+  const commands: CommandGroup[] = [
+    { heading: "Go to", items: nav.map((item) => ({ id: item.id, label: item.label, icon: item.icon, run: item.onSelect })) },
+    ...(services.length > 1
+      ? [{
+          heading: "Services",
+          items: services.map((entry) => ({ id: `service-${entry.name}`, label: `Open ${entry.name}`, run: () => setActive(entry.name) })),
+        }]
+      : []),
+  ];
+
   return (
     <AppShell
       title={title}
@@ -112,7 +125,10 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
       activeService={service.name}
       collapsed={collapsed}
       onToggleCollapsed={() => setCollapsed(!collapsed)}
+      onSearch={openCommand}
     >
+      <CommandPalette label="Search sections…" groups={commands} />
+
       {problem && (
         // Config that failed to load is NOT a quiet fallback: an operator who configured
         // four services and sees one is looking at the wrong console.

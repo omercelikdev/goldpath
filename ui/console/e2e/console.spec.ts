@@ -180,6 +180,28 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(audit).toContainText("remove-trigger");
   });
 
+  test("the ⌘K palette: the rail's search opens it and a command navigates", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await expect(page.getByRole("button", { name: "Runs" })).toBeVisible();
+
+    // The rail trigger opens the palette; typing narrows it to one destination.
+    await page.getByRole("button", { name: /Search/ }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole("combobox").fill("archi");
+    await dialog.getByText("Archival").click();
+
+    // The palette closed and the console went where the command said.
+    await expect(dialog).not.toBeVisible();
+    await expect(page.getByRole("heading", { name: "Archival" })).toBeVisible();
+
+    // And the keyboard route works too — ⌘K/Ctrl-K toggles it from anywhere.
+    await page.keyboard.press("ControlOrMeta+k");
+    await expect(page.getByRole("dialog")).toBeVisible();
+    await page.keyboard.press("ControlOrMeta+k");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
+  });
+
   test("a job cannot be CREATED from the console — the constitution has no button", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
     await page.getByRole("button", { name: "Runs" }).click();
