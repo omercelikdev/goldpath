@@ -12,6 +12,7 @@ export default defineConfig({
       // same version, two identities, invalid-hook-call. One physical copy, always.
       "lucide-react": fileURLToPath(new URL("./node_modules/lucide-react", import.meta.url)),
       "@radix-ui/react-dialog": fileURLToPath(new URL("./node_modules/@radix-ui/react-dialog", import.meta.url)),
+      "@radix-ui/react-dropdown-menu": fileURLToPath(new URL("./node_modules/@radix-ui/react-dropdown-menu", import.meta.url)),
     },
     dedupe: ["react", "react-dom"],
   },

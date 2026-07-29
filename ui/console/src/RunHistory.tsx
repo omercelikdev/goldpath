@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { KeysetTable, RunProgress, SearchBox, Sheet, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
+import { FacetFilter, KeysetTable, RunProgress, SearchBox, Sheet, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
 import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
 import { asOutcome } from "./verbs";
 
@@ -72,23 +72,19 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
     <div data-testid="run-history" className="space-y-4">
       <div className="flex flex-wrap items-end gap-3 text-xs">
         <SearchBox value={job} onCommit={setJob} label="Search by job" placeholder="job name…" />
-        <span className="flex flex-col gap-1">
-          {/* Explicit binding: a select INSIDE its label answers to the label text plus
-              every option, which is neither what a screen reader should say nor what a
-              caller can address. */}
-          <label htmlFor="run-state">State</label>
-          <select
-            id="run-state"
-            className="control"
-            value={status}
-            onChange={(event) => setStatus(event.target.value)}
-          >
-            <option value="">all states</option>
-            {STATES.map((state) => (
-              <option key={state} value={state}>{state}</option>
-            ))}
-          </select>
-        </span>
+        {/*
+          The facet LOOKS multi-select (the family pattern) but commits ONE state: the
+          frozen contract's ?status= takes a single value, and pretending otherwise would
+          mean OR-ing pages client-side — the lie this console never tells. Toggling the
+          active state clears it.
+        */}
+        <FacetFilter
+          label="State"
+          options={STATES.map((state) => ({ value: state }))}
+          selected={new Set(status ? [status] : [])}
+          onToggle={(value) => setStatus(value === status ? "" : value)}
+          onClear={() => setStatus("")}
+        />
         <label className="flex flex-col gap-1">
           From
           <input type="date" className="control" value={from} onChange={(event) => setFrom(event.target.value)} />

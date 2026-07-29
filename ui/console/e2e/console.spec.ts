@@ -159,9 +159,15 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // ── the history answers a QUESTION rather than being scrolled (R2.4)
     await page.getByRole("tab", { name: "History" }).click();
-    await page.getByLabel("State").selectOption("Completed");
+    await page.getByRole("button", { name: /State/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /Completed/ }).click();
+    await page.keyboard.press("Escape");
     await expect(page.getByRole("row", { name: /Completed/ }).first()).toBeVisible();
-    await page.getByLabel("State").selectOption("Running");
+    // Toggling to Running: the facet holds ONE state — pick Running (Completed clears).
+    await page.getByRole("button", { name: /State/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /^Completed$/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: /^Running$/ }).click();
+    await page.keyboard.press("Escape");
     // Either there is a running row or the screen says the filters emptied it — both are
     // answers; a stale Completed row would not be.
     await expect(page.getByTestId("run-history")).not.toContainText("Completed:");
