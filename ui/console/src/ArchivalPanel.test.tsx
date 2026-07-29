@@ -85,9 +85,12 @@ describe("the archival panel (chain health, retrieval, lifecycle)", () => {
     const { client: api } = client();
     render(<ArchivalPanel client={api} now={NOW} />);
 
-    expect(await screen.findByText("1200 entries")).toBeInTheDocument();
-    expect(screen.getByText("3 due to archive")).toBeInTheDocument();
-    expect(screen.getByText("chain head 1200 · purged through 400")).toBeInTheDocument();
+    // The definitions are a standard TABLE now (v1.1 §7.4): numbers live in their own
+    // labelled columns, so the words moved to the headers.
+    const row = (await screen.findAllByText("policies"))[0].closest("tr")!;
+    expect(row).toHaveTextContent("1200");
+    expect(row).toHaveTextContent("3");
+    expect(row).toHaveTextContent("head 1200 · purged through 400");
   });
 
   it("verification with no findings is stated as the good news it is", async () => {

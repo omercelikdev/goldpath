@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banner, humanizeSeconds, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, humanizeSeconds, KeysetTable, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type {
   AdminClient,
@@ -123,18 +123,29 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
 
       <section>
         <h2 className="section-title">Archives</h2>
-        <ul className="space-y-2">
-          {(definitions ?? []).map((archive) => (
-            <li key={archive.name} className="row-card flex flex-wrap items-center gap-3">
-              <span className="text-sm font-medium">{archive.name}</span>
-              <span className="text-xs text-faint">{archive.entries} entries</span>
-              <span className={`text-xs ${archive.dueBacklog > 0 ? "text-warning" : "text-faint"}`}>
-                {archive.dueBacklog} due to archive
-              </span>
-              <span className="text-xs text-faint">{archive.activeHolds} active holds</span>
-              {/* The chain head and the purge watermark together say how much history is provable. */}
-              <span className="text-xs text-faint">chain head {archive.chainHead} · purged through {archive.purgedThrough}</span>
-              <span className="ml-auto">
+        <Table
+          columns={[
+            { header: "Archive", cell: (archive) => <span className="font-medium">{archive.name}</span> },
+            { header: "Entries", align: "right", cell: (archive) => <span className="text-xs">{archive.entries}</span> },
+            {
+              header: "Due",
+              align: "right",
+              cell: (archive) => (
+                <span className={`text-xs ${archive.dueBacklog > 0 ? "text-warning" : "text-faint"}`}>{archive.dueBacklog}</span>
+              ),
+            },
+            { header: "Holds", align: "right", cell: (archive) => <span className="text-xs">{archive.activeHolds}</span> },
+            {
+              header: "Chain",
+              cell: (archive) => (
+                // The chain head and the purge watermark together say how much history is provable.
+                <span className="text-xs text-faint">head {archive.chainHead} · purged through {archive.purgedThrough}</span>
+              ),
+            },
+            {
+              header: "",
+              align: "right",
+              cell: (archive) => (
                 <VerbButton
                   label={`verify ${archive.name}`}
                   confirm={`Verify the ${archive.name} chain end to end? This reads every entry.`}
@@ -142,11 +153,13 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
                   // Quiet: the findings section below says it richer, and says it in one place.
                   quiet
                 />
-              </span>
-            </li>
-          ))}
-          {definitions?.length === 0 && <li className="text-xs text-faint">No archives are defined in this app.</li>}
-        </ul>
+              ),
+            },
+          ]}
+          rows={definitions ?? []}
+          rowKey={(archive) => archive.name}
+          emptyMessage="No archives are defined in this app."
+        />
       </section>
 
       {verifyFailed && (
