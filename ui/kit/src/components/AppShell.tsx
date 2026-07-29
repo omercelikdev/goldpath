@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { PanelLeftClose, PanelLeftOpen } from "lucide-react";
+import { ChevronsLeft, ChevronsRight } from "lucide-react";
 
 export interface ShellNavItem {
   /** Stable id — also the capability key when the console lights panels by discovery. */
@@ -89,7 +89,7 @@ export function AppShell({
     <div data-testid="app-shell" className="flex h-dvh overflow-hidden bg-app">
       <aside
         data-collapsed={collapsed}
-        className={`shrink-0 bg-app transition-[width] duration-300 ${collapsed ? "w-[64px]" : "w-[252px]"}`}
+        className={`shrink-0 bg-app transition-[width] duration-300 ${collapsed ? "w-[74px]" : "w-[252px]"}`}
       >
         {/* The rail scrolls INDEPENDENTLY: a console composed of many capability panels
             must never clip its own nav inside the frame's overflow-hidden. */}
@@ -109,10 +109,10 @@ export function AppShell({
               <button
                 aria-label={collapsed ? "expand navigation" : "collapse navigation"}
                 aria-expanded={!collapsed}
-                className="flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-accent hover:text-foreground"
+                className="shrink-0 rounded-lg p-1.5 text-faint transition-colors hover:bg-muted hover:text-foreground"
                 onClick={onToggleCollapsed}
               >
-                {collapsed ? <PanelLeftOpen size={16} aria-hidden="true" /> : <PanelLeftClose size={16} aria-hidden="true" />}
+                {collapsed ? <ChevronsRight size={18} aria-hidden="true" /> : <ChevronsLeft size={16} aria-hidden="true" />}
               </button>
             )}
           </div>
@@ -136,10 +136,10 @@ export function AppShell({
           {groups.map((group) => (
             <div key={group.name ?? "·"} className="mb-1">
               {group.name && !collapsed && (
-                <div className="px-2 pb-1 pt-3 text-[11px] font-medium uppercase tracking-wider text-faint">{group.name}</div>
+                <div className="px-2.5 pb-1 pt-2.5 text-[10.5px] font-semibold uppercase tracking-wider text-faint">{group.name}</div>
               )}
               {/* Collapsed rails keep the grouping legible as thin separators. */}
-              {group.name && collapsed && <div className="mx-auto my-2 h-px w-6 bg-border" aria-hidden="true" />}
+              {group.name && collapsed && <div className="mx-3 my-2 h-px bg-border" aria-hidden="true" />}
               {group.items.map((item) => {
                 const active = item.id === activeId;
                 return (
@@ -150,16 +150,17 @@ export function AppShell({
                     // Reference-exact (owner: "birebir Mockifyr"): items carry NO border;
                     // the active one gets the fill plus a short accent bar INSET at its
                     // left edge — a highlight, not a border.
-                    className={`relative mb-0.5 flex w-full items-center rounded-md py-2 text-sm ${
-                      collapsed ? "justify-center px-0" : "gap-2.5 px-2.5"
+                    className={`relative mb-0.5 flex h-9 items-center rounded-lg text-sm font-medium transition-colors ${
+                      collapsed ? "mx-auto w-10 justify-center" : "w-full gap-2.5 px-2.5"
                     } ${
                       active
-                        ? "bg-accent font-medium text-accent-foreground before:absolute before:left-0 before:top-1/2 before:h-4 before:w-[3px] before:-translate-y-1/2 before:rounded-full before:bg-primary before:content-['']"
-                        : "text-muted-foreground hover:bg-accent/60 hover:text-foreground"
+                        ? "bg-sidebar-accent font-semibold text-sidebar-accent-foreground"
+                        : "text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                     onClick={item.onSelect}
                   >
-                    {item.icon && <span aria-hidden="true" className="flex shrink-0 items-center [&>svg]:h-4 [&>svg]:w-4">{item.icon}</span>}
+                    {active && !collapsed && <span aria-hidden="true" className="absolute inset-y-1.5 start-0 w-[3px] rounded-full bg-primary" />}
+                    {item.icon && <span aria-hidden="true" className="flex shrink-0 items-center [&>svg]:h-[18px] [&>svg]:w-[18px]">{item.icon}</span>}
                     <span className={collapsed ? "sr-only" : "truncate"}>{item.label}</span>
                     {!item.icon && collapsed && <span aria-hidden="true">{item.label.slice(0, 1).toUpperCase()}</span>}
                     {item.badge !== undefined && item.badge > 0 && !collapsed && (
