@@ -114,7 +114,11 @@ dashboard and its source (not from memory):
    so the relationships read on the screen instead of in the docs.
 10. **Search**: global ⌘K over nav + entity ids; per-table search only where a list
     is take-bounded (it narrows SERVER-side via the existing filters, never a loaded
-    page).
+    page). Shipped in b3d as the kit `CommandPalette` (cmdk, reference-verbatim):
+    ⌘K/Ctrl-K toggles it, the rail's search trigger opens it, and it offers every
+    rail destination plus the estate's service switch. Entity-id search is DEFERRED
+    with a written trigger: it needs a cross-module lookup endpoint on the admin
+    contract — the console keeps no client-side index to fake one with.
 11. **Family conformance**: tokens/type/radii re-checked against the reference each
     U7 batch; divergence is a defect. Extraction of the family into a shared package
     (the `@qorpe/ui` question) is DEFERRED with a written trigger: the third consumer.

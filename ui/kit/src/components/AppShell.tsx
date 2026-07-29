@@ -1,5 +1,5 @@
 import { useEffect, type ReactNode } from "react";
-import { ChevronsLeft, ChevronsRight } from "lucide-react";
+import { ChevronsLeft, ChevronsRight, Search } from "lucide-react";
 
 export interface ShellNavItem {
   /** Stable id — also the capability key when the console lights panels by discovery. */
@@ -32,6 +32,8 @@ export interface AppShellProps {
   activeService?: string;
   collapsed?: boolean;
   onToggleCollapsed?: () => void;
+  /** Renders the rail's search trigger (v1.1 §7.14) — usually the kit's `openCommand`. */
+  onSearch?: () => void;
   /** Rendered at the rail foot — theme toggle, sign-out, whatever the app owns. */
   footer?: (collapsed: boolean) => ReactNode;
 }
@@ -66,6 +68,7 @@ export function AppShell({
   activeService,
   collapsed = false,
   onToggleCollapsed,
+  onSearch,
   footer,
 }: AppShellProps) {
   // Persist on change, wherever the state itself lives.
@@ -116,6 +119,31 @@ export function AppShell({
               </button>
             )}
           </div>
+
+          {onSearch && (
+            // Reference-exact trigger: the expanded rail shows the full search field with
+            // its ⌘K hint; the collapsed rail keeps only the icon, centered like nav items.
+            <div className="pb-2 pt-1">
+              {collapsed ? (
+                <button
+                  aria-label="Search"
+                  onClick={onSearch}
+                  className="mx-auto flex h-9 w-10 items-center justify-center rounded-lg transition-colors hover:bg-muted"
+                >
+                  <Search size={18} aria-hidden="true" className="text-muted-foreground" />
+                </button>
+              ) : (
+                <button
+                  onClick={onSearch}
+                  className="flex h-9 w-full items-center gap-2.5 rounded-lg border border-border bg-muted/60 px-3 text-sm text-muted-foreground transition-colors hover:border-border-strong"
+                >
+                  <Search className="size-4" aria-hidden="true" />
+                  <span>Search</span>
+                  <kbd className="ms-auto rounded-md border border-border bg-background px-1.5 font-mono text-[11px]">⌘K</kbd>
+                </button>
+              )}
+            </div>
+          )}
 
           {services && services.length > 0 && !collapsed && (
             <div className="mb-2 px-1">

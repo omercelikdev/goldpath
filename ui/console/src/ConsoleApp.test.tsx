@@ -217,6 +217,33 @@ describe("the console across services", () => {
     expect(screen.queryByLabelText(/service/i)).toBeNull();   // one service: no picker
   });
 
+  it("the palette opens from the rail's Search trigger and GOES where the rail goes", async () => {
+    render(<ConsoleApp fetcher={estate().fetcher} search="" />);
+    await screen.findByRole("button", { name: "Runs" });
+
+    // The trigger is the reference's field-with-⌘K-hint; clicking it opens the dialog.
+    await userEvent.click(screen.getByRole("button", { name: /Search/ }));
+    const dialog = await screen.findByRole("dialog");
+
+    // Every rail destination is a command; picking one closes and navigates.
+    await userEvent.click(within(dialog).getByText("Bulk intake"));
+    expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: "Bulk intake" })).toBeInTheDocument();
+  });
+
+  it("with several services, the palette can switch the estate too", async () => {
+    render(<ConsoleApp fetcher={estate().fetcher} search="" />);
+    await screen.findByRole("button", { name: "Runs" });
+
+    await userEvent.keyboard("{Meta>}k{/Meta}");
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(within(dialog).getByText("Open claims"));
+
+    // claims composes ONLY archival — the switch re-discovered, the rail followed.
+    expect(await screen.findByRole("button", { name: "Archival" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Runs" })).not.toBeInTheDocument());
+  });
+
   it("the rail renders ONE Modules group — the owner's amendment, pinned", async () => {
     render(<ConsoleApp fetcher={estate().fetcher} search="" />);
     const rail = await screen.findByTestId("shell-rail");
