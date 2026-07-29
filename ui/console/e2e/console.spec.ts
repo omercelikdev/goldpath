@@ -149,7 +149,7 @@ test.describe("the run console against a real Goldpath app", () => {
     await page.reload();
     await page.getByRole("button", { name: "Runs" }).click();
     await page.getByRole("tab", { name: "Calendars" }).click();
-    const calendar = page.locator("li", { hasText: "smoke-holidays" });
+    const calendar = page.getByRole("row", { name: /smoke-holidays/ });
     await expect(calendar).toBeVisible();
     await calendar.getByRole("button", { name: "delete" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "delete" }).click();

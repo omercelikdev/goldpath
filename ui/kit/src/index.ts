@@ -4,6 +4,8 @@ export { KeysetTable, clampTake, type KeysetTableProps, type KeysetColumn, type 
 export { VerbButton, type VerbButtonProps } from "./components/VerbButton";
 export { RunProgress, itemsPerSecond, deadlineVerdict, type RunProgressProps, type RunProgressData, type DeadlineVerdict } from "./components/RunProgress";
 export { AuditBlock, isClassified, SYSTEM_ACTOR, type AuditBlockProps, type AuditEntry } from "./components/AuditBlock";
+export { Sheet, type SheetProps } from "./components/Sheet";
+export { Table, type TableProps, type TableColumn } from "./components/Table";
 export { TabStrip, TabPanel, type TabStripProps, type TabStripItem, type TabPanelProps } from "./components/TabStrip";
 export { AppShell, PageHeader, initialCollapsed, COLLAPSE_KEY, type AppShellProps, type PageHeaderProps, type ShellNavItem, type ShellService } from "./components/AppShell";
 export { statusTone, KNOWN_STATES, type StatusTone } from "./status";
