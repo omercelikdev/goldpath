@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, VerbButton } from "@goldpath/kit";
+import { Banner, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type { AdminClient, CalendarInfo, CalendarSpec } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -69,19 +69,22 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
         </button>
       </div>
 
-      {calendars.length === 0 && <p className="text-sm text-muted-foreground">This fleet has no calendar.</p>}
-
-      <ul className="space-y-2">
-        {calendars.map((calendar) => (
-          <li key={calendar.name} className="row-card flex flex-wrap items-baseline gap-3 text-sm">
-            <span className="font-medium">{calendar.name}</span>
-            {calendar.description && <span className="text-xs text-muted-foreground">{calendar.description}</span>}
-            <span className="text-xs text-faint">
-              {calendar.usedByTriggers.length === 0
-                ? "no trigger uses it"
-                : `used by ${calendar.usedByTriggers.join(", ")}`}
-            </span>
-            <span className="ml-auto">
+      <Table
+        columns={[
+          { header: "Calendar", cell: (calendar) => <span className="font-medium">{calendar.name}</span> },
+          { header: "Description", cell: (calendar) => <span className="text-xs text-muted-foreground">{calendar.description ?? "—"}</span> },
+          {
+            header: "Used by",
+            cell: (calendar) => (
+              <span className="text-xs text-faint">
+                {calendar.usedByTriggers.length === 0 ? "no trigger uses it" : `used by ${calendar.usedByTriggers.join(", ")}`}
+              </span>
+            ),
+          },
+          {
+            header: "",
+            align: "right",
+            cell: (calendar) => (
               <VerbButton
                 label="delete"
                 confirm={
@@ -92,8 +95,6 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
                       } ride it (${calendar.usedByTriggers.join(", ")}) and will lose its exclusions.`
                 }
                 execute={() => asOutcome(client.deleteCalendar(fleet, calendar.name))}
-                // Same reason as the trigger row: the row goes, so the message is
-                // rendered above the list rather than inside the thing being deleted.
                 onDone={(result) => {
                   setOutcome(result);
                   onChanged();
@@ -101,10 +102,13 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
                 destructive
                 quiet
               />
-            </span>
-          </li>
-        ))}
-      </ul>
+            ),
+          },
+        ]}
+        rows={calendars}
+        rowKey={(calendar) => calendar.name}
+        emptyMessage="This fleet has no calendar."
+      />
 
       {outcome && (
         <Banner tone={outcome.kind === "ok" ? "success" : "danger"} live={outcome.kind === "ok" ? "status" : "alert"} dense>

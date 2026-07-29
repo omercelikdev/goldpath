@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { KeysetTable, RunProgress, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
+import { KeysetTable, RunProgress, Sheet, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
 import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
 import { asOutcome } from "./verbs";
 
@@ -145,11 +145,17 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
 
       {problem && <p className="text-sm text-danger">{problem}</p>}
 
-      {selectedRun && (
-        <section data-testid="run-detail" className="card">
-          <div className="mb-3 flex items-center justify-between">
-            <h3 className="text-sm font-medium">Run {selectedRun.run.id} · {selectedRun.run.jobName}</h3>
-            <span className="flex gap-2">
+      <Sheet
+        open={selectedRun !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedRunId(null);
+        }}
+        title={selectedRun ? `Run ${selectedRun.run.id}` : ""}
+        description={selectedRun ? `${selectedRun.run.jobName} — chunks, progress, and the repair queue.` : undefined}
+      >
+        {selectedRun && (
+          <section data-testid="run-detail" className="space-y-4">
+            <div className="flex flex-wrap items-center gap-2">
               <VerbButton
                 label="rerun"
                 confirm={`Rerun ${selectedRun.run.id}?`}
@@ -159,41 +165,41 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
               {selectedRun.openFailures.length > 0 && (
                 <VerbButton
                   label="replay-items"
-                  // The verb redrives ALL open items; the listed failures are a capped
-                  // VIEW, so a count here would understate what the operator triggers.
                   confirm="Replay all open repair items of this run?"
                   execute={() => asOutcome(client.replayItems(selectedRun.run.id))}
                   onDone={onChanged}
                 />
               )}
-            </span>
-          </div>
+            </div>
 
-          <RunProgress run={selectedRun.run} now={now} />
+            <RunProgress run={selectedRun.run} now={now} />
 
-          <h4 className="control-label mb-1 mt-4 block">Chunks by status</h4>
-          <div className="flex flex-wrap gap-1">
-            {Object.entries(selectedRun.chunksByStatus).map(([state, count]) => (
-              <span key={state} className="chip">
-                {state}: {count}
-              </span>
-            ))}
-          </div>
+            <div>
+              <h4 className="control-label mb-1 block">Chunks by status</h4>
+              <div className="flex flex-wrap gap-1">
+                {Object.entries(selectedRun.chunksByStatus).map(([state, count]) => (
+                  <span key={state} className="chip">{state}: {count}</span>
+                ))}
+              </div>
+            </div>
 
-          <h4 className="control-label mb-1 mt-4 block">
-            Repair queue{selectedRun.openFailures.length === 0 ? " — empty" : ` (${selectedRun.openFailures.length} shown)`}
-          </h4>
-          <ul className="space-y-1">
-            {selectedRun.openFailures.map((failure) => (
-              <li key={failure.id} className="flex items-baseline gap-2 text-xs">
-                <span className="font-mono">{failure.itemKey}</span>
-                <span className="text-faint">chunk {failure.chunkIndex}</span>
-                <span className="text-danger">{failure.reason}</span>
-              </li>
-            ))}
-          </ul>
-        </section>
-      )}
+            <div>
+              <h4 className="control-label mb-1 block">
+                Repair queue{selectedRun.openFailures.length === 0 ? " — empty" : ` (${selectedRun.openFailures.length} shown)`}
+              </h4>
+              <ul className="space-y-1">
+                {selectedRun.openFailures.map((failure) => (
+                  <li key={failure.id} className="flex items-baseline gap-2 text-xs">
+                    <span className="font-mono">{failure.itemKey}</span>
+                    <span className="text-faint">chunk {failure.chunkIndex}</span>
+                    <span className="text-danger">{failure.reason}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </section>
+        )}
+      </Sheet>
     </div>
   );
 }

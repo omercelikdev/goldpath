@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, shortStamp, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { AdminAuditRow, AdminClient, FleetStatus } from "./adminClient";
 import { asOutcome } from "./verbs";
 
@@ -120,20 +120,19 @@ export function FleetOverview({ client, fleet, refreshToken, onChanged }: FleetO
         */}
         {audit === null ? (
           <p className="text-sm text-muted-foreground">Reading the audit…</p>
-        ) : audit.length === 0 ? (
-          <p className="text-sm text-muted-foreground">Nobody has verbed this service yet.</p>
         ) : (
-          <ul className="space-y-1">
-            {audit.map((row) => (
-              <li key={row.id} className="flex flex-wrap items-baseline gap-2 text-xs">
-                <time className="text-faint" title={row.at}>{shortStamp(row.at)}</time>
-                <span className="font-medium">{row.actor}</span>
-                <span className="chip">{row.action}</span>
-                <span className="font-mono">{row.fleet}/{row.target}</span>
-                {row.detail && <span className="text-faint">{row.detail}</span>}
-              </li>
-            ))}
-          </ul>
+          <Table
+            columns={[
+              { header: "When", cell: (row) => <time className="text-xs text-faint" title={row.at}>{shortStamp(row.at)}</time> },
+              { header: "Actor", cell: (row) => <span className="text-xs font-medium">{row.actor}</span> },
+              { header: "Action", cell: (row) => <span className="chip">{row.action}</span> },
+              { header: "Target", cell: (row) => <span className="font-mono text-xs">{row.fleet}/{row.target}</span> },
+              { header: "Detail", cell: (row) => <span className="text-xs text-faint">{row.detail ?? "—"}</span> },
+            ]}
+            rows={audit}
+            rowKey={(row) => String(row.id)}
+            emptyMessage="Nobody has verbed this service yet."
+          />
         )}
       </section>
     </div>

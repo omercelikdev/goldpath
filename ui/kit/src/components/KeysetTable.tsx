@@ -67,11 +67,12 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
 
   return (
     <div data-testid="keyset-table">
+      <div className="overflow-hidden rounded-lg border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
       <table className="w-full text-sm">
         <thead>
-          <tr className="border-b border-border text-left text-xs text-muted-foreground">
+          <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
             {columns.map((column) => (
-              <th key={column.header} className={`py-2 pr-4 font-medium ${column.align === "right" ? "text-right" : ""}`}>
+              <th key={column.header} className={`px-3 py-2 font-medium ${column.align === "right" ? "text-right" : ""}`}>
                 {column.header}
               </th>
             ))}
@@ -79,9 +80,9 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-border/60 hover:bg-muted/40">
+            <tr key={rowKey(row)} className="border-b border-border/60 transition-colors hover:bg-muted/40">
               {columns.map((column) => (
-                <td key={column.header} className={`py-2 pr-4 ${column.align === "right" ? "text-right" : ""}`}>
+                <td key={column.header} className={`px-3 py-2 ${column.align === "right" ? "text-right" : ""}`}>
                   {column.cell(row)}
                 </td>
               ))}
@@ -89,6 +90,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
           ))}
         </tbody>
       </table>
+      </div>
 
       {state === "idle" && rows.length === 0 && ended && (
         // Only the END of an empty walk is "empty" — an empty intermediate page keeps
