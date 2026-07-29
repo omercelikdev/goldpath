@@ -22,34 +22,48 @@ export interface TableProps<T> {
  */
 export function Table<T>({ columns, rows, rowKey, onRowClick, emptyMessage = "Nothing here yet." }: TableProps<T>) {
   return (
-    <div className="overflow-hidden rounded-lg border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
-      <table className="w-full text-sm">
-        <thead>
-          <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
-            {columns.map((column) => (
-              <th key={column.header} className={`px-3 py-2 font-medium ${column.align === "right" ? "text-right" : ""}`}>
-                {column.header}
-              </th>
-            ))}
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-border/60">
-          {rows.map((row) => (
-            <tr
-              key={rowKey(row)}
-              className={onRowClick ? "cursor-pointer transition-colors hover:bg-muted/40" : "hover:bg-muted/40"}
-              onClick={onRowClick ? () => onRowClick(row) : undefined}
-            >
+    <div className="overflow-hidden rounded-2xl border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
+      <div className="scroll-area overflow-x-auto">
+        <table className="w-full border-collapse text-sm">
+          <thead>
+            <tr>
               {columns.map((column) => (
-                <td key={column.header} className={`px-3 py-2 ${column.align === "right" ? "text-right" : ""}`}>
-                  {column.cell(row)}
-                </td>
+                <th
+                  key={column.header}
+                  className={`border-b border-border bg-muted/40 px-4 py-2.5 text-start text-[11px] font-semibold uppercase tracking-wide text-muted-foreground ${
+                    column.align === "right" ? "text-end" : ""
+                  }`}
+                >
+                  {column.header}
+                </th>
               ))}
             </tr>
-          ))}
-        </tbody>
-      </table>
-      {rows.length === 0 && <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>}
+          </thead>
+          <tbody>
+            {rows.length === 0 ? (
+              <tr>
+                <td colSpan={columns.length}>
+                  <p className="py-16 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+                </td>
+              </tr>
+            ) : (
+              rows.map((row) => (
+                <tr
+                  key={rowKey(row)}
+                  className={`border-b border-border transition-colors hover:bg-muted/40 ${onRowClick ? "cursor-pointer" : ""}`}
+                  onClick={onRowClick ? () => onRowClick(row) : undefined}
+                >
+                  {columns.map((column) => (
+                    <td key={column.header} className={`px-4 py-3 align-middle ${column.align === "right" ? "text-end" : ""}`}>
+                      {column.cell(row)}
+                    </td>
+                  ))}
+                </tr>
+              ))
+            )}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

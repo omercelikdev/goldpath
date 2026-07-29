@@ -67,12 +67,13 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
 
   return (
     <div data-testid="keyset-table">
-      <div className="overflow-hidden rounded-lg border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
-      <table className="w-full text-sm">
+      <div className="overflow-hidden rounded-2xl border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
+      <div className="scroll-area overflow-x-auto">
+      <table className="w-full border-collapse text-sm">
         <thead>
-          <tr className="border-b border-border bg-muted/40 text-left text-xs text-muted-foreground">
+          <tr>
             {columns.map((column) => (
-              <th key={column.header} className={`px-3 py-2 font-medium ${column.align === "right" ? "text-right" : ""}`}>
+              <th key={column.header} className={`border-b border-border bg-muted/40 px-4 py-2.5 text-start text-[11px] font-semibold uppercase tracking-wide text-muted-foreground ${column.align === "right" ? "text-end" : ""}`}>
                 {column.header}
               </th>
             ))}
@@ -80,9 +81,9 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
         </thead>
         <tbody>
           {rows.map((row) => (
-            <tr key={rowKey(row)} className="border-b border-border/60 transition-colors hover:bg-muted/40">
+            <tr key={rowKey(row)} className="border-b border-border transition-colors hover:bg-muted/40">
               {columns.map((column) => (
-                <td key={column.header} className={`px-3 py-2 ${column.align === "right" ? "text-right" : ""}`}>
+                <td key={column.header} className={`px-4 py-3 align-middle ${column.align === "right" ? "text-end" : ""}`}>
                   {column.cell(row)}
                 </td>
               ))}
@@ -90,6 +91,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
           ))}
         </tbody>
       </table>
+      </div>
       </div>
 
       {state === "idle" && rows.length === 0 && ended && (
@@ -112,7 +114,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
         </div>
       )}
 
-      <div className="flex items-center justify-between py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-3 text-[12.5px] text-muted-foreground">
         <span className="text-xs text-faint">
           {/* The honest footer: what is LOADED — never a total (the offset trap reborn). */}
           {rows.length} loaded{ended ? " · end" : ""}
