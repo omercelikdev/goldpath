@@ -48,8 +48,11 @@ export function FacetFilter({ label, options, selected, onToggle, onClear }: Fac
           {options.map((option) => {
             const on = selected.has(option.value);
             return (
-              <DropdownMenu.Item
+              // CheckboxItem, not Item: role=menuitemcheckbox + aria-checked reach
+              // assistive tech — the drawn checkmark alone said nothing out loud.
+              <DropdownMenu.CheckboxItem
                 key={option.value}
+                checked={on}
                 onSelect={(event) => {
                   event.preventDefault();   // stay open: facets toggle in batches
                   onToggle(option.value);
@@ -66,7 +69,7 @@ export function FacetFilter({ label, options, selected, onToggle, onClear }: Fac
                 </span>
                 <span className="flex-1 truncate">{option.label ?? option.value}</span>
                 {option.count != null && <span className="tabular-nums text-xs text-faint">{option.count}</span>}
-              </DropdownMenu.Item>
+              </DropdownMenu.CheckboxItem>
             );
           })}
           {n > 0 && (

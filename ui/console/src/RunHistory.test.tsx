@@ -76,7 +76,7 @@ describe("the run history (contract R2.4)", () => {
     await screen.findByText("eod-reconciliation");
 
     await user.click(screen.getByRole("button", { name: /State/ }));
-    await user.click(await screen.findByRole("menuitem", { name: /Failed/ }));
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /Failed/ }));
 
     // Filtering client-side would narrow ONE take-bounded page and read as "no failures"
     // while more sat behind it.
@@ -132,7 +132,7 @@ describe("the run history (contract R2.4)", () => {
     render(<RunHistory client={client} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
     await screen.findByText("eod-reconciliation");
     await user.click(screen.getByRole("button", { name: /State/ }));
-    await user.click(await screen.findByRole("menuitem", { name: /Failed/ }));
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /Failed/ }));
     await waitFor(() => expect(asked.at(-1)!.searchParams.get("status")).toBe("Failed"));
 
     await user.click(screen.getByRole("button", { name: "clear filters" }));
@@ -147,7 +147,7 @@ describe("the run history (contract R2.4)", () => {
     await screen.findByText("eod-reconciliation");
 
     await user.click(screen.getByRole("button", { name: /State/ }));
-    await user.click(await screen.findByRole("menuitem", { name: /Failed/ }));
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /Failed/ }));
 
     expect(await screen.findByText(/No run matches these filters/)).toBeInTheDocument();
   });
