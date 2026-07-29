@@ -11,6 +11,7 @@ export { SearchBox, type SearchBoxProps } from "./components/SearchBox";
 export { TabStrip, TabPanel, type TabStripProps, type TabStripItem, type TabPanelProps } from "./components/TabStrip";
 export { AppShell, PageHeader, initialCollapsed, COLLAPSE_KEY, type AppShellProps, type PageHeaderProps, type ShellNavItem, type ShellService } from "./components/AppShell";
 export { CommandPalette, openCommand, OPEN_COMMAND_EVENT, type CommandPaletteProps, type CommandGroup, type CommandEntry } from "./components/CommandPalette";
+export { StatCard, type StatCardProps } from "./components/StatCard";
 export { statusTone, KNOWN_STATES, type StatusTone } from "./status";
 export { humanizeSeconds } from "./duration";
 export { shortStamp } from "./stamp";

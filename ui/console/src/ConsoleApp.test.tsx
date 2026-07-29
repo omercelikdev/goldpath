@@ -244,6 +244,29 @@ describe("the console across services", () => {
     await waitFor(() => expect(screen.queryByRole("button", { name: "Runs" })).not.toBeInTheDocument());
   });
 
+  it("Today opens with the estate's stat cards — only the modules someone composed, zeros neutral", async () => {
+    render(<ConsoleApp fetcher={estate().fetcher} search="" />);
+    const cards = await screen.findByTestId("triage-cards");
+
+    // payments composes jobs + bulk, claims composes archival: three countable modules.
+    expect(within(cards).getByText("Failed runs")).toBeInTheDocument();
+    expect(within(cards).getByText("Awaiting approval")).toBeInTheDocument();
+    expect(within(cards).getByText("Due to archive")).toBeInTheDocument();
+    // Nobody composed campaign or notification — no card, not a false zero.
+    expect(within(cards).queryByText("Failed campaign items")).not.toBeInTheDocument();
+    expect(within(cards).queryByText("Failed notifications")).not.toBeInTheDocument();
+  });
+
+  it("a stat card deep-links like a triage row — to the SERVICE that owns the number", async () => {
+    render(<ConsoleApp fetcher={estate().fetcher} search="" />);
+    const cards = await screen.findByTestId("triage-cards");
+
+    // "Due to archive" belongs to claims: the click switches the estate AND the section.
+    await userEvent.click(within(cards).getByRole("button", { name: /Due to archive/ }));
+    expect(await screen.findByRole("heading", { name: "Archival" })).toBeInTheDocument();
+    await waitFor(() => expect(screen.queryByRole("button", { name: "Runs" })).not.toBeInTheDocument());
+  });
+
   it("the rail renders ONE Modules group — the owner's amendment, pinned", async () => {
     render(<ConsoleApp fetcher={estate().fetcher} search="" />);
     const rail = await screen.findByTestId("shell-rail");

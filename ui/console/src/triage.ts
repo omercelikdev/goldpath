@@ -22,6 +22,16 @@ export interface TriageRow {
   detail: string;
 }
 
+/**
+ * What one service contributed to Today: the attention rows, and the per-module counts
+ * the stat cards print. A module appears in `stats` ONLY when its surface was actually
+ * read to the end — a number the console could not read must not print as a zero.
+ */
+export interface ServiceTriage {
+  rows: TriageRow[];
+  stats: Partial<Record<ModuleName, number>>;
+}
+
 /** How much of each surface the triage reads. The contract is take-bounded everywhere. */
 export const TRIAGE_TAKE = 50;
 
@@ -45,8 +55,9 @@ export async function collectServiceTriage(
   client: AdminClient,
   capabilities: Capabilities,
   now: Date = new Date(),
-): Promise<TriageRow[]> {
+): Promise<ServiceTriage> {
   const rows: TriageRow[] = [];
+  const stats: ServiceTriage["stats"] = {};
   const present = (module: ModuleName) => capabilities[module].kind === "present";
 
   // A surface the console cannot READ is triage's own blind spot, and blindness during an
@@ -92,12 +103,14 @@ export async function collectServiceTriage(
   if (present("jobs")) {
     try {
       const fleets = await client.fleets();
+      let failedRuns = 0;
       for (const fleet of fleets) {
         const runs = await client.runs(fleet.schedulerName, { take: TRIAGE_TAKE });
         const failed = runs.filter((run) => run.status === "Failed");
         const overrun = runs.filter((run) => deadlineVerdict(run, now) === "overrun" && run.status !== "Failed");
         const predicted = runs.filter((run) => deadlineVerdict(run, now) === "overrun-predicted");
         const repair = runs.reduce((sum, run) => sum + run.itemFailures, 0);
+        failedRuns += failed.length;
 
         if (failed.length > 0) {
           rows.push({
@@ -139,6 +152,7 @@ export async function collectServiceTriage(
           });
         }
       }
+      stats.jobs = failedRuns;
     } catch {
       unreachable("jobs", "the run surface");
     }
@@ -146,7 +160,9 @@ export async function collectServiceTriage(
 
   if (present("bulk")) {
     try {
+      let awaiting = 0;
       for (const definition of await client.bulkDefinitions()) {
+        awaiting += definition.awaitingApproval;
         if (definition.awaitingApproval > 0) {
           const age = definition.oldestAwaitingApprovalSeconds;
           rows.push({
@@ -158,6 +174,7 @@ export async function collectServiceTriage(
           });
         }
       }
+      stats.bulk = awaiting;
     } catch {
       unreachable("bulk", "the intake surface");
     }
@@ -165,7 +182,9 @@ export async function collectServiceTriage(
 
   if (present("campaign")) {
     try {
+      let failedItems = 0;
       for (const campaign of await client.campaigns({ take: TRIAGE_TAKE })) {
+        failedItems += campaign.failedCount;
         if (campaign.failedCount > 0) {
           rows.push({
             service,
@@ -186,6 +205,7 @@ export async function collectServiceTriage(
           });
         }
       }
+      stats.campaign = failedItems;
     } catch {
       unreachable("campaign", "the campaign surface");
     }
@@ -193,8 +213,10 @@ export async function collectServiceTriage(
 
   if (present("notification")) {
     try {
+      let failedSends = 0;
       for (const template of await client.notificationTemplates()) {
         const failed = template.byState.Failed ?? 0;
+        failedSends += failed;
         if (failed > 0) {
           rows.push({
             service,
@@ -216,6 +238,7 @@ export async function collectServiceTriage(
           });
         }
       }
+      stats.notification = failedSends;
     } catch {
       unreachable("notification", "the notification surface");
     }
@@ -223,7 +246,9 @@ export async function collectServiceTriage(
 
   if (present("archival")) {
     try {
+      let due = 0;
       for (const archive of await client.archiveDefinitions()) {
+        due += archive.dueBacklog;
         if (archive.dueBacklog > 0) {
           rows.push({
             service,
@@ -234,12 +259,13 @@ export async function collectServiceTriage(
           });
         }
       }
+      stats.archival = due;
     } catch {
       unreachable("archival", "the archival surface");
     }
   }
 
-  return rows;
+  return { rows, stats };
 }
 
 /**

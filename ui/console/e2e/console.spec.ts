@@ -581,6 +581,13 @@ test.describe("the run console against a real Goldpath app", () => {
     // The screen says WHAT it read, so the numbers cannot be mistaken for the whole truth.
     await expect(page.getByTestId("triage-home")).toContainText("most recent 50 rows");
 
+    // The stat cards print the same published numbers: the gate above means the
+    // "Awaiting approval" card carries a non-zero count, and it is a real button.
+    const cards = page.getByTestId("triage-cards");
+    await expect(cards).toBeVisible();
+    await expect(cards.getByRole("button", { name: /Awaiting approval/ })).toContainText(/[1-9]/);
+    await expect(cards.getByText("Failed runs")).toBeVisible();
+
     // A row is a deep link: it opens the panel that owns it, on the service that owns it.
     await gate.click();
     await expect(page.getByTestId("bulk-panel")).toBeVisible();
