@@ -9,6 +9,10 @@ export interface RunHistoryProps {
   refreshToken: number;
   onChanged: () => void;
   now?: Date;
+  /** Cross-screen link (v1.1 §7.9): the run's JOB opens on the Jobs tab. */
+  onOpenJob?: (jobName: string) => void;
+  /** Another screen asked for this run — a fresh object each ask, so asking twice works. */
+  openRunRequest?: { id: string } | null;
 }
 
 const STATES = ["Running", "Completed", "Failed"];
@@ -21,7 +25,7 @@ const STATES = ["Running", "Completed", "Failed"];
  * operator reads, so an offset-paged second page would skip rows that shifted down. The
  * server continues strictly after the last row we were given.
  */
-export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunHistoryProps) {
+export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpenJob, openRunRequest }: RunHistoryProps) {
   const [status, setStatus] = useState("");
   const [job, setJob] = useState("");
   const [from, setFrom] = useState("");
@@ -29,6 +33,11 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
   const [selectedRunId, setSelectedRunId] = useState<string | null>(null);
   const [selectedRun, setSelectedRun] = useState<RunDetail | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
+
+  // The intent arrives as an OBJECT so the same run can be asked for twice in a row.
+  useEffect(() => {
+    if (openRunRequest) setSelectedRunId(openRunRequest.id);
+  }, [openRunRequest]);
 
   const loadRuns = useCallback(
     async (cursor: string | null, take: number) => {
@@ -119,7 +128,19 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now }: RunH
               </button>
             ),
           },
-          { header: "Job", cell: (run) => run.jobName },
+          {
+            header: "Job",
+            // The relationship reads ON the screen (v1.1 §7.9): a run's job is one
+            // click from its schedule, not a name to remember and go find.
+            cell: (run) =>
+              onOpenJob ? (
+                <button className="underline-offset-2 hover:underline" onClick={() => onOpenJob(run.jobName)}>
+                  {run.jobName}
+                </button>
+              ) : (
+                run.jobName
+              ),
+          },
           { header: "State", cell: (run) => <StateBadge state={run.status} /> },
           // Who put this run on the schedule, and which node ran it: the two questions a
           // run list is asked the morning after (contract R2.3).

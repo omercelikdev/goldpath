@@ -202,6 +202,25 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("dialog")).not.toBeVisible();
   });
 
+  test("§7.9: a history row's job links to its schedule; a trigger's calendar links on", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByRole("button", { name: "Runs" }).click();
+    await expect(page.getByRole("button", { name: /console-smoke/ })).toBeVisible();
+    await page.getByRole("tab", { name: "History" }).click();
+
+    // Earlier journeys left runs behind; the JOB cell is a link, not a name to remember.
+    const jobLink = page.getByTestId("run-history").getByRole("button", { name: "SmokeJob" }).first();
+    await expect(jobLink).toBeVisible();
+    await jobLink.click();
+
+    // Landed on Jobs with the job's own sheet already open.
+    const sheet = page.getByTestId("sheet");
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toContainText("SmokeJob");
+    await page.keyboard.press("Escape");
+    await expect(page.getByRole("tab", { name: "Jobs" })).toHaveAttribute("aria-selected", "true");
+  });
+
   test("a job cannot be CREATED from the console — the constitution has no button", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
     await page.getByRole("button", { name: "Runs" }).click();

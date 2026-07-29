@@ -82,6 +82,60 @@ describe("the scheduling surface (console RFC U5 — a client of the frozen cont
     expect(screen.queryByText("eod-reconciliation")).toBeNull();
   });
 
+  it("§7.9: a history row's JOB is a link — it lands on the Jobs tab with the sheet open", async () => {
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (init?.method && init.method !== "GET") return json({ ok: true, message: "done" });
+      if (url.includes("/status")) return json(STATUS);
+      if (url.includes("/audit") || url.includes("/calendars")) return json([]);
+      if (url.includes("/runs?")) {
+        return json([{ id: "r-77", jobName: "eod-reconciliation", status: "Completed", startedAt: "2026-07-28T03:00:00Z", totalChunks: 1, completedChunks: 1, failedChunks: 0, itemFailures: 0 }]);
+      }
+      if (url.endsWith("/jobs")) return json([{ name: "eod-reconciliation", triggers: [] }]);
+      if (url.endsWith("/fleets")) return json(FLEETS);
+      return new Response("not found", { status: 404 });
+    }) as typeof fetch;
+
+    render(<RunConsole client={new AdminClient({ fetcher })} />);
+    await userEvent.click(await screen.findByRole("tab", { name: "History" }));
+    await userEvent.click(await screen.findByRole("button", { name: "eod-reconciliation" }));
+
+    // The job's own sheet is already open (it is MODAL, so the tab strip is hidden
+    // from the a11y tree behind it — the hidden query reads through).
+    const sheet = await screen.findByTestId("sheet");
+    expect(sheet).toHaveTextContent("eod-reconciliation");
+    expect(screen.getByRole("tab", { name: "Jobs", hidden: true })).toHaveAttribute("aria-selected", "true");
+  });
+
+  it("§7.9: another section's run ask opens History with that run's sheet", async () => {
+    const detail = {
+      run: { id: "r-42", jobName: "bulk-execute", status: "Completed", startedAt: "2026-07-28T03:00:00Z", totalChunks: 1, completedChunks: 1, failedChunks: 0, itemFailures: 0 },
+      chunksByStatus: { Completed: 1 },
+      openFailures: [],
+    };
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (init?.method && init.method !== "GET") return json({ ok: true, message: "done" });
+      if (url.includes("/status")) return json(STATUS);
+      if (url.includes("/audit") || url.includes("/calendars") ) return json([]);
+      if (url.includes("/runs/r-42")) return json(detail);
+      if (url.includes("/runs?")) return json([]);
+      if (url.endsWith("/jobs")) return json([{ name: "bulk-execute", triggers: [] }]);
+      if (url.endsWith("/fleets")) return json(FLEETS);
+      return new Response("not found", { status: 404 });
+    }) as typeof fetch;
+
+    render(<RunConsole client={new AdminClient({ fetcher })} openRunRequest={{ id: "r-42" }} />);
+
+    // No clicks: the ask itself lands the operator on History, run open.
+    await waitFor(() => expect(screen.getByRole("tab", { name: "History" })).toHaveAttribute("aria-selected", "true"));
+    const sheet = await screen.findByTestId("sheet");
+    expect(sheet).toHaveTextContent("Run r-42");
+    expect(sheet).toHaveTextContent("bulk-execute");
+  });
+
   it("a fleet list that will not load says so instead of showing an empty console", async () => {
     const fetcher = (async () => new Response("", { status: 503 })) as typeof fetch;
     render(<RunConsole client={new AdminClient({ fetcher })} />);

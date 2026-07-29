@@ -10,6 +10,10 @@ export interface JobsTabProps {
   /** Bumped by a verb: the panel re-READS, it does not remount. */
   refreshToken: number;
   onChanged: () => void;
+  /** A history row asked for this job (v1.1 §7.9) — a fresh object each ask. */
+  openJobRequest?: { name: string } | null;
+  /** Cross-screen link: a trigger's calendar opens the Calendars tab. */
+  onShowCalendars?: () => void;
 }
 
 /**
@@ -23,11 +27,15 @@ export interface JobsTabProps {
  * (ADR-0001), and the admin surface has no such route to call. What an operator changes
  * here is the SCHEDULE.
  */
-export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps) {
+export function JobsTab({ client, fleet, refreshToken, onChanged, openJobRequest, onShowCalendars }: JobsTabProps) {
   const [jobs, setJobs] = useState<JobInfo[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const openJob = jobs?.find((job) => job.name === open) ?? null;
+
+  useEffect(() => {
+    if (openJobRequest) setOpen(openJobRequest.name);
+  }, [openJobRequest]);
 
   useEffect(() => {
     let live = true;
@@ -139,7 +147,7 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
       >
         {openJob && (
           <div className="space-y-3">
-            <Triggers client={client} fleet={fleet} job={openJob} onChanged={onChanged} />
+            <Triggers client={client} fleet={fleet} job={openJob} onChanged={onChanged} onShowCalendars={onShowCalendars} />
 
             {openJob.dataMap && Object.keys(openJob.dataMap).length > 0 && (
               <div>
@@ -168,11 +176,13 @@ function Triggers({
   fleet,
   job,
   onChanged,
+  onShowCalendars,
 }: {
   client: AdminClient;
   fleet: string;
   job: JobInfo;
   onChanged: () => void;
+  onShowCalendars?: () => void;
 }) {
   const [adding, setAdding] = useState(false);
   const [rescheduling, setRescheduling] = useState(false);
@@ -221,7 +231,16 @@ function Triggers({
             <span className="font-mono">{trigger.name}</span>
             <StateBadge state={trigger.state === "Normal" ? "Running" : trigger.state === "Paused" ? "Suppressed" : trigger.state} />
             <Schedule trigger={trigger} />
-            {trigger.calendarName && <span className="text-faint">calendar {trigger.calendarName}</span>}
+            {trigger.calendarName &&
+              // The calendar is another tab's entity: link it (v1.1 §7.9) rather than
+              // leaving a name the operator has to go match by hand.
+              (onShowCalendars ? (
+                <button className="text-faint underline-offset-2 hover:underline" onClick={onShowCalendars}>
+                  calendar {trigger.calendarName}
+                </button>
+              ) : (
+                <span className="text-faint">calendar {trigger.calendarName}</span>
+              ))}
             <span className="text-faint">priority {trigger.priority}</span>
             {trigger.nextFireAt && <span className="text-faint" title={trigger.nextFireAt}>next {shortStamp(trigger.nextFireAt)}</span>}
             <span className="ml-auto">
