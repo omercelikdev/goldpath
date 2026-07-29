@@ -113,10 +113,14 @@ describe("the notification evidence panel (read-only by contract)", () => {
     const { client: api, fetched } = client();
     render(<NotificationPanel client={api} />);
 
-    await userEvent.selectOptions(await screen.findByLabelText("State"), "Failed");
+    await userEvent.click(await screen.findByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Failed/ }));
+    await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(fetched.some((url) => url.includes("state=Failed"))).toBe(true));
 
-    await userEvent.selectOptions(screen.getByLabelText("Template"), "policy-renewal");
+    await userEvent.click(screen.getByRole("button", { name: /Template/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /policy-renewal/ }));
+    await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(fetched.some((url) => url.includes("template=policy-renewal"))).toBe(true));
   });
 

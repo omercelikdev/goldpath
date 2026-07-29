@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Banner, humanizeSeconds, KeysetTable, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
+import { Banner, FacetFilter, humanizeSeconds, KeysetTable, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type { AdminClient, BulkBatchInfo, BulkDefinitionStatus, BulkRowError } from "./adminClient";
 
@@ -221,25 +221,19 @@ export function BulkPanel({ client }: BulkPanelProps) {
       <section data-testid="batches">
         <h2 className="section-title">Batches</h2>
         <div className="mb-2 flex flex-wrap items-center gap-2">
-          <label className="text-xs text-muted-foreground" htmlFor="bulk-state">
-            State
-          </label>
-          <select
-            id="bulk-state"
-            className="control"
-            value={state}
-            onChange={(event) => {
-              setState(event.target.value);
-              setSelectedId(null);
-            }}
-          >
-            <option value="">all states</option>
-            {STATES.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+          <FacetFilter
+                label="State"
+                options={STATES.map((option) => ({ value: option }))}
+                selected={new Set(state ? [state] : [])}
+                onToggle={(value) => {
+                  setState(value === state ? "" : value);
+                  setSelectedId(null);
+                }}
+                onClear={() => {
+                  setState("");
+                  setSelectedId(null);
+                }}
+              />
         </div>
 
         <KeysetTable<BulkBatchInfo>

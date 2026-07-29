@@ -103,7 +103,9 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     const { client: api, fetched } = client();
     render(<BulkPanel client={api} />);
 
-    await userEvent.selectOptions(await screen.findByLabelText("State"), "Validated");
+    await userEvent.click(await screen.findByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Validated/ }));
+    await userEvent.keyboard("{Escape}");
 
     await waitFor(() => expect(fetched.some((url) => url.includes("state=Validated"))).toBe(true));
     expect(fetched.every((url) => !url.includes("definition="))).toBe(true);
