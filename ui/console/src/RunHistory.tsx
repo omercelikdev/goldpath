@@ -13,6 +13,9 @@ export interface RunHistoryProps {
   onOpenJob?: (jobName: string) => void;
   /** Another screen asked for this run — a fresh object each ask, so asking twice works. */
   openRunRequest?: { id: string } | null;
+  /** Called once the ask is consumed, so the OWNER clears it — an intent left standing
+      replays on every remount of this panel (review R3 on #118). */
+  onRunRequestConsumed?: () => void;
 }
 
 const STATES = ["Running", "Completed", "Failed"];
@@ -25,7 +28,7 @@ const STATES = ["Running", "Completed", "Failed"];
  * operator reads, so an offset-paged second page would skip rows that shifted down. The
  * server continues strictly after the last row we were given.
  */
-export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpenJob, openRunRequest }: RunHistoryProps) {
+export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpenJob, openRunRequest, onRunRequestConsumed }: RunHistoryProps) {
   const [status, setStatus] = useState("");
   const [job, setJob] = useState("");
   const [from, setFrom] = useState("");
@@ -34,9 +37,15 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
   const [selectedRun, setSelectedRun] = useState<RunDetail | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
 
-  // The intent arrives as an OBJECT so the same run can be asked for twice in a row.
+  // The intent arrives as an OBJECT so the same run can be asked for twice in a row —
+  // and is ACKED as consumed, or the leftover ask would replay on the next remount.
   useEffect(() => {
-    if (openRunRequest) setSelectedRunId(openRunRequest.id);
+    if (openRunRequest) {
+      setSelectedRunId(openRunRequest.id);
+      onRunRequestConsumed?.();
+    }
+    // The ack callback is deliberately not a dependency: the effect answers the ASK.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openRunRequest]);
 
   const loadRuns = useCallback(

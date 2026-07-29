@@ -159,6 +159,7 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
             section={section}
             now={now}
             openRunRequest={runRequest}
+            onRunRequestConsumed={() => setRunRequest(null)}
             onOpenRun={(runId) => {
               setRunRequest({ id: runId });
               setSection("jobs");

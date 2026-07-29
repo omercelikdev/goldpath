@@ -12,6 +12,8 @@ export interface JobsTabProps {
   onChanged: () => void;
   /** A history row asked for this job (v1.1 §7.9) — a fresh object each ask. */
   openJobRequest?: { name: string } | null;
+  /** Ack: the owner clears the ask, or it replays on remount (review R3 on #118). */
+  onJobRequestConsumed?: () => void;
   /** Cross-screen link: a trigger's calendar opens the Calendars tab. */
   onShowCalendars?: () => void;
 }
@@ -27,14 +29,19 @@ export interface JobsTabProps {
  * (ADR-0001), and the admin surface has no such route to call. What an operator changes
  * here is the SCHEDULE.
  */
-export function JobsTab({ client, fleet, refreshToken, onChanged, openJobRequest, onShowCalendars }: JobsTabProps) {
+export function JobsTab({ client, fleet, refreshToken, onChanged, openJobRequest, onJobRequestConsumed, onShowCalendars }: JobsTabProps) {
   const [jobs, setJobs] = useState<JobInfo[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const openJob = jobs?.find((job) => job.name === open) ?? null;
 
   useEffect(() => {
-    if (openJobRequest) setOpen(openJobRequest.name);
+    if (openJobRequest) {
+      setOpen(openJobRequest.name);
+      onJobRequestConsumed?.();
+    }
+    // The ack callback is deliberately not a dependency: the effect answers the ASK.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openJobRequest]);
 
   useEffect(() => {

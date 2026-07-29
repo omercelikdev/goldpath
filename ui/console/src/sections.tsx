@@ -76,6 +76,7 @@ export interface ServicePanelsProps {
   /** Cross-section ask: a batch's run id wants the run console's History (v1.1 §7.9). */
   onOpenRun?: (runId: string) => void;
   openRunRequest?: { id: string } | null;
+  onRunRequestConsumed?: () => void;
 }
 
 /**
@@ -86,7 +87,7 @@ export interface ServicePanelsProps {
  * but REFUSING — no ops role, or no tenant to scope the call to — says exactly that, in
  * the server's words.
  */
-export function ServicePanels({ client, capabilities, section, now, onOpenRun, openRunRequest }: ServicePanelsProps) {
+export function ServicePanels({ client, capabilities, section, now, onOpenRun, openRunRequest, onRunRequestConsumed }: ServicePanelsProps) {
   if (capabilities === null) {
     return <p className="text-sm text-muted-foreground">Discovering capabilities…</p>;
   }
@@ -133,7 +134,7 @@ export function ServicePanels({ client, capabilities, section, now, onOpenRun, o
         </Banner>
       )}
 
-      {capability.kind === "present" && section === "jobs" && <RunConsole client={client} now={now} openRunRequest={openRunRequest} />}
+      {capability.kind === "present" && section === "jobs" && <RunConsole client={client} now={now} openRunRequest={openRunRequest} onRunRequestConsumed={onRunRequestConsumed} />}
       {capability.kind === "present" && section === "bulk" && (
         // The run link lights only when this service COMPOSES a run console to land on.
         <BulkPanel client={client} onOpenRun={capabilities.jobs.kind === "present" ? onOpenRun : undefined} />

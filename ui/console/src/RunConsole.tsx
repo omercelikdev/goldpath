@@ -12,6 +12,8 @@ export interface RunConsoleProps {
   now?: Date;
   /** Another SECTION asked for a run (a batch's run id) — open History with it. */
   openRunRequest?: { id: string } | null;
+  /** Threaded to History's ack: the section OWNER clears the ask once it landed. */
+  onRunRequestConsumed?: () => void;
 }
 
 const TABS = [
@@ -30,7 +32,7 @@ const TABS = [
  * does not own, and offers no verb the API does not have — notably, no way to create or
  * delete a job, because composition belongs to the manifest (ADR-0001).
  */
-export function RunConsole({ client, now, openRunRequest }: RunConsoleProps) {
+export function RunConsole({ client, now, openRunRequest, onRunRequestConsumed }: RunConsoleProps) {
   const [fleets, setFleets] = useState<FleetInfo[]>([]);
   const [fleet, setFleet] = useState<string | null>(null);
   const [tab, setTab] = useState("overview");
@@ -112,6 +114,7 @@ export function RunConsole({ client, now, openRunRequest }: RunConsoleProps) {
               refreshToken={refreshToken}
               onChanged={refresh}
               openJobRequest={jobRequest}
+              onJobRequestConsumed={() => setJobRequest(null)}
               onShowCalendars={() => setTab("calendars")}
             />
           </TabPanel>
@@ -126,6 +129,7 @@ export function RunConsole({ client, now, openRunRequest }: RunConsoleProps) {
               onChanged={refresh}
               now={now}
               openRunRequest={openRunRequest}
+              onRunRequestConsumed={onRunRequestConsumed}
               onOpenJob={(name) => {
                 setJobRequest({ name });
                 setTab("jobs");

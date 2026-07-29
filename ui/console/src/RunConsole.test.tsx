@@ -136,6 +136,43 @@ describe("the scheduling surface (console RFC U5 — a client of the frozen cont
     expect(sheet).toHaveTextContent("bulk-execute");
   });
 
+  it("R3: a consumed job ask does NOT replay — leave Jobs and return, no sheet reopens", async () => {
+    const fetcher = (async (input: RequestInfo | URL, init?: RequestInit) => {
+      const url = String(input);
+      const json = (body: unknown) => new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+      if (init?.method && init.method !== "GET") return json({ ok: true, message: "done" });
+      if (url.includes("/status")) return json(STATUS);
+      if (url.includes("/audit") || url.includes("/calendars")) return json([]);
+      if (url.includes("/runs?")) {
+        return json([{ id: "r-77", jobName: "eod-reconciliation", status: "Completed", startedAt: "2026-07-28T03:00:00Z", totalChunks: 1, completedChunks: 1, failedChunks: 0, itemFailures: 0 }]);
+      }
+      if (url.endsWith("/jobs")) return json([{ name: "eod-reconciliation", triggers: [] }]);
+      if (url.endsWith("/fleets")) return json(FLEETS);
+      return new Response("not found", { status: 404 });
+    }) as typeof fetch;
+
+    render(<RunConsole client={new AdminClient({ fetcher })} />);
+    await userEvent.click(await screen.findByRole("tab", { name: "History" }));
+    await userEvent.click(await screen.findByRole("button", { name: "eod-reconciliation" }));
+    await screen.findByTestId("sheet");
+
+    // Close the sheet, walk away, come back: the OLD ask must not reopen it.
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(screen.queryByTestId("sheet")).not.toBeInTheDocument());
+    await userEvent.click(screen.getByRole("tab", { name: "Overview" }));
+    await userEvent.click(screen.getByRole("tab", { name: "Jobs" }));
+
+    await screen.findByRole("button", { name: "eod-reconciliation" });
+    expect(screen.queryByTestId("sheet")).not.toBeInTheDocument();
+  });
+
+  it("R3: the run ask is ACKED so its owner can clear it", async () => {
+    const consumed: string[] = [];
+    render(<RunConsole client={api()} openRunRequest={{ id: "r-9" }} onRunRequestConsumed={() => consumed.push("acked")} />);
+
+    await waitFor(() => expect(consumed).toEqual(["acked"]));
+  });
+
   it("a fleet list that will not load says so instead of showing an empty console", async () => {
     const fetcher = (async () => new Response("", { status: 503 })) as typeof fetch;
     render(<RunConsole client={new AdminClient({ fetcher })} />);
