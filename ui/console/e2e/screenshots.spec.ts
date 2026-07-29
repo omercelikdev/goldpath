@@ -23,7 +23,7 @@ test("the console, as an operator sees it", async ({ page }) => {
 
   // 2. The run console — fleets discovered from the store, a run with its repair queue.
   // Since U5 the Runs section opens on the fleet OVERVIEW; the run list lives in History.
-  await page.getByRole("button", { name: "Runs" }).click();
+  await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
   await expect(page.getByTestId("run-console")).toBeVisible();
   await page.getByRole("tab", { name: "History" }).click();
   await page.locator("table button").first().click();
@@ -33,9 +33,11 @@ test("the console, as an operator sees it", async ({ page }) => {
   // position is not a picture of the run.
   await runDetail.scrollIntoViewIfNeeded();
   await page.screenshot({ path: `${out}/console-runs.png` });
+  // The run opens in a MODAL sheet since B2 — close it or the rail stays unreachable.
+  await page.keyboard.press("Escape");
 
   // 3. The four-eyes gate — the engine's own validation report under it.
-  await page.getByRole("button", { name: "Bulk intake" }).click();
+  await page.getByTestId("shell-rail").getByRole("button", { name: "Bulk intake", exact: true }).click();
   await expect(page.getByTestId("bulk-panel")).toBeVisible();
   await page.locator("table button").first().click();
   const batchDetail = page.getByTestId("batch-detail");

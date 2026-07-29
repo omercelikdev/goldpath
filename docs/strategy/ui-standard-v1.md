@@ -138,5 +138,14 @@ dashboard and its source (not from memory):
     (the `@qorpe/ui` question) is DEFERRED with a written trigger: the third consumer.
     Two consumers copy; three justify a package.
 
+    Closing check (b4c, 2026-07-29): a mechanical token diff against the reference's
+    `index.css` shows exactly two divergences, both deliberate and both already
+    documented — the reference's `--brand` pair has no Goldpath counterpart (the
+    near-black accent IS the identity, §1), and the secondary inks
+    (`--faint`/`--muted-foreground`) carry the 2026-07-27 WCAG AA correction the axe
+    gate demanded (§1). Radii, shadows, status ramp, dark palette: identical. The
+    README's three pictures are re-captured from the finished family UI by
+    `scripts/console-screenshots.sh` in the same PR.
+
 Verification unchanged in kind: axe + console smoke green through every batch, and the
 row-click/Sheet change updates the smoke's locators in the same PR.
