@@ -392,7 +392,9 @@ test.describe("the run console against a real Goldpath app", () => {
     // The archive job is real and runs on its own cron — poll until it has appended.
     await expect(async () => {
       await openArchival();
-      await expect(page.getByRole("row", { name: /policies/ }).first()).toBeVisible({ timeout: 5_000 });
+      // The row exists at startup; CRON ACTIVITY is a positive number appearing in it —
+      // every numeric column starts at 0, so any nonzero digit is the appended entry.
+      await expect(page.getByRole("row", { name: /policies/ }).first()).toContainText(/[1-9]/, { timeout: 5_000 });
     }).toPass({ timeout: 90_000 });
 
     // The chain verifies END TO END, computed by the engine over every entry.
