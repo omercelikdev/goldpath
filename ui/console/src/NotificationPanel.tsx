@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banner, humanizeSeconds, KeysetTable, StateBadge } from "@goldpath/kit";
+import { Banner, humanizeSeconds, KeysetTable, StateBadge, Table } from "@goldpath/kit";
 import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
 
 export interface NotificationPanelProps {
@@ -112,30 +112,36 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
 
       <section>
         <h2 className="section-title">Templates</h2>
-        <ul className="space-y-2">
-          {(templates ?? []).map((entry) => (
-            <li key={entry.key} className="row-card flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium">{entry.key}</span>
-              {/* The hash is what proves WHICH text was sent — truncated for the eye, whole in the row. */}
-              <span className="font-mono text-xs text-faint" title={entry.hash}>
-                {entry.hash.slice(0, 12)}
-              </span>
-              <span className="text-xs text-faint">{retentionWords(entry.deleteBodyAfter)}</span>
-              {Object.entries(entry.byState).map(([key, count]) => (
-                <span key={key} className="text-xs text-faint">
-                  {key}: {count}
+        <Table
+          columns={[
+            { header: "Template", cell: (entry) => <span className="font-medium">{entry.key}</span> },
+            {
+              header: "Body hash",
+              cell: (entry) => (
+                // The hash is what proves WHICH text was sent — truncated for the eye, whole on hover.
+                <span className="font-mono text-xs text-faint" title={entry.hash}>{entry.hash.slice(0, 12)}</span>
+              ),
+            },
+            { header: "Retention", cell: (entry) => <span className="text-xs text-faint">{retentionWords(entry.deleteBodyAfter)}</span> },
+            {
+              header: "By state",
+              cell: (entry) => (
+                <span className="flex flex-wrap gap-2">
+                  {Object.entries(entry.byState).map(([key, count]) => (
+                    <span key={key} className="text-xs text-faint">{key}: {count}</span>
+                  ))}
+                  {Object.keys(entry.byState ?? {}).length === 0 && <span className="text-xs text-faint">nothing requested yet</span>}
                 </span>
-              ))}
-              {Object.keys(entry.byState ?? {}).length === 0 && (
-                <span className="text-xs text-faint">nothing requested yet</span>
-              )}
-            </li>
-          ))}
-          {templates?.length === 0 && <li className="text-xs text-faint">No templates are registered in this app.</li>}
-        </ul>
+              ),
+            },
+          ]}
+          rows={templates ?? []}
+          rowKey={(entry) => entry.key}
+          emptyMessage="No templates are registered in this app."
+        />
       </section>
 
-      <section>
+      <section data-testid="evidence">
         <div className="mb-2 flex flex-wrap items-center gap-2">
           {LENSES.map((entry) => (
             <button

@@ -202,7 +202,7 @@ test.describe("the run console against a real Goldpath app", () => {
     };
 
     // The newest batch is the first row (the contract orders by receipt, newest first).
-    const newest = page.getByRole("row", { name: /payments/ }).first();
+    const newest = page.getByTestId("batches").getByRole("row", { name: /payments/ }).first();
     const waitForState = async (state: string) =>
       expect(async () => {
         await openBulk();
@@ -352,7 +352,7 @@ test.describe("the run console against a real Goldpath app", () => {
     // The send job is real and runs on its own cron; the app requested three notifications
     // at startup — one the webhook accepts, one the MaySend hook refuses, one whose
     // transport is a dead port. Poll until the queue has worked through them.
-    const sentRow = page.getByRole("row", { name: /Sent/ }).first();
+    const sentRow = page.getByTestId("evidence").getByRole("row", { name: /Sent/ }).first();
     await expect(async () => {
       await openNotifications();
       await expect(sentRow).toBeVisible({ timeout: 5_000 });
@@ -366,7 +366,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // The failure lens: the transport's own refusal, written by the module.
     await page.getByRole("button", { name: "Failures" }).click();
-    const failedRow = page.getByRole("row", { name: /Failed/ }).first();
+    const failedRow = page.getByTestId("evidence").getByRole("row", { name: /Failed/ }).first();
     await expect(failedRow).toBeVisible();
     await failedRow.getByRole("button").first().click();
     const detail = page.getByTestId("notification-detail");
@@ -375,7 +375,7 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // The suppression lens: a refusal by policy is evidence, and it carries its reason.
     await page.getByRole("button", { name: "Suppressions" }).click();
-    await page.getByRole("row", { name: /Suppressed/ }).first().getByRole("button").first().click();
+    await page.getByTestId("evidence").getByRole("row", { name: /Suppressed/ }).first().getByRole("button").first().click();
     await expect(detail).toContainText("suppressed by the MaySend hook");
 
     // Read-only by contract: this surface offers no verb at all.
@@ -392,7 +392,9 @@ test.describe("the run console against a real Goldpath app", () => {
     // The archive job is real and runs on its own cron — poll until it has appended.
     await expect(async () => {
       await openArchival();
-      await expect(page.getByText(/[1-9]\d* entries/)).toBeVisible({ timeout: 5_000 });
+      // The row exists at startup; CRON ACTIVITY is a positive number appearing in it —
+      // every numeric column starts at 0, so any nonzero digit is the appended entry.
+      await expect(page.getByRole("row", { name: /policies/ }).first()).toContainText(/[1-9]/, { timeout: 5_000 });
     }).toPass({ timeout: 90_000 });
 
     // The chain verifies END TO END, computed by the engine over every entry.

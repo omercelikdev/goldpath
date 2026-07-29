@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Banner, humanizeSeconds, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, humanizeSeconds, KeysetTable, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type { AdminClient, BulkBatchInfo, BulkDefinitionStatus, BulkRowError } from "./adminClient";
 
@@ -154,21 +154,27 @@ export function BulkPanel({ client }: BulkPanelProps) {
 
       <section>
         <h2 className="section-title">Definitions</h2>
-        <ul className="space-y-2">
-          {(definitions ?? []).map((definition) => (
-            <li key={definition.name} className="row-card flex flex-wrap items-center gap-2">
-              <span className="text-sm font-medium">{definition.name}</span>
-              {Object.entries(definition.batchesByState).map(([batchState, count]) => (
-                <span key={batchState} className="text-xs text-faint">
-                  {batchState}: {count}
+        <Table
+          columns={[
+            { header: "Definition", cell: (definition) => <span className="font-medium">{definition.name}</span> },
+            {
+              header: "Batches by state",
+              cell: (definition) => (
+                <span className="flex flex-wrap gap-2">
+                  {Object.entries(definition.batchesByState).map(([batchState, count]) => (
+                    <span key={batchState} className="text-xs text-faint">{batchState}: {count}</span>
+                  ))}
+                  {Object.keys(definition.batchesByState ?? {}).length === 0 && (
+                    <span className="text-xs text-faint">no batches yet</span>
+                  )}
                 </span>
-              ))}
-              {Object.keys(definition.batchesByState ?? {}).length === 0 && (
-                <span className="text-xs text-faint">no batches yet</span>
-              )}
-            </li>
-          ))}
-        </ul>
+              ),
+            },
+          ]}
+          rows={definitions ?? []}
+          rowKey={(definition) => definition.name}
+          emptyMessage="No bulk definition is composed here."
+        />
       </section>
 
       <section>
@@ -212,7 +218,7 @@ export function BulkPanel({ client }: BulkPanelProps) {
         </p>
       </section>
 
-      <section>
+      <section data-testid="batches">
         <h2 className="section-title">Batches</h2>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <label className="text-xs text-muted-foreground" htmlFor="bulk-state">
@@ -258,8 +264,16 @@ export function BulkPanel({ client }: BulkPanelProps) {
         />
       </section>
 
+      <Sheet
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+        title={selected ? `Batch ${selected.id}` : ""}
+        description={selected ? `${selected.definition} — the validation report and the four-eyes gate.` : undefined}
+      >
       {selected && (
-        <section data-testid="batch-detail" className="card">
+        <section data-testid="batch-detail">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <h2 className="text-sm font-medium">
               Batch {selected.id} · {selected.definition}
@@ -353,6 +367,7 @@ export function BulkPanel({ client }: BulkPanelProps) {
           )}
         </section>
       )}
+      </Sheet>
     </div>
   );
 }
