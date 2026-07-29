@@ -72,7 +72,7 @@ test.describe("the console is operable without a mouse or a perfect screen", () 
 
     // Opened from the KEYBOARD — the mouse is not assumed anywhere in this journey.
     await page.getByRole("tab", { name: "Jobs" }).click();
-    const trigger = page.locator("section", { hasText: "SmokeJob" }).getByRole("button", { name: "trigger" }).first();
+    const trigger = page.getByRole("row", { name: /SmokeJob/ }).first().getByRole("button", { name: "trigger" }).first();
     await trigger.focus();
     await page.keyboard.press("Enter");
     const dialog = page.getByRole("alertdialog");
