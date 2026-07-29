@@ -113,11 +113,28 @@ describe("the notification evidence panel (read-only by contract)", () => {
     const { client: api, fetched } = client();
     render(<NotificationPanel client={api} />);
 
-    await userEvent.selectOptions(await screen.findByLabelText("State"), "Failed");
+    await userEvent.click(await screen.findByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Failed/ }));
+    await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(fetched.some((url) => url.includes("state=Failed"))).toBe(true));
 
-    await userEvent.selectOptions(screen.getByLabelText("Template"), "policy-renewal");
+    await userEvent.click(screen.getByRole("button", { name: /Template/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /policy-renewal/ }));
+    await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(fetched.some((url) => url.includes("template=policy-renewal"))).toBe(true));
+
+    // Re-toggling the active STATE clears it: the follow-up fetch drops the param while
+    // the template filter (untouched) stays.
+    const before = fetched.length;
+    await userEvent.click(screen.getByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Failed/ }));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      const since = fetched.slice(before).filter((url) => url.includes("/notifications?"));
+      expect(since.length).toBeGreaterThan(0);
+      expect(since.every((url) => !url.includes("state="))).toBe(true);
+      expect(since.some((url) => url.includes("template=policy-renewal"))).toBe(true);
+    });
   });
 
   it("each focused lens reads the contract's OWN route, not a re-filtered list", async () => {

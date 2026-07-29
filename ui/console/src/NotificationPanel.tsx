@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banner, humanizeSeconds, KeysetTable, StateBadge, Table } from "@goldpath/kit";
+import { Banner, FacetFilter, humanizeSeconds, KeysetTable, StateBadge, Table } from "@goldpath/kit";
 import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
 
 export interface NotificationPanelProps {
@@ -161,45 +161,33 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
 
           {lens === "all" && (
             <>
-              <label className="ml-2 text-xs text-muted-foreground" htmlFor="notification-state">
-                State
-              </label>
-              <select
-                id="notification-state"
-                className="control"
-                value={state}
-                onChange={(event) => {
-                  setState(event.target.value);
+              {/* Single-commit facets: the frozen ?state=/?template= take one value each. */}
+              <FacetFilter
+                label="State"
+                options={STATES.map((option) => ({ value: option }))}
+                selected={new Set(state ? [state] : [])}
+                onToggle={(value) => {
+                  setState(value === state ? "" : value);
                   setSelectedId(null);
                 }}
-              >
-                <option value="">all states</option>
-                {STATES.map((option) => (
-                  <option key={option} value={option}>
-                    {option}
-                  </option>
-                ))}
-              </select>
-
-              <label className="text-xs text-muted-foreground" htmlFor="notification-template">
-                Template
-              </label>
-              <select
-                id="notification-template"
-                className="control"
-                value={template}
-                onChange={(event) => {
-                  setTemplate(event.target.value);
+                onClear={() => {
+                  setState("");
                   setSelectedId(null);
                 }}
-              >
-                <option value="">all templates</option>
-                {(templates ?? []).map((entry) => (
-                  <option key={entry.key} value={entry.key}>
-                    {entry.key}
-                  </option>
-                ))}
-              </select>
+              />
+              <FacetFilter
+                label="Template"
+                options={(templates ?? []).map((entry) => ({ value: entry.key }))}
+                selected={new Set(template ? [template] : [])}
+                onToggle={(value) => {
+                  setTemplate(value === template ? "" : value);
+                  setSelectedId(null);
+                }}
+                onClear={() => {
+                  setTemplate("");
+                  setSelectedId(null);
+                }}
+              />
             </>
           )}
 

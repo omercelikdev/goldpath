@@ -103,10 +103,24 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     const { client: api, fetched } = client();
     render(<BulkPanel client={api} />);
 
-    await userEvent.selectOptions(await screen.findByLabelText("State"), "Validated");
+    await userEvent.click(await screen.findByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Validated/ }));
+    await userEvent.keyboard("{Escape}");
 
     await waitFor(() => expect(fetched.some((url) => url.includes("state=Validated"))).toBe(true));
     expect(fetched.every((url) => !url.includes("definition="))).toBe(true);
+
+    // The single-commit contract's other half: RE-toggling the active state clears it —
+    // the next batch fetch carries no state filter at all.
+    const before = fetched.length;
+    await userEvent.click(screen.getByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Validated/ }));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => {
+      const since = fetched.slice(before).filter((url) => url.includes("/batches?"));
+      expect(since.length).toBeGreaterThan(0);
+      expect(since.every((url) => !url.includes("state="))).toBe(true);
+    });
   });
 
   it("opens a batch and shows the row ledger the server reported", async () => {
