@@ -145,8 +145,8 @@ describe("the keyset table (ui-standard-v1 §4 — cursor pager, never offsets)"
     );
 
     return waitFor(() => {
-      expect(screen.getByRole("columnheader", { name: "Count" })).toHaveClass("text-right");
-      expect(screen.getByRole("cell", { name: "7" })).toHaveClass("text-right");
+      expect(screen.getByRole("columnheader", { name: "Count" })).toHaveClass("text-end");
+      expect(screen.getByRole("cell", { name: "7" })).toHaveClass("text-end");
     });
   });
 });
