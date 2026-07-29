@@ -43,6 +43,15 @@ describe("the command palette (v1.1 §7.14 — every destination one keystroke a
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
 
+  it("a query with no home shows the empty state, and no command at all", async () => {
+    render(<CommandPalette groups={groups()} />);
+    act(() => openCommand());
+    await userEvent.type(await screen.findByRole("combobox"), "zzz");
+    expect(screen.queryByText("Today")).not.toBeInTheDocument();
+    expect(screen.queryByText("Runs")).not.toBeInTheDocument();
+    expect(screen.getByText("—")).toBeInTheDocument();   // the reference's quiet dash
+  });
+
   it("typing filters the list down to what matches", async () => {
     render(<CommandPalette groups={groups()} />);
     act(() => openCommand());
