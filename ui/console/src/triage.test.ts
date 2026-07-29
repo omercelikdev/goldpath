@@ -47,7 +47,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
   it("a quiet estate produces NO rows: silence is the answer, not an empty metric", async () => {
     const api = client({ "/jobs/fleets": [{ schedulerName: "it", jobCount: 1, nodes: [] }], "/runs?": [run()] });
 
-    expect(await collectServiceTriage("payments", api, capabilities(), NOW)).toEqual([]);
+    expect((await collectServiceTriage("payments", api, capabilities(), NOW)).rows).toEqual([]);
   });
 
   it("failed runs are DANGER and name the jobs", async () => {
@@ -56,7 +56,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       "/runs?": [run({ status: "Failed", jobName: "settlement" }), run()],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities(), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities(), NOW);
 
     expect(rows[0]).toMatchObject({ tone: "danger", section: "jobs", service: "payments" });
     expect(rows[0].headline).toBe("1 failed run in it");
@@ -72,7 +72,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities(), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities(), NOW);
 
     expect(rows.find((row) => row.tone === "danger")?.headline).toBe("1 run past the deadline in it");
     expect(rows.find((row) => row.tone === "warning")?.headline).toBe("1 run predicted to overrun in it");
@@ -84,7 +84,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       "/runs?": [run({ itemFailures: 3 }), run({ id: "r2", itemFailures: 4 })],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities(), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities(), NOW);
 
     expect(headlines(rows)).toContain("7 items waiting in the repair queue of it");
   });
@@ -94,7 +94,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       "/bulk/definitions": [{ name: "payouts", batchesByState: {}, awaitingApproval: 2, oldestAwaitingApprovalSeconds: 7200 }],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     expect(rows[0].headline).toBe("2 batches awaiting approval in payouts");
     expect(rows[0].detail).toBe("the oldest has waited 2h");
@@ -107,7 +107,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     expect(headlines(rows)).toContain("june-welcome is paused");
     expect(rows[0].detail).toContain("90 items");
@@ -120,7 +120,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     expect(rows[0]).toMatchObject({ tone: "danger", headline: "2 notifications failed on welcome" });
     expect(headlines(rows)).toContain("welcome has a request waiting 30m");
@@ -131,7 +131,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       "/archival/definitions": [{ name: "policies", entries: 10, dueBacklog: 4, activeHolds: 0, chainHead: 10, purgedThrough: 0 }],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     expect(rows[0].headline).toBe("4 aggregates due to archive in policies");
   });
@@ -141,7 +141,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
     // probe was refused, so triage must not read it and must not pretend it did.
     const api = client({ "/bulk/definitions": [{ name: "payouts", batchesByState: {}, awaitingApproval: 9 }] });
 
-    const rows = await collectServiceTriage(
+    const { rows } = await collectServiceTriage(
       "payments",
       api,
       capabilities({
@@ -162,7 +162,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
   it("a surface that DIES mid-read becomes a row of its own — triage never drops a service quietly", async () => {
     const api = client({ "/jobs/fleets": [{ schedulerName: "it", jobCount: 1, nodes: [] }] }, (url) => url.includes("/runs?"));
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ bulk: { kind: "absent" }, campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ bulk: { kind: "absent" }, campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" } }), NOW);
 
     expect(rows).toEqual([
       {
@@ -205,7 +205,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     // Singular, because one item is one item — the count is the operator's first read.
     expect(rows[0].headline).toBe("1 failed item in june-welcome");
@@ -224,7 +224,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ) as Capabilities;
       const api = client({}, (url) => url.includes(route.replace("?", "")));
 
-      const rows = await collectServiceTriage("payments", api, only, NOW);
+      const { rows } = await collectServiceTriage("payments", api, only, NOW);
 
       expect(rows).toEqual([
         {
@@ -248,7 +248,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ bulk: { kind: "absent" }, campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ bulk: { kind: "absent" }, campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" } }), NOW);
 
     expect(headlines(rows)).toContain("2 failed runs in it");
     expect(headlines(rows)).toContain("1 item waiting in the repair queue of it");
@@ -259,7 +259,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       "/bulk/definitions": [{ name: "payouts", batchesByState: {}, awaitingApproval: 1, oldestAwaitingApprovalSeconds: null }],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     expect(rows[0].headline).toBe("1 batch awaiting approval in payouts");
     expect(rows[0].detail).toBe("a four-eyes gate is holding them");
@@ -270,7 +270,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       "/notification/templates": [{ key: "welcome", hash: "h", byState: { Failed: 1 }, oldestRequestedSeconds: 60 }],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     expect(headlines(rows)).toEqual(["1 notification failed on welcome"]);
   });
@@ -280,7 +280,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       "/archival/definitions": [{ name: "policies", entries: 1, dueBacklog: 1, activeHolds: 0, chainHead: 1, purgedThrough: 0 }],
     });
 
-    const rows = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
+    const { rows } = await collectServiceTriage("payments", api, capabilities({ jobs: { kind: "absent" } }), NOW);
 
     expect(rows[0].headline).toBe("1 aggregate due to archive in policies");
   });
@@ -296,7 +296,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ]),
     ) as Capabilities;
 
-    const rows = await collectServiceTriage("auth-floored", api, blind, NOW);
+    const { rows } = await collectServiceTriage("auth-floored", api, blind, NOW);
 
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ tone: "danger", blind: true, service: "auth-floored", section: "jobs" });
@@ -307,7 +307,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
   it("a service that never answered is named as such, not as five unreadable surfaces", async () => {
     const dead = Object.fromEntries(MODULES.map((module) => [module, { kind: "unreachable" }])) as Capabilities;
 
-    const rows = await collectServiceTriage("claims", client({}), dead, NOW);
+    const { rows } = await collectServiceTriage("claims", client({}), dead, NOW);
 
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ blind: true, tone: "danger" });
@@ -323,7 +323,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
       ]),
     ) as Capabilities;
 
-    const rows = await collectServiceTriage("payments", client({}), mixed, NOW);
+    const { rows } = await collectServiceTriage("payments", client({}), mixed, NOW);
 
     expect(rows).toHaveLength(1);
     expect(rows[0].headline).toBe("5 surfaces on payments cannot be read");
@@ -331,7 +331,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
   });
 
   it("one unreadable surface reads in the singular, and without a message says what it can", async () => {
-    const rows = await collectServiceTriage(
+    const { rows } = await collectServiceTriage(
       "payments",
       client({}),
       capabilities({ jobs: { kind: "refused" }, bulk: { kind: "absent" }, campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" } }),
@@ -340,5 +340,87 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
 
     expect(rows[0].headline).toBe("1 surface on payments cannot be read");
     expect(rows[0].detail).toBe("this operator may not see them, or the request cannot be scoped");
+  });
+});
+
+describe("triage stats — the numbers the Today cards print", () => {
+  it("a readable module reports its count even at ZERO — a quiet zero is still a claim", async () => {
+    const api = client({
+      "/jobs/fleets": [{ schedulerName: "it", jobCount: 1, nodes: [] }],
+      "/runs?": [run()],
+      "/bulk/definitions": [{ name: "payments", awaitingApproval: 0 }],
+    });
+
+    const { stats } = await collectServiceTriage(
+      "payments",
+      api,
+      capabilities({ campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" } }),
+      NOW,
+    );
+
+    expect(stats).toEqual({ jobs: 0, bulk: 0 });
+  });
+
+  it("counts SUM across fleets and definitions, straight from the lists it read", async () => {
+    const api = client({
+      "/jobs/fleets": [
+        { schedulerName: "it", jobCount: 1, nodes: [] },
+        { schedulerName: "ops", jobCount: 1, nodes: [] },
+      ],
+      "/runs?": [run({ status: "Failed" }), run()],
+      "/bulk/definitions": [
+        { name: "payments", awaitingApproval: 2, oldestAwaitingApprovalSeconds: 60 },
+        { name: "claims", awaitingApproval: 1, oldestAwaitingApprovalSeconds: 60 },
+      ],
+      "/notification/templates": [
+        { key: "ops-alert", byState: { Failed: 3 } },
+        { key: "welcome", byState: { Sent: 5 } },
+      ],
+      "/archival/definitions": [{ name: "ledger", dueBacklog: 4 }],
+      "/campaign/?": [{ name: "renewal", state: "Running", failedCount: 2, succeededCount: 1, remaining: 7 }],
+    });
+
+    const { stats } = await collectServiceTriage("payments", api, capabilities(), NOW);
+
+    // One failed run PER FLEET (both fleets answer the same run list here).
+    expect(stats).toEqual({ jobs: 2, bulk: 3, campaign: 2, notification: 3, archival: 4 });
+  });
+
+  it("a surface that DIED reports no number at all — a count we could not read is not a zero", async () => {
+    const api = client(
+      {
+        "/jobs/fleets": [{ schedulerName: "it", jobCount: 1, nodes: [] }],
+        "/runs?": [run()],
+        "/bulk/definitions": [{ name: "payments", awaitingApproval: 1 }],
+      },
+      (url) => url.includes("/jobs/fleets"),
+    );
+
+    const { rows, stats } = await collectServiceTriage(
+      "payments",
+      api,
+      capabilities({ campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" } }),
+      NOW,
+    );
+
+    expect(stats).toEqual({ bulk: 1 });   // jobs is absent from stats, not zero
+    expect(headlines(rows)).toContain("the run surface could not be read");
+  });
+
+  it("a module that is absent, forbidden or refusing contributes no number either", async () => {
+    const { stats } = await collectServiceTriage(
+      "payments",
+      client({}),
+      capabilities({
+        jobs: { kind: "absent" },
+        bulk: { kind: "forbidden" },
+        campaign: { kind: "refused" },
+        notification: { kind: "absent" },
+        archival: { kind: "absent" },
+      }),
+      NOW,
+    );
+
+    expect(stats).toEqual({});
   });
 });

@@ -105,7 +105,15 @@ dashboard and its source (not from memory):
    retires.
 7. **Stat cards** on Today and section overviews: icon + label + number (+ small
    trend where the API already carries the numbers — the console still invents no
-   aggregate).
+   aggregate). Shipped in b4a as the kit `StatCard` (class-verbatim from the
+   reference dashboard): Today opens with one card per module the estate can
+   COUNT — failed runs, awaiting approval, failed campaign items, failed
+   notifications, due to archive — each summed from the same take-bounded lists
+   the triage reads (the scope line covers them), toned only when non-zero, and
+   deep-linking to the service that owns the number. A module nobody composed, or
+   whose surface could not be read, shows NO card rather than a false zero.
+   Trends stay deferred with their trigger: the contract publishes no time
+   series to draw one from.
 8. **Page headers**: every screen opens with title + one-line purpose sentence
    (Mockifyr's "Here's what's happening…" pattern); banner-ish summary strips become
    header cards.
