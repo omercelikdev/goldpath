@@ -6,6 +6,7 @@ export { RunProgress, itemsPerSecond, deadlineVerdict, type RunProgressProps, ty
 export { AuditBlock, isClassified, SYSTEM_ACTOR, type AuditBlockProps, type AuditEntry } from "./components/AuditBlock";
 export { Sheet, type SheetProps } from "./components/Sheet";
 export { Table, type TableProps, type TableColumn } from "./components/Table";
+export { FacetFilter, type FacetFilterProps, type FacetOption } from "./components/FacetFilter";
 export { SearchBox, type SearchBoxProps } from "./components/SearchBox";
 export { TabStrip, TabPanel, type TabStripProps, type TabStripItem, type TabPanelProps } from "./components/TabStrip";
 export { AppShell, PageHeader, initialCollapsed, COLLAPSE_KEY, type AppShellProps, type PageHeaderProps, type ShellNavItem, type ShellService } from "./components/AppShell";
