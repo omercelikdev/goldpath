@@ -50,17 +50,17 @@ actually composes.
 **Today** answers the only question an operator opens a console to ask, across every
 service in the registry, before opening any of them:
 
-![The console's Today screen: a failed notification, a repair queue, a batch at the four-eyes gate](docs/assets/console-today.png)
+![The console's Today screen: stat cards for each module, then a failed notification, a repair queue, and a batch at the four-eyes gate](docs/assets/console-today.png)
 
 **Runs** discovers the fleets from the store — every run with its chunks, its repair queue
 and its deadline verdict, and `rerun` for the one that failed:
 
-![The run console: fleet jobs with trigger and pause, the run list, and one run's detail with its chunk states](docs/assets/console-runs.png)
+![The run console: the fleet's run history behind, and one run's detail — progress, chunk states, repair queue — in the right-side sheet](docs/assets/console-runs.png)
 
 **Bulk intake** puts the engine's own validation report under the four-eyes gate, so the
 person approving sees exactly which row the file got wrong:
 
-![A validated batch: 3 rows, 2 valid, 1 invalid, the finding named per row, with approve and reject](docs/assets/console-gate.png)
+![A validated batch in the right-side sheet: 3 rows, 2 valid, 1 invalid, the finding named per row, with approve and reject](docs/assets/console-gate.png)
 
 These are captured, never mocked: `scripts/console-screenshots.sh` brings up Postgres and
 RabbitMQ, runs a real app, uploads a real file, triggers real jobs, and photographs what
