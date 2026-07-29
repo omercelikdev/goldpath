@@ -89,16 +89,20 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
               ))}
             </tr>
           ))}
+          {state === "idle" && rows.length === 0 && ended && (
+            // Only the END of an empty walk is "empty" — an empty intermediate page keeps
+            // the load-more path alive without contradicting itself (review R3 on this PR).
+            // Rendered as the reference's own empty row (colSpan, py-16), same as Table.
+            <tr>
+              <td colSpan={columns.length}>
+                <p className="py-16 text-center text-sm text-muted-foreground">{emptyMessage}</p>
+              </td>
+            </tr>
+          )}
         </tbody>
       </table>
       </div>
       </div>
-
-      {state === "idle" && rows.length === 0 && ended && (
-        // Only the END of an empty walk is "empty" — an empty intermediate page keeps
-        // the load-more path alive without contradicting itself (review R3 on this PR).
-        <p className="py-6 text-center text-sm text-muted-foreground">{emptyMessage}</p>
-      )}
 
       {state === "error" && (
         <div className="my-3">

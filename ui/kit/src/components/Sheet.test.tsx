@@ -65,6 +65,10 @@ describe("Table (v1.1 §7.4)", () => {
     expect(clicked).toEqual(["b"]);
 
     rerender(<Table columns={[{ header: "Name", cell: (r: (typeof rows)[0]) => r.name }]} rows={[]} rowKey={(r: (typeof rows)[0]) => r.id} emptyMessage="No calendars." />);
+    // The empty state is one ROW spanning every column — the reference's structure,
+    // not a <p> floating outside the table's semantics.
+    const emptyCell = screen.getByText("No calendars.").closest("td")!;
+    expect(emptyCell).toHaveAttribute("colspan", "1");
     expect(screen.getByText("No calendars.")).toBeInTheDocument();
   });
 });
