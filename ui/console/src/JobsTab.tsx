@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, Sheet, shortStamp, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import { isPaused, nextFireAt, type AdminClient, type JobInfo, type TriggerInfo } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -27,6 +27,7 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
   const [jobs, setJobs] = useState<JobInfo[] | null>(null);
   const [problem, setProblem] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const openJob = jobs?.find((job) => job.name === open) ?? null;
 
   useEffect(() => {
     let live = true;
@@ -56,40 +57,54 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
       */}
       {problem && <Banner tone="danger">{problem} — the rows below are the last ones it did answer with.</Banner>}
 
-      {jobs.length === 0 && <p className="text-sm text-muted-foreground">This fleet declares no job.</p>}
-
-      {jobs.map((job) => {
-        const paused = isPaused(job);
-        const next = nextFireAt(job);
-        return (
-          <section key={job.name} className="row-card">
-            <div className="flex flex-wrap items-center gap-3">
-              <button
-                className="text-sm font-medium underline-offset-2 hover:underline"
-                aria-expanded={open === job.name}
-                onClick={() => setOpen(open === job.name ? null : job.name)}
-              >
+      <Table
+        columns={[
+          {
+            header: "Job",
+            cell: (job) => (
+              // The name is the door: it opens the job in the right Sheet (v1.1 §7.4).
+              <button className="text-sm font-medium underline-offset-2 hover:underline" onClick={() => setOpen(job.name)}>
                 {job.name}
               </button>
-              {paused && <StateBadge state="Suppressed" />}
-              {job.triggers.length === 0 && (
+            ),
+          },
+          {
+            header: "State",
+            cell: (job) =>
+              isPaused(job) ? (
+                <StateBadge state="Suppressed" />
+              ) : job.triggers.length === 0 ? (
                 // Not the same thing as paused, and saying so matters: a job with no
                 // trigger will never fire and no amount of resuming will change that.
                 <span className="text-xs text-warning">no trigger — nothing will fire it</span>
-              )}
-              {next && <span className="text-xs text-faint" title={next}>next {shortStamp(next)}</span>}
-              <span className="text-xs text-faint">
-                {job.triggers.length} trigger{job.triggers.length === 1 ? "" : "s"}
-              </span>
-
-              <span className="ml-auto flex flex-wrap gap-2">
+              ) : (
+                <StateBadge state="Running" />
+              ),
+          },
+          {
+            header: "Triggers",
+            align: "right",
+            cell: (job) => <span className="text-xs">{job.triggers.length}</span>,
+          },
+          {
+            header: "Next fire",
+            cell: (job) => {
+              const next = nextFireAt(job);
+              return next ? <span className="text-xs text-faint" title={next}>{shortStamp(next)}</span> : <span className="text-xs text-faint">—</span>;
+            },
+          },
+          {
+            header: "",
+            align: "right",
+            cell: (job) => (
+              <span className="flex flex-wrap justify-end gap-2">
                 <VerbButton
                   label="trigger"
                   confirm={`Fire ${job.name} now? The run is recorded as started by hand.`}
                   execute={() => asOutcome(client.triggerJob(fleet, job.name))}
                   onDone={onChanged}
                 />
-                {paused ? (
+                {isPaused(job) ? (
                   <VerbButton
                     label="resume"
                     confirm={`Resume ${job.name}?`}
@@ -106,34 +121,44 @@ export function JobsTab({ client, fleet, refreshToken, onChanged }: JobsTabProps
                   />
                 )}
               </span>
-            </div>
+            ),
+          },
+        ]}
+        rows={jobs}
+        rowKey={(job) => job.name}
+        emptyMessage="This fleet declares no job."
+      />
 
-            {open === job.name && (
-              <div className="mt-3 space-y-3 border-t border-border/60 pt-3">
-                {job.description && <p className="text-xs text-muted-foreground">{job.description}</p>}
+      <Sheet
+        open={openJob !== null}
+        onOpenChange={(isOpen) => {
+          if (!isOpen) setOpen(null);
+        }}
+        title={openJob?.name ?? ""}
+        description={openJob?.description ?? "Triggers, schedule, and the declared job data."}
+      >
+        {openJob && (
+          <div className="space-y-3">
+            <Triggers client={client} fleet={fleet} job={openJob} onChanged={onChanged} />
 
-                <Triggers client={client} fleet={fleet} job={job} onChanged={onChanged} />
-
-                {job.dataMap && Object.keys(job.dataMap).length > 0 && (
-                  <div>
-                    <h4 className="control-label mb-1 block">
-                      Job data — read-only: these come from the code that declares the job
-                    </h4>
-                    <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                      {Object.entries(job.dataMap).map(([key, value]) => (
-                        <div key={key} className="flex gap-1">
-                          <dt className="text-faint">{key}</dt>
-                          <dd className="font-mono">{value}</dd>
-                        </div>
-                      ))}
-                    </dl>
-                  </div>
-                )}
+            {openJob.dataMap && Object.keys(openJob.dataMap).length > 0 && (
+              <div>
+                <h4 className="control-label mb-1 block">
+                  Job data — read-only: these come from the code that declares the job
+                </h4>
+                <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
+                  {Object.entries(openJob.dataMap).map(([key, value]) => (
+                    <div key={key} className="flex gap-1">
+                      <dt className="text-faint">{key}</dt>
+                      <dd className="font-mono">{value}</dd>
+                    </div>
+                  ))}
+                </dl>
               </div>
             )}
-          </section>
-        );
-      })}
+          </div>
+        )}
+      </Sheet>
     </div>
   );
 }

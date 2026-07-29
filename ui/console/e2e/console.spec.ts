@@ -32,7 +32,7 @@ test.describe("the run console against a real Goldpath app", () => {
     await page.getByRole("tab", { name: "Jobs" }).click();
     // Scope the verb to ITS job section: this fleet also carries the bulk validate/execute
     // jobs, so an unscoped "trigger" would be three buttons and one ambiguous click.
-    const smokeJob = page.locator("section", { hasText: "SmokeJob" }).first();
+    const smokeJob = page.getByRole("row", { name: /SmokeJob/ }).first();
     await smokeJob.getByRole("button", { name: "trigger" }).click();
     const dialog = page.getByRole("alertdialog");
     await expect(dialog).toContainText("recorded as started by hand");
@@ -114,20 +114,20 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // ── a second schedule on a DECLARED job, then removed again (R2.5)
     await page.getByRole("tab", { name: "Jobs" }).click();
-    const job = page.locator("section", { hasText: "SmokeJob" }).first();
-    await job.getByRole("button", { name: "SmokeJob" }).click();
-    await job.getByRole("button", { name: "add a trigger" }).click();
-    await job.getByLabel("Name").fill("month-end");
-    await job.getByLabel("Cron").fill("0 0 2 L * ?");
-    await job.getByRole("button", { name: "schedule it" }).click();
+    await page.getByRole("button", { name: "SmokeJob" }).click();
+    const sheet = page.getByTestId("sheet");
+    await sheet.getByRole("button", { name: "add a trigger" }).click();
+    await sheet.getByLabel("Name").fill("month-end");
+    await sheet.getByLabel("Cron").fill("0 0 2 L * ?");
+    await sheet.getByRole("button", { name: "schedule it" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "schedule it" }).click();
     await expect(page.getByRole("status")).toBeVisible();
 
     await page.reload();
     await page.getByRole("button", { name: "Runs" }).click();
     await page.getByRole("tab", { name: "Jobs" }).click();
-    const reopened = page.locator("section", { hasText: "SmokeJob" }).first();
-    await reopened.getByRole("button", { name: "SmokeJob" }).click();
+    await page.getByRole("button", { name: "SmokeJob" }).click();
+    const reopened = page.getByTestId("sheet");
     await expect(reopened).toContainText("month-end");
     await expect(reopened).toContainText("0 0 2 L * ?");
 
@@ -136,6 +136,8 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(removeDialog).toContainText("The JOB stays");
     await removeDialog.getByRole("button", { name: "remove" }).click();
     await expect(page.getByRole("status")).toBeVisible();
+    // The sheet is MODAL: close it before reaching for the tab strip behind it.
+    await page.keyboard.press("Escape");
 
     // ── a calendar, created and deleted through the frozen CRUD (T13)
     await page.getByRole("tab", { name: "Calendars" }).click();
@@ -487,14 +489,13 @@ test.describe("the run console against a real Goldpath app", () => {
 
     // Reach the verb while the service is still healthy...
     await page.getByRole("tab", { name: "Jobs" }).click();
-    const job = page.locator("section", { hasText: "SmokeJob" }).first();
-    await expect(job).toBeVisible();
+    await expect(page.getByRole("row", { name: /SmokeJob/ }).first()).toBeVisible();
 
     // ...and only THEN let the service stop answering: the point is a verb that dies in
     // flight, not a screen that never loaded.
     await page.route(`${service}/goldpath/admin/**`, (route) => route.abort("failed"));
 
-    await job.getByRole("button", { name: "trigger" }).first().click();
+    await page.getByRole("row", { name: /SmokeJob/ }).first().getByRole("button", { name: "trigger" }).first().click();
     const dialog = page.getByRole("alertdialog");
     await dialog.getByRole("button", { name: "trigger" }).click();
 
