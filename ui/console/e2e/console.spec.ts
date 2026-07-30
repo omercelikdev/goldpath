@@ -117,11 +117,15 @@ test.describe("the run console against a real Goldpath app", () => {
     await page.getByRole("button", { name: "SmokeJob" }).click();
     const sheet = page.getByTestId("sheet");
     await sheet.getByRole("button", { name: "add a trigger" }).click();
-    await sheet.getByLabel("Name").fill("month-end");
-    await sheet.getByLabel("Cron").fill("0 0 2 L * ?");
-    await sheet.getByRole("button", { name: "schedule it" }).click();
+    // The form opens in the centred DIALOG now (§9.5) — a portal outside the sheet.
+    const addDialog = page.getByRole("dialog", { name: "Add a trigger" });
+    await addDialog.getByLabel("Name").fill("month-end");
+    await addDialog.getByLabel("Cron").fill("0 0 2 L * ?");
+    await addDialog.getByRole("button", { name: "schedule it" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "schedule it" }).click();
-    await expect(page.getByRole("status")).toBeVisible();
+    // Success CLOSES the dialog itself; the outcome strip lands back in the sheet.
+    await expect(addDialog).not.toBeVisible();
+    await expect(sheet.getByRole("status")).toBeVisible();
 
     await page.reload();
     await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
@@ -142,11 +146,14 @@ test.describe("the run console against a real Goldpath app", () => {
     // ── a calendar, created and deleted through the frozen CRUD (T13)
     await page.getByRole("tab", { name: "Calendars" }).click();
     await page.getByRole("button", { name: "add a calendar" }).click();
-    await page.getByLabel("Name").fill("smoke-holidays");
-    await page.getByLabel(/Excluded dates/).fill("2026-01-01");
-    await page.getByRole("button", { name: "create it" }).click();
+    const calendarDialog = page.getByRole("dialog", { name: "Add a calendar" });
+    await calendarDialog.getByLabel("Name").fill("smoke-holidays");
+    await calendarDialog.getByLabel(/Excluded dates/).fill("2026-01-01");
+    await calendarDialog.getByRole("button", { name: "create it" }).click();
     await page.getByRole("alertdialog").getByRole("button", { name: "create it" }).click();
-    await expect(page.getByRole("status")).toBeVisible();
+    // Success closes this dialog too; the outcome lands on the calendars section.
+    await expect(calendarDialog).not.toBeVisible();
+    await expect(page.getByRole("status").first()).toBeVisible();
 
     await page.reload();
     await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
