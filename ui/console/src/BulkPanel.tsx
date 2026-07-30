@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Banner, FacetFilter, humanizeSeconds, KeysetTable, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
+import { Banner, FacetFilter, humanizeSeconds, KeysetTable, SearchBox, Select, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
-import type { AdminClient, BulkBatchInfo, BulkDefinitionStatus, BulkRowError } from "./adminClient";
+import { AdminHttpError, type AdminClient, type BulkBatchInfo, type BulkDefinitionStatus, type BulkRowError } from "./adminClient";
 
 export interface BulkPanelProps {
   client: AdminClient;
@@ -48,6 +48,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
   const fileInput = useRef<HTMLInputElement>(null);
   const [uploadInto, setUploadInto] = useState<string>("");
   const [file, setFile] = useState<File | null>(null);
+  const [batchQuery, setBatchQuery] = useState("");
 
   const refresh = () => setRefreshToken((token) => token + 1);
 
@@ -76,10 +77,22 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
     async (_cursor: string | null, take: number) => {
       // The batch list is take-bounded, not cursor-paged (frozen contract): one page,
       // honestly ended — the table stops instead of faking a cursor it was never given.
+      // A search commits a batch ID and reads THAT batch (§8.12) — the contract has no
+      // text search to send, and an ID lookup is exactly what it does have.
+      if (batchQuery) {
+        try {
+          return { items: [await client.batch(batchQuery.trim())], nextCursor: null };
+        } catch (error) {
+          // ONLY "nobody has this id" reads as an empty list; a dead service or a 500
+          // must surface as the failure it is (review R3) — the table's own error path.
+          if (error instanceof AdminHttpError && error.status === 404) return { items: [], nextCursor: null };
+          throw error;
+        }
+      }
       const batches = await client.bulkBatches({ state: state || undefined, take });
       return { items: batches, nextCursor: null };
     },
-    [client, state, refreshToken],
+    [client, state, batchQuery, refreshToken],
   );
 
   // The validation report IS keyset-paged: the cursor is the last row number of the page.
@@ -181,37 +194,51 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
 
       <section>
         <h2 className="section-title">Upload</h2>
-        <div className="flex flex-wrap items-center gap-2">
-          <label className="text-xs text-muted-foreground" htmlFor="bulk-definition">
+        {/* The upload is a DESIGNED row of family controls (§8.11): definition, then the
+            file — the native input stays in the tree for accessibility, its face is the
+            family button — then the verb, which appears once there is a file to send. */}
+        <div className="card flex flex-wrap items-center gap-3">
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Definition
+            <Select
+              id="bulk-definition"
+              aria-label="definition"
+              value={uploadInto}
+              onChange={(event) => setUploadInto(event.target.value)}
+            >
+              {(definitions ?? []).map((definition) => (
+                <option key={definition.name} value={definition.name}>
+                  {definition.name}
+                </option>
+              ))}
+            </Select>
           </label>
-          <select
-            id="bulk-definition"
-            className="control"
-            value={uploadInto}
-            onChange={(event) => setUploadInto(event.target.value)}
-          >
-            {(definitions ?? []).map((definition) => (
-              <option key={definition.name} value={definition.name}>
-                {definition.name}
-              </option>
-            ))}
-          </select>
-          <input
-            ref={fileInput}
-            type="file"
-            aria-label="batch file"
-            // The native control is kept (it is the accessible one); only its button half
-            // is dressed in the kit's language so it does not read as a foreign widget.
-            className="max-w-xs text-sm text-muted-foreground file:mr-3 file:rounded-md file:border file:border-border file:bg-background file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-foreground hover:file:bg-accent"
-            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
-          />
+          <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+            File
+            <span className="inline-flex items-center gap-2">
+              <input
+                ref={fileInput}
+                type="file"
+                aria-label="batch file"
+                className="sr-only"
+                onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+              />
+              <button type="button" className="btn-quiet" onClick={() => fileInput.current?.click()}>
+                choose file
+              </button>
+              <span className={`max-w-[28ch] truncate text-sm ${file ? "text-foreground" : "text-faint"}`} title={file?.name}>
+                {file ? file.name : "none chosen"}
+              </span>
+            </span>
+          </label>
           {file && (
-            <VerbButton
-              label="upload"
-              confirm={`Upload ${file.name} into ${uploadInto}?`}
-              execute={upload}
-            />
+            <span className="self-end">
+              <VerbButton
+                label="upload"
+                confirm={`Upload ${file.name} into ${uploadInto}?`}
+                execute={upload}
+              />
+            </span>
           )}
         </div>
         <p className="mt-1 text-xs text-faint">
@@ -223,6 +250,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
       <section data-testid="batches">
         <h2 className="section-title">Batches</h2>
         <div className="mb-2 flex flex-wrap items-center gap-2">
+          <SearchBox value={batchQuery} onCommit={setBatchQuery} label="Search by batch id" placeholder="batch id…" />
           <FacetFilter
                 label="State"
                 options={STATES.map((option) => ({ value: option }))}

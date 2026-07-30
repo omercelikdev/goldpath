@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banner, humanizeSeconds, KeysetTable, StateBadge, Table, VerbButton } from "@goldpath/kit";
+import { Banner, Checkbox, KeysetTable, Select, StateBadge, Table, VerbButton, humanizeSeconds } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type {
   AdminClient,
@@ -198,9 +198,8 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
         <div className="flex flex-wrap items-end gap-2">
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Archive
-            <select
+            <Select
               aria-label="archive"
-              className="control"
               value={definition}
               onChange={(event) => {
                 setDefinition(event.target.value);
@@ -213,7 +212,7 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
                   {archive.name}
                 </option>
               ))}
-            </select>
+            </Select>
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Aggregate key
@@ -351,10 +350,7 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
       <section>
         <div className="mb-2 flex flex-wrap items-center gap-3">
           <h2 className="text-sm font-medium text-muted-foreground">Legal holds</h2>
-          <label className="flex items-center gap-2 text-xs text-muted-foreground">
-            <input type="checkbox" checked={includeLifted} onChange={(event) => setIncludeLifted(event.target.checked)} />
-            include lifted
-          </label>
+          <Checkbox checked={includeLifted} onChange={setIncludeLifted} label="include lifted" />
         </div>
         <KeysetTable<LegalHold>
           key={`holds-${includeLifted}-${refreshToken}`}

@@ -32,18 +32,20 @@ export function SearchBox({ value, onCommit, placeholder, label }: SearchBoxProp
           if (event.key === "Enter") onCommit(draft);
         }}
       />
-      {draft.length > 0 && (
-        <button
-          aria-label="clear search"
-          className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
-          onClick={() => {
-            setDraft("");
-            onCommit("");
-          }}
-        >
-          <X size={14} aria-hidden="true" />
-        </button>
-      )}
+      {/* Always laid out, only VISIBLE with text: appearing beside the input would
+          shift every neighbour to the right (§8.10). */}
+      <button
+        aria-label="clear search"
+        aria-hidden={draft.length === 0}
+        tabIndex={draft.length > 0 ? 0 : -1}
+        className={`shrink-0 text-muted-foreground transition-colors hover:text-foreground ${draft.length > 0 ? "visible" : "invisible"}`}
+        onClick={() => {
+          setDraft("");
+          onCommit("");
+        }}
+      >
+        <X size={14} aria-hidden="true" />
+      </button>
     </label>
   );
 }

@@ -167,7 +167,7 @@ body {
 
 /* A form control (input/select/textarea): §3's focus rule lives here — fields take a
    border tint instead of the heavy ring, and every panel gets it by classname. */
-.control { height: 2rem; background: var(--background); border: 1px solid var(--input); border-radius: calc(var(--radius) - 2px); padding: 0 0.625rem; font-size: 0.875rem; color: var(--foreground); }
+.control { height: 2.25rem; background: var(--background); border: 1px solid var(--input); border-radius: var(--radius); padding: 0 0.75rem; font-size: 0.875rem; color: var(--foreground); }
 .control:focus-visible { border-color: var(--border-strong); box-shadow: 0 0 0 1px var(--border-strong); }
 textarea.control { height: auto; padding: 0.375rem 0.625rem; }
 
