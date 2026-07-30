@@ -1,3 +1,4 @@
+import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Banner, Checkbox, KeysetTable, Select, StateBadge, Table, VerbButton, humanizeSeconds } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
@@ -269,6 +270,7 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
               />
               <VerbButton
                 label="erase"
+                icon={<Trash2 />}
                 // Erasure redacts classified fields IN PLACE and re-stamps the content
                 // hash; the chain stays verifiable because the sealed hash is kept.
                 confirm={`Erase the classified fields of ${entry.aggregateKey}? This cannot be undone — the entry stays in the chain, redacted, and the erasure is recorded.`}

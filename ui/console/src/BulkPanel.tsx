@@ -1,3 +1,4 @@
+import { Check, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Banner, FacetFilter, humanizeSeconds, KeysetTable, SearchBox, Select, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
@@ -235,6 +236,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
             <span className="self-end">
               <VerbButton
                 label="upload"
+                icon={<Upload />}
                 confirm={`Upload ${file.name} into ${uploadInto}?`}
                 execute={upload}
               />
@@ -322,6 +324,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
               <span className="ml-auto flex flex-wrap gap-2">
                 <VerbButton
                   label="approve"
+                  icon={<Check />}
                   confirm={`Approve ${selected.validRows} valid rows of this batch for execution?`}
                   note={{ label: "note (optional)" }}
                   execute={(note) => asOutcome(client.approveBatch(selected.id, note || undefined))}
@@ -330,6 +333,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
                 />
                 <VerbButton
                   label="reject"
+                  icon={<X />}
                   confirm="Reject this batch? Nothing will execute."
                   // The contract makes the note MANDATORY here — it is the gate's evidence.
                   note={{ label: "reason (required)", required: true }}

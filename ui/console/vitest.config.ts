@@ -14,6 +14,7 @@ export default defineConfig({
       "@radix-ui/react-dialog": fileURLToPath(new URL("./node_modules/@radix-ui/react-dialog", import.meta.url)),
       "@radix-ui/react-dropdown-menu": fileURLToPath(new URL("./node_modules/@radix-ui/react-dropdown-menu", import.meta.url)),
       "cmdk": fileURLToPath(new URL("./node_modules/cmdk", import.meta.url)),
+      "@radix-ui/react-tooltip": fileURLToPath(new URL("./node_modules/@radix-ui/react-tooltip", import.meta.url)),
     },
     dedupe: ["react", "react-dom"],
   },

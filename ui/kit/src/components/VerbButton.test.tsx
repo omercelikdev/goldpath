@@ -182,4 +182,29 @@ describe("the verb button (ui-standard-v1 §3/§4 — confirm-before-verb, verba
     await userEvent.click(screen.getByRole("button", { name: "erase" }));
     expect(within(screen.getByRole("alertdialog")).getByLabelText("subject key (required)")).toHaveValue("");
   });
+
+  it("§8.4: iconOnly hides the words, keeps the NAME, and says the label in a tooltip", async () => {
+    render(
+      <VerbButton
+        label="pause"
+        icon={<svg data-icon="pause" />}
+        iconOnly
+        confirm="Pause this job?"
+        execute={async () => ({ kind: "ok", message: "paused" })}
+      />,
+    );
+
+    // The visible words are gone, the accessible name is not.
+    const button = screen.getByRole("button", { name: "pause" });
+    expect(button.textContent).toBe("");
+    expect(button.querySelector("[data-icon=pause]")).not.toBeNull();
+
+    // Focus surfaces the label through the REAL tooltip.
+    await userEvent.tab();
+    expect(await screen.findByRole("tooltip")).toHaveTextContent("pause");
+
+    // And the confirm step keeps the full words — never a pictogram to confirm against.
+    await userEvent.click(button);
+    expect(screen.getByRole("alertdialog")).toHaveTextContent("Pause this job?");
+  });
 });

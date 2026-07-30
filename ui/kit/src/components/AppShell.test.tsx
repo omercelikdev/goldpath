@@ -163,11 +163,16 @@ describe("the v1.1 rail (u7-b1)", () => {
     expect(within(rail).getAllByText(/^Execution$/)).toHaveLength(1);
   });
 
-  it("collapsed keeps the ICON as the item, with the label as tooltip + sr-only", () => {
+  it("collapsed keeps the ICON as the item, and a REAL tooltip says its name (§8.5)", async () => {
     render(<AppShell title="t" nav={[item("runs", "Execution")]} activeId="runs" collapsed>x</AppShell>);
     const button = screen.getByRole("button", { name: "runs" });   // sr-only label keeps the name
-    expect(button).toHaveAttribute("title", "runs");
     expect(button.querySelector("[data-icon=runs]")).not.toBeNull();
+    // Focus opens the REAL tooltip — asserted on the tooltip role itself, because the
+    // sr-only label always contains the name and would satisfy a bare text query.
+    await userEvent.tab();
+    const tip = await screen.findByRole("tooltip");
+    expect(tip).toHaveTextContent("runs");
+    expect(button).not.toHaveAttribute("title");   // the browser-delay tooltip retired
   });
 
   it("persists the rail state, and initialCollapsed reads it back", () => {

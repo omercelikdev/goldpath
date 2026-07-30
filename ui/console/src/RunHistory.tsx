@@ -1,3 +1,4 @@
+import { RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { FacetFilter, KeysetTable, RunProgress, SearchBox, Sheet, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
 import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
@@ -188,6 +189,8 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
             <div className="flex flex-wrap items-center gap-2">
               <VerbButton
                 label="rerun"
+                icon={<RotateCcw />}
+                iconOnly
                 confirm={`Rerun ${selectedRun.run.id}?`}
                 execute={() => asOutcome(client.rerun(selectedRun.run.id))}
                 onDone={onChanged}

@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from "react";
 import { ChevronsLeft, ChevronsRight, Search } from "lucide-react";
 import { Select } from "./Select";
+import { Tooltip } from "./Tooltip";
 
 export interface ShellNavItem {
   /** Stable id — also the capability key when the console lights panels by discovery. */
@@ -126,13 +127,15 @@ export function AppShell({
             // its ⌘K hint; the collapsed rail keeps only the icon, centered like nav items.
             <div className="pb-2 pt-1">
               {collapsed ? (
-                <button
-                  aria-label="Search"
-                  onClick={onSearch}
-                  className="mx-auto flex h-9 w-10 items-center justify-center rounded-lg transition-colors hover:bg-muted"
-                >
-                  <Search size={18} aria-hidden="true" className="text-muted-foreground" />
-                </button>
+                <Tooltip label="Search" side="right">
+                  <button
+                    aria-label="Search"
+                    onClick={onSearch}
+                    className="mx-auto flex h-9 w-10 items-center justify-center rounded-lg transition-colors hover:bg-muted"
+                  >
+                    <Search size={18} aria-hidden="true" className="text-muted-foreground" />
+                  </button>
+                </Tooltip>
               ) : (
                 <button
                   onClick={onSearch}
@@ -171,11 +174,10 @@ export function AppShell({
               {group.name && collapsed && <div className="mx-3 my-2 h-px bg-border" aria-hidden="true" />}
               {group.items.map((item) => {
                 const active = item.id === activeId;
-                return (
+                const button = (
                   <button
                     key={item.id}
                     aria-current={active ? "page" : undefined}
-                    title={collapsed ? item.label : undefined}
                     // Reference-exact (owner: "birebir Mockifyr"): items carry NO border;
                     // the active one gets the fill plus a short accent bar INSET at its
                     // left edge — a highlight, not a border.
@@ -197,6 +199,9 @@ export function AppShell({
                     )}
                   </button>
                 );
+                // Collapsed, the NAME rides a real tooltip to the right of the rail —
+                // the browser's title delay left the icons mute in practice (§8.5).
+                return collapsed ? <Tooltip key={item.id} label={item.label} side="right">{button}</Tooltip> : button;
               })}
             </div>
           ))}
