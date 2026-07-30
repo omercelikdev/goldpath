@@ -296,7 +296,7 @@ describe("the campaign governor panel", () => {
     await screen.findByTestId("campaign-detail");
     const before = screen.getByTestId("campaign-detail").textContent;
 
-    await userEvent.click(screen.getByRole("button", { name: "refresh" }));
+    await userEvent.click(screen.getByRole("button", { name: "Refresh" }));
 
     await waitFor(() => expect(screen.getByTestId("campaign-detail").textContent).not.toBe(before));
   });

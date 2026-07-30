@@ -1,6 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { FacetFilter, KeysetTable, RunProgress, SearchBox, Sheet, shortStamp, StateBadge, VerbButton } from "@goldpath/kit";
+import { DensityToggle, FacetFilter, KeysetTable, RunProgress, SearchBox, Sheet, StateBadge, VerbButton, shortStamp } from "@goldpath/kit";
 import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
 import { asOutcome } from "./verbs";
 
@@ -112,6 +112,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
           To
           <input type="date" className="control" value={to} onChange={(event) => setTo(event.target.value)} />
         </label>
+        <span className="ms-auto"><DensityToggle /></span>
         {(status || from || to || job) && (
           <button
             className="link-action"

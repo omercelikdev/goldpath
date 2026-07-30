@@ -196,3 +196,30 @@ STANDARD — fixed once, swept everywhere, nothing patched on a single screen.
     the right Sheet (§7.4 finishes).
 15. **Sweep rule**: each of the above lands as a kit-level change swept across all
     screens in the same PR — no screen updated alone.
+
+
+## 9. v1.3 — the journal-parity batch (owner review, 2026-07-30 afternoon; drives U9)
+
+The owner set the reference's REQUEST JOURNAL screen as the bar for every list screen.
+Same rule as §7/§8: kit-level, swept everywhere.
+
+1. **Filter rows compose like the journal**: the search field first and WIDE, facets
+   beside it, and the row's utilities (refresh, density) right-aligned — one layout
+   for every list screen's toolbar.
+2. **Refresh is an ICON**: the word retires; `RefreshCw` with the family tooltip
+   (and the accessible name) everywhere a refresh lives.
+3. **Density is a feature**: the journal's comfortable/compact toggle comes to every
+   family table — one control, table rhythm swaps (py-3 ↔ py-1.5), persisted like
+   the rail state.
+4. **Sheet details get the journal's anatomy**: a header strip (method/state badge +
+   identity + status), small-caps section headings, key-value rows as bordered
+   cards, and code/JSON blocks with a copy button — never a plain run of text.
+5. **Add/edit leaves the inline-below pattern**: create/reschedule/hold forms open
+   in a centred modal DIALOG (the family's), a designed form of §8 controls — the
+   page never grows a form at its bottom.
+6. **Link-styled actions retire**: underlined "add a…" hrefs become real buttons
+   with their icon (Plus, Pencil…), the §8.4 language.
+7. **Trigger add/remove STAYS** — the question was raised and answered: the JOB is
+   the manifest's (ADR-0001, no create/delete), but the SCHEDULE is the operator's,
+   and the frozen contract has carried add/remove-trigger verbs since S2. They move
+   into the §9.5 dialog like every other form.

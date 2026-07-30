@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
-import { Banner, PageHeader, StatCard, StateBadge } from "@goldpath/kit";
+import { Banner, DensityToggle, IconAction, PageHeader, StatCard, StateBadge } from "@goldpath/kit";
+import { RefreshCw } from "lucide-react";
 import { MODULES, type AdminClient, type ModuleName } from "./adminClient";
 import { SECTION_ICON, type Capabilities } from "./sections";
 import { collectServiceTriage, orderTriage, TRIAGE_SCOPE, type ServiceTriage, type TriageRow } from "./triage";
@@ -70,7 +71,12 @@ export function TriageHome({ services, onOpen, now }: TriageHomeProps) {
       <PageHeader
         title="Today"
         purpose={`Across ${services.length} service${services.length === 1 ? "" : "s"} · ${TRIAGE_SCOPE}.`}
-        actions={<button className="btn-quiet" onClick={() => setRefreshToken((token) => token + 1)}>refresh</button>}
+        actions={
+          <span className="flex items-center gap-2">
+            <IconAction icon={<RefreshCw />} label="Refresh" onClick={() => setRefreshToken((token) => token + 1)} />
+            <DensityToggle />
+          </span>
+        }
       />
 
       {waiting > 0 && (

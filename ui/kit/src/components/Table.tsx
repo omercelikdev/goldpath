@@ -1,3 +1,4 @@
+import { densityCell, useDensity } from "./Density";
 import type { ReactNode } from "react";
 
 export interface TableColumn<T> {
@@ -21,6 +22,8 @@ export interface TableProps<T> {
  * Ad-hoc lists that were tables in disguise retire onto this.
  */
 export function Table<T>({ columns, rows, rowKey, onRowClick, emptyMessage = "Nothing here yet." }: TableProps<T>) {
+  // The journal's density feature (§9.3): one rhythm for every family table.
+  const cell = densityCell(useDensity());
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
       <div className="scroll-area overflow-x-auto">
@@ -54,7 +57,7 @@ export function Table<T>({ columns, rows, rowKey, onRowClick, emptyMessage = "No
                   onClick={onRowClick ? () => onRowClick(row) : undefined}
                 >
                   {columns.map((column) => (
-                    <td key={column.header} className={`px-4 py-3 align-middle ${column.align === "right" ? "text-end" : ""}`}>
+                    <td key={column.header} className={`${cell} align-middle ${column.align === "right" ? "text-end" : ""}`}>
                       {column.cell(row)}
                     </td>
                   ))}

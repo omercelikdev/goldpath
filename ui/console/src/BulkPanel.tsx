@@ -1,6 +1,6 @@
 import { Check, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Banner, FacetFilter, humanizeSeconds, KeysetTable, SearchBox, Select, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
+import { Banner, DensityToggle, FacetFilter, KeysetTable, SearchBox, Select, Sheet, StateBadge, Table, VerbButton, humanizeSeconds } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import { AdminHttpError, type AdminClient, type BulkBatchInfo, type BulkDefinitionStatus, type BulkRowError } from "./adminClient";
 
@@ -266,6 +266,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
                   setSelectedId(null);
                 }}
               />
+          <span className="ms-auto"><DensityToggle /></span>
         </div>
 
         <KeysetTable<BulkBatchInfo>

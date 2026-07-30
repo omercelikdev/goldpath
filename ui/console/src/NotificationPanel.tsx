@@ -1,5 +1,6 @@
+import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, FacetFilter, KeysetTable, Sheet, StateBadge, Table, humanizeSeconds } from "@goldpath/kit";
+import { Banner, DensityToggle, FacetFilter, IconAction, KeysetTable, Sheet, StateBadge, Table, humanizeSeconds } from "@goldpath/kit";
 import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
 
 export interface NotificationPanelProps {
@@ -194,12 +195,10 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
             </>
           )}
 
-          <button
-            className="btn-quiet ml-auto"
-            onClick={refresh}
-          >
-            refresh
-          </button>
+          <span className="ml-auto flex items-center gap-2">
+            <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
+            <DensityToggle />
+          </span>
         </div>
 
         <KeysetTable<NotificationInfo>
@@ -250,7 +249,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
             <StateBadge state={selected.state} />
             {/* Evidence is in MOTION until terminal (attempts, claims) — and the list's
                 refresh sits behind this modal, so the sheet carries its own. */}
-            <button className="btn-quiet" onClick={refresh}>refresh</button>
+            <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
             <span className="text-xs text-faint">{selected.channel} · {selected.culture || "default culture"}</span>
           </div>
 

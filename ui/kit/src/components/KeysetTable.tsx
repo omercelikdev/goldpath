@@ -1,3 +1,4 @@
+import { densityCell, useDensity } from "./Density";
 import { type ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { Banner } from "./Banner";
 
@@ -36,6 +37,8 @@ type LoadState = "loading" | "idle" | "error";
  * Pages append; the walk ends when the API answers `nextCursor: null`.
  */
 export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMessage = "Nothing here yet." }: KeysetTableProps<T>) {
+  // The journal's density feature (§9.3): one rhythm for every family table.
+  const cell = densityCell(useDensity());
   const [rows, setRows] = useState<T[]>([]);
   const [cursor, setCursor] = useState<string | null>(null);
   const [ended, setEnded] = useState(false);
@@ -83,7 +86,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
           {rows.map((row) => (
             <tr key={rowKey(row)} className="border-b border-border transition-colors hover:bg-muted/40">
               {columns.map((column) => (
-                <td key={column.header} className={`px-4 py-3 align-middle ${column.align === "right" ? "text-end" : ""}`}>
+                <td key={column.header} className={`${cell} align-middle ${column.align === "right" ? "text-end" : ""}`}>
                   {column.cell(row)}
                 </td>
               ))}

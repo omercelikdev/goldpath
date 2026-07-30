@@ -295,7 +295,7 @@ describe("the console across services", () => {
     expect(heading).toBeInTheDocument();
     // The scope line rides the header's purpose slot, not a stray strip.
     expect(screen.getByText(/most recent 50 rows/)).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: "refresh" })).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Refresh" })).toBeInTheDocument();
   });
 
   it("the rail renders ONE Modules group — the owner's amendment, pinned", async () => {
