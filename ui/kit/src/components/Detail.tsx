@@ -47,10 +47,15 @@ export function CodeBlock({ text }: { text: string }) {
           icon={copied ? <Check /> : <Copy />}
           label={copied ? "Copied" : "Copy"}
           onClick={() => {
-            void navigator.clipboard?.writeText(text).then(() => {
-              setCopied(true);
-              setTimeout(() => setCopied(false), 2000);
-            });
+            void navigator.clipboard
+              ?.writeText(text)
+              .then(() => {
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              })
+              // A denied clipboard (permissions, insecure context) must not claim
+              // "Copied" — the button simply stays a Copy button (review R3).
+              .catch(() => setCopied(false));
           }}
         />
       </span>

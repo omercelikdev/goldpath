@@ -250,7 +250,6 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
             {/* Evidence is in MOTION until terminal (attempts, claims) — and the list's
                 refresh sits behind this modal, so the sheet carries its own. */}
             <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
-            <span className="text-xs text-faint">{selected.channel} · {selected.culture || "default culture"}</span>
           </div>
 
           <DetailSection title="Identity">
