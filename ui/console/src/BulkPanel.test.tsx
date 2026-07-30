@@ -137,6 +137,15 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     expect(within(section).queryByText(batch().id)).not.toBeInTheDocument();
   });
 
+  it("§8.12: a search that HITS a broken service surfaces the failure — never an empty list", async () => {
+    const { client: api } = client({ batchStatus: 500 });
+    render(<BulkPanel client={api} />);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Search by batch id" }), "any{Enter}");
+    // The keyset table's own error path answers, not a quiet "no batches".
+    expect(await within(screen.getByTestId("batches")).findByText(/could not be loaded/)).toBeInTheDocument();
+    expect(within(screen.getByTestId("batches")).queryByText(/No batches/)).not.toBeInTheDocument();
+  });
+
   it("§8.12: an ID nobody has answers as an empty list, not an error", async () => {
     const { client: api } = client({ batchStatus: 404 });
     render(<BulkPanel client={api} />);

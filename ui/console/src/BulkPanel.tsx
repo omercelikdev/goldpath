@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Banner, FacetFilter, humanizeSeconds, KeysetTable, SearchBox, Select, Sheet, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
-import type { AdminClient, BulkBatchInfo, BulkDefinitionStatus, BulkRowError } from "./adminClient";
+import { AdminHttpError, type AdminClient, type BulkBatchInfo, type BulkDefinitionStatus, type BulkRowError } from "./adminClient";
 
 export interface BulkPanelProps {
   client: AdminClient;
@@ -82,8 +82,11 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
       if (batchQuery) {
         try {
           return { items: [await client.batch(batchQuery.trim())], nextCursor: null };
-        } catch {
-          return { items: [], nextCursor: null };
+        } catch (error) {
+          // ONLY "nobody has this id" reads as an empty list; a dead service or a 500
+          // must surface as the failure it is (review R3) — the table's own error path.
+          if (error instanceof AdminHttpError && error.status === 404) return { items: [], nextCursor: null };
+          throw error;
         }
       }
       const batches = await client.bulkBatches({ state: state || undefined, take });
