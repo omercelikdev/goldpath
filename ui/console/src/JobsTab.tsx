@@ -1,6 +1,6 @@
 import { Pause, Pencil, Play, Plus, Trash2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, Dialog, Sheet, StateBadge, Table, VerbButton, shortStamp } from "@goldpath/kit";
+import { Banner, DetailSection, Dialog, KeyValueRows, Sheet, StateBadge, Table, VerbButton, shortStamp } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import { isPaused, nextFireAt, type AdminClient, type JobInfo, type TriggerInfo } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -164,19 +164,9 @@ export function JobsTab({ client, fleet, refreshToken, onChanged, openJobRequest
             <Triggers client={client} fleet={fleet} job={openJob} onChanged={onChanged} onShowCalendars={onShowCalendars} />
 
             {openJob.dataMap && Object.keys(openJob.dataMap).length > 0 && (
-              <div>
-                <h4 className="control-label mb-1 block">
-                  Job data — read-only: these come from the code that declares the job
-                </h4>
-                <dl className="flex flex-wrap gap-x-4 gap-y-1 text-xs">
-                  {Object.entries(openJob.dataMap).map(([key, value]) => (
-                    <div key={key} className="flex gap-1">
-                      <dt className="text-faint">{key}</dt>
-                      <dd className="font-mono">{value}</dd>
-                    </div>
-                  ))}
-                </dl>
-              </div>
+              <DetailSection title="Job data — read-only, declared by the code">
+                <KeyValueRows rows={Object.entries(openJob.dataMap).map(([key, value]) => ({ key, value, mono: true }))} />
+              </DetailSection>
             )}
           </div>
         )}

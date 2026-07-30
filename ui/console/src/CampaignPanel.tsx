@@ -1,6 +1,6 @@
 import { Pause, Play, RefreshCw, Square } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, Checkbox, DensityToggle, FacetFilter, IconAction, KeysetTable, Sheet, StateBadge, VerbButton, humanizeSeconds } from "@goldpath/kit";
+import { Banner, Checkbox, DensityToggle, DetailSection, FacetFilter, IconAction, KeyValueRows, KeysetTable, Sheet, StateBadge, VerbButton, humanizeSeconds } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type {
   AdminClient,
@@ -285,64 +285,65 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             <Banner tone="warning">the verb did not reach the server — it may not have been applied</Banner>
           )}
 
-          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-4">
-            <div>
-              <dt className="text-faint">Released</dt>
-              <dd>
-                {selected.releasedThrough} of {selected.enumeratedThrough}
-                {!selected.enumerationComplete && <span className="text-faint"> (still enumerating)</span>}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">Succeeded / failed</dt>
-              <dd>
-                {selected.succeededCount} /{" "}
-                <span className={selected.failedCount > 0 ? "text-danger" : undefined}>{selected.failedCount}</span>
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">In flight</dt>
-              <dd>
-                {selected.inFlight} of {selected.maxInFlight} allowed
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">Remaining</dt>
-              <dd>
-                {selected.remaining}
-                {selected.etaSecondsAtCurrentTps != null && (
-                  // Honest label: this is the arithmetic at the CURRENT rate, not a promise.
-                  <span className="text-faint"> · ~{humanizeSeconds(selected.etaSecondsAtCurrentTps)} at {selected.tps} tps</span>
-                )}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">Daily quota</dt>
-              <dd>
-                {selected.dailyQuota == null ? "none" : `${selected.releasedToday} of ${selected.dailyQuota} today`}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">Window</dt>
-              <dd>
-                {selected.windowStart && selected.windowEnd
-                  ? `${selected.windowStart}–${selected.windowEnd} ${selected.timeZoneId}`
-                  : "around the clock"}
-                {" · "}
-                {selected.windowOpenNow ? "open now" : "closed now"}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">Created</dt>
-              <dd>
-                {selected.createdAt} by {selected.createdBy}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">Last verb</dt>
-              <dd>{selected.lastVerb ?? "—"}</dd>
-            </div>
-          </dl>
+          <DetailSection title="Progress">
+            <KeyValueRows
+              rows={[
+                {
+                  key: "Released",
+                  value: (
+                    <>
+                      {selected.releasedThrough} of {selected.enumeratedThrough}
+                      {!selected.enumerationComplete && <span className="text-faint"> (still enumerating)</span>}
+                    </>
+                  ),
+                },
+                {
+                  key: "Succeeded / failed",
+                  value: (
+                    <>
+                      {selected.succeededCount} /{" "}
+                      <span className={selected.failedCount > 0 ? "text-danger" : undefined}>{selected.failedCount}</span>
+                    </>
+                  ),
+                },
+                { key: "In flight", value: `${selected.inFlight} of ${selected.maxInFlight} allowed` },
+                {
+                  key: "Remaining",
+                  value: (
+                    <>
+                      {selected.remaining}
+                      {selected.etaSecondsAtCurrentTps != null && (
+                        // Honest label: the arithmetic at the CURRENT rate, not a promise.
+                        <span className="text-faint"> · ~{humanizeSeconds(selected.etaSecondsAtCurrentTps)} at {selected.tps} tps</span>
+                      )}
+                    </>
+                  ),
+                },
+              ]}
+            />
+          </DetailSection>
+
+          <DetailSection title="Policy & provenance">
+            <KeyValueRows
+              rows={[
+                { key: "Daily quota", value: selected.dailyQuota == null ? "none" : `${selected.releasedToday} of ${selected.dailyQuota} today` },
+                {
+                  key: "Window",
+                  value: (
+                    <>
+                      {selected.windowStart && selected.windowEnd
+                        ? `${selected.windowStart}–${selected.windowEnd} ${selected.timeZoneId}`
+                        : "around the clock"}
+                      {" · "}
+                      {selected.windowOpenNow ? "open now" : "closed now"}
+                    </>
+                  ),
+                },
+                { key: "Created", value: `${selected.createdAt} by ${selected.createdBy}`, mono: true },
+                { key: "Last verb", value: selected.lastVerb ?? "—" },
+              ]}
+            />
+          </DetailSection>
 
           {LIVE.has(selected.state) && (
             <div className="row-card mt-4">
