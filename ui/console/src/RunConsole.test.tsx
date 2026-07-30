@@ -49,8 +49,11 @@ describe("the scheduling surface (console RFC U5 — a client of the frozen cont
     render(<RunConsole client={api()} />);
 
     expect(await screen.findByRole("button", { name: /it-cluster/ })).toBeInTheDocument();
-    // The first question of an incident is whether the thing is alive.
-    expect(await screen.findByTestId("fleet-overview")).toHaveTextContent("accepting fires");
+    // The first question of an incident is whether the thing is alive. findByTestId
+    // resolves when the CONTAINER mounts — before the status answers — so the wait
+    // must be on the words themselves (flaked on CI's slower box).
+    expect(await screen.findByText("accepting fires")).toBeInTheDocument();
+    expect(screen.getByTestId("fleet-overview")).toHaveTextContent("accepting fires");
     expect(screen.getByRole("tab", { name: "Overview" })).toHaveAttribute("aria-selected", "true");
   });
 
