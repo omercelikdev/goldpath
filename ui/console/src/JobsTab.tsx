@@ -1,6 +1,6 @@
-import { Pause, Play, Trash2, Zap } from "lucide-react";
+import { Pause, Pencil, Play, Plus, Trash2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, Sheet, shortStamp, StateBadge, Table, VerbButton } from "@goldpath/kit";
+import { Banner, Dialog, Sheet, StateBadge, Table, VerbButton, shortStamp } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import { isPaused, nextFireAt, type AdminClient, type JobInfo, type TriggerInfo } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -216,11 +216,12 @@ function Triggers({
       <div className="mb-1 flex items-center justify-between">
         <h4 className="control-label">Triggers</h4>
         <span className="flex gap-3">
-          <button className="link-action" onClick={() => setRescheduling(!rescheduling)}>
-            {rescheduling ? "cancel" : "change the schedule"}
+          {/* Real buttons with their icon (§9.6) — the underlined link retires. */}
+          <button className="btn-quiet inline-flex items-center gap-1.5" onClick={() => setRescheduling(true)}>
+            <Pencil size={14} aria-hidden="true" /> change the schedule
           </button>
-          <button className="link-action" onClick={() => setAdding(!adding)}>
-            {adding ? "cancel" : "add a trigger"}
+          <button className="btn-quiet inline-flex items-center gap-1.5" onClick={() => setAdding(true)}>
+            <Plus size={14} aria-hidden="true" /> add a trigger
           </button>
         </span>
       </div>
@@ -233,9 +234,15 @@ function Triggers({
         </Banner>
       )}
 
-      {rescheduling && (
+      {/* Forms open in the centred dialog (§9.5) — the page never grows one below. */}
+      <Dialog
+        open={rescheduling}
+        onOpenChange={setRescheduling}
+        title="Change the schedule"
+        description={`A new cron for ${job.name} — the job stays, only WHEN it fires moves.`}
+      >
         <Reschedule client={client} fleet={fleet} job={job} onDone={(result) => settle(result, () => setRescheduling(false))} />
-      )}
+      </Dialog>
 
       {job.triggers.length === 0 && <p className="text-xs text-faint">None. This job is declared but unscheduled.</p>}
 
@@ -276,9 +283,14 @@ function Triggers({
         ))}
       </ul>
 
-      {adding && (
+      <Dialog
+        open={adding}
+        onOpenChange={setAdding}
+        title="Add a trigger"
+        description={`A new schedule for ${job.name} — cron or interval, on the store, cluster-wide.`}
+      >
         <AddTrigger client={client} fleet={fleet} job={job.name} onDone={(result) => settle(result, () => setAdding(false))} />
-      )}
+      </Dialog>
     </div>
   );
 }

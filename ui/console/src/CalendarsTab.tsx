@@ -1,5 +1,6 @@
+import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, Table, VerbButton } from "@goldpath/kit";
+import { Banner, Dialog, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type { AdminClient, CalendarInfo, CalendarSpec } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -64,8 +65,8 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
       {problem && <Banner tone="danger">{problem} — the rows below are the last ones it did answer with.</Banner>}
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-muted-foreground">Calendars</h3>
-        <button className="link-action" onClick={() => setAdding(!adding)}>
-          {adding ? "cancel" : "add a calendar"}
+        <button className="btn-quiet inline-flex items-center gap-1.5" onClick={() => setAdding(true)}>
+          <Plus size={14} aria-hidden="true" /> add a calendar
         </button>
       </div>
 
@@ -116,7 +117,13 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
         </Banner>
       )}
 
-      {adding && (
+      {/* The form opens in the centred dialog (§9.5) — never at the page's bottom. */}
+      <Dialog
+        open={adding}
+        onOpenChange={setAdding}
+        title="Add a calendar"
+        description={`A holiday or cron calendar for ${fleet} — triggers exclude the days it names.`}
+      >
         <AddCalendar
           client={client}
           fleet={fleet}
@@ -126,7 +133,7 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
             onChanged();
           }}
         />
-      )}
+      </Dialog>
     </div>
   );
 }
