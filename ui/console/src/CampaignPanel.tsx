@@ -1,6 +1,6 @@
 import { Pause, Play, Square } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, humanizeSeconds, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
+import { Banner, Checkbox, FacetFilter, KeysetTable, Sheet, StateBadge, VerbButton, humanizeSeconds } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type {
   AdminClient,
@@ -156,25 +156,23 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
       <section>
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <h2 className="text-sm font-medium text-muted-foreground">Campaigns</h2>
-          <label className="ml-2 text-xs text-muted-foreground" htmlFor="campaign-state">
-            State
-          </label>
-          <select
-            id="campaign-state"
-            className="control"
-            value={state}
-            onChange={(event) => {
-              setState(event.target.value);
+          {/*
+            The family facet (§8.14). It COMMITS one state: the frozen contract's ?state=
+            takes a single value until revision R3 lands — toggling the active one clears.
+          */}
+          <FacetFilter
+            label="State"
+            options={STATES.map((option) => ({ value: option }))}
+            selected={new Set(state ? [state] : [])}
+            onToggle={(value) => {
+              setState(value === state ? "" : value);
               setSelectedId(null);
             }}
-          >
-            <option value="">all states</option>
-            {STATES.map((option) => (
-              <option key={option} value={option}>
-                {option}
-              </option>
-            ))}
-          </select>
+            onClear={() => {
+              setState("");
+              setSelectedId(null);
+            }}
+          />
           {/*
             A governor watches numbers that move under it: without a re-read the table
             and the open campaign drift apart until a verb happens to refresh them.
@@ -211,13 +209,22 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
         />
       </section>
 
+      {/* The governor opens in the right Sheet (§8.14) — the inline-below card retires. */}
+      <Sheet
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+        title={selected ? `${selected.name} · ${selected.type}` : ""}
+        description={selected ? "Release policy, progress, failures, and the audit trail." : undefined}
+      >
       {selected && (
-        <section data-testid="campaign-detail" className="card">
+        <section data-testid="campaign-detail">
           <div className="mb-3 flex flex-wrap items-center gap-3">
-            <h2 className="text-sm font-medium">
-              {selected.name} · {selected.type}
-            </h2>
             <StateBadge state={selected.state} />
+            {/* The governor watches numbers that MOVE — and the list's refresh sits
+                behind this modal sheet, so the sheet carries its own. */}
+            <button className="btn-quiet" onClick={refresh}>refresh</button>
             {!selected.windowOpenNow && (LIVE.has(selected.state) || selected.state === "Paused") && (
               // Nothing is wrong — the policy simply says "not now".
               <span className="text-xs text-warning">outside the release window</span>
@@ -392,22 +399,16 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                     onChange={(event) => setDraft({ ...draft, timeZoneId: event.target.value })}
                   />
                 </label>
-                <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={draft.clearDailyQuota}
-                    onChange={(event) => setDraft({ ...draft, clearDailyQuota: event.target.checked })}
-                  />
-                  clear daily quota
-                </label>
-                <label className="flex items-center gap-2 text-xs text-muted-foreground">
-                  <input
-                    type="checkbox"
-                    checked={draft.clearWindow}
-                    onChange={(event) => setDraft({ ...draft, clearWindow: event.target.checked })}
-                  />
-                  clear window
-                </label>
+                <Checkbox
+                  checked={draft.clearDailyQuota}
+                  onChange={(clearDailyQuota) => setDraft({ ...draft, clearDailyQuota })}
+                  label="clear daily quota"
+                />
+                <Checkbox
+                  checked={draft.clearWindow}
+                  onChange={(clearWindow) => setDraft({ ...draft, clearWindow })}
+                  label="clear window"
+                />
                 {patched && (
                   <VerbButton
                     label="throttle"
@@ -463,6 +464,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
           </ul>
         </section>
       )}
+      </Sheet>
     </div>
   );
 }

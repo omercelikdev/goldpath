@@ -121,7 +121,9 @@ describe("the campaign governor panel", () => {
     }) as typeof fetch;
     render(<CampaignPanel client={new AdminClient({ fetcher })} />);
 
-    await userEvent.selectOptions(await screen.findByLabelText("State"), "Paused");
+    await userEvent.click(await screen.findByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Paused/ }));
+    await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(seen.some((url) => url.includes("state=Paused"))).toBe(true));
   });
 

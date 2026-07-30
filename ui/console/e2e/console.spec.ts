@@ -418,9 +418,12 @@ test.describe("the run console against a real Goldpath app", () => {
     const failedRow = page.getByTestId("evidence").getByRole("row", { name: /Failed/ }).first();
     await expect(failedRow).toBeVisible();
     await failedRow.getByRole("button").first().click();
-    const detail = page.getByTestId("notification-detail");
+    // The template name lives in the SHEET's title now; the section holds the fields.
+    const detail = page.getByTestId("sheet");
     await expect(detail).toContainText("ops-alert");
     await expect(detail).toContainText(/refused|connection|error/i);
+    // The detail is a modal SHEET now — close it before reaching for the lens rail.
+    await page.keyboard.press("Escape");
 
     // The suppression lens: a refusal by policy is evidence, and it carries its reason.
     await page.getByRole("button", { name: "Suppressions" }).click();
