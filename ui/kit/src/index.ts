@@ -15,6 +15,8 @@ export { StatCard, type StatCardProps } from "./components/StatCard";
 export { Select, type SelectProps } from "./components/Select";
 export { Checkbox, type CheckboxProps } from "./components/Checkbox";
 export { Tooltip, type TooltipProps } from "./components/Tooltip";
+export { DensityProvider, DensityToggle, useDensity, densityCell, DENSITY_KEY, type Density } from "./components/Density";
+export { IconAction, type IconActionProps } from "./components/IconAction";
 export { statusTone, KNOWN_STATES, type StatusTone } from "./status";
 export { humanizeSeconds } from "./duration";
 export { shortStamp } from "./stamp";

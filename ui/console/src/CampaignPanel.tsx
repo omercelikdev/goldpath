@@ -1,6 +1,6 @@
-import { Pause, Play, Square } from "lucide-react";
+import { Pause, Play, RefreshCw, Square } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, Checkbox, FacetFilter, KeysetTable, Sheet, StateBadge, VerbButton, humanizeSeconds } from "@goldpath/kit";
+import { Banner, Checkbox, DensityToggle, FacetFilter, IconAction, KeysetTable, Sheet, StateBadge, VerbButton, humanizeSeconds } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type {
   AdminClient,
@@ -177,12 +177,10 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             A governor watches numbers that move under it: without a re-read the table
             and the open campaign drift apart until a verb happens to refresh them.
           */}
-          <button
-            className="btn-quiet ml-auto"
-            onClick={refresh}
-          >
-            refresh
-          </button>
+          <span className="ml-auto flex items-center gap-2">
+            <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
+            <DensityToggle />
+          </span>
         </div>
 
         <KeysetTable<CampaignInfo>
@@ -224,7 +222,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             <StateBadge state={selected.state} />
             {/* The governor watches numbers that MOVE — and the list's refresh sits
                 behind this modal sheet, so the sheet carries its own. */}
-            <button className="btn-quiet" onClick={refresh}>refresh</button>
+            <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
             {!selected.windowOpenNow && (LIVE.has(selected.state) || selected.state === "Paused") && (
               // Nothing is wrong — the policy simply says "not now".
               <span className="text-xs text-warning">outside the release window</span>

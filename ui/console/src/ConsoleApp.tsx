@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppShell, Banner, CommandPalette, PageHeader, initialCollapsed, openCommand } from "@goldpath/kit";
+import { AppShell, Banner, CommandPalette, DensityProvider, PageHeader, initialCollapsed, openCommand } from "@goldpath/kit";
 import type { CommandGroup, ShellNavItem } from "@goldpath/kit";
 import { AdminClient, type ModuleName } from "./adminClient";
 import { composedSections, isUnreachable, SECTION_GROUP, SECTION_ICON, SECTION_LABEL, SECTION_PURPOSE, ServicePanels, type Capabilities } from "./sections";
@@ -118,6 +118,7 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
   ];
 
   return (
+    <DensityProvider>
     <AppShell
       title={title}
       subtitle="Operations"
@@ -168,5 +169,6 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
         </>
       )}
     </AppShell>
+    </DensityProvider>
   );
 }
