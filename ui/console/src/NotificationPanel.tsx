@@ -142,22 +142,25 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
       </section>
 
       <section data-testid="evidence">
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          {LENSES.map((entry) => (
-            <button
-              key={entry.key}
-              aria-pressed={lens === entry.key}
-              className={`rounded-md border px-3 py-1 text-sm ${
-                lens === entry.key ? "border-border bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent"
-              }`}
-              onClick={() => {
-                setLens(entry.key);
-                setSelectedId(null);
-              }}
-            >
-              {entry.label}
-            </button>
-          ))}
+        <div className="mb-2 flex flex-wrap items-center gap-3">
+          {/* Choose-one-of-few = the pill rail (§8.6); the black pill retires here too. */}
+          <div className="inline-flex gap-1 rounded-xl bg-muted p-1">
+            {LENSES.map((entry) => (
+              <button
+                key={entry.key}
+                aria-pressed={lens === entry.key}
+                className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+                  lens === entry.key ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
+                }`}
+                onClick={() => {
+                  setLens(entry.key);
+                  setSelectedId(null);
+                }}
+              >
+                {entry.label}
+              </button>
+            ))}
+          </div>
 
           {lens === "all" && (
             <>

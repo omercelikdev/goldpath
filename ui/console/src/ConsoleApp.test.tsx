@@ -289,6 +289,15 @@ describe("the console across services", () => {
     expect(within(cards).queryByRole("button", { name: /Failed runs/ })).not.toBeInTheDocument();
   });
 
+  it("§8.1: Today opens with the standard page header — one header pattern everywhere", async () => {
+    render(<ConsoleApp fetcher={estate().fetcher} search="" />);
+    const heading = await screen.findByRole("heading", { level: 1, name: "Today" });
+    expect(heading).toBeInTheDocument();
+    // The scope line rides the header's purpose slot, not a stray strip.
+    expect(screen.getByText(/most recent 50 rows/)).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "refresh" })).toBeInTheDocument();
+  });
+
   it("the rail renders ONE Modules group — the owner's amendment, pinned", async () => {
     render(<ConsoleApp fetcher={estate().fetcher} search="" />);
     const rail = await screen.findByTestId("shell-rail");
