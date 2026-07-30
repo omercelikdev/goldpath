@@ -195,12 +195,10 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
             </>
           )}
 
-          <button
-            className="btn-quiet ml-auto"
-            onClick={refresh}
-          >
-            refresh
-          </button>
+          <span className="ml-auto flex items-center gap-2">
+            <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
+            <DensityToggle />
+          </span>
         </div>
 
         <KeysetTable<NotificationInfo>

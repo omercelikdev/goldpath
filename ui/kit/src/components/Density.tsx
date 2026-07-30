@@ -1,6 +1,6 @@
 import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
 import { Rows2, Rows3 } from "lucide-react";
-import { Tooltip } from "./Tooltip";
+import { IconAction } from "./IconAction";
 
 export type Density = "comfortable" | "compact";
 
@@ -52,20 +52,16 @@ export function densityCell(density: Density): string {
   return density === "compact" ? "px-4 py-1.5" : "px-4 py-3";
 }
 
-/** The toolbar's density control: an icon action that says its state out loud. */
+/** The toolbar's density control: the IconAction, saying which rhythm a press GIVES. */
 export function DensityToggle() {
   const { density, toggle } = useContext(DensityContext);
   const compact = density === "compact";
   return (
-    <Tooltip label={compact ? "Comfortable rows" : "Compact rows"}>
-      <button
-        aria-label={compact ? "Comfortable rows" : "Compact rows"}
-        aria-pressed={compact}
-        className="inline-flex h-9 items-center justify-center rounded-lg border border-border bg-background px-2.5 transition-colors hover:bg-accent"
-        onClick={toggle}
-      >
-        {compact ? <Rows3 size={16} aria-hidden="true" /> : <Rows2 size={16} aria-hidden="true" />}
-      </button>
-    </Tooltip>
+    <IconAction
+      icon={compact ? <Rows3 /> : <Rows2 />}
+      label={compact ? "Comfortable rows" : "Compact rows"}
+      onClick={toggle}
+      pressed={compact}
+    />
   );
 }
