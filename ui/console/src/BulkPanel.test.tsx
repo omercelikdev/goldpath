@@ -36,6 +36,7 @@ const finding = (row: number): BulkRowError => ({
 });
 
 interface Routes {
+  batchStatus?: number;
   definitions?: unknown;
   batches?: unknown;
   batch?: unknown;
@@ -70,7 +71,10 @@ function client(routes: Routes = {}) {
     }
 
     if (url.includes("/bulk/batches?")) return json(routes.batches ?? [batch()]);
-    if (url.includes("/bulk/batches/")) return json(routes.batch ?? batch());
+    if (url.includes("/bulk/batches/")) {
+      if (routes.batchStatus) return json({ title: "not found" }, routes.batchStatus);
+      return json(routes.batch ?? batch());
+    }
     if (url.endsWith("/bulk/definitions")) return json(routes.definitions ?? [definition()]);
     return new Response("not found", { status: 404 });
   }) as typeof fetch;
@@ -116,6 +120,28 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     await openBatch();
     expect(await screen.findByText("run r-42")).toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "run r-42" })).not.toBeInTheDocument();
+  });
+
+  it("§8.12: a committed batch ID reads THAT batch from the server", async () => {
+    const wanted = batch({ id: "11111111-2222-4333-8444-555555555555", state: "Approved" });
+    const { client: api, fetched } = client({ batch: wanted, batches: [batch()] });
+    render(<BulkPanel client={api} />);
+
+    const search = await screen.findByRole("textbox", { name: "Search by batch id" });
+    await userEvent.type(search, "11111111-2222-4333-8444-555555555555{Enter}");
+
+    // The lookup went to the single-batch route, and the table shows only that batch.
+    await waitFor(() => expect(fetched.some((url) => url.includes("/bulk/batches/11111111"))).toBe(true));
+    const section = screen.getByTestId("batches");
+    expect(await within(section).findByText("11111111-2222-4333-8444-555555555555")).toBeInTheDocument();
+    expect(within(section).queryByText(batch().id)).not.toBeInTheDocument();
+  });
+
+  it("§8.12: an ID nobody has answers as an empty list, not an error", async () => {
+    const { client: api } = client({ batchStatus: 404 });
+    render(<BulkPanel client={api} />);
+    await userEvent.type(await screen.findByRole("textbox", { name: "Search by batch id" }), "nope{Enter}");
+    expect(await within(screen.getByTestId("batches")).findByText(/No batches/)).toBeInTheDocument();
   });
 
   it("filters batches by STATE only — the contract has no definition filter to send", async () => {

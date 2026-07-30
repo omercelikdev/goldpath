@@ -1,5 +1,6 @@
 import { useEffect, type ReactNode } from "react";
 import { ChevronsLeft, ChevronsRight, Search } from "lucide-react";
+import { Select } from "./Select";
 
 export interface ShellNavItem {
   /** Stable id — also the capability key when the console lights panels by discovery. */
@@ -148,16 +149,16 @@ export function AppShell({
           {services && services.length > 0 && !collapsed && (
             <div className="mb-2 px-1">
               <label className="control-label" htmlFor="goldpath-service">service</label>
-              <select
+              <Select
                 id="goldpath-service"
-                className="control mt-1 w-full"
+                className="mt-1 w-full"
                 value={activeService ?? services[0].name}
                 onChange={(event) => services.find((s) => s.name === event.target.value)?.onSelect()}
               >
                 {services.map((service) => (
                   <option key={service.name} value={service.name}>{service.name}</option>
                 ))}
-              </select>
+              </Select>
             </div>
           )}
 

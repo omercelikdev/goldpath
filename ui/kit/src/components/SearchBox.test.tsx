@@ -47,4 +47,12 @@ describe("SearchBox (v1.1 §7.5)", () => {
     expect(commits).toEqual(["eod", ""]);
     expect(screen.getByLabelText("Search by job")).toHaveValue("");
   });
+
+  it("§8.10: the clear icon never SHIFTS the row — it is laid out even when empty", () => {
+    render(<SearchBox value="" onCommit={() => {}} label="Search" />);
+    // Present in layout (reserving its width), just invisible and out of the tab order.
+    const clear = screen.getByRole("button", { hidden: true });
+    expect(clear).toHaveClass("invisible");
+    expect(clear).toHaveAttribute("tabindex", "-1");
+  });
 });
