@@ -226,7 +226,8 @@ function Triggers({
         </span>
       </div>
 
-      {outcome && (
+      {/* While a form dialog is open, ITS copy speaks — one voice per outcome. */}
+      {outcome && !rescheduling && !adding && (
         <Banner tone={outcome.kind === "ok" ? "success" : "danger"} live={outcome.kind === "ok" ? "status" : "alert"} dense>
           {outcome.kind === "error"
             ? "the verb did not reach the service — check the service logs"
@@ -241,6 +242,15 @@ function Triggers({
         title="Change the schedule"
         description={`A new cron for ${job.name} — the job stays, only WHEN it fires moves.`}
       >
+        {outcome && outcome.kind !== "ok" && (
+          // The form verbs are QUIET and the composite's outcome strip sits in the sheet
+          // BEHIND this modal — a refusal must speak where the operator is (review R1).
+          <div className="mb-3">
+            <Banner tone="danger" live="alert" dense>
+              {outcome.kind === "error" ? "the verb did not reach the service — check the service logs" : outcome.message}
+            </Banner>
+          </div>
+        )}
         <Reschedule client={client} fleet={fleet} job={job} onDone={(result) => settle(result, () => setRescheduling(false))} />
       </Dialog>
 
@@ -289,6 +299,15 @@ function Triggers({
         title="Add a trigger"
         description={`A new schedule for ${job.name} — cron or interval, on the store, cluster-wide.`}
       >
+        {outcome && outcome.kind !== "ok" && (
+          // The form verbs are QUIET and the composite's outcome strip sits in the sheet
+          // BEHIND this modal — a refusal must speak where the operator is (review R1).
+          <div className="mb-3">
+            <Banner tone="danger" live="alert" dense>
+              {outcome.kind === "error" ? "the verb did not reach the service — check the service logs" : outcome.message}
+            </Banner>
+          </div>
+        )}
         <AddTrigger client={client} fleet={fleet} job={job.name} onDone={(result) => settle(result, () => setAdding(false))} />
       </Dialog>
     </div>

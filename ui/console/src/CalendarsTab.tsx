@@ -111,7 +111,8 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
         emptyMessage="This fleet has no calendar."
       />
 
-      {outcome && (
+      {/* While the form dialog is open, ITS copy speaks — one voice per outcome. */}
+      {outcome && !adding && (
         <Banner tone={outcome.kind === "ok" ? "success" : "danger"} live={outcome.kind === "ok" ? "status" : "alert"} dense>
           {outcome.kind === "error" ? "the verb did not reach the service — check the service logs" : outcome.message}
         </Banner>
@@ -124,6 +125,14 @@ export function CalendarsTab({ client, fleet, refreshToken, onChanged }: Calenda
         title="Add a calendar"
         description={`A holiday or cron calendar for ${fleet} — triggers exclude the days it names.`}
       >
+        {outcome && outcome.kind !== "ok" && (
+          // Quiet form verb + modal: the refusal must speak IN the dialog (review R1).
+          <div className="mb-3">
+            <Banner tone="danger" live="alert" dense>
+              {outcome.kind === "error" ? "the verb did not reach the service — check the service logs" : outcome.message}
+            </Banner>
+          </div>
+        )}
         <AddCalendar
           client={client}
           fleet={fleet}
