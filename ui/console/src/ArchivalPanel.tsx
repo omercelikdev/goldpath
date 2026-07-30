@@ -1,6 +1,6 @@
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, Checkbox, KeysetTable, Select, StateBadge, Table, VerbButton, humanizeSeconds } from "@goldpath/kit";
+import { Banner, Checkbox, CodeBlock, DetailSection, KeyValueRows, KeysetTable, Select, StateBadge, Table, VerbButton, humanizeSeconds } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type {
   AdminClient,
@@ -292,34 +292,18 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
             <Banner tone="warning">the verb did not reach the server — it may not have been applied</Banner>
           )}
 
-          <dl className="mt-3 grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
-            <div>
-              <dt className="text-faint">Chain index</dt>
-              <dd>{entry.chainIndex}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Due / archived</dt>
-              <dd>
-                {entry.dueAt} → {entry.archivedAt}
-              </dd>
-            </div>
-            <div>
-              <dt className="text-faint">Schema version</dt>
-              <dd>{entry.schemaVersion}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Chain hash (sealed)</dt>
-              <dd className="font-mono break-all">{entry.chainHash}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Content hash (current)</dt>
-              <dd className="font-mono break-all">{entry.contentHash}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Previous hash</dt>
-              <dd className="font-mono break-all">{entry.previousHash || "genesis"}</dd>
-            </div>
-          </dl>
+          <DetailSection title="Chain">
+            <KeyValueRows
+              rows={[
+                { key: "Chain index", value: String(entry.chainIndex) },
+                { key: "Due / archived", value: `${entry.dueAt} → ${entry.archivedAt}`, mono: true },
+                { key: "Schema version", value: String(entry.schemaVersion) },
+                { key: "Chain hash (sealed)", value: entry.chainHash, mono: true },
+                { key: "Content hash (current)", value: entry.contentHash, mono: true },
+                { key: "Previous hash", value: entry.previousHash || "genesis", mono: true },
+              ]}
+            />
+          </DetailSection>
 
           {entry.erasedAt && (
             // Divergence WITHOUT an erasure stamp is tamper; with one, it is the record
@@ -341,9 +325,9 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
                 opening a screen should not spray personal data across it by accident. */}
             <span className="ml-2 text-xs text-faint">the archived graph, as stored — it may contain personal data</span>
             {revealDocument && (
-              <pre className="mt-2 max-h-64 overflow-auto rounded-md border border-border bg-muted p-3 text-xs">
-                {entry.document}
-              </pre>
+              <div className="mt-2 max-h-64 overflow-auto">
+                <CodeBlock text={entry.document} />
+              </div>
             )}
           </div>
         </section>

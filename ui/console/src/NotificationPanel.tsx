@@ -1,6 +1,6 @@
 import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, DensityToggle, FacetFilter, IconAction, KeysetTable, Sheet, StateBadge, Table, humanizeSeconds } from "@goldpath/kit";
+import { Banner, DensityToggle, DetailSection, FacetFilter, IconAction, KeyValueRows, KeysetTable, Sheet, StateBadge, Table, humanizeSeconds } from "@goldpath/kit";
 import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
 
 export interface NotificationPanelProps {
@@ -250,61 +250,33 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
             {/* Evidence is in MOTION until terminal (attempts, claims) — and the list's
                 refresh sits behind this modal, so the sheet carries its own. */}
             <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
-            <span className="text-xs text-faint">{selected.channel} · {selected.culture || "default culture"}</span>
           </div>
 
-          <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
-            <div>
-              <dt className="text-faint">Dedup key</dt>
-              {/* The business identity that makes a retry storm land once. */}
-              <dd className="font-mono break-all">{selected.dedupKey}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Template hash</dt>
-              <dd className="font-mono break-all">{selected.templateHash}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Attempts</dt>
-              <dd>{selected.attempts}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Requested</dt>
-              <dd>{selected.requestedAt}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Not before</dt>
-              <dd>{selected.notBefore ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Claimed</dt>
-              <dd>{selected.claimedAt ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Sent</dt>
-              <dd>{selected.sentAt ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Failed</dt>
-              <dd className={selected.failedAt ? "text-danger" : undefined}>{selected.failedAt ?? "—"}</dd>
-            </div>
-            <div>
-              <dt className="text-faint">Body</dt>
-              {/* Retention is a promise the module keeps; the row records when it was kept. */}
-              <dd>{selected.bodyDeletedAt ? `deleted ${selected.bodyDeletedAt}` : "retained"}</dd>
-            </div>
-            {selected.tenant && (
-              <div>
-                <dt className="text-faint">Tenant</dt>
-                <dd>{selected.tenant}</dd>
-              </div>
-            )}
-            {selected.correlationId && (
-              <div>
-                <dt className="text-faint">Correlation</dt>
-                <dd className="font-mono break-all">{selected.correlationId}</dd>
-              </div>
-            )}
-          </dl>
+          <DetailSection title="Identity">
+            <KeyValueRows
+              rows={[
+                { key: "Dedup key", value: selected.dedupKey, mono: true },
+                { key: "Template hash", value: selected.templateHash, mono: true },
+                { key: "Channel", value: `${selected.channel} · ${selected.culture || "default culture"}` },
+                ...(selected.tenant ? [{ key: "Tenant", value: selected.tenant }] : []),
+                ...(selected.correlationId ? [{ key: "Correlation id", value: selected.correlationId, mono: true }] : []),
+              ]}
+            />
+          </DetailSection>
+
+          <DetailSection title="Timeline">
+            <KeyValueRows
+              rows={[
+                { key: "Requested", value: selected.requestedAt, mono: true },
+                { key: "Not before", value: selected.notBefore ?? "—", mono: true },
+                { key: "Claimed", value: selected.claimedAt ?? "—", mono: true },
+                { key: "Sent", value: selected.sentAt ?? "—", mono: true },
+                { key: "Failed", value: <span className={selected.failedAt ? "text-danger" : undefined}>{selected.failedAt ?? "—"}</span>, mono: true },
+                { key: "Attempts", value: String(selected.attempts) },
+                { key: "Body", value: selected.bodyDeletedAt ? `deleted ${selected.bodyDeletedAt}` : "retained" },
+              ]}
+            />
+          </DetailSection>
 
           {selected.detail && (
             // The server's own words: the transport's refusal, or why it was suppressed.
