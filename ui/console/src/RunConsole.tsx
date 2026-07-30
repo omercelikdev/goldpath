@@ -73,18 +73,19 @@ export function RunConsole({ client, now, openRunRequest, onRunRequestConsumed }
 
       <section>
         <h2 className="section-title">Fleets</h2>
-        <div className="flex flex-wrap gap-2">
+        {/* Choose-one-of-few is the PILL pattern here too (§8.6) — the black pill retires. */}
+        <div className="inline-flex flex-wrap gap-1 rounded-xl bg-muted p-1">
           {fleets.map((entry) => (
             <button
               key={entry.schedulerName}
               aria-pressed={entry.schedulerName === fleet}
-              className={`rounded-md border px-3 py-1.5 text-sm ${
-                entry.schedulerName === fleet ? "border-border bg-primary text-primary-foreground" : "border-border bg-background hover:bg-accent"
+              className={`rounded-lg px-3.5 py-1.5 text-sm font-semibold transition-colors ${
+                entry.schedulerName === fleet ? "bg-background shadow-sm" : "text-muted-foreground hover:text-foreground"
               }`}
               onClick={() => setFleet(entry.schedulerName)}
             >
               {entry.schedulerName}
-              <span className="ml-2 text-xs opacity-70">
+              <span className="ml-2 text-xs font-normal text-faint">
                 {entry.jobCount} jobs · {entry.nodes?.length ?? 0} nodes
               </span>
             </button>

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, StatCard, StateBadge } from "@goldpath/kit";
+import { Banner, PageHeader, StatCard, StateBadge } from "@goldpath/kit";
 import { MODULES, type AdminClient, type ModuleName } from "./adminClient";
 import { SECTION_ICON, type Capabilities } from "./sections";
 import { collectServiceTriage, orderTriage, TRIAGE_SCOPE, type ServiceTriage, type TriageRow } from "./triage";
@@ -66,16 +66,12 @@ export function TriageHome({ services, onOpen, now }: TriageHomeProps) {
 
   return (
     <div data-testid="triage-home" className="space-y-4">
-      <div className="flex flex-wrap items-baseline gap-3">
-        <h2 className="text-sm font-medium">Today</h2>
-        <span className="text-xs text-faint">across {services.length} service{services.length === 1 ? "" : "s"} · {TRIAGE_SCOPE}</span>
-        <button
-          className="btn-quiet ml-auto"
-          onClick={() => setRefreshToken((token) => token + 1)}
-        >
-          refresh
-        </button>
-      </div>
+      {/* The estate screen opens like every other screen (§8.1) — one header pattern. */}
+      <PageHeader
+        title="Today"
+        purpose={`Across ${services.length} service${services.length === 1 ? "" : "s"} · ${TRIAGE_SCOPE}.`}
+        actions={<button className="btn-quiet" onClick={() => setRefreshToken((token) => token + 1)}>refresh</button>}
+      />
 
       {waiting > 0 && (
         <p className="text-xs text-muted-foreground">
@@ -124,11 +120,13 @@ export function TriageHome({ services, onOpen, now }: TriageHomeProps) {
       )}
 
       {rows !== null && rows.length > 0 && (
-        <ul className="space-y-2">
+        // The family card-list (§8.2): ONE lifted card, rows divided inside — the
+        // reference dashboard's activity-list pattern, not floating row chips.
+        <ul className="divide-y divide-border rounded-2xl border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
           {rows.map((row, index) => (
             <li
               key={`${row.service}-${row.section}-${row.headline}-${index}`}
-              className="row-card flex flex-wrap items-center gap-3"
+              className="flex flex-wrap items-center gap-3 px-4 py-3"
             >
               {/* The word carries the meaning; the tone only reinforces it. Colour alone
                   would leave the row unreadable to whoever cannot see the difference. */}

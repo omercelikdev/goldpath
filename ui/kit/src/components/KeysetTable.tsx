@@ -118,7 +118,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
         </div>
       )}
 
-      <div className="flex flex-wrap items-center justify-between gap-3 border-t border-border bg-muted/30 px-4 py-3 text-[12.5px] text-muted-foreground">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-4 py-2.5 text-xs text-faint">
         <span className="text-xs text-faint">
           {/* The honest footer: what is LOADED — never a total (the offset trap reborn). */}
           {rows.length} loaded{ended ? " · end" : ""}

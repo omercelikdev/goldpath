@@ -157,7 +157,7 @@ body {
 */
 
 /* A card: content lifted onto --background above the surface, with the one soft shadow. */
-.card { background: var(--background); border: 1px solid var(--border); border-radius: var(--radius); padding: 1rem; box-shadow: var(--shadow-surface); }
+.card { background: var(--background); border: 1px solid var(--border); border-radius: calc(var(--radius) + 10px); padding: 1rem; box-shadow: var(--shadow-surface); }
 
 /* A row card: one entity in a list — same lift, tighter rhythm, quieter border. */
 .row-card { background: var(--background); border: 1px solid color-mix(in srgb, var(--border) 60%, transparent); border-radius: calc(var(--radius) - 2px); padding: 0.5rem 0.75rem; }

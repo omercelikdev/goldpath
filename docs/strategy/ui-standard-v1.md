@@ -149,3 +149,50 @@ dashboard and its source (not from memory):
 
 Verification unchanged in kind: axe + console smoke green through every batch, and the
 row-click/Sheet change updates the smoke's locators in the same PR.
+
+
+## 8. v1.2 — the finalize batch (owner review of the finished U7 UI, 2026-07-30; drives U8)
+
+The owner walked the live console screen by screen. Same rule as §7: every item is a
+STANDARD — fixed once, swept everywhere, nothing patched on a single screen.
+
+1. **Today gets the standard PageHeader** — its small inline heading is the odd one
+   out; every screen opens the same way (§7.8), the estate screen included.
+2. **The triage list modernizes**: the floating row-cards give way to the family's
+   card-list (one bordered card, rows divided inside — the reference dashboard's
+   activity-list pattern).
+3. **Status/info cards standardize**: the run console's flat fleet block (and any
+   sibling flat info block on other screens) becomes the family card — the surface
+   the StatCard/Panel already use.
+4. **Verbs grow icons**: the universal verbs (pause, resume, trigger, rerun, remove,
+   approve, reject, abort) carry their lucide icon with the label a hover away —
+   icon-only where the icon is unmistakable, icon+label where it is not. Sparse by
+   §7.1: domain verbs (verify, retrieve, erase…) keep their words.
+5. **Collapsed rail tooltips**: an icon-only rail item must SAY its name on hover —
+   a real tooltip (the reference's), not the browser's title delay.
+6. **The fleet switcher restyles**: the black pill retires; choose-one-of-few is the
+   pill-tab pattern (§7.6) here too. Any sibling black-pill selector follows.
+7. **Selects standardize**: native blue-focus selects retire for the family select
+   (field skin + chevron), one kit control, every screen.
+8. **Checkboxes standardize**: the native blue checkbox retires for the family box —
+   the FacetFilter's drawn box (primary fill + check) becomes the one checkbox.
+9. **The keyset footer quiets**: "N loaded · end" loses its elevated strip (border +
+   tint); it reads as a quiet line under the table, nothing more.
+10. **Text fields standardize**: every free-text input (aggregate key, search, notes,
+    dates) wears the ONE field skin — h-9, rounded-lg, the SearchBox's field. And a
+    field must not SHIFT its neighbours: the clear icon lives INSIDE the reserved
+    width, never appended beside it.
+11. **The upload row composes properly**: definition + file + verb laid as a designed
+    row of the family's controls, not primitives in a line.
+12. **Batches gain search**: the standard SearchBox, far left of the filter row — it
+    commits a batch ID and reads THAT batch from the server (the contract has no text
+    search to send; an ID lookup is what it does have).
+13. **Facets go truly multi**: selecting several values means OR, on every facet of
+    every screen. The frozen contract takes ONE value per filter today, so this is a
+    contract REVISION (R3, additive: repeated query params) that the server grows
+    first — the console keeps refusing to fake OR by merging take-bounded pages.
+14. **Campaigns joins the family**: its plain state select becomes the standard facet,
+    and its inline-below detail — and ANY remaining inline-below detail — opens in
+    the right Sheet (§7.4 finishes).
+15. **Sweep rule**: each of the above lands as a kit-level change swept across all
+    screens in the same PR — no screen updated alone.
