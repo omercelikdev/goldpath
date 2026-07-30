@@ -167,9 +167,11 @@ describe("the v1.1 rail (u7-b1)", () => {
     render(<AppShell title="t" nav={[item("runs", "Execution")]} activeId="runs" collapsed>x</AppShell>);
     const button = screen.getByRole("button", { name: "runs" });   // sr-only label keeps the name
     expect(button.querySelector("[data-icon=runs]")).not.toBeNull();
-    // Focus opens the tooltip — the name is readable without a pointer.
+    // Focus opens the REAL tooltip — asserted on the tooltip role itself, because the
+    // sr-only label always contains the name and would satisfy a bare text query.
     await userEvent.tab();
-    expect(await screen.findAllByText("runs")).not.toHaveLength(0);
+    const tip = await screen.findByRole("tooltip");
+    expect(tip).toHaveTextContent("runs");
     expect(button).not.toHaveAttribute("title");   // the browser-delay tooltip retired
   });
 
