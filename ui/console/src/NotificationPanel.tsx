@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
-import { Banner, FacetFilter, humanizeSeconds, KeysetTable, StateBadge, Table } from "@goldpath/kit";
+import { Banner, FacetFilter, KeysetTable, Sheet, StateBadge, Table, humanizeSeconds } from "@goldpath/kit";
 import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
 
 export interface NotificationPanelProps {
@@ -235,12 +235,18 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
         </p>
       </section>
 
+      {/* Evidence opens in the right Sheet (§8.14) — the inline-below card retires. */}
+      <Sheet
+        open={selected !== null}
+        onOpenChange={(open) => {
+          if (!open) setSelectedId(null);
+        }}
+        title={selected ? `${selected.template} → ${selected.maskedRecipient}` : ""}
+        description={selected ? "The evidence row: identity, timeline, and the transport's words." : undefined}
+      >
       {selected && (
-        <section data-testid="notification-detail" className="card">
+        <section data-testid="notification-detail">
           <div className="mb-3 flex flex-wrap items-center gap-3">
-            <h2 className="text-sm font-medium">
-              {selected.template} → <span className="font-mono">{selected.maskedRecipient}</span>
-            </h2>
             <StateBadge state={selected.state} />
             <span className="text-xs text-faint">{selected.channel} · {selected.culture || "default culture"}</span>
           </div>
@@ -306,6 +312,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
           )}
         </section>
       )}
+      </Sheet>
     </div>
   );
 }
