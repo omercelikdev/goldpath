@@ -248,6 +248,9 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
         <section data-testid="notification-detail">
           <div className="mb-3 flex flex-wrap items-center gap-3">
             <StateBadge state={selected.state} />
+            {/* Evidence is in MOTION until terminal (attempts, claims) — and the list's
+                refresh sits behind this modal, so the sheet carries its own. */}
+            <button className="btn-quiet" onClick={refresh}>refresh</button>
             <span className="text-xs text-faint">{selected.channel} · {selected.culture || "default culture"}</span>
           </div>
 
