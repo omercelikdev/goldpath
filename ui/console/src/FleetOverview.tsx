@@ -1,3 +1,4 @@
+import { Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Banner, shortStamp, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { AdminAuditRow, AdminClient, FleetStatus } from "./adminClient";
@@ -60,6 +61,7 @@ export function FleetOverview({ client, fleet, refreshToken, onChanged }: FleetO
             <span className="ml-auto flex gap-2">
               <VerbButton
                 label="pause every job"
+                icon={<Pause />}
                 confirm={`Pause EVERY trigger in ${fleet}? This is cluster-wide and survives a restart — nothing scheduled will fire until it is resumed.`}
                 execute={() => asOutcome(client.pauseFleet(fleet))}
                 onDone={onChanged}
@@ -67,6 +69,7 @@ export function FleetOverview({ client, fleet, refreshToken, onChanged }: FleetO
               />
               <VerbButton
                 label="resume every job"
+                icon={<Play />}
                 confirm={`Resume every trigger in ${fleet}?`}
                 execute={() => asOutcome(client.resumeFleet(fleet))}
                 onDone={onChanged}

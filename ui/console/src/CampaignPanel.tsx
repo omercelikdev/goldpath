@@ -1,3 +1,4 @@
+import { Pause, Play, Square } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
 import { Banner, humanizeSeconds, KeysetTable, StateBadge, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
@@ -225,6 +226,8 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
               <span className="ml-auto flex flex-wrap gap-2">
                 <VerbButton
                   label="pause"
+                  icon={<Pause />}
+                  iconOnly
                   confirm={`Pause ${selected.name}? In-flight items drain; nothing new is released.`}
                   execute={() => asOutcome(client.pauseCampaign(selected.id))}
                   onDone={settle}
@@ -232,6 +235,8 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                 />
                 <VerbButton
                   label="abort"
+                  icon={<Square />}
+                  iconOnly
                   confirm={`Abort ${selected.name}? The ${selected.remaining} remaining items are stamped Aborted — this cannot be undone.`}
                   note={{ label: "reason (required)", required: true }}
                   execute={(reason) => asOutcome(client.abortCampaign(selected.id, reason ?? ""))}
@@ -245,6 +250,8 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
               <span className="ml-auto flex flex-wrap gap-2">
                 <VerbButton
                   label="resume"
+                  icon={<Play />}
+                  iconOnly
                   confirm={`Resume ${selected.name}? Release continues under the policy below.`}
                   execute={() => asOutcome(client.resumeCampaign(selected.id))}
                   onDone={settle}

@@ -1,3 +1,4 @@
+import { Pause, Play, Trash2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Banner, Sheet, shortStamp, StateBadge, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
@@ -115,6 +116,8 @@ export function JobsTab({ client, fleet, refreshToken, onChanged, openJobRequest
               <span className="flex flex-wrap justify-end gap-2">
                 <VerbButton
                   label="trigger"
+                  icon={<Zap />}
+                  iconOnly
                   confirm={`Fire ${job.name} now? The run is recorded as started by hand.`}
                   execute={() => asOutcome(client.triggerJob(fleet, job.name))}
                   onDone={onChanged}
@@ -122,6 +125,8 @@ export function JobsTab({ client, fleet, refreshToken, onChanged, openJobRequest
                 {isPaused(job) ? (
                   <VerbButton
                     label="resume"
+                    icon={<Play />}
+                    iconOnly
                     confirm={`Resume ${job.name}?`}
                     execute={() => asOutcome(client.resumeJob(fleet, job.name))}
                     onDone={onChanged}
@@ -129,6 +134,8 @@ export function JobsTab({ client, fleet, refreshToken, onChanged, openJobRequest
                 ) : (
                   <VerbButton
                     label="pause"
+                    icon={<Pause />}
+                    iconOnly
                     confirm={`Pause ${job.name}? Its triggers stop firing until resumed.`}
                     execute={() => asOutcome(client.pauseJob(fleet, job.name))}
                     onDone={onChanged}
@@ -253,6 +260,8 @@ function Triggers({
             <span className="ml-auto">
               <VerbButton
                 label="remove"
+                icon={<Trash2 />}
+                iconOnly
                 confirm={`Remove trigger ${trigger.name}? The JOB stays — it simply loses this schedule.`}
                 execute={() => asOutcome(client.removeTrigger(fleet, job.name, trigger.name))}
                 // Quiet because the ROW is about to disappear and would take the strip

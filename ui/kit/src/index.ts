@@ -14,6 +14,7 @@ export { CommandPalette, openCommand, OPEN_COMMAND_EVENT, type CommandPalettePro
 export { StatCard, type StatCardProps } from "./components/StatCard";
 export { Select, type SelectProps } from "./components/Select";
 export { Checkbox, type CheckboxProps } from "./components/Checkbox";
+export { Tooltip, type TooltipProps } from "./components/Tooltip";
 export { statusTone, KNOWN_STATES, type StatusTone } from "./status";
 export { humanizeSeconds } from "./duration";
 export { shortStamp } from "./stamp";

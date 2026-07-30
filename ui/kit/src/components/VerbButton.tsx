@@ -1,4 +1,5 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Tooltip } from "./Tooltip";
 import { Banner } from "./Banner";
 import type { VerbOutcome } from "../adminResult";
 
@@ -19,6 +20,14 @@ export interface VerbButtonProps {
   onDone?: (outcome: VerbOutcome) => void;
   /** Marks destructive verbs (reject, erase, pause-all) — the tone, not the flow. */
   destructive?: boolean;
+  /** The verb's lucide icon (v1.2 §8.4) — universal verbs wear one. */
+  icon?: ReactNode;
+  /**
+   * Icon-ONLY rendering for the unmistakable verbs (pause, resume, trigger…): the label
+   * moves into a real tooltip and the accessible name. The confirm step always keeps
+   * the full words — nobody confirms a destructive verb against a pictogram.
+   */
+  iconOnly?: boolean;
   /**
    * Suppresses the button's OWN outcome strip, for verbs whose control legitimately
    * disappears once the verb lands (a four-eyes gate vanishes the moment the batch
@@ -40,7 +49,7 @@ type Phase =
  * TEACH — the UI never paraphrases them), and the audit hint reminds the operator the
  * server records every verb (the actor comes from the token, never the UI).
  */
-export function VerbButton({ label, confirm, execute, onDone, destructive = false, note, quiet = false }: VerbButtonProps) {
+export function VerbButton({ label, confirm, execute, onDone, destructive = false, note, quiet = false, icon, iconOnly = false }: VerbButtonProps) {
   const [phase, setPhase] = useState<Phase>({ at: "rest" });
   const dialog = useRef<HTMLSpanElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
@@ -122,16 +131,24 @@ export function VerbButton({ label, confirm, execute, onDone, destructive = fals
     );
   }
 
+  const restButton = (
+    <button
+      ref={trigger}
+      aria-label={label}
+      className={`inline-flex items-center gap-1.5 rounded-md border font-medium disabled:opacity-50 ${
+        iconOnly ? "p-1.5" : "px-3 py-1.5 text-sm"
+      } ${destructive ? "border-danger-border text-danger hover:bg-danger-bg" : "border-border bg-background hover:bg-accent"}`}
+      disabled={phase.at === "executing"}
+      onClick={() => setPhase({ at: "confirming" })}
+    >
+      {icon && <span aria-hidden="true" className="flex shrink-0 items-center [&>svg]:size-4">{icon}</span>}
+      {iconOnly ? null : phase.at === "executing" ? "working…" : label}
+    </button>
+  );
+
   return (
     <span className="inline-flex items-center gap-2">
-      <button
-        ref={trigger}
-        className={`rounded-md border px-3 py-1.5 text-sm font-medium disabled:opacity-50 ${destructive ? "border-danger-border text-danger hover:bg-danger-bg" : "border-border bg-background hover:bg-accent"}`}
-        disabled={phase.at === "executing"}
-        onClick={() => setPhase({ at: "confirming" })}
-      >
-        {phase.at === "executing" ? "working…" : label}
-      </button>
+      {iconOnly ? <Tooltip label={label}>{restButton}</Tooltip> : restButton}
 
       {!quiet && phase.at === "settled" && phase.outcome.kind === "ok" && (
         <Banner tone="success" live="status" dense>{phase.outcome.message}</Banner>
