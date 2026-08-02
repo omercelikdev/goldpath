@@ -1,1 +1,3 @@
 #nullable enable
+*REMOVED*Goldpath.GoldpathCampaignAdminService<TContext>.ListAsync(string? state, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathCampaignInfo!>!>!
+Goldpath.GoldpathCampaignAdminService<TContext>.ListAsync(string![]? state, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathCampaignInfo!>!>!

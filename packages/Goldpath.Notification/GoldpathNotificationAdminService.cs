@@ -90,19 +90,25 @@ public sealed class GoldpathNotificationAdminService<TContext>
 
     /// <summary>Recent notifications, newest first (filters optional; tenant fail-closed).</summary>
     public async Task<IReadOnlyList<GoldpathNotificationInfo>> GetNotificationsAsync(
-        string? state, string? template, string? tenant, int take, CancellationToken ct)
+        string[]? state, string[]? template, string? tenant, int take, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
         var query = db.Set<GoldpathNotification>().AsNoTracking();
-        if (state is not null && Enum.TryParse<GoldpathNotificationState>(state, ignoreCase: true, out var parsed))
+        var states = state is null
+            ? new List<GoldpathNotificationState>()
+            : [.. state.Select(value => Enum.TryParse<GoldpathNotificationState>(value, ignoreCase: true, out var parsed) ? parsed : (GoldpathNotificationState?)null)
+                       .Where(parsed => parsed is not null)
+                       .Select(parsed => parsed!.Value)];
+        if (states.Count > 0)
         {
-            query = query.Where(n => n.State == parsed);
+            // Values OR within a filter (contract R3); one value behaves exactly as R2 did.
+            query = query.Where(n => states.Contains(n.State));
         }
 
-        if (template is not null)
+        if (template is { Length: > 0 })
         {
-            query = query.Where(n => n.Template == template);
+            query = query.Where(n => template.Contains(n.Template));
         }
 
         if (tenant is not null)
@@ -125,11 +131,11 @@ public sealed class GoldpathNotificationAdminService<TContext>
 
     /// <summary>The suppression report — every MaySend refusal, with its when (evidence, not logs).</summary>
     public Task<IReadOnlyList<GoldpathNotificationInfo>> GetSuppressionsAsync(string? tenant, int take, CancellationToken ct)
-        => GetNotificationsAsync(nameof(GoldpathNotificationState.Suppressed), null, tenant, take, ct);
+        => GetNotificationsAsync([nameof(GoldpathNotificationState.Suppressed)], null, tenant, take, ct);
 
     /// <summary>The failure list — repair/replay itself lives in the JOBS console.</summary>
     public Task<IReadOnlyList<GoldpathNotificationInfo>> GetFailuresAsync(string? tenant, int take, CancellationToken ct)
-        => GetNotificationsAsync(nameof(GoldpathNotificationState.Failed), null, tenant, take, ct);
+        => GetNotificationsAsync([nameof(GoldpathNotificationState.Failed)], null, tenant, take, ct);
 
     private static GoldpathNotificationInfo ToInfo(GoldpathNotification n) => new(
         n.Id, n.DedupKey, n.Template, n.TemplateHash, n.Channel,

@@ -346,7 +346,7 @@ public sealed class GoldpathJobsAdminService<TContext>
         string? job,
         int take,
         CancellationToken ct,
-        string? status = null,
+        string[]? status = null,
         DateTimeOffset? from = null,
         DateTimeOffset? to = null,
         Guid? afterId = null)
@@ -356,9 +356,10 @@ public sealed class GoldpathJobsAdminService<TContext>
         var runs = db.Set<GoldpathJobRun>().AsNoTracking()
             .Where(r => r.SchedulerName == fleet && (job == null || r.JobName == job));
 
-        if (status is not null)
+        if (status is { Length: > 0 })
         {
-            runs = runs.Where(r => r.Status == status);
+            // Several states are OR'd (contract R3); one state behaves exactly as R2 did.
+            runs = runs.Where(r => status.Contains(r.Status));
         }
 
         if (from is { } start)

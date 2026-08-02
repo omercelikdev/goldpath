@@ -153,6 +153,18 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     expect(await within(screen.getByTestId("batches")).findByText(/No batches/)).toBeInTheDocument();
   });
 
+  it("R3: TWO states travel as repeated params — OR on the server, never merged here", async () => {
+    const { client: api, fetched } = client();
+    render(<BulkPanel client={api} />);
+    await userEvent.click(await screen.findByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Validated/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Approved/ }));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(fetched.some((url) => url.includes("state=Validated") && url.includes("state=Approved"))).toBe(true),
+    );
+  });
+
   it("filters batches by STATE only — the contract has no definition filter to send", async () => {
     const { client: api, fetched } = client();
     render(<BulkPanel client={api} />);

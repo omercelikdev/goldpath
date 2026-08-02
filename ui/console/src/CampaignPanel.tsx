@@ -88,7 +88,7 @@ export function describeThrottle(patch: CampaignThrottle): string {
  * tick. Item REPLAY is deliberately absent: repair has ONE home, the run console.
  */
 export function CampaignPanel({ client }: CampaignPanelProps) {
-  const [state, setState] = useState<string>("");
+  const [states, setStates] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<CampaignInfo | null>(null);
   const [failures, setFailures] = useState<CampaignFailedItem[]>([]);
@@ -110,11 +110,11 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
   const loadCampaigns = useCallback(
     async (_cursor: string | null, take: number) => {
       // Take-bounded, not cursor-paged (frozen contract): one page, honestly ended.
-      const campaigns = await client.campaigns({ state: state || undefined, take });
+      const campaigns = await client.campaigns({ state: states.length > 0 ? states : undefined, take });
       setReady(true);
       return { items: campaigns, nextCursor: null };
     },
-    [client, state, refreshToken],
+    [client, states, refreshToken],
   );
 
   useEffect(() => {
@@ -160,20 +160,17 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
         <KeysetTable<CampaignInfo>
           toolbar={<>
           
-          {/*
-            The family facet (§8.14). It COMMITS one state: the frozen contract's ?state=
-            takes a single value until revision R3 lands — toggling the active one clears.
-          */}
+          {/* Truly multi since contract R3: values OR within the facet, on the server. */}
           <FacetFilter
             label="State"
             options={STATES.map((option) => ({ value: option }))}
-            selected={new Set(state ? [state] : [])}
+            selected={new Set(states)}
             onToggle={(value) => {
-              setState(value === state ? "" : value);
+              setStates((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
               setSelectedId(null);
             }}
             onClear={() => {
-              setState("");
+              setStates([]);
               setSelectedId(null);
             }}
           />

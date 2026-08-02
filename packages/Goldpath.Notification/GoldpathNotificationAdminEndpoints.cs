@@ -25,7 +25,8 @@ public static class GoldpathNotificationAdminEndpoints
         group.MapGet("/templates", ([FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct)
             => admin.GetTemplatesAsync(ct));
 
-        group.MapGet("/notifications", async (string? state, string? template, string? tenant, int? take, HttpContext http, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct) =>
+        // R3: ?state= and ?template= repeat — values OR within a filter, filters AND together.
+        group.MapGet("/notifications", async ([FromQuery] string[]? state, [FromQuery] string[]? template, string? tenant, int? take, HttpContext http, [FromServices] GoldpathNotificationAdminService<TContext> admin, CancellationToken ct) =>
         {
             var scope = await AdminTenantScope.ResolveAsync(http, tenant);
             return scope.Refusal ?? Results.Ok(await admin.GetNotificationsAsync(state, template, scope.Tenant, take ?? 50, ct));
