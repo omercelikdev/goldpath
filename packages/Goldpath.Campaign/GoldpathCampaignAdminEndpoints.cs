@@ -37,7 +37,8 @@ public static class GoldpathCampaignAdminEndpoints
         // inherently cross-tenant, so the WHOLE group demands the all-tenants privilege.
         group.AddEndpointFilter(async (context, next) =>
             await AdminTenantScope.RequireAllTenantsAsync(context.HttpContext) is { } refusal ? refusal : await next(context));
-        group.MapGet("/", (string? state, int? take, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)
+        // R3: ?state= repeats — several states are OR'd; absent means all (additive, R2-compatible).
+        group.MapGet("/", ([FromQuery] string[]? state, int? take, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)
             => admin.ListAsync(state, take ?? 50, ct));
 
         group.MapGet("/{id:guid}", async (Guid id, [FromServices] GoldpathCampaignAdminService<TContext> admin, CancellationToken ct)

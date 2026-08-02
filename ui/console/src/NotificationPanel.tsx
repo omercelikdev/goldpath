@@ -44,8 +44,8 @@ export function retentionWords(deleteBodyAfter: string | null | undefined): stri
 export function NotificationPanel({ client }: NotificationPanelProps) {
   const [templates, setTemplates] = useState<NotificationTemplateStatus[] | null>(null);
   const [lens, setLens] = useState<Lens>("all");
-  const [state, setState] = useState<string>("");
-  const [template, setTemplate] = useState<string>("");
+  const [stateFilter, setStateFilter] = useState<string[]>([]);
+  const [templateFilter, setTemplateFilter] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<NotificationInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -73,10 +73,10 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
           ? await client.notificationFailures(take)
           : lens === "suppressions"
             ? await client.notificationSuppressions(take)
-            : await client.notifications({ state: state || undefined, template: template || undefined, take });
+            : await client.notifications({ state: stateFilter.length > 0 ? stateFilter : undefined, template: templateFilter.length > 0 ? templateFilter : undefined, take });
       return { items: rows, nextCursor: null };
     },
-    [client, lens, state, template, refreshToken],
+    [client, lens, stateFilter, templateFilter, refreshToken],
   );
 
   // The open row RE-READS by id: a notification is evidence in MOTION (Requested → Sent
@@ -172,26 +172,26 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
               <FacetFilter
                 label="State"
                 options={STATES.map((option) => ({ value: option }))}
-                selected={new Set(state ? [state] : [])}
+                selected={new Set(stateFilter)}
                 onToggle={(value) => {
-                  setState(value === state ? "" : value);
+                  setStateFilter((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
                   setSelectedId(null);
                 }}
                 onClear={() => {
-                  setState("");
+                  setStateFilter([]);
                   setSelectedId(null);
                 }}
               />
               <FacetFilter
                 label="Template"
                 options={(templates ?? []).map((entry) => ({ value: entry.key }))}
-                selected={new Set(template ? [template] : [])}
+                selected={new Set(templateFilter)}
                 onToggle={(value) => {
-                  setTemplate(value === template ? "" : value);
+                  setTemplateFilter((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
                   setSelectedId(null);
                 }}
                 onClear={() => {
-                  setTemplate("");
+                  setTemplateFilter([]);
                   setSelectedId(null);
                 }}
               />

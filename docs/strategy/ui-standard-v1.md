@@ -239,6 +239,11 @@ U9 addenda (owner review, 2026-08-02):
   modal dialogs and the popover libraries loop the test DOM there). The platform
   popup retires everywhere: archive picker, bulk definition, calendar type, trigger
   kind, the shell's service picker.
-- **§8.13 stands confirmed**: facets go truly multi — OR within a facet, AND across
-  facets, on every list — once contract revision R3 (repeated query params) lands
-  server-side. The UI keeps refusing to fake OR by merging take-bounded pages.
+- **§8.13 SHIPPED with contract R3 (2026-08-02)**: the four list filters accept
+  repeated values server-side (?state=a&state=b — OR within a filter, filters AND
+  together, additive over R2), and every facet is truly multi-select: History's
+  states, Batches' states, Campaigns' states, Evidence's states AND templates.
+  Re-clicking an active value removes it from the set — the single-commit behavior
+  is a special case now, not a limitation. The console still never merges
+  take-bounded pages client-side. The History date fields also joined the toolbar
+  BASELINE (inline labels — the stacked ones pushed them below the row).

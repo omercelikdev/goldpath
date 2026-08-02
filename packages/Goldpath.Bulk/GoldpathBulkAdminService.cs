@@ -112,16 +112,25 @@ public sealed class GoldpathBulkAdminService<TContext>
         return result;
     }
 
+    private static List<GoldpathBulkBatchState> ParseStates(string[]? raw)
+        => raw is null
+            ? []
+            : [.. raw.Select(value => Enum.TryParse<GoldpathBulkBatchState>(value, ignoreCase: true, out var parsed) ? parsed : (GoldpathBulkBatchState?)null)
+                     .Where(parsed => parsed is not null)
+                     .Select(parsed => parsed!.Value)];
+
     /// <summary>Recent batches, newest first (optionally by state; tenant-scoped when supplied).</summary>
     public async Task<IReadOnlyList<GoldpathBulkBatchInfo>> GetBatchesAsync(
-        string? state, string? tenant, int take, CancellationToken ct)
+        string[]? state, string? tenant, int take, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
         var query = db.Set<GoldpathBulkBatch>().AsNoTracking();
-        if (state is not null && Enum.TryParse<GoldpathBulkBatchState>(state, ignoreCase: true, out var parsed))
+        var states = ParseStates(state);
+        if (states.Count > 0)
         {
-            query = query.Where(b => b.State == parsed);
+            // Several states are OR'd (contract R3); one behaves exactly as R2 did.
+            query = query.Where(b => states.Contains(b.State));
         }
 
         if (tenant is not null)

@@ -30,7 +30,7 @@ const STATES = ["Running", "Completed", "Failed"];
  * server continues strictly after the last row we were given.
  */
 export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpenJob, openRunRequest, onRunRequestConsumed }: RunHistoryProps) {
-  const [status, setStatus] = useState("");
+  const [statuses, setStatuses] = useState<string[]>([]);
   const [job, setJob] = useState("");
   const [from, setFrom] = useState("");
   const [to, setTo] = useState("");
@@ -54,7 +54,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
       const runs = await client.runs(fleet, {
         take,
         job: job || undefined,
-        status: status || undefined,
+        status: statuses.length > 0 ? statuses : undefined,
         // The inputs are date-only; the window an operator means by "from the 27th" runs
         // to the END of the 27th, so the upper bound is stretched to that day's last
         // instant rather than its first — otherwise "from X to X" returns nothing.
@@ -65,7 +65,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
       // A short page is the end of the walk; a full one may have more behind it.
       return { items: runs, nextCursor: runs.length < take ? null : (runs[runs.length - 1]?.id ?? null) };
     },
-    [client, fleet, job, status, from, to, refreshToken],
+    [client, fleet, job, statuses, from, to, refreshToken],
   );
 
   useEffect(() => {
@@ -95,33 +95,31 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
         toolbar={
           <>
         <SearchBox value={job} onCommit={setJob} label="Search by job" placeholder="job name…" />
-        {/*
-          The facet LOOKS multi-select (the family pattern) but commits ONE state: the
-          frozen contract's ?status= takes a single value, and pretending otherwise would
-          mean OR-ing pages client-side — the lie this console never tells. Toggling the
-          active state clears it.
-        */}
+        {/* Truly multi since contract R3: several states OR together on the SERVER —
+            the console still never merges take-bounded pages client-side. */}
         <FacetFilter
           label="State"
           options={STATES.map((state) => ({ value: state }))}
-          selected={new Set(status ? [status] : [])}
-          onToggle={(value) => setStatus(value === status ? "" : value)}
-          onClear={() => setStatus("")}
+          selected={new Set(statuses)}
+          onToggle={(value) => setStatuses((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]))}
+          onClear={() => setStatuses([])}
         />
-        <label className="flex flex-col gap-1">
+        {/* Inline labels keep the dates on the SAME baseline as the other controls —
+            the stacked label pushed them below the row (owner: "tarihler kayık"). */}
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
           From
           <input type="date" className="control" value={from} onChange={(event) => setFrom(event.target.value)} />
         </label>
-        <label className="flex flex-col gap-1">
+        <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
           To
           <input type="date" className="control" value={to} onChange={(event) => setTo(event.target.value)} />
         </label>
         <span className="ms-auto"><DensityToggle /></span>
-        {(status || from || to || job) && (
+        {(statuses.length > 0 || from || to || job) && (
           <button
             className="link-action"
             onClick={() => {
-              setStatus("");
+              setStatuses([]);
               setFrom("");
               setTo("");
               setJob("");
@@ -175,7 +173,7 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
         ]}
         loadPage={loadRuns}
         rowKey={(run) => run.id}
-        emptyMessage={status || from || to ? "No run matches these filters." : "No runs recorded for this fleet yet."}
+        emptyMessage={statuses.length > 0 || from || to ? "No run matches these filters." : "No runs recorded for this fleet yet."}
       />
 
       {problem && <p className="text-sm text-danger">{problem}</p>}

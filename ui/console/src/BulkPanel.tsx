@@ -38,7 +38,7 @@ const GATED = "Validated";
  */
 export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
   const [definitions, setDefinitions] = useState<BulkDefinitionStatus[] | null>(null);
-  const [state, setState] = useState<string>("");
+  const [states, setStates] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<BulkBatchInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -90,10 +90,10 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
           throw error;
         }
       }
-      const batches = await client.bulkBatches({ state: state || undefined, take });
+      const batches = await client.bulkBatches({ state: states.length > 0 ? states : undefined, take });
       return { items: batches, nextCursor: null };
     },
-    [client, state, batchQuery, refreshToken],
+    [client, states, batchQuery, refreshToken],
   );
 
   // The validation report IS keyset-paged: the cursor is the last row number of the page.
@@ -254,13 +254,13 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
           <FacetFilter
                 label="State"
                 options={STATES.map((option) => ({ value: option }))}
-                selected={new Set(state ? [state] : [])}
+                selected={new Set(states)}
                 onToggle={(value) => {
-                  setState(value === state ? "" : value);
+                  setStates((current) => (current.includes(value) ? current.filter((v) => v !== value) : [...current, value]));
                   setSelectedId(null);
                 }}
                 onClear={() => {
-                  setState("");
+                  setStates([]);
                   setSelectedId(null);
                 }}
               />

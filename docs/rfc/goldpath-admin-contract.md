@@ -227,3 +227,17 @@ Owner decision, 2026-07-28: adopt this three-way split as written.
 Additive fields on existing payloads, new routes alongside the frozen ones, and one
 migration that adds two nullable columns. R1 clients keep working unchanged. Ships in the
 train after preview.5, with an upgrade-guide entry for the migration.
+
+## Revision R3 (2026-08-02) — repeatable filters
+
+Additive; nothing an R2 client sends changes meaning.
+
+- The list filters `?status=` (jobs runs), `?state=` (bulk batches, campaigns,
+  notifications) and `?template=` (notifications) may now REPEAT:
+  `?state=Failed&state=Suppressed`. Several values of one filter are OR'd; different
+  filters still AND together. A single value behaves exactly as R2 did; an absent
+  filter still means "all". Unknown values are ignored rather than refused — a
+  filter that matches nothing returns an empty list, the same claim R2 made.
+- Motivation: the console's facet filters are multi-select (ui-standard v1.2 §8.13),
+  and the console refuses to fake OR by merging take-bounded pages client-side —
+  the server is the only honest place to widen a filter.

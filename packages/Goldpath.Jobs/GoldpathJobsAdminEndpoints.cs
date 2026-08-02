@@ -31,7 +31,8 @@ public static class GoldpathJobsAdminEndpoints
         group.MapGet("/fleets/{fleet}/status", async (string fleet, [FromServices] GoldpathJobsAdminService<TContext> admin, CancellationToken ct)
             => await admin.GetFleetStatusAsync(fleet, ct) is { } status ? Results.Ok(status) : Results.NotFound());
 
-        group.MapGet("/fleets/{fleet}/runs", (string fleet, string? job, int? take, string? status, DateTimeOffset? from, DateTimeOffset? to, Guid? afterId, [FromServices] GoldpathJobsAdminService<TContext> admin, CancellationToken ct)
+        // R3: ?status= repeats — several states are OR'd; absent means all (additive, R2-compatible).
+        group.MapGet("/fleets/{fleet}/runs", (string fleet, string? job, int? take, [FromQuery] string[]? status, DateTimeOffset? from, DateTimeOffset? to, Guid? afterId, [FromServices] GoldpathJobsAdminService<TContext> admin, CancellationToken ct)
             => admin.GetRunsAsync(fleet, job, take ?? 50, ct, status, from, to, afterId));
 
         group.MapGet("/runs/{runId:guid}", async (Guid runId, [FromServices] GoldpathJobsAdminService<TContext> admin, CancellationToken ct)

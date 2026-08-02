@@ -97,14 +97,20 @@ public sealed class GoldpathCampaignAdminService<TContext>
     }
 
     /// <summary>Every campaign with its live numbers (newest first; feeds the console list).</summary>
-    public async Task<IReadOnlyList<GoldpathCampaignInfo>> ListAsync(string? state, int take, CancellationToken ct)
+    public async Task<IReadOnlyList<GoldpathCampaignInfo>> ListAsync(string[]? state, int take, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
         var query = db.Set<GoldpathCampaign>().AsNoTracking();
-        if (!string.IsNullOrEmpty(state) && Enum.TryParse<GoldpathCampaignState>(state, ignoreCase: true, out var parsed))
+        var states = state is null
+            ? new List<GoldpathCampaignState>()
+            : [.. state.Select(value => Enum.TryParse<GoldpathCampaignState>(value, ignoreCase: true, out var parsed) ? parsed : (GoldpathCampaignState?)null)
+                       .Where(parsed => parsed is not null)
+                       .Select(parsed => parsed!.Value)];
+        if (states.Count > 0)
         {
-            query = query.Where(c => c.State == parsed);
+            // Several states are OR'd (contract R3); one behaves exactly as R2 did.
+            query = query.Where(c => states.Contains(c.State));
         }
 
         var rows = await query.OrderByDescending(c => c.CreatedAt).Take(AdminPaging.Clamp(take)).ToListAsync(ct);

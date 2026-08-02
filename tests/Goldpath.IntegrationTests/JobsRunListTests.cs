@@ -39,7 +39,7 @@ public sealed class JobsRunListTests : IAsyncLifetime
                         ("nightly", GoldpathJobRunStatus.Failed, noon.AddHours(-2)),
                         ("nightly", GoldpathJobRunStatus.Completed, noon.AddHours(-1)));
 
-        var failed = await admin.GetRunsAsync("fleet", job: null, take: 50, default, status: GoldpathJobRunStatus.Failed);
+        var failed = await admin.GetRunsAsync("fleet", job: null, take: 50, default, status: [GoldpathJobRunStatus.Failed]);
         var yesterday = await admin.GetRunsAsync("fleet", job: null, take: 50, default,
             from: noon.AddHours(-30), to: noon.AddHours(-24));
 
@@ -49,6 +49,11 @@ public sealed class JobsRunListTests : IAsyncLifetime
         // must not be handed this morning's run as well.
         Assert.Single(yesterday);
         Assert.Equal(noon.AddHours(-26), yesterday[0].StartedAt);
+
+        // R3: several statuses are OR'd — one request, both families of rows.
+        var either = await admin.GetRunsAsync("fleet", job: null, take: 50, default,
+            status: [GoldpathJobRunStatus.Failed, GoldpathJobRunStatus.Completed]);
+        Assert.Equal(3, either.Count);
     }
 
     [Fact]

@@ -36,7 +36,8 @@ public static class GoldpathBulkAdminEndpoints
             return scope.Refusal ?? Results.Ok(await admin.UploadAsync(definition, http.Request.Body, fileName ?? "upload.csv", scope.Tenant, Actor(http), ct));
         });
 
-        group.MapGet("/batches", async (string? state, string? tenant, int? take, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
+        // R3: ?state= repeats — several states are OR'd; absent means all (additive, R2-compatible).
+        group.MapGet("/batches", async ([FromQuery] string[]? state, string? tenant, int? take, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
         {
             var scope = await AdminTenantScope.ResolveAsync(http, tenant);
             return scope.Refusal ?? Results.Ok(await admin.GetBatchesAsync(state, scope.Tenant, take ?? 50, ct));

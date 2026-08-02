@@ -509,11 +509,11 @@ export class AdminClient {
    */
   runs(
     fleet: string,
-    options: { job?: string; take?: number; status?: string; from?: string; to?: string; afterId?: string } = {},
+    options: { job?: string; take?: number; status?: string[]; from?: string; to?: string; afterId?: string } = {},
   ): Promise<RunSummary[]> {
     const query = new URLSearchParams();
     if (options.job) query.set("job", options.job);
-    if (options.status) query.set("status", options.status);
+    for (const status of options.status ?? []) query.append("status", status);
     if (options.from) query.set("from", options.from);
     if (options.to) query.set("to", options.to);
     if (options.afterId) query.set("afterId", options.afterId);
@@ -645,9 +645,9 @@ export class AdminClient {
    * The per-definition counts come from `/definitions`; issue #72 tracks adding the
    * server-side filter.
    */
-  bulkBatches(options: { state?: string; take?: number } = {}): Promise<BulkBatchInfo[]> {
+  bulkBatches(options: { state?: string[]; take?: number } = {}): Promise<BulkBatchInfo[]> {
     const query = new URLSearchParams();
-    if (options.state) query.set("state", options.state);
+    for (const state of options.state ?? []) query.append("state", state);
     query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
     return this.get<BulkBatchInfo[]>(`/goldpath/admin/bulk/batches?${query.toString()}`);
   }
@@ -693,9 +693,9 @@ export class AdminClient {
     return this.get<BulkBatchInfo>(`/goldpath/admin/bulk/batches/${encodeURIComponent(batchId)}`);
   }
 
-  campaigns(options: { state?: string; take?: number } = {}): Promise<CampaignInfo[]> {
+  campaigns(options: { state?: string[]; take?: number } = {}): Promise<CampaignInfo[]> {
     const query = new URLSearchParams();
-    if (options.state) query.set("state", options.state);
+    for (const state of options.state ?? []) query.append("state", state);
     query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
     return this.get<CampaignInfo[]>(`/goldpath/admin/campaign/?${query.toString()}`);
   }
@@ -738,10 +738,10 @@ export class AdminClient {
     return this.get<NotificationTemplateStatus[]>("/goldpath/admin/notification/templates");
   }
 
-  notifications(options: { state?: string; template?: string; take?: number } = {}): Promise<NotificationInfo[]> {
+  notifications(options: { state?: string[]; template?: string[]; take?: number } = {}): Promise<NotificationInfo[]> {
     const query = new URLSearchParams();
-    if (options.state) query.set("state", options.state);
-    if (options.template) query.set("template", options.template);
+    for (const state of options.state ?? []) query.append("state", state);
+    for (const template of options.template ?? []) query.append("template", template);
     query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
     return this.get<NotificationInfo[]>(`/goldpath/admin/notification/notifications?${query.toString()}`);
   }
