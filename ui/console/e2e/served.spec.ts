@@ -11,7 +11,20 @@ import { expect, test } from "@playwright/test";
 const served = process.env.GOLDPATH_SERVED_CONSOLE_URL ?? "http://localhost:5310/goldpath/console/";
 
 test.describe("the console served by the app itself", () => {
-  test("loads from the embedded assets and reads the registry the APP configured", async ({ page }) => {
+  test("the bare prefix and the bare PORT both land on the console", async ({ page }) => {
+  const origin = new URL(served).origin;
+  // Off by a slash: the no-slash url must REDIRECT, not serve a blank page.
+  await page.goto(`${origin}/goldpath/console`);
+  await expect(page).toHaveURL(/\/goldpath\/console\/$/);
+  await expect(page.getByTestId("shell-rail")).toBeVisible();
+
+  // And whoever lands on the bare port goes to the console home.
+  await page.goto(`${origin}/`);
+  await expect(page).toHaveURL(/\/goldpath\/console\/$/);
+  await expect(page.getByTestId("triage-home")).toBeVisible();
+});
+
+test("loads from the embedded assets and reads the registry the APP configured", async ({ page }) => {
     // Only the console's OWN assets are judged here: the capability probes are supposed
     // to draw 401s and 400s from the auth-floored and tenant-scoped services — that is the
     // discovery working, not the page failing.

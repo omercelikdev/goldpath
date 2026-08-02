@@ -36,6 +36,8 @@ export interface AppShellProps {
   onToggleCollapsed?: () => void;
   /** Renders the rail's search trigger (v1.1 §7.14) — usually the kit's `openCommand`. */
   onSearch?: () => void;
+  /** Makes the brand head a BUTTON that goes home — the reference's own affordance. */
+  onHome?: () => void;
   /** Rendered at the rail foot — theme toggle, sign-out, whatever the app owns. */
   footer?: (collapsed: boolean) => ReactNode;
 }
@@ -71,6 +73,7 @@ export function AppShell({
   collapsed = false,
   onToggleCollapsed,
   onSearch,
+  onHome,
   footer,
 }: AppShellProps) {
   // Persist on change, wherever the state itself lives.
@@ -104,12 +107,18 @@ export function AppShell({
           className="scroll-area flex h-full flex-col overflow-y-auto px-3 pb-3"
         >
           <div className={`flex items-center py-4 ${collapsed ? "justify-center" : "justify-between px-1"}`}>
-            {!collapsed && (
-              <span className="min-w-0">
-                <span className="block truncate text-sm font-semibold">{title}</span>
-                {subtitle && <span className="block truncate text-xs text-faint">{subtitle}</span>}
-              </span>
-            )}
+            {!collapsed &&
+              (onHome ? (
+                <button onClick={onHome} className="min-w-0 rounded-lg text-start transition-opacity hover:opacity-70">
+                  <span className="block truncate text-sm font-semibold">{title}</span>
+                  {subtitle && <span className="block truncate text-xs text-faint">{subtitle}</span>}
+                </button>
+              ) : (
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-semibold">{title}</span>
+                  {subtitle && <span className="block truncate text-xs text-faint">{subtitle}</span>}
+                </span>
+              ))}
             {onToggleCollapsed && (
               <button
                 aria-label={collapsed ? "expand navigation" : "collapse navigation"}

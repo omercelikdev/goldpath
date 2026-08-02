@@ -208,6 +208,18 @@ describe("the v1.1 rail (u7-b1)", () => {
     expect(screen.queryByRole("button", { name: /Search/ })).not.toBeInTheDocument();
   });
 
+  it("the brand head is a BUTTON that goes home when the shell is told where home is", async () => {
+    const onHome = vi.fn();
+    render(<AppShell title="Goldpath Console" nav={[item("a")]} activeId="a" onHome={onHome}>x</AppShell>);
+    await userEvent.click(screen.getByRole("button", { name: /Goldpath Console/ }));
+    expect(onHome).toHaveBeenCalledTimes(1);
+  });
+
+  it("without onHome the brand stays plain text — nothing pretends to be clickable", () => {
+    render(<AppShell title="Goldpath Console" nav={[item("a")]} activeId="a">x</AppShell>);
+    expect(screen.queryByRole("button", { name: /Goldpath Console/ })).not.toBeInTheDocument();
+  });
+
   it("a throwing localStorage never breaks the shell", () => {
     const real = Storage.prototype.getItem;
     Storage.prototype.getItem = () => { throw new Error("private mode"); };

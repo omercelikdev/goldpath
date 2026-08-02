@@ -299,6 +299,15 @@ describe("the console across services", () => {
     expect(screen.getByRole("button", { name: "Refresh" })).toBeInTheDocument();
   });
 
+  it("the brand goes HOME: from any section, clicking the title lands on Today", async () => {
+    render(<ConsoleApp fetcher={estate().fetcher} search="" />);
+    await userEvent.click(await screen.findByRole("button", { name: "Runs" }));
+    await screen.findByRole("heading", { name: "Runs" });
+
+    await userEvent.click(screen.getByRole("button", { name: /Goldpath Console/ }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Today" })).toBeInTheDocument();
+  });
+
   it("the rail renders ONE Modules group — the owner's amendment, pinned", async () => {
     render(<ConsoleApp fetcher={estate().fetcher} search="" />);
     const rail = await screen.findByTestId("shell-rail");
