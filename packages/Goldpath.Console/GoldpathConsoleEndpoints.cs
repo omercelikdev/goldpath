@@ -87,7 +87,18 @@ public static class GoldpathConsoleEndpoints
             return Results.Content(payload, "application/json", Encoding.UTF8);
         });
 
-        group.MapGet("/{**path}", (string? path) => Serve(files, path));
+        group.MapGet("/{**path}", (string? path, HttpContext http) =>
+        {
+            // Off by a slash: at "/goldpath/console" (no trailing slash) the page would
+            // serve, but its RELATIVE asset urls would resolve one directory too high —
+            // a blank screen with a green status code. Redirect to the canonical root.
+            if (string.IsNullOrEmpty(path) && http.Request.Path.Value is { } raw && !raw.EndsWith('/'))
+            {
+                return Results.Redirect(raw + "/" + http.Request.QueryString);
+            }
+
+            return Serve(files, path);
+        });
 
         return endpoints;
     }

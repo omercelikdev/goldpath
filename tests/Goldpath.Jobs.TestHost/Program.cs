@@ -275,6 +275,9 @@ static async Task RunConsoleHostAsync(
     app.MapGoldpathArchivalAdmin<ClusterDb>(exposeUnsecured: unsecured);
     // The console SERVED BY THE APP — the shape adopters actually deploy (console RFC D1).
     // Same origin as the admin surfaces, so no CORS is involved in this path at all.
+    // The console IS this host's home: whoever lands on the bare port goes there.
+    app.MapGet("/", () => Results.Redirect("/goldpath/console/"));
+
     app.MapGoldpathConsole(exposeUnsecured: unsecured, configure: console =>
     {
         foreach (var entry in (Environment.GetEnvironmentVariable("GOLDPATH_CONSOLE_SERVICES") ?? "").Split(';', StringSplitOptions.RemoveEmptyEntries))

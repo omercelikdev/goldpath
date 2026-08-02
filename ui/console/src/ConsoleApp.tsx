@@ -25,7 +25,7 @@ type Section = typeof TODAY | ModuleName;
  * exist (config, not discovery), which one the operator is looking at, and the triage home
  * that answers "is anything wrong" across all of them before any of them is opened.
  */
-export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }: ConsoleAppProps) {
+export function ConsoleApp({ title = "Goldpath Console", fetcher, search, now }: ConsoleAppProps) {
   const [services, setServices] = useState<ServiceEntry[] | null>(null);
   const [problem, setProblem] = useState<{ text: string; fellBack: boolean } | null>(null);
   const [active, setActive] = useState<string | null>(null);
@@ -129,6 +129,7 @@ export function ConsoleApp({ title = "Goldpath console", fetcher, search, now }:
       collapsed={collapsed}
       onToggleCollapsed={() => setCollapsed(!collapsed)}
       onSearch={openCommand}
+      onHome={() => setSection(TODAY)}
     >
       <CommandPalette label="Search sections…" groups={commands} />
 

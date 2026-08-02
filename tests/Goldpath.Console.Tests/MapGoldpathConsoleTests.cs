@@ -46,6 +46,18 @@ public class MapGoldpathConsoleTests
     }
 
     [Fact]
+    public async Task The_bare_prefix_redirects_to_its_slashed_root()
+    {
+        // Off by a slash the page would still answer 200 — with relative asset urls
+        // resolving a directory too high. The canonical root is the only honest answer.
+        var client = await HostAsync();
+        var response = await client.GetAsync("/goldpath/console");
+
+        Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
+        Assert.Equal("/goldpath/console/", response.Headers.Location?.ToString());
+    }
+
+    [Fact]
     public async Task The_registry_is_served_from_configuration_not_from_a_file_beside_the_dist()
     {
         var client = await HostAsync(console => console
