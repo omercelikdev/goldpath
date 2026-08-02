@@ -55,6 +55,12 @@ public class MapGoldpathConsoleTests
 
         Assert.Equal(HttpStatusCode.Redirect, response.StatusCode);
         Assert.Equal("/goldpath/console/", response.Headers.Location?.ToString());
+
+        // The query survives the slash: ?base= is how the smoke drives a chosen service,
+        // and a redirect that dropped it would silently change WHICH console opens.
+        var withQuery = await client.GetAsync("/goldpath/console?base=https%3A%2F%2Fpayments.internal");
+        Assert.Equal(HttpStatusCode.Redirect, withQuery.StatusCode);
+        Assert.Equal("/goldpath/console/?base=https%3A%2F%2Fpayments.internal", withQuery.Headers.Location?.ToString());
     }
 
     [Fact]
