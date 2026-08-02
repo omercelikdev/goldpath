@@ -57,8 +57,8 @@ describe("the console across services", () => {
     const { fetcher } = estate();
     render(<ConsoleApp fetcher={fetcher} search="" />);
 
-    const picker = await screen.findByLabelText(/service/i);
-    expect(picker).toHaveValue("payments");
+    const picker = await screen.findByRole("combobox", { name: "service" });
+    expect(picker).toHaveTextContent("payments");
     await userEvent.click(await screen.findByRole("button", { name: "Bulk intake" }));
     expect(await screen.findByTestId("bulk-panel")).toBeInTheDocument();
   });
@@ -69,7 +69,8 @@ describe("the console across services", () => {
 
     await screen.findByRole("button", { name: "Bulk intake" });
 
-    await userEvent.selectOptions(await screen.findByLabelText(/service/i), "claims");
+    await userEvent.click(await screen.findByRole("combobox", { name: "service" }));
+    await userEvent.click(await screen.findByRole("option", { name: "claims" }));
 
     // Claims composes archival only: bulk must be GONE, not carried over.
     expect(await screen.findByRole("button", { name: "Archival" })).toBeInTheDocument();
@@ -187,7 +188,7 @@ describe("the console across services", () => {
 
     // The console switched service AND section — the row is a deep link, not a label.
     expect(await screen.findByTestId("bulk-panel")).toBeInTheDocument();
-    expect(screen.getByLabelText(/service/i)).toHaveValue("claims");
+    expect(screen.getByRole("combobox", { name: "service" })).toHaveTextContent("claims");
   });
 
   it("a registry that failed to load is ANNOUNCED — an operator who configured four services must not silently see one", async () => {

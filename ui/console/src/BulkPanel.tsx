@@ -205,14 +205,9 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
               id="bulk-definition"
               aria-label="definition"
               value={uploadInto}
-              onChange={(event) => setUploadInto(event.target.value)}
-            >
-              {(definitions ?? []).map((definition) => (
-                <option key={definition.name} value={definition.name}>
-                  {definition.name}
-                </option>
-              ))}
-            </Select>
+              onChange={setUploadInto}
+              options={(definitions ?? []).map((definition) => ({ value: definition.name }))}
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             File

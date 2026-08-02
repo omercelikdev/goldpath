@@ -202,18 +202,13 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
             <Select
               aria-label="archive"
               value={definition}
-              onChange={(event) => {
-                setDefinition(event.target.value);
+              onChange={(name) => {
+                setDefinition(name);
                 setEntry(null);
                 setLookedUp(null);
               }}
-            >
-              {(definitions ?? []).map((archive) => (
-                <option key={archive.name} value={archive.name}>
-                  {archive.name}
-                </option>
-              ))}
-            </Select>
+              options={(definitions ?? []).map((archive) => ({ value: archive.name }))}
+            />
           </label>
           <label className="flex flex-col gap-1 text-xs text-muted-foreground">
             Aggregate key

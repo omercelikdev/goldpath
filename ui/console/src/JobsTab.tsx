@@ -1,6 +1,6 @@
 import { Pause, Pencil, Play, Plus, Trash2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, DetailSection, Dialog, KeyValueRows, Sheet, StateBadge, Table, VerbButton, shortStamp } from "@goldpath/kit";
+import { Banner, DetailSection, Dialog, KeyValueRows, Select, Sheet, StateBadge, Table, VerbButton, shortStamp } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import { isPaused, nextFireAt, type AdminClient, type JobInfo, type TriggerInfo } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -427,15 +427,13 @@ function AddTrigger({
         </label>
         <span className="flex flex-col gap-1">
           <label htmlFor={`kind-${job}`}>Kind</label>
-          <select
+          <Select
             id={`kind-${job}`}
-            className="control"
+            aria-label="trigger kind"
             value={kind}
-            onChange={(event) => setKind(event.target.value as "cron" | "simple")}
-          >
-            <option value="cron">cron</option>
-            <option value="simple">interval</option>
-          </select>
+            onChange={(value) => setKind(value as "cron" | "simple")}
+            options={[{ value: "cron", label: "cron" }, { value: "simple", label: "interval" }]}
+          />
         </span>
         {kind === "cron" ? (
           <>

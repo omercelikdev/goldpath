@@ -570,23 +570,28 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByTestId("triage-home")).toBeVisible();
     await page.getByTestId("shell-rail").getByRole("button", { name: "Runs", exact: true }).click();
 
-    const picker = page.getByLabel(/service/i);
-    await expect(picker).toHaveValue("open");
+    // The picker is the family's OWN listbox now — a combobox button, not a native select.
+    const picker = page.getByRole("combobox", { name: "service" });
+    await expect(picker).toContainText("open");
+    const pick = async (name: string) => {
+      await picker.click();
+      await page.getByRole("option", { name }).click();
+    };
     await expect(page.getByTestId("run-console")).toBeVisible();
     await expect(page.getByTestId("shell-rail").getByRole("button", { name: "Bulk intake", exact: true })).toBeVisible();
 
     // The auth-floored app composes the same modules but refuses this operator: the
     // sections stay NAMED and the reason is the server's.
-    await picker.selectOption("auth-floored");
+    await pick("auth-floored");
     await expect(page.getByRole("alert")).toContainText("lacks the ops role");
     await expect(page.getByTestId("run-console")).toHaveCount(0);
 
     // And the tenant-scoped app refuses differently — a call it cannot scope.
-    await picker.selectOption("tenant-scoped");
+    await pick("tenant-scoped");
     await expect(page.getByRole("alert")).toContainText("composed here but refused this request");
 
     // Back to the open app: its panels come back, freshly discovered.
-    await picker.selectOption("open");
+    await pick("open");
     await expect(page.getByTestId("run-console")).toBeVisible();
   });
 
@@ -620,6 +625,6 @@ test.describe("the run console against a real Goldpath app", () => {
     // A row is a deep link: it opens the panel that owns it, on the service that owns it.
     await gate.click();
     await expect(page.getByTestId("bulk-panel")).toBeVisible();
-    await expect(page.getByLabel(/service/i)).toHaveValue("open");
+    await expect(page.getByRole("combobox", { name: "service" })).toContainText("open");
   });
 });

@@ -12,7 +12,7 @@ export { TabStrip, TabPanel, type TabStripProps, type TabStripItem, type TabPane
 export { AppShell, PageHeader, initialCollapsed, COLLAPSE_KEY, type AppShellProps, type PageHeaderProps, type ShellNavItem, type ShellService } from "./components/AppShell";
 export { CommandPalette, openCommand, OPEN_COMMAND_EVENT, type CommandPaletteProps, type CommandGroup, type CommandEntry } from "./components/CommandPalette";
 export { StatCard, type StatCardProps } from "./components/StatCard";
-export { Select, type SelectProps } from "./components/Select";
+export { Select, type SelectProps, type SelectOption } from "./components/Select";
 export { Checkbox, type CheckboxProps } from "./components/Checkbox";
 export { Tooltip, type TooltipProps } from "./components/Tooltip";
 export { DensityProvider, DensityToggle, useDensity, densityCell, DENSITY_KEY, type Density } from "./components/Density";

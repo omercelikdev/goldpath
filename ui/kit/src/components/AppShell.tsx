@@ -154,14 +154,12 @@ export function AppShell({
               <label className="control-label" htmlFor="goldpath-service">service</label>
               <Select
                 id="goldpath-service"
+                aria-label="service"
                 className="mt-1 w-full"
                 value={activeService ?? services[0].name}
-                onChange={(event) => services.find((s) => s.name === event.target.value)?.onSelect()}
-              >
-                {services.map((service) => (
-                  <option key={service.name} value={service.name}>{service.name}</option>
-                ))}
-              </Select>
+                onChange={(name) => services.find((s) => s.name === name)?.onSelect()}
+                options={services.map((service) => ({ value: service.name }))}
+              />
             </div>
           )}
 

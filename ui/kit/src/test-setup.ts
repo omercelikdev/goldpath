@@ -10,3 +10,8 @@ globalThis.ResizeObserver ??= class {
 
 // jsdom also lacks scrollIntoView, which cmdk calls to keep the selection visible.
 Element.prototype.scrollIntoView ??= () => {};
+
+// Radix Select drives pointer capture; jsdom has none of it. No-ops suffice.
+Element.prototype.hasPointerCapture ??= () => false;
+Element.prototype.setPointerCapture ??= () => {};
+Element.prototype.releasePointerCapture ??= () => {};

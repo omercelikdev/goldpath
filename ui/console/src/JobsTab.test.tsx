@@ -173,7 +173,8 @@ describe("the jobs tab", () => {
     await user.click(await screen.findByRole("button", { name: "poller" }));
     await user.click(screen.getByRole("button", { name: "add a trigger" }));
     await user.type(screen.getByLabelText("Name"), "every-15");
-    await user.selectOptions(screen.getByLabelText("Kind"), "simple");
+    await user.click(screen.getByRole("combobox", { name: "trigger kind" }));
+    await user.click(await screen.findByRole("option", { name: "interval" }));
     await user.type(screen.getByLabelText("Interval"), "00:15:00");
     await user.click(screen.getByRole("button", { name: "schedule it" }));
     await user.click(screen.getByRole("alertdialog").querySelector("button")!);
