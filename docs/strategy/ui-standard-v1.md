@@ -205,7 +205,13 @@ Same rule as §7/§8: kit-level, swept everywhere.
 
 1. **Filter rows compose like the journal**: the search field first and WIDE, facets
    beside it, and the row's utilities (refresh, density) right-aligned — one layout
-   for every list screen's toolbar.
+   for every list screen's toolbar. CORRECTED against the moved reference
+   (qorpe/mockifyr@331b392, 2026-07-30): the toolbar lives INSIDE the table card as
+   its header strip (`border-b p-3`), never as a page row above it — Table and
+   KeysetTable grew a `toolbar` slot and every list screen moved its filters in.
+   The compact density rhythm is the reference's `py-2`. One deliberate divergence
+   stands: the reference tints its footer strip (`bg-muted/30`), ours stays quiet —
+   the owner ruled on that explicitly in §8.9.
 2. **Refresh is an ICON**: the word retires; `RefreshCw` with the family tooltip
    (and the accessible name) everywhere a refresh lives.
 3. **Density is a feature**: the journal's comfortable/compact toggle comes to every

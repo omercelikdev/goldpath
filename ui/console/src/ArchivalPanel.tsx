@@ -334,12 +334,9 @@ export function ArchivalPanel({ client, now }: ArchivalPanelProps) {
       )}
 
       <section>
-        <div className="mb-2 flex flex-wrap items-center gap-3">
-          <h2 className="text-sm font-medium text-muted-foreground">Legal holds</h2>
-          <Checkbox checked={includeLifted} onChange={setIncludeLifted} label="include lifted" />
-        </div>
+        <h2 className="section-title">Legal holds</h2>
         <KeysetTable<LegalHold>
-          key={`holds-${includeLifted}-${refreshToken}`}
+          toolbar={<Checkbox checked={includeLifted} onChange={setIncludeLifted} label="include lifted" />}
           columns={[
             { header: "Archive", cell: (hold) => hold.definition },
             { header: "Key", cell: (hold) => <span className="font-mono text-xs">{hold.aggregateKey}</span> },

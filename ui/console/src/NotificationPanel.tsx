@@ -143,8 +143,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
       </section>
 
       <section data-testid="evidence">
-        <div className="mb-2 flex flex-wrap items-center gap-3">
-          {/* Choose-one-of-few = the pill rail (§8.6); the black pill retires here too. */}
+        <div className="mb-2">
           <div className="inline-flex gap-1 rounded-xl bg-muted p-1">
             {LENSES.map((entry) => (
               <button
@@ -162,6 +161,10 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
               </button>
             ))}
           </div>
+        </div>
+
+        <KeysetTable<NotificationInfo>
+          toolbar={<>
 
           {lens === "all" && (
             <>
@@ -199,10 +202,7 @@ export function NotificationPanel({ client }: NotificationPanelProps) {
             <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
             <DensityToggle />
           </span>
-        </div>
-
-        <KeysetTable<NotificationInfo>
-          key={`${lens}-${state}-${template}-${refreshToken}`}
+        </>}
           columns={[
             {
               header: "Recipient (masked)",

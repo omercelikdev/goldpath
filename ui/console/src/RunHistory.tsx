@@ -89,7 +89,11 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
 
   return (
     <div data-testid="run-history" className="space-y-4">
-      <div className="flex flex-wrap items-end gap-3 text-xs">
+
+
+      <KeysetTable<RunSummary>
+        toolbar={
+          <>
         <SearchBox value={job} onCommit={setJob} label="Search by job" placeholder="job name…" />
         {/*
           The facet LOOKS multi-select (the family pattern) but commits ONE state: the
@@ -126,10 +130,9 @@ export function RunHistory({ client, fleet, refreshToken, onChanged, now, onOpen
             clear filters
           </button>
         )}
-      </div>
-
-      <KeysetTable<RunSummary>
-        key={`${fleet}-${job}-${status}-${from}-${to}-${refreshToken}`}
+      
+          </>
+        }
         columns={[
           {
             header: "Run",
