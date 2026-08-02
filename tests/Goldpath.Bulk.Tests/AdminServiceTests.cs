@@ -52,7 +52,9 @@ public class AdminServiceTests : IDisposable
         await _admin.UploadAsync("payments", BulkFixture.Csv(("E2", "T", "2", null)), "b.csv", "agency-2", "ops", CancellationToken.None);
 
         Assert.Equal(2, (await _admin.GetBatchesAsync(null, null, 10, CancellationToken.None)).Count);
-        Assert.Single(await _admin.GetBatchesAsync("validated", null, 10, CancellationToken.None));
+        Assert.Single(await _admin.GetBatchesAsync(["validated"], null, 10, CancellationToken.None));
+        // R3: several states OR together in one request.
+        Assert.Equal(2, (await _admin.GetBatchesAsync(["validated", "received"], null, 10, CancellationToken.None)).Count);
         Assert.Single(await _admin.GetBatchesAsync(null, "agency-1", 10, CancellationToken.None));
         // H8 frozen contract: take rides AdminPaging.Clamp — the floor answers one row.
         Assert.Single(await _admin.GetBatchesAsync(null, null, 0, CancellationToken.None));

@@ -194,7 +194,7 @@ public class AdminServiceTests
         var second = await fixture.CreateAsync(Fast);
         await admin.PauseAsync(second.Id, "op", CancellationToken.None);
 
-        var paused = await admin.ListAsync("paused", 50, CancellationToken.None);
+        var paused = await admin.ListAsync(["paused"], 50, CancellationToken.None);
         Assert.Equal(second.Id, Assert.Single(paused).Id);
         var all = await admin.ListAsync(null, 50, CancellationToken.None);
         Assert.Equal(2, all.Count);
@@ -288,7 +288,7 @@ public class AdminServiceTests
         await fixture.CreateAsync(Fast);
         var admin = fixture.Admin();
         Assert.Single(await admin.ListAsync(null, 1, CancellationToken.None));
-        Assert.Equal(2, (await admin.ListAsync("not-a-state", 50, CancellationToken.None)).Count);
+        Assert.Equal(2, (await admin.ListAsync(["not-a-state"], 50, CancellationToken.None)).Count);   // unknown values are ignored, as R2 did
     }
 
     [Fact]

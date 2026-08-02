@@ -61,8 +61,8 @@ public class AdminServiceTests : IDisposable
         await _fixture.RequestAsync(NotificationFixture.Renewal("renewal:other"));
 
         Assert.Equal(2, (await _admin.GetNotificationsAsync(null, null, null, 10, CancellationToken.None)).Count);
-        Assert.Single(await _admin.GetNotificationsAsync("requested", "policy-renewal", "agency-1", 10, CancellationToken.None));
-        Assert.Empty(await _admin.GetNotificationsAsync(null, "no-such-template", null, 10, CancellationToken.None));
+        Assert.Single(await _admin.GetNotificationsAsync(["requested"], ["policy-renewal"], "agency-1", 10, CancellationToken.None));
+        Assert.Empty(await _admin.GetNotificationsAsync(null, ["no-such-template"], null, 10, CancellationToken.None));
 
         var mine = Assert.Single(await _admin.GetNotificationsAsync(null, null, "agency-1", 10, CancellationToken.None));
         Assert.NotNull(await _admin.GetNotificationAsync(mine.Id, "agency-1", CancellationToken.None));
