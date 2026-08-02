@@ -123,8 +123,10 @@ describe("the campaign governor panel", () => {
 
     await userEvent.click(await screen.findByRole("button", { name: /State/ }));
     await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Paused/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Running/ }));
     await userEvent.keyboard("{Escape}");
-    await waitFor(() => expect(seen.some((url) => url.includes("state=Paused"))).toBe(true));
+    // R3: both selections travel as REPEATED params — OR on the server.
+    await waitFor(() => expect(seen.some((url) => url.includes("state=Paused") && url.includes("state=Running"))).toBe(true));
   });
 
   it("shows the policy in force, including what the quota and window mean right now", async () => {

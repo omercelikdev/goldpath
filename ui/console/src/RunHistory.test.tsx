@@ -81,6 +81,10 @@ describe("the run history (contract R2.4)", () => {
     // Filtering client-side would narrow ONE take-bounded page and read as "no failures"
     // while more sat behind it.
     await waitFor(() => expect(asked.at(-1)!.searchParams.get("status")).toBe("Failed"));
+
+    // R3: a second selection APPENDS — repeated params, OR on the server.
+    await user.click(await screen.findByRole("menuitemcheckbox", { name: /Running/ }));
+    await waitFor(() => expect(asked.at(-1)!.searchParams.getAll("status")).toEqual(["Failed", "Running"]));
   });
 
   it("a date window covers the WHOLE of the last day, not its first instant", async () => {
