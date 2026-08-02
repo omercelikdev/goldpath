@@ -49,7 +49,7 @@ export function useDensity(): Density {
 
 /** Row padding per rhythm — read by every family table body cell. */
 export function densityCell(density: Density): string {
-  return density === "compact" ? "px-4 py-1.5" : "px-4 py-3";
+  return density === "compact" ? "px-4 py-2" : "px-4 py-3";
 }
 
 /** The toolbar's density control: the IconAction, saying which rhythm a press GIVES. */

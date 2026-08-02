@@ -251,7 +251,10 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
 
       <section data-testid="batches">
         <h2 className="section-title">Batches</h2>
-        <div className="mb-2 flex flex-wrap items-center gap-2">
+
+
+        <KeysetTable<BulkBatchInfo>
+          toolbar={<>
           <SearchBox value={batchQuery} onCommit={setBatchQuery} label="Search by batch id" placeholder="batch id…" />
           <FacetFilter
                 label="State"
@@ -267,10 +270,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
                 }}
               />
           <span className="ms-auto"><DensityToggle /></span>
-        </div>
-
-        <KeysetTable<BulkBatchInfo>
-          key={`${state}-${refreshToken}`}
+        </>}
           columns={[
             {
               header: "Batch",

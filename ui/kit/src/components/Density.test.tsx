@@ -19,7 +19,7 @@ describe("the density feature (v1.3 §9.3 — one rhythm for every family table)
 
     expect(screen.getByText("eod").closest("td")).toHaveClass("py-3");
     await userEvent.click(screen.getByRole("button", { name: "Compact rows" }));
-    expect(screen.getByText("eod").closest("td")).toHaveClass("py-1.5");
+    expect(screen.getByText("eod").closest("td")).toHaveClass("py-2");   // the reference's dense rhythm
     // The choice persists like the rail state — the operator meant it.
     expect(localStorage.getItem(DENSITY_KEY)).toBe("compact");
     expect(screen.getByRole("button", { name: "Comfortable rows" })).toHaveAttribute("aria-pressed", "true");

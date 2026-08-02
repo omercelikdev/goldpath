@@ -21,6 +21,9 @@ export interface KeysetTableProps<T> {
   rowKey: (row: T) => string;
   take?: number;
   emptyMessage?: string;
+  /** Rendered INSIDE the card as its header strip (v1.3 §9.1 as corrected): search,
+      facets and utilities belong to the TABLE, not to the page above it. */
+  toolbar?: ReactNode;
 }
 
 /** AdminPaging.Clamp, mirrored — the UI never asks for what the API would refuse. */
@@ -36,7 +39,7 @@ type LoadState = "loading" | "idle" | "error";
  * numbers, NO total count (the contract deliberately never counts large tables).
  * Pages append; the walk ends when the API answers `nextCursor: null`.
  */
-export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMessage = "Nothing here yet." }: KeysetTableProps<T>) {
+export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMessage = "Nothing here yet.", toolbar }: KeysetTableProps<T>) {
   // The journal's density feature (§9.3): one rhythm for every family table.
   const cell = densityCell(useDensity());
   const [rows, setRows] = useState<T[]>([]);
@@ -71,6 +74,7 @@ export function KeysetTable<T>({ columns, loadPage, rowKey, take = 50, emptyMess
   return (
     <div data-testid="keyset-table">
       <div className="overflow-hidden rounded-2xl border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
+      {toolbar && <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">{toolbar}</div>}
       <div className="scroll-area overflow-x-auto">
       <table className="w-full border-collapse text-sm">
         <thead>

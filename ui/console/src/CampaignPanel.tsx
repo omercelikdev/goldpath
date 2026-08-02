@@ -154,8 +154,12 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
       {error && <Banner tone="danger">{error}</Banner>}
 
       <section>
-        <div className="mb-2 flex flex-wrap items-center gap-2">
-          <h2 className="text-sm font-medium text-muted-foreground">Campaigns</h2>
+        <h2 className="section-title">Campaigns</h2>
+
+
+        <KeysetTable<CampaignInfo>
+          toolbar={<>
+          
           {/*
             The family facet (§8.14). It COMMITS one state: the frozen contract's ?state=
             takes a single value until revision R3 lands — toggling the active one clears.
@@ -181,10 +185,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             <IconAction icon={<RefreshCw />} label="Refresh" onClick={refresh} />
             <DensityToggle />
           </span>
-        </div>
-
-        <KeysetTable<CampaignInfo>
-          key={`${state}-${refreshToken}`}
+        </>}
           columns={[
             {
               header: "Campaign",

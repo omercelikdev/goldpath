@@ -14,6 +14,9 @@ export interface TableProps<T> {
   /** A row click opens the entity in a Sheet (v1.1 §7.4) — never an unfold below. */
   onRowClick?: (row: T) => void;
   emptyMessage?: string;
+  /** Rendered INSIDE the card as its header strip (v1.3 §9.1 as corrected): search,
+      facets and utilities belong to the TABLE, not to the page above it. */
+  toolbar?: ReactNode;
 }
 
 /**
@@ -21,11 +24,12 @@ export interface TableProps<T> {
  * rows — over a REAL html table, because screen readers get column semantics for free.
  * Ad-hoc lists that were tables in disguise retire onto this.
  */
-export function Table<T>({ columns, rows, rowKey, onRowClick, emptyMessage = "Nothing here yet." }: TableProps<T>) {
+export function Table<T>({ columns, rows, rowKey, onRowClick, emptyMessage = "Nothing here yet.", toolbar }: TableProps<T>) {
   // The journal's density feature (§9.3): one rhythm for every family table.
   const cell = densityCell(useDensity());
   return (
     <div className="overflow-hidden rounded-2xl border border-border bg-background" style={{ boxShadow: "var(--shadow-surface)" }}>
+      {toolbar && <div className="flex flex-wrap items-center gap-2 border-b border-border p-3">{toolbar}</div>}
       <div className="scroll-area overflow-x-auto">
         <table className="w-full border-collapse text-sm">
           <thead>
