@@ -85,6 +85,9 @@ export function Select({ value, onChange, options, id, className = "", placehold
         aria-expanded={open}
         aria-controls={listId}
         aria-haspopup="listbox"
+        // The walk must be AUDIBLE, not just visible: focus stays on the button, so the
+        // highlighted option is exposed through aria-activedescendant (review R3).
+        aria-activedescendant={open ? `${listId}-${active}` : undefined}
         disabled={disabled}
         className="inline-flex h-9 w-full items-center justify-between gap-2 rounded-lg border border-input bg-background ps-3 pe-2.5 text-sm text-foreground outline-none transition-colors focus:border-border-strong disabled:opacity-50"
         onClick={() => (open ? setOpen(false) : openAt(options.findIndex((option) => option.value === value)))}
@@ -106,6 +109,7 @@ export function Select({ value, onChange, options, id, className = "", placehold
           {options.map((option, index) => (
             <li
               key={option.value}
+              id={`${listId}-${index}`}
               role="option"
               aria-selected={option.value === value}
               className={`flex cursor-pointer select-none items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm ${

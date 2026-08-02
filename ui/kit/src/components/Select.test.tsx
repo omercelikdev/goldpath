@@ -33,7 +33,10 @@ describe("the family select (v1.2 §8.7, modernized — the family's OWN listbox
 
     trigger.focus();
     await userEvent.keyboard("{ArrowDown}");        // opens at the current value
-    await userEvent.keyboard("{ArrowDown}{Enter}"); // walks to "b", chooses it
+    await userEvent.keyboard("{ArrowDown}");        // walks to "b"…
+    // …and the walk is AUDIBLE: the button points at the highlighted option.
+    expect(trigger.getAttribute("aria-activedescendant")).toBe(screen.getByRole("option", { name: "bee" }).id);
+    await userEvent.keyboard("{Enter}");            // chooses it
     expect(onChange).toHaveBeenCalledWith("b");
 
     await userEvent.keyboard("{ArrowDown}");
