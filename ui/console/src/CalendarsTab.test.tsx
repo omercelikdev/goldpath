@@ -97,7 +97,8 @@ describe("the calendars tab (frozen CRUD, first screened in U5)", () => {
 
     await user.click(await screen.findByRole("button", { name: "add a calendar" }));
     await user.type(screen.getByLabelText("Name"), "weekends");
-    await user.selectOptions(screen.getByLabelText("Type"), "weekly");
+    await user.click(screen.getByRole("combobox", { name: "calendar type" }));
+    await user.click(await screen.findByRole("option", { name: "weekly" }));
     await user.click(screen.getByLabelText("Saturday"));
     await user.click(screen.getByLabelText("Sunday"));
     await user.click(screen.getByRole("button", { name: "create it" }));
@@ -115,7 +116,8 @@ describe("the calendars tab (frozen CRUD, first screened in U5)", () => {
 
     await user.click(await screen.findByRole("button", { name: "add a calendar" }));
     await user.type(screen.getByLabelText("Name"), "nights");
-    await user.selectOptions(screen.getByLabelText("Type"), "cron");
+    await user.click(screen.getByRole("combobox", { name: "calendar type" }));
+    await user.click(await screen.findByRole("option", { name: "cron" }));
     await user.type(screen.getByLabelText(/Excluded times/), "0 0 0-6 * * ?");
     await user.click(screen.getByRole("button", { name: "create it" }));
     await user.click(screen.getByRole("alertdialog").querySelector("button")!);
@@ -131,7 +133,8 @@ describe("the calendars tab (frozen CRUD, first screened in U5)", () => {
 
     await user.click(await screen.findByRole("button", { name: "add a calendar" }));
     await user.type(screen.getByLabelText("Name"), "new-year");
-    await user.selectOptions(screen.getByLabelText("Type"), "annual");
+    await user.click(screen.getByRole("combobox", { name: "calendar type" }));
+    await user.click(await screen.findByRole("option", { name: "annual" }));
     // An annual calendar recurs on the day and month; letting an operator believe they
     // excluded one particular 1 January would be a quiet lie.
     await user.type(screen.getByLabelText(/the year is ignored/), "2026-01-01");

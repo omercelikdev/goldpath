@@ -229,3 +229,16 @@ Same rule as §7/§8: kit-level, swept everywhere.
    the manifest's (ADR-0001, no create/delete), but the SCHEDULE is the operator's,
    and the frozen contract has carried add/remove-trigger verbs since S2. They move
    into the §9.5 dialog like every other form.
+
+U9 addenda (owner review, 2026-08-02):
+- **Header alignment**: a right-aligned column aligns its HEADER too. The th carried
+  both `text-start` and `text-end` and the stylesheet's order let start win — the
+  class is conditional now, in both family tables.
+- **§8.7 modernized**: the family select is the family's OWN listbox (combobox
+  pattern, hand-rolled — no portal machinery, because the select must live inside
+  modal dialogs and the popover libraries loop the test DOM there). The platform
+  popup retires everywhere: archive picker, bulk definition, calendar type, trigger
+  kind, the shell's service picker.
+- **§8.13 stands confirmed**: facets go truly multi — OR within a facet, AND across
+  facets, on every list — once contract revision R3 (repeated query params) lands
+  server-side. The UI keeps refusing to fake OR by merging take-bounded pages.

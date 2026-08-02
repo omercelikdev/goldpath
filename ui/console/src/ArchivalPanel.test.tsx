@@ -288,7 +288,8 @@ describe("the archival panel (chain health, retrieval, lifecycle)", () => {
     await retrieve();
     await screen.findByTestId("archive-entry");
 
-    await userEvent.selectOptions(screen.getByLabelText("archive"), "claims");
+    await userEvent.click(screen.getByRole("combobox", { name: "archive" }));
+    await userEvent.click(await screen.findByRole("option", { name: "claims" }));
 
     // The policies entry must not linger under the claims archive's name.
     expect(screen.queryByTestId("archive-entry")).toBeNull();

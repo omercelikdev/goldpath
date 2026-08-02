@@ -1,6 +1,6 @@
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, Dialog, Table, VerbButton } from "@goldpath/kit";
+import { Banner, Dialog, Select, Table, VerbButton } from "@goldpath/kit";
 import type { VerbOutcome } from "@goldpath/kit";
 import type { AdminClient, CalendarInfo, CalendarSpec } from "./adminClient";
 import { asOutcome } from "./verbs";
@@ -176,16 +176,13 @@ function AddCalendar({ client, fleet, onDone }: { client: AdminClient; fleet: st
         </label>
         <span className="flex flex-col gap-1">
           <label htmlFor="calendar-type">Type</label>
-          <select
+          <Select
             id="calendar-type"
-            className="control"
+            aria-label="calendar type"
             value={type}
-            onChange={(event) => setType(event.target.value as typeof type)}
-          >
-            {TYPES.map((entry) => (
-              <option key={entry.id} value={entry.id}>{entry.label}</option>
-            ))}
-          </select>
+            onChange={(value) => setType(value as typeof type)}
+            options={TYPES.map((entry) => ({ value: entry.id, label: entry.label }))}
+          />
         </span>
         <label className="flex flex-col gap-1">
           Description

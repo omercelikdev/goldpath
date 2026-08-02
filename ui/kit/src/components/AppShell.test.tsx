@@ -76,7 +76,7 @@ describe("the app shell (ui-standard-v1 §3 — the surface scrolls, never the p
   it("the service switcher appears only with a registry, and switching calls its entry", async () => {
     const onSelect = vi.fn();
     const { rerender } = render(<AppShell title="CorPay" nav={[nav()]} activeId="runs"><p>c</p></AppShell>);
-    expect(screen.queryByLabelText("service")).toBeNull();   // single-service console: no switcher
+    expect(screen.queryByRole("combobox", { name: "service" })).toBeNull();   // single-service console: no switcher
 
     rerender(
       <AppShell
@@ -90,7 +90,8 @@ describe("the app shell (ui-standard-v1 §3 — the surface scrolls, never the p
       </AppShell>,
     );
 
-    await userEvent.selectOptions(screen.getByLabelText("service"), "payments");
+    await userEvent.click(screen.getByRole("combobox", { name: "service" }));
+    await userEvent.click(await screen.findByRole("option", { name: "payments" }));
     expect(onSelect).toHaveBeenCalledTimes(1);
   });
 
@@ -142,10 +143,11 @@ describe("the app shell (ui-standard-v1 §3 — the surface scrolls, never the p
     );
 
     // No activeService given: the picker shows the first, rather than an empty box.
-    const picker = screen.getByLabelText(/service/i);
-    expect(picker).toHaveValue("payments");
+    const picker = screen.getByRole("combobox", { name: "service" });
+    expect(picker).toHaveTextContent("payments");
 
-    await userEvent.selectOptions(picker, "claims");
+    await userEvent.click(picker);
+    await userEvent.click(await screen.findByRole("option", { name: "claims" }));
     expect(chosen).toEqual(["claims"]);
   });
 });

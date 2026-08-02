@@ -29,9 +29,12 @@ test.describe("the console served by the app itself", () => {
     expect(failures, "the served console must not 404 its own assets").toEqual([]);
 
     // The registry is the app's configuration — three services, named by the host.
-    const picker = page.getByLabel(/service/i);
+    // The picker is the family's own listbox now: open it to read the options.
+    const picker = page.getByRole("combobox", { name: "service" });
     await expect(picker).toBeVisible();
-    await expect(picker.locator("option")).toHaveText(["open", "auth-floored", "tenant-scoped"]);
+    await picker.click();
+    await expect(page.getByRole("option")).toHaveText(["open", "auth-floored", "tenant-scoped"]);
+    await page.keyboard.press("Escape");
   });
 
   test("an app that configures NO service shows one service and NO warning at all", async ({ page }) => {
