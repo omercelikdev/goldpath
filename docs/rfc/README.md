@@ -38,6 +38,6 @@ All "implemented" modules are published on nuget.org at `0.1.0-preview.2`.
 | [goldpath-versioning](goldpath-versioning.md) | SemVer & support promise (H7) | accepted (binding) |
 | [goldpath-event-contracts](goldpath-event-contracts.md) | event contracts idiom (per-app `<Name>.Contracts`) | accepted (2026-07-14) |
 | [goldpath-skills-v1](goldpath-skills-v1.md) | the AI skill layer v1 | implemented — ships inside the template; field status: `../strategy/ai-sdlc-status.md` §2 |
-| [goldpath-console](goldpath-console.md) | Goldpath.Console (the UI phase) | accepted — U1–U2 met, U3 in flight |
+| [goldpath-console](goldpath-console.md) | Goldpath.Console (the UI phase) | implemented — U1–U9 met (family standards: `../strategy/ui-standard-v1.md` §7–§9); admin contract at Revision R3 |
 | [goldpath-ai](goldpath-ai.md) | Goldpath.Ai — opt-in runtime AI (gateway · tool registry · decision record · confidence gate) | **ACCEPTED** (2026-07-26, D1–D4 as recommended) — implementation opens after the UI phase |
 | [spec-engine-v1](spec-engine-v1.md) | specdrift (separate repo) | implemented — 0.4.2 published (NuGet tool + MCP + Docker + Action) |

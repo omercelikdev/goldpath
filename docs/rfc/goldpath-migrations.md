@@ -4,7 +4,7 @@
 > tables (qrtz_, archive, bulk, notification, campaign, audit...) need a proven path for
 > (a) enabling a feature on a LIVE system and (b) upgrading BETWEEN Goldpath versions when a
 > package changes its model. Today the template SAYS "production applies the CI migration
-> bundle" — and nothing anywhere produces one. Status: v0.1 DRAFT for approval (2026-07-10).
+> bundle" — and nothing anywhere produces one. Status: **IMPLEMENTED** (H1 S1–S3 shipped: template + `goldpath db` verbs + CI bundle + validate-migrations proofs; accepted 2026-07-10, drafted as v0.1).
 
 ## 1. Scope / Non-Goals
 
