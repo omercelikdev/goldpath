@@ -37,7 +37,8 @@ jobs:
           fi
       - name: install the Claude CLI
         if: steps.key.outputs.present == 'true'
-        run: npm install -g @anthropic-ai/claude-code
+        # Pinned (CLAUDE.md invariant: "latest" is forbidden) — bump deliberately.
+        run: npm install -g @anthropic-ai/claude-code@2.1.220
       - name: review the PR (gates on hard-stop only)
         if: steps.key.outputs.present == 'true'
         env:

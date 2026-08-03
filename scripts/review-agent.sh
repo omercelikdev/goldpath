@@ -182,8 +182,19 @@ print(body)
 PY
 }
 
+# CI has no durable temp dir: when asked, whatever exists survives the runner — called on
+# the failure paths too, because the double-break verdict.raw is exactly the artifact that
+# explains a red run (review R3 on this very script's PR).
+persist_artifacts() {
+  if [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ]; then
+    mkdir -p "$REVIEW_AGENT_ARTIFACT_DIR"
+    cp "$WORK/verdict.raw" "$WORK/note.json" "$WORK/labels.txt" "$REVIEW_AGENT_ARTIFACT_DIR/" 2>/dev/null || true
+  fi
+}
+
 if ! render_verdict; then
   echo "── review-agent: the model broke the output contract — one corrective retry"
+  cp "$WORK/verdict.raw" "$WORK/verdict.first-attempt.raw"
   {
     cat "$WORK/prompt.md"
     echo
@@ -192,14 +203,15 @@ if ! render_verdict; then
     echo "and every finding carries class (R1–R6) and claim."
   } > "$WORK/prompt-retry.md"
   claude -p < "$WORK/prompt-retry.md" > "$WORK/verdict.raw"
-  render_verdict || { echo "review-agent: the output contract broke twice — raw output kept in $WORK" >&2; exit 1; }
+  if ! render_verdict; then
+    persist_artifacts
+    [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ] && cp "$WORK/verdict.first-attempt.raw" "$REVIEW_AGENT_ARTIFACT_DIR/" 2>/dev/null || true
+    echo "review-agent: the output contract broke twice — raw output kept in $WORK" >&2
+    exit 1
+  fi
 fi
 
-# CI has no durable temp dir: when asked, the artifacts survive the runner.
-if [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ]; then
-  mkdir -p "$REVIEW_AGENT_ARTIFACT_DIR"
-  cp "$WORK/verdict.raw" "$WORK/note.json" "$WORK/labels.txt" "$REVIEW_AGENT_ARTIFACT_DIR/" 2>/dev/null || true
-fi
+persist_artifacts
 
 gate() {
   if [ -n "$GATE" ] && grep -q "review:hard-stop" "$WORK/labels.txt"; then
