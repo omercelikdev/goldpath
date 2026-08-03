@@ -650,15 +650,15 @@ export class AdminClient {
   }
 
   /**
-   * The batch list. The frozen surface filters by STATE (and tenant) only — there is no
-   * `definition` parameter, and the panel does NOT fake one client-side: narrowing the
-   * take-bounded page the server returned would read as "no batches" while plenty exist.
-   * The per-definition counts come from `/definitions`; issue #72 tracks adding the
-   * server-side filter.
+   * The batch list. State and definition filter on the SERVER (#72 closed the definition
+   * gap) — the panel never narrows the take-bounded page client-side, which would read as
+   * "no batches" while plenty exist past the page. R3: repeated values OR within a
+   * filter, the filters AND together.
    */
-  bulkBatches(options: { state?: string[]; take?: number } = {}): Promise<BulkBatchInfo[]> {
+  bulkBatches(options: { state?: string[]; definition?: string[]; take?: number } = {}): Promise<BulkBatchInfo[]> {
     const query = new URLSearchParams();
     for (const state of options.state ?? []) query.append("state", state);
+    for (const definition of options.definition ?? []) query.append("definition", definition);
     query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
     return this.get<BulkBatchInfo[]>(`/goldpath/admin/bulk/batches?${query.toString()}`);
   }

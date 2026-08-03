@@ -68,7 +68,8 @@ Data Archival module in Ring C is the long-term answer, referenced not duplicate
 - [x] README (4 sections) + CHANGELOG · analyzer specs (GP0501/0502) SHIPPED in analyzer batch 2
 - [x] Abstractions gains IUserContext; Data's GoldpathSaveContext gains User; the Data
       interceptor now snapshots entries (contributors may add rows while iterating)
-- [ ] Ops package + GM wiring → with GM shape growth (same pattern as Idempotency, tracked)
+- [x] Ops runbook (`ops/audit-trail.md`, 2026-08-03 — no-row triage, the correlation walk,
+      growth/retention pointing at Archival) · GM wiring → with GM shape growth (tracked)
 
 ## 9. Decision Points (Ömer)
 - **D1 — Entity audit rows live in the app's own DbContext/transaction** (a change and its

@@ -11,11 +11,13 @@ green → merge → ledgers updated in the same PR.
 1. **Campaign R1 implementation** — ExcludedDays, EndDate→ExpiredIncomplete, the retry
    ladder (30s → 2m → repair queue), GlobalTps; schema + template + CLI recipe +
    console fields + tests. The one accepted RFC with zero code; blocks S-FLEET-01/03.
-2. **Housekeeping slice** (one group): T14 four `.Produces<T>` · T8 bulk
-   `?definition=` filter · ops packages for Idempotency/AuditTrail/SoftDelete ·
-   analyzers GP1001/1002/1004 · T4 review agent as a CI step + output-contract
-   hardening · a monthly bench cadence · the GM coverage-table reality note and the
-   stale doc lines (done 2026-08-03, this PR).
+2. **Housekeeping slice** (one group) — **DONE 2026-08-03**: T14 four `.Produces<T>` (+
+   the response-side export test; CorPay's re-export proof rides preview.6) · T8 bulk
+   `?definition=` filter (server + facet + smoke past the page bound) · ops runbooks for
+   Idempotency/AuditTrail/SoftDelete · analyzers GP1001/1002/1004 (batch 4) · T4 review
+   agent as a CI step + output-contract hardening (waits only on the `ANTHROPIC_API_KEY`
+   secret — owner decision) · the monthly bench cadence (bench.yml, 1st of the month) ·
+   the GM coverage-table reality note and the stale doc lines (2026-08-03, PR #131).
 3. **preview.6 train** — R3 contract + console U7–U9 + R1 + housekeeping to NuGet;
    T12 (CorPay EOD worker readiness) rides this train and unblocks T1; CorPay pins +
    upgrade guide.

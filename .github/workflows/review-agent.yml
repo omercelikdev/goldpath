@@ -1,0 +1,52 @@
+# T4: the review agent as a CI step — the same script the manual flow runs, with --gate:
+# the job fails ONLY on a hard-stop finding (strategy §0: the agent never blocks on its
+# own otherwise; ordinary findings land as the consolidated comment + labels for a human).
+# Without the ANTHROPIC_API_KEY secret the job skips HONESTLY with a notice — it never
+# pretends a review happened. The verdict artifact outlives the runner either way.
+name: review-agent
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write
+  issues: write   # gh label create
+
+concurrency:
+  group: review-agent-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: is the key configured?
+        id: key
+        run: |
+          if [ -n "$ANTHROPIC_API_KEY" ]; then
+            echo "present=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "present=false" >> "$GITHUB_OUTPUT"
+            echo "::notice::review-agent skipped — the ANTHROPIC_API_KEY secret is not configured; the manual script remains the review path"
+          fi
+      - name: install the Claude CLI
+        if: steps.key.outputs.present == 'true'
+        run: npm install -g @anthropic-ai/claude-code
+      - name: review the PR (gates on hard-stop only)
+        if: steps.key.outputs.present == 'true'
+        env:
+          REVIEW_AGENT_ARTIFACT_DIR: ${{ runner.temp }}/review-agent
+        run: ./scripts/review-agent.sh "${{ github.event.pull_request.number }}" --gate
+      - name: keep the verdict
+        if: always() && steps.key.outputs.present == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: review-agent-verdict
+          path: ${{ runner.temp }}/review-agent
+          if-no-files-found: ignore

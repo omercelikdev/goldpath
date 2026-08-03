@@ -17,6 +17,9 @@
 
   <ItemGroup>
     <ProjectReference Include="../../packages/Goldpath.ApiDefaults/Goldpath.ApiDefaults.csproj" />
+    <!-- The RESPONSE-side export test (#98) maps the two surfaces whose tenant wrappers hide the 200. -->
+    <ProjectReference Include="../../packages/Goldpath.Archival/Goldpath.Archival.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Bulk/Goldpath.Bulk.csproj" />
   </ItemGroup>
 
 </Project>

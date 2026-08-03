@@ -72,9 +72,9 @@ dependency). Descriptors carry `CompilationEnd` custom tags (RS1037).
 | ID | Original blocker | Outcome |
 |---|---|---|
 | GP0403 | needed manifest knowledge (event not declared in the manifest specs) | **MOVES UP A LAYER**: cross-artifact truth is specdrift territory — lands as a drift-profile capability when AsyncAPI support ships (engine v2 scope), not as a Roslyn rule |
-| GP1001 | write-command without [Idempotent] while idempotency is enabled | STAYS Roslyn: per-type attribute analysis needs semantics, but the "is idempotency enabled" input now has a cleaner path — the manifest-as-AdditionalFile design remains right, unblocked whenever we choose to invest |
-| GP1002 | consumer registered without an inbox filter | STAYS deferred: registration-flow analysis; PARTIALLY covered today — the drift profile's outbox row catches the missing AddGoldpathOutbox wiring textually |
-| GP1004 | no natural key detectable on a command | STAYS deferred (semantic, low yield) |
+| GP1001 | write-command without [Idempotent] while idempotency is enabled | **SHIPPED (batch 4, 2026-08-03)** — and the "is idempotency enabled" input got SIMPLER than the manifest-as-AdditionalFile design: with compile-time composition the `AddGoldpathIdempotency()` call in the compilation IS the manifest's truth in code, so a wiring flag (the GP0501 idiom) supersedes the AdditionalFile plumbing entirely. Composition-scoped: command-only assemblies are exempt, like entity-only assemblies for the model-wiring rules |
+| GP1002 | consumer registered without an inbox filter | **SHIPPED (batch 4, 2026-08-03)** — rule text reconciled to the seam that actually shipped (`AddGoldpathOutbox`'s EF inbox superseded the separate InboxFilter idea): source-declared MassTransit consumers in a compilation that calls `AddGoldpathMessaging` without `AddGoldpathOutbox`. The drift profile's textual outbox row stays as the cross-project net |
+| GP1004 | no natural key detectable on a command | **SHIPPED (batch 4, 2026-08-03)** — `[Idempotent]` with no `Key*` attribute argument and no property ending Id/Key/No/Number/Reference warns: the full-payload fingerprint fallback breaks on any volatile field |
 | GP0101/0103/0203 | registration-flow / Spec Engine naming rules | 0203 (kebab routes) now has its home: a future specdrift naming-rules pack; 0101/0103 stay deferred |
 
 ## 6. Batch 3 (2026-07-06) — the full Ring B rule backlog
@@ -102,3 +102,22 @@ Twelve rules accumulated by DataProtection/Caching/MultiTenancy/Locking/Auth:
 - [x] Tests green (11 new, 33 total): flag/no-flag per rule incl. the variable-stays-silent
       cases, contributor exemption, visible-Bypass quiet path, provable-leak-only scoping
 - [x] Module RFC backlog lines (5 RFCs) marked SHIPPED · analyzer count now 23
+
+## 7. Batch 4 (2026-08-03) — the idempotency remainder (housekeeping slice)
+
+The three rules the deferred ledger above tracked, now shipped (IdempotencyAnalyzers.cs).
+Two design decisions, both recorded in the ledger rows: GP1001 detects "idempotency is
+enabled" by the `AddGoldpathIdempotency()` wiring call in the compilation — with
+compile-time composition that call IS the manifest's truth in code, superseding the
+manifest-as-AdditionalFile plumbing the original deferral sketched. GP1002's rule text is
+reconciled to the shipped seam: the EF inbox arrives with `AddGoldpathOutbox` (the separate
+InboxFilter idea was superseded), so the rule holds the COMPOSITION accountable — consumers
+declared where `AddGoldpathMessaging` is called but `AddGoldpathOutbox` is not. Both rules
+are composition-scoped on purpose (command-only and consumer-library assemblies are exempt),
+the same exemption shape as the batch-2 model-wiring rules.
+
+### Batch 4 DoD
+- [x] 3 analyzers (GP1001 warn / GP1002 error / GP1004 warn) + descriptors + release rows
+- [x] Tests green (11 new, 80 total): flag/quiet per rule incl. not-composed exemptions,
+      abstract/query quiet paths, declared-key and natural-key quiet paths
+- [x] Idempotency RFC §5 lines marked SHIPPED · analyzer count now 42

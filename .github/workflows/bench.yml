@@ -1,10 +1,14 @@
 # Reference-profile benches (H6): the numbers in each module's ops/*-benchmarks.md are
 # re-measured on PINNED CI hardware (ubuntu-latest: 4 vCPU / 16 GB) so adopters compare
-# against a profile they can rent, not a dev laptop. Dispatch-only — re-run whenever an
-# engine path changes, then update the ops docs from the step summary.
+# against a profile they can rent, not a dev laptop. Runs monthly (the housekeeping
+# cadence — reference numbers older than a month stop being reference) and on dispatch
+# whenever an engine path changes; either way, update the ops docs from the step summary
+# when the numbers move.
 name: bench
 
 on:
+  schedule:
+    - cron: "0 3 1 * *"   # 03:00 UTC on the 1st — the monthly reference re-measure
   workflow_dispatch:
 
 jobs:

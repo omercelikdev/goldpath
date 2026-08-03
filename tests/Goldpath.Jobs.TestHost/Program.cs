@@ -122,6 +122,11 @@ static async Task RunConsoleHostAsync(
         bulk.AddBatch<ClusterPaymentRow>("payments", b => b
             .MaxRows(10_000)
             .RowKey(r => r.EndToEndId));
+        // A SECOND definition, so the console smoke can prove ?definition= narrows the
+        // QUERY on the server (T8/#72) — one definition could never tell filtered from not.
+        bulk.AddBatch<ClusterPaymentRow>("refunds", b => b
+            .MaxRows(10_000)
+            .RowKey(r => r.EndToEndId));
     });
 
     // Campaign joins only when a broker exists: the module releases items through the bus,

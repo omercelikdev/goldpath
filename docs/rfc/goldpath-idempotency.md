@@ -3,7 +3,7 @@
 > This document is also the **reference example of the module RFC template** (foundation 13.8):
 > every module is born by filling in these eight sections. The template sections are fixed;
 > the content is module-specific.
-> Status: **IMPLEMENTED** (package + template + GM wiring shipped; drafted v0.1 2026-07-03 — the unchecked DoD boxes below, analyzers GP1001/1002/1004 and the ops package, remain the module's OPEN remainder, ledgered for the housekeeping slice) · Ring: B · Dependencies: Data (store), Mediant (behavior), Messaging (inbox)
+> Status: **IMPLEMENTED** (package + template + GM wiring shipped; drafted v0.1 2026-07-03; the housekeeping slice 2026-08-03 closed the module's remainder — analyzers GP1001/1002/1004 and the ops runbook) · Ring: B · Dependencies: Data (store), Mediant (behavior), Messaging (inbox)
 
 ---
 
@@ -75,19 +75,21 @@ The public API diff is tracked with PublicApiAnalyzers (foundation section 5).
 
 | ID | Rule | Severity |
 |---|---|---|
-| GP1001 | A write-performing command is not marked `[Idempotent]` while idempotency is enabled | warn |
-| GP1002 | A broker consumer is registered without an inbox filter | error |
+| GP1001 | A write-performing command is not marked `[Idempotent]` while idempotency is enabled — SHIPPED (batch 4) | warn |
+| GP1002 | A broker consumer is composed without the EF inbox (`AddGoldpathOutbox`) — SHIPPED (batch 4; the rule text is reconciled to the seam that actually shipped, which superseded the separate InboxFilter idea) | error |
 | GP1003 | `[Idempotent]` on a GET-semantics query (unnecessary) — SHIPPED (batch 2) | info |
-| GP1004 | No `KeyExpression` and no natural key field can be detected on the command | warn |
+| GP1004 | No `KeyExpression` and no natural key field can be detected on the command — SHIPPED (batch 4) | warn |
 
 ## 6. Ops Package ("no runbook = no module")
 
-- **Metrics:** `goldpath_idempotency_replay_total`, `conflict_total`, `fingerprint_mismatch_total`,
-  `store_latency` (OTel; flows into the Ring A infrastructure)
-- **Dashboard panel:** replay/conflict rate, store latency (Aspire dashboard + Grafana template)
-- **Alerts:** a sudden spike in the replay rate = a client retry storm (signal of an upstream
-  problem); a rise in fingerprint mismatches = a client integration bug
-- **Runbook:** store growth/TTL tuning; diagnosing lock-ups in `wait` mode; key collision analysis
+- **Runbook:** `ops/idempotency.md` (SHIPPED 2026-08-03) — 409/422 triage with the store's
+  own inspection queries, store growth/TTL tuning, `Wait`-mode lock-up diagnosis, and the
+  alert semantics (replay/409 spike = client retry storm; 422 rise = client integration bug)
+- **Metrics:** the module ships NO dedicated meter yet — the runbook cites only honest
+  signals (`http.server.request.duration` by status code, the `Goldpath-Idempotent-Replay`
+  header in access logs, the store's own health). The originally sketched
+  `goldpath_idempotency_*` meters remain unbuilt; if a meter lands, the runbook and this
+  section move together.
 
 ## 7. Test Plan (aligned with foundation 8)
 
@@ -111,7 +113,8 @@ The public API diff is tracked with PublicApiAnalyzers (foundation section 5).
 - [x] Tests 6/6: byte-for-byte replay, 422 fingerprint, 409 in-flight, tenant isolation,
       Wait-mode serialize+replay, no-header/GET passthrough
 - [x] README (4 sections) + CHANGELOG · manifest schema gained the options object
-- [ ] Analyzers (GP1001-1004) + their tests → next Goldpath.Analyzers batch (tracked)
-- [ ] Ops package (replay/conflict metrics + dashboard/alert/runbook) + benchmark baseline →
-      with the module's template wiring (GM-3/5 growth), tracked
+- [x] Analyzers (GP1001-1004) + their tests — batch 4 (housekeeping slice, 2026-08-03):
+      11 flag/quiet facts, composition-scoped wiring detection (see the analyzers RFC ledger)
+- [x] Ops runbook (`ops/idempotency.md`, 2026-08-03) — honest-signals posture: no dedicated
+      meter shipped, none cited; the sketched meters stay in §6 as the open option
 - [ ] Golden manifest impact: idempotency joins GM-2/3/5/6 when those shapes ship (7d)

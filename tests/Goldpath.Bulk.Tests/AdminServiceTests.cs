@@ -51,13 +51,13 @@ public class AdminServiceTests : IDisposable
         var mine = await _fixture.IngestValidatedAsync(BulkFixture.Csv(("E1", "T", "1", null)), tenant: "agency-1");
         await _admin.UploadAsync("payments", BulkFixture.Csv(("E2", "T", "2", null)), "b.csv", "agency-2", "ops", CancellationToken.None);
 
-        Assert.Equal(2, (await _admin.GetBatchesAsync(null, null, 10, CancellationToken.None)).Count);
-        Assert.Single(await _admin.GetBatchesAsync(["validated"], null, 10, CancellationToken.None));
+        Assert.Equal(2, (await _admin.GetBatchesAsync(null, null, null, 10, CancellationToken.None)).Count);
+        Assert.Single(await _admin.GetBatchesAsync(["validated"], null, null, 10, CancellationToken.None));
         // R3: several states OR together in one request.
-        Assert.Equal(2, (await _admin.GetBatchesAsync(["validated", "received"], null, 10, CancellationToken.None)).Count);
-        Assert.Single(await _admin.GetBatchesAsync(null, "agency-1", 10, CancellationToken.None));
+        Assert.Equal(2, (await _admin.GetBatchesAsync(["validated", "received"], null, null, 10, CancellationToken.None)).Count);
+        Assert.Single(await _admin.GetBatchesAsync(null, null, "agency-1", 10, CancellationToken.None));
         // H8 frozen contract: take rides AdminPaging.Clamp — the floor answers one row.
-        Assert.Single(await _admin.GetBatchesAsync(null, null, 0, CancellationToken.None));
+        Assert.Single(await _admin.GetBatchesAsync(null, null, null, 0, CancellationToken.None));
 
         Assert.NotNull(await _admin.GetBatchAsync(mine.Id, "agency-1", CancellationToken.None));
         Assert.Null(await _admin.GetBatchAsync(mine.Id, "agency-2", CancellationToken.None));   // fail-closed
@@ -87,7 +87,47 @@ public class AdminServiceTests : IDisposable
             await db.SaveChangesAsync();
         }
 
-        Assert.Equal(500, (await _admin.GetBatchesAsync(null, null, 1_000_000, CancellationToken.None)).Count);
+        Assert.Equal(500, (await _admin.GetBatchesAsync(null, null, null, 1_000_000, CancellationToken.None)).Count);
+    }
+
+    [Fact]
+    public async Task Batches_filter_by_definition_on_the_server_and_compose_with_state()
+    {
+        // T8 (#72): the definition filter narrows the QUERY, not the returned page — a
+        // definition whose newest batch sits far past any page must still answer.
+        using (var scope = _fixture.Scope())
+        {
+            var db = scope.ServiceProvider.GetRequiredService<BulkTestContext>();
+            db.Set<GoldpathBulkBatch>().Add(new GoldpathBulkBatch
+            {
+                Id = Guid.NewGuid(),
+                Definition = "refunds",
+                FileId = Guid.NewGuid(),
+                State = GoldpathBulkBatchState.Validated,
+                ReceivedAt = DateTimeOffset.UtcNow.AddHours(-1),   // older than every payments row
+            });
+            for (var i = 0; i < 3; i++)
+            {
+                db.Set<GoldpathBulkBatch>().Add(new GoldpathBulkBatch
+                {
+                    Id = Guid.NewGuid(),
+                    Definition = "payments",
+                    FileId = Guid.NewGuid(),
+                    State = GoldpathBulkBatchState.Received,
+                    ReceivedAt = DateTimeOffset.UtcNow.AddSeconds(-i),
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
+
+        var refunds = Assert.Single(await _admin.GetBatchesAsync(null, ["refunds"], null, 1, CancellationToken.None));
+        Assert.Equal("refunds", refunds.Definition);   // take=1 would have shown only payments without the server filter
+
+        // R3: several definitions OR together; definition ANDs with state.
+        Assert.Equal(4, (await _admin.GetBatchesAsync(null, ["refunds", "payments"], null, 10, CancellationToken.None)).Count);
+        Assert.Single(await _admin.GetBatchesAsync(["validated"], ["refunds", "payments"], null, 10, CancellationToken.None));
+        Assert.Empty(await _admin.GetBatchesAsync(["received"], ["refunds"], null, 10, CancellationToken.None));
     }
 
     [Fact]

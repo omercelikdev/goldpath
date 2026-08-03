@@ -233,7 +233,8 @@ train after preview.5, with an upgrade-guide entry for the migration.
 Additive; nothing an R2 client sends changes meaning.
 
 - The list filters `?status=` (jobs runs), `?state=` (bulk batches, campaigns,
-  notifications) and `?template=` (notifications) may now REPEAT:
+  notifications), `?template=` (notifications) and `?definition=` (bulk batches —
+  joined 2026-08-03 with T8/#72, before the revision ships) may now REPEAT:
   `?state=Failed&state=Suppressed`. Several values of one filter are OR'd; different
   filters still AND together. A single value behaves exactly as R2 did; an absent
   filter still means "all". Unknown values are ignored rather than refused — a

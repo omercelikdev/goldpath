@@ -165,7 +165,7 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     );
   });
 
-  it("filters batches by STATE only — the contract has no definition filter to send", async () => {
+  it("filters batches by state, and RE-toggling the active state clears it", async () => {
     const { client: api, fetched } = client();
     render(<BulkPanel client={api} />);
 
@@ -174,7 +174,6 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
     await userEvent.keyboard("{Escape}");
 
     await waitFor(() => expect(fetched.some((url) => url.includes("state=Validated"))).toBe(true));
-    expect(fetched.every((url) => !url.includes("definition="))).toBe(true);
 
     // The single-commit contract's other half: RE-toggling the active state clears it —
     // the next batch fetch carries no state filter at all.
@@ -187,6 +186,33 @@ describe("the bulk intake panel (upload → report → four-eyes gate)", () => {
       expect(since.length).toBeGreaterThan(0);
       expect(since.every((url) => !url.includes("state="))).toBe(true);
     });
+  });
+
+  it("R3 (#72): definitions travel as repeated ?definition= params to the SERVER, ANDed with state", async () => {
+    const { client: api, fetched } = client({
+      definitions: [definition(), definition({ name: "refunds", batchesByState: {}, awaitingApproval: 0 })],
+    });
+    render(<BulkPanel client={api} />);
+
+    await userEvent.click(await screen.findByRole("button", { name: /Definition/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /payments/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /refunds/ }));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(
+        fetched.some((url) => url.includes("definition=payments") && url.includes("definition=refunds")),
+      ).toBe(true),
+    );
+
+    // The filter narrows the QUERY the server answers — never the page client-side.
+    await userEvent.click(screen.getByRole("button", { name: /State/ }));
+    await userEvent.click(await screen.findByRole("menuitemcheckbox", { name: /Validated/ }));
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() =>
+      expect(
+        fetched.some((url) => url.includes("definition=refunds") && url.includes("state=Validated")),
+      ).toBe(true),
+    );
   });
 
   it("opens a batch and shows the row ledger the server reported", async () => {
