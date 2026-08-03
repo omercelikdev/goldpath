@@ -57,6 +57,15 @@ public sealed record GoldpathCampaignPolicy(
     TimeOnly? WindowEnd,
     string TimeZoneId)
 {
+    /// <summary>Days on which nothing releases (R1.1), evaluated in <see cref="TimeZoneId"/>.</summary>
+    public IReadOnlyList<DayOfWeek> ExcludedDays { get; init; } = [];
+
+    /// <summary>Last local calendar day releases are allowed on (R1.2); null = open-ended.</summary>
+    public DateOnly? EndDate { get; init; }
+
+    /// <summary>Attempts per item before the repair queue (R1.3); 1 = today's behavior.</summary>
+    public int MaxAttempts { get; init; } = 1;
+
     /// <summary>True when <paramref name="utcNow"/> falls inside the send window (always true when no window).</summary>
     public bool IsWindowOpen(DateTimeOffset utcNow)
     {
@@ -74,6 +83,28 @@ public sealed record GoldpathCampaignPolicy(
     /// <summary>The policy-timezone calendar day (quota accounting).</summary>
     public DateOnly LocalDay(DateTimeOffset utcNow)
         => DateOnly.FromDateTime(TimeZoneInfo.ConvertTime(utcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId)).Date);
+
+    /// <summary>False on an excluded day (R1.1) — "weekends are off-limits" without a Friday-night human.</summary>
+    public bool IsDayAllowed(DateTimeOffset utcNow)
+        => ExcludedDays.Count == 0
+            || !ExcludedDays.Contains(TimeZoneInfo.ConvertTime(utcNow, TimeZoneInfo.FindSystemTimeZoneById(TimeZoneId)).DayOfWeek);
+
+    /// <summary>True once the local day is PAST <see cref="EndDate"/> (R1.2) — the day itself still counts.</summary>
+    public bool IsExpired(DateTimeOffset utcNow)
+        => EndDate is { } end && LocalDay(utcNow) > end;
+
+    /// <summary>The backoff before attempt N+1 (R1.3): one fixed ladder, 30s then 2m.</summary>
+    public static TimeSpan RetryBackoff(int attemptsSoFar)
+        => attemptsSoFar <= 1 ? TimeSpan.FromSeconds(30) : TimeSpan.FromMinutes(2);
+
+    /// <summary>Parses the model's CSV day set (unknown tokens are ignored, as filters are).</summary>
+    public static IReadOnlyList<DayOfWeek> ParseDays(string? csv)
+        => csv is null
+            ? []
+            : [.. csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+                     .Select(token => Enum.TryParse<DayOfWeek>(token, ignoreCase: true, out var day) ? day : (DayOfWeek?)null)
+                     .Where(day => day is not null)
+                     .Select(day => day!.Value)];
 }
 
 /// <summary>One registered campaign type — code, shipped through PRs (D1). Closures baked.</summary>
@@ -194,6 +225,13 @@ public sealed class GoldpathCampaignOptions
 
     /// <summary>A Processing claim older than this is an interrupted consumer (sweep to repair).</summary>
     public TimeSpan StaleClaimAfter { get; set; } = TimeSpan.FromMinutes(10);
+
+    /// <summary>
+    /// Per-process release ceiling across ALL running campaigns (R1.4); null = off.
+    /// PLATFORM protection, not provider fairness: the pacer is a cluster singleton per
+    /// app, so per-process IS per-app. Cross-app limiting belongs at the gateway.
+    /// </summary>
+    public int? GlobalTps { get; set; }
 
     /// <summary>Registers one campaign type.</summary>
     public GoldpathCampaignOptions AddCampaign<TTarget>(string key, Action<GoldpathCampaignTypeBuilder<TTarget>> configure)

@@ -280,6 +280,9 @@ export interface CampaignInfo {
   windowStart?: string | null;
   windowEnd?: string | null;
   timeZoneId: string;
+  excludedDays: string[];
+  endDate?: string | null;
+  maxAttempts: number;
   windowOpenNow: boolean;
   etaSecondsAtCurrentTps?: number | null;
   createdAt: string;
@@ -320,6 +323,14 @@ export interface CampaignThrottle {
   timeZoneId?: string;
   clearDailyQuota?: boolean;
   clearWindow?: boolean;
+  /** R1.1: English day names ("Saturday"); omitted = keep, clearExcludedDays wipes. */
+  excludedDays?: string[];
+  /** R1.2: yyyy-MM-dd in the policy timezone; omitted = keep, clearEndDate wipes. */
+  endDate?: string;
+  /** R1.3: attempts per item before the repair queue (1 = no auto-retry). */
+  maxAttempts?: number;
+  clearExcludedDays?: boolean;
+  clearEndDate?: boolean;
 }
 
 /** One template with its live queue numbers and its retention promise. */

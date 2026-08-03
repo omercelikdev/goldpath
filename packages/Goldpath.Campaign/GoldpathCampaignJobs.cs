@@ -43,6 +43,9 @@ public sealed class GoldpathCampaignPacerJob<TContext> : IGoldpathJob, IGoldpath
         // Leader-local state (D3's cache tier at single-leader): fractional TPS budgets
         // and open enumeration streams live HERE; the durable rows stay the truth.
         var tpsBudgets = new Dictionary<Guid, double>();
+        // R1.4: ONE bucket over every campaign in the slice — per-campaign limits cannot
+        // see each other, and five campaigns at once must not melt the platform.
+        var globalBudget = 0d;
         var streams = new Dictionary<Guid, LeaderStream>();
         try
         {
@@ -57,9 +60,16 @@ public sealed class GoldpathCampaignPacerJob<TContext> : IGoldpathJob, IGoldpath
                 var db = tickScope.ServiceProvider.GetRequiredService<TContext>();
                 var campaigns = await _engine.LoadWorkableAsync(db, cancellationToken);
                 db.ChangeTracker.Clear();
+                if (_options.GlobalTps is { } globalTps)
+                {
+                    globalBudget = Math.Min(globalBudget + globalTps * _options.LeaderTick.TotalSeconds, globalTps);
+                }
+
                 foreach (var campaign in campaigns)
                 {
-                    await WorkOneTickAsync(tickScope.ServiceProvider, campaign, tpsBudgets, streams, chunk, cancellationToken);
+                    var spent = await WorkOneTickAsync(tickScope.ServiceProvider, campaign, tpsBudgets,
+                        _options.GlobalTps is null ? null : globalBudget, streams, chunk, cancellationToken);
+                    globalBudget -= spent;
                 }
 
                 var elapsed = _time.GetElapsedTime(tickStart);
@@ -94,12 +104,26 @@ public sealed class GoldpathCampaignPacerJob<TContext> : IGoldpathJob, IGoldpath
         }
     }
 
-    private async Task WorkOneTickAsync(
+    private async Task<int> WorkOneTickAsync(
         IServiceProvider services, GoldpathCampaign campaign,
-        Dictionary<Guid, double> tpsBudgets, Dictionary<Guid, LeaderStream> streams,
+        Dictionary<Guid, double> tpsBudgets, double? globalBudget, Dictionary<Guid, LeaderStream> streams,
         GoldpathJobChunk chunk, CancellationToken cancellationToken)
     {
         var db = services.GetRequiredService<TContext>();
+
+        // R1.2 first: past the end date the remainder is a REPORT — a campaign born
+        // expired must not even enumerate, and the flip must not wait out a slice
+        // boundary behind enumeration.
+        if (campaign.State is GoldpathCampaignState.Created or GoldpathCampaignState.Enumerating or GoldpathCampaignState.Running
+            && GoldpathCampaignEngine<TContext>.PolicyOf(campaign).IsExpired(_time.GetUtcNow()))
+        {
+            if (await TryExpireAsync(db, campaign, cancellationToken) && streams.Remove(campaign.Id, out var open))
+            {
+                await open.DisposeAsync();
+            }
+
+            return 0;
+        }
 
         // 1) Enumerate ahead (streaming, ceilinged) while the source has more.
         if (!campaign.EnumerationComplete && campaign.State is GoldpathCampaignState.Created or GoldpathCampaignState.Enumerating or GoldpathCampaignState.Running)
@@ -130,17 +154,26 @@ public sealed class GoldpathCampaignPacerJob<TContext> : IGoldpathJob, IGoldpath
 
         if (campaign.State != GoldpathCampaignState.Running)
         {
-            return;   // paused / ceiling-paused / still enumerating first batch
+            return 0;   // paused / ceiling-paused / still enumerating first batch
         }
 
         // 2) Policy math on the LIVE row values (throttle takes effect within one tick).
         var policy = GoldpathCampaignEngine<TContext>.PolicyOf(campaign);
         var now = _time.GetUtcNow();
+
         await _engine.RollQuotaDayIfNeededAsync(db, campaign, cancellationToken);
+        if (!policy.IsDayAllowed(now))
+        {
+            // R1.1: an excluded day releases nothing — and the day AFTER resumes
+            // without a human. In-flight items still drain; the sink still applies.
+            GoldpathCampaignMetrics.WindowClosed(campaign.Type);
+            return 0;
+        }
+
         if (!policy.IsWindowOpen(now))
         {
             GoldpathCampaignMetrics.WindowClosed(campaign.Type);
-            return;
+            return 0;
         }
 
         var budget = tpsBudgets.GetValueOrDefault(campaign.Id)
@@ -150,11 +183,24 @@ public sealed class GoldpathCampaignPacerJob<TContext> : IGoldpathJob, IGoldpath
         var allowance = (int)Math.Floor(Math.Min(budget, Math.Max(0,
             Math.Min(policy.MaxInFlight - inFlight,
                 policy.DailyQuota is { } quota ? quota - campaign.ReleasedToday : long.MaxValue))));
+        if (globalBudget is { } shared)
+        {
+            // R1.4: the global gate caps the ALLOWANCE — window, quota and in-flight math
+            // stay per-campaign; only the release rate is shared.
+            allowance = Math.Min(allowance, (int)Math.Floor(Math.Max(0, shared)));
+        }
 
+        var spent = 0;
         if (allowance > 0)
         {
-            var released = await _engine.ReleaseBatchAsync(services, campaign, allowance, cancellationToken);
-            budget -= released;
+            // R1.3: ripe retries ride the SAME allowance as fresh releases — a retry storm
+            // must not out-run the policy any more than a first send may.
+            var retried = await _engine.ReleaseRipeRetriesAsync(services, campaign, allowance, cancellationToken);
+            var released = retried >= allowance
+                ? 0
+                : await _engine.ReleaseBatchAsync(services, campaign, allowance - retried, cancellationToken);
+            spent = retried + released;
+            budget -= spent;
         }
 
         tpsBudgets[campaign.Id] = budget;
@@ -207,6 +253,35 @@ public sealed class GoldpathCampaignPacerJob<TContext> : IGoldpathJob, IGoldpath
 
         db.ChangeTracker.Clear();
         GoldpathCampaignMetrics.Snapshot(campaign, inFlight);
+        return spent;
+    }
+
+    /// <summary>
+    /// Flips a Running campaign whose EndDate passed to ExpiredIncomplete (state-token
+    /// guarded, so a racing verb wins and the flip re-evaluates next tick). The remaining
+    /// count IS the report; nothing is stamped onto the items themselves.
+    /// </summary>
+    private async Task<bool> TryExpireAsync(TContext db, GoldpathCampaign campaign, CancellationToken cancellationToken)
+    {
+        try
+        {
+            db.Attach(campaign);
+            campaign.State = GoldpathCampaignState.ExpiredIncomplete;
+            campaign.CompletedAt = _time.GetUtcNow();
+            campaign.LastVerb = $"goldpath: end date {campaign.EndDate:yyyy-MM-dd} passed with "
+                + $"{campaign.EnumeratedThrough - campaign.SucceededCount - campaign.FailedCount} items remaining — the remainder is a report";
+            await db.SaveChangesAsync(cancellationToken);
+            _logger.LogWarning("Campaign {CampaignId} expired incomplete at its end date.", campaign.Id);
+            return true;
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return false;   // a verb raced us; next tick re-evaluates
+        }
+        finally
+        {
+            db.ChangeTracker.Clear();
+        }
     }
 
     /// <inheritdoc />

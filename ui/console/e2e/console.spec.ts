@@ -398,6 +398,63 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("button", { name: "pause" })).toHaveCount(0);
   });
 
+  test("campaign R1: an excluded day halts release; an end date expires the remainder into a report", async ({ page, request }) => {
+    // Two probes, created through the API like every campaign. The first excludes
+    // TODAY from day one; the second was born already past its end date.
+    const day = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"][new Date().getUTCDay()];
+    const yesterday = new Date(Date.now() - 86_400_000).toISOString().slice(0, 10);
+    const excluded = await request.post(`${service}/goldpath/admin/campaign/`, {
+      data: { type: "welcome", name: "r1-excluded", policy: { tps: 50, maxInFlight: 50, excludedDays: [day] } },
+    });
+    expect(excluded.ok()).toBeTruthy();
+    const expiring = await request.post(`${service}/goldpath/admin/campaign/`, {
+      data: { type: "welcome", name: "r1-expiring", policy: { tps: 50, maxInFlight: 50, endDate: yesterday } },
+    });
+    expect(expiring.ok()).toBeTruthy();
+
+    const openCampaigns = async () => {
+      await page.goto(`/?base=${encodeURIComponent(service)}`);
+      await page.getByTestId("shell-rail").getByRole("button", { name: "Campaigns", exact: true }).click();
+      await expect(page.getByTestId("campaign-panel")).toBeVisible();
+    };
+
+    // The expiring probe flips to the R1 terminal state on the pacer's own clock.
+    await expect(async () => {
+      await openCampaigns();
+      await expect(page.getByRole("row", { name: /r1-expiring/ })).toContainText("ExpiredIncomplete", { timeout: 5_000 });
+    }).toPass({ timeout: 90_000 });
+
+    // The excluded probe releases NOTHING today — enumeration may finish, release must not move.
+    await page.getByRole("button", { name: "r1-excluded" }).click();
+    const detail = page.getByTestId("campaign-detail");
+    await expect(detail).toBeVisible();
+    await expect(detail).toContainText(day.slice(0, 3));   // the policy row says which day is off
+    // textContent concatenates the label and the value ("Released0 of N") — assert
+    // on that seam, which no other number can fake.
+    await expect(page.getByTestId("sheet")).toContainText(/Released0 of/);
+
+    // Lifting the exclusion live resumes it — the operator sentence R1.1 promises.
+    await page.keyboard.press("Escape");
+    await expect(async () => {
+      await openCampaigns();
+      await page.getByRole("button", { name: "r1-excluded" }).click();
+      // The family checkbox keeps its real input sr-only; actionability wants the
+      // LABEL, which is what an operator clicks anyway.
+      await page.getByTestId("sheet").getByText("clear excluded days").click();
+      await page.getByTestId("sheet").getByRole("button", { name: "throttle" }).click();
+      const dialog = page.getByRole("alertdialog");
+      await expect(dialog).toContainText("no excluded days");
+      await dialog.getByRole("button", { name: "throttle" }).click();
+      await expect(page.getByRole("status").first()).toBeVisible({ timeout: 5_000 });
+    }).toPass({ timeout: 30_000 });
+
+    await expect(async () => {
+      await openCampaigns();
+      await page.getByRole("button", { name: "r1-excluded" }).click();
+      await expect(page.getByTestId("sheet")).not.toContainText(/Released0 of/, { timeout: 5_000 });
+    }).toPass({ timeout: 60_000 });
+  });
+
   test("reads the notification evidence: sent, suppressed and failed, each with its own words", async ({ page }) => {
     const openNotifications = async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);

@@ -3,6 +3,12 @@ import userEvent from "@testing-library/user-event";
 import { AdminClient, type CampaignInfo } from "./adminClient";
 import { CampaignPanel, describeThrottle, toThrottle } from "./CampaignPanel";
 
+const emptyDraft = {
+  tps: "", dailyQuota: "", maxInFlight: "", windowStart: "", windowEnd: "", timeZoneId: "",
+  clearDailyQuota: false, clearWindow: false,
+  excludedDays: [] as string[], endDate: "", maxAttempts: "", clearExcludedDays: false, clearEndDate: false,
+};
+
 const campaign = (over: Partial<CampaignInfo> = {}): CampaignInfo => ({
   id: "c1a2b3c4-0000-4000-8000-000000000001",
   type: "welcome-sms",
@@ -22,6 +28,9 @@ const campaign = (over: Partial<CampaignInfo> = {}): CampaignInfo => ({
   windowStart: "09:00:00",
   windowEnd: "20:00:00",
   timeZoneId: "Europe/Istanbul",
+  excludedDays: [],
+  endDate: null,
+  maxAttempts: 1,
   windowOpenNow: true,
   etaSecondsAtCurrentTps: 300,
   createdAt: "2026-07-27T06:00:00Z",
@@ -64,16 +73,14 @@ function client(routes: Routes = {}) {
 const open = async (name = "june-welcome") => userEvent.click(await screen.findByRole("button", { name }));
 
 describe("the throttle patch (a null field KEEPS the server's current value)", () => {
-  const draft = {
-    tps: "",
-    dailyQuota: "",
-    maxInFlight: "",
-    windowStart: "",
-    windowEnd: "",
-    timeZoneId: "",
-    clearDailyQuota: false,
-    clearWindow: false,
-  };
+  const draft = { ...emptyDraft };
+
+  it("R1: the new dials travel only when touched — and clears are explicit", () => {
+    expect(toThrottle({ ...draft, excludedDays: ["Saturday", "Sunday"], endDate: "2026-08-10", maxAttempts: "3" }))
+      .toEqual({ excludedDays: ["Saturday", "Sunday"], endDate: "2026-08-10", maxAttempts: 3 });
+    expect(toThrottle({ ...draft, clearExcludedDays: true, clearEndDate: true }))
+      .toEqual({ clearExcludedDays: true, clearEndDate: true });
+  });
 
   it("sends nothing for an untouched form", () => {
     expect(toThrottle(draft)).toEqual({});

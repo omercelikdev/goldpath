@@ -25,6 +25,9 @@ public sealed record GoldpathCampaignInfo(
     TimeOnly? WindowStart,
     TimeOnly? WindowEnd,
     string TimeZoneId,
+    IReadOnlyList<string> ExcludedDays,
+    DateOnly? EndDate,
+    int MaxAttempts,
     bool WindowOpenNow,
     double? EtaSecondsAtCurrentTps,
     DateTimeOffset CreatedAt,
@@ -45,7 +48,12 @@ public sealed record GoldpathCampaignThrottle(
     TimeOnly? WindowEnd = null,
     string? TimeZoneId = null,
     bool ClearDailyQuota = false,
-    bool ClearWindow = false);
+    bool ClearWindow = false,
+    IReadOnlyList<string>? ExcludedDays = null,
+    DateOnly? EndDate = null,
+    int? MaxAttempts = null,
+    bool ClearExcludedDays = false,
+    bool ClearEndDate = false);
 
 /// <summary>
 /// The campaign admin verbs (campaign RFC §4: create/pause/resume/abort/throttle — EVERY
@@ -192,7 +200,8 @@ public sealed class GoldpathCampaignAdminService<TContext>
 
         var result = await MutateAsync(id, "abort", actor, detail: reason, campaign =>
         {
-            if (campaign.State is GoldpathCampaignState.Completed or GoldpathCampaignState.CompletedWithFailures or GoldpathCampaignState.Aborted)
+            if (campaign.State is GoldpathCampaignState.Completed or GoldpathCampaignState.CompletedWithFailures
+                or GoldpathCampaignState.Aborted or GoldpathCampaignState.ExpiredIncomplete)
             {
                 return $"'{campaign.Name}' is already terminal ({campaign.State}).";
             }
@@ -222,9 +231,24 @@ public sealed class GoldpathCampaignAdminService<TContext>
     /// <summary>The LIVE throttle (D6): patches policy on the row; takes effect within one leader tick.</summary>
     public Task<GoldpathAdminResult> ThrottleAsync(Guid id, GoldpathCampaignThrottle patch, string actor, CancellationToken ct)
     {
-        if (patch.Tps is <= 0 || patch.MaxInFlight is <= 0 || patch.DailyQuota is <= 0)
+        if (patch.Tps is <= 0 || patch.MaxInFlight is <= 0 || patch.DailyQuota is <= 0 || patch.MaxAttempts is <= 0)
         {
             return Task.FromResult(new GoldpathAdminResult(false, "Throttle values must be positive."));
+        }
+
+        if (patch.ExcludedDays is { } days)
+        {
+            var unknown = days.Where(day => !Enum.TryParse<DayOfWeek>(day, ignoreCase: true, out _)).ToArray();
+            if (unknown.Length > 0)
+            {
+                return Task.FromResult(new GoldpathAdminResult(false, $"Unknown day '{unknown[0]}' — use English day names (Saturday, Sunday…)."));
+            }
+
+            if (GoldpathCampaignPolicy.ParseDays(string.Join(",", days)).Count == 7)
+            {
+                // Seven excluded days is a pause wearing a policy's clothes — say so.
+                return Task.FromResult(new GoldpathAdminResult(false, "Every day excluded would never release — pause the campaign instead."));
+            }
         }
 
         if (patch.TimeZoneId is { } tz)
@@ -241,7 +265,8 @@ public sealed class GoldpathCampaignAdminService<TContext>
 
         return MutateAsync(id, "throttle", actor, detail: null, campaign =>
         {
-            if (campaign.State is GoldpathCampaignState.Completed or GoldpathCampaignState.CompletedWithFailures or GoldpathCampaignState.Aborted)
+            if (campaign.State is GoldpathCampaignState.Completed or GoldpathCampaignState.CompletedWithFailures
+                or GoldpathCampaignState.Aborted or GoldpathCampaignState.ExpiredIncomplete)
             {
                 return $"'{campaign.Name}' is terminal ({campaign.State}) — nothing left to throttle.";
             }
@@ -254,6 +279,9 @@ public sealed class GoldpathCampaignAdminService<TContext>
             campaign.WindowStart = effective.WindowStart;
             campaign.WindowEnd = effective.WindowEnd;
             campaign.TimeZoneId = effective.TimeZoneId;
+            campaign.ExcludedDays = effective.ExcludedDays.Count == 0 ? null : string.Join(",", effective.ExcludedDays);
+            campaign.EndDate = effective.EndDate;
+            campaign.MaxAttempts = effective.MaxAttempts;
             campaign.LastVerb = $"throttled by {actor}: {before} -> {Describe(effective)}";
             return null;
         }, ct, detailFactory: campaign => campaign.LastVerb);
@@ -318,7 +346,9 @@ public sealed class GoldpathCampaignAdminService<TContext>
             c.EnumeratedThrough, c.EnumerationComplete, c.ReleasedThrough,
             c.SucceededCount, c.FailedCount, inFlight, remaining,
             c.Tps, c.DailyQuota, c.ReleasedToday, c.MaxInFlight,
-            c.WindowStart, c.WindowEnd, c.TimeZoneId, policy.IsWindowOpen(_time.GetUtcNow()),
+            c.WindowStart, c.WindowEnd, c.TimeZoneId,
+            [.. policy.ExcludedDays.Select(day => day.ToString())], c.EndDate, c.MaxAttempts,
+            policy.IsWindowOpen(_time.GetUtcNow()) && policy.IsDayAllowed(_time.GetUtcNow()),
             eta, c.CreatedAt, c.CreatedBy, c.CompletedAt, c.LastVerb, c.Tenant);
     }
 
@@ -329,9 +359,18 @@ public sealed class GoldpathCampaignAdminService<TContext>
             patch.MaxInFlight ?? current.MaxInFlight,
             patch.ClearWindow ? null : patch.WindowStart ?? current.WindowStart,
             patch.ClearWindow ? null : patch.WindowEnd ?? current.WindowEnd,
-            patch.TimeZoneId ?? current.TimeZoneId);
+            patch.TimeZoneId ?? current.TimeZoneId)
+        {
+            ExcludedDays = patch.ClearExcludedDays
+                ? []
+                : patch.ExcludedDays is { } days
+                    ? GoldpathCampaignPolicy.ParseDays(string.Join(",", days))
+                    : current.ExcludedDays,
+            EndDate = patch.ClearEndDate ? null : patch.EndDate ?? current.EndDate,
+            MaxAttempts = patch.MaxAttempts ?? current.MaxAttempts,
+        };
 
     private static string Describe(GoldpathCampaignPolicy p)
         => string.Create(CultureInfo.InvariantCulture,
-            $"tps={p.Tps} quota={p.DailyQuota?.ToString(CultureInfo.InvariantCulture) ?? "none"} maxInFlight={p.MaxInFlight} window={(p.WindowStart is null ? "always" : $"{p.WindowStart}-{p.WindowEnd} {p.TimeZoneId}")}");
+            $"tps={p.Tps} quota={p.DailyQuota?.ToString(CultureInfo.InvariantCulture) ?? "none"} maxInFlight={p.MaxInFlight} window={(p.WindowStart is null ? "always" : $"{p.WindowStart}-{p.WindowEnd} {p.TimeZoneId}")} excludedDays={(p.ExcludedDays.Count == 0 ? "none" : string.Join("+", p.ExcludedDays))} endDate={p.EndDate?.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture) ?? "open"} maxAttempts={p.MaxAttempts}");
 }
