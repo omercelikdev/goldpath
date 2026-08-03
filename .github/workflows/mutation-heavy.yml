@@ -24,5 +24,8 @@ jobs:
           dotnet-version: |
             8.0.x
             10.0.x
+      # Stryker is a local tool — without the restore every job dies in seconds with
+      # "Run 'dotnet tool restore'" (found on the preview.6 pre-flight dispatch).
+      - run: dotnet tool restore
       - name: mutation gate (single testhost — the 16 GB survival mode)
         run: bash scripts/mutation-gate.sh "${{ matrix.package }}"
