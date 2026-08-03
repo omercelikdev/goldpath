@@ -6,7 +6,7 @@ line here fails for you, that is a bug; please file it.
 ## Install (once per machine)
 
 ```bash
-dotnet new install Goldpath.Templates@0.1.0-preview.5   # preview: pin the version
+dotnet new install Goldpath.Templates@0.1.0-preview.6   # preview: pin the version
 dotnet tool install -g Goldpath.Cli --prerelease         # the `goldpath` command
 dotnet tool install -g specdrift                         # the deterministic engine behind check/add
 ```

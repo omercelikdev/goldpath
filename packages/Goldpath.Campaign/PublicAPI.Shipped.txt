@@ -59,7 +59,6 @@ Goldpath.GoldpathCampaignAdminService<TContext>.GoldpathCampaignAdminService(Gol
 Goldpath.GoldpathCampaignAdminService<TContext>.GetAsync(System.Guid id, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathCampaignInfo?>!
 Goldpath.GoldpathCampaignAdminService<TContext>.GetAuditAsync(System.Guid id, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathCampaignAudit!>!>!
 Goldpath.GoldpathCampaignAdminService<TContext>.GetFailedItemsAsync(System.Guid id, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathCampaignFailedItem!>!>!
-Goldpath.GoldpathCampaignAdminService<TContext>.ListAsync(string? state, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathCampaignInfo!>!>!
 Goldpath.GoldpathCampaignAdminService<TContext>.PauseAsync(System.Guid id, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathCampaignAdminService<TContext>.ResumeAsync(System.Guid id, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathCampaignAdminService<TContext>.ThrottleAsync(System.Guid id, Goldpath.GoldpathCampaignThrottle! patch, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
@@ -120,7 +119,6 @@ Goldpath.GoldpathCampaignInfo.CreatedBy.get -> string!
 Goldpath.GoldpathCampaignInfo.CreatedBy.init -> void
 Goldpath.GoldpathCampaignInfo.DailyQuota.get -> int?
 Goldpath.GoldpathCampaignInfo.DailyQuota.init -> void
-Goldpath.GoldpathCampaignInfo.GoldpathCampaignInfo(System.Guid Id, string! Type, string! Name, string! State, long EnumeratedThrough, bool EnumerationComplete, long ReleasedThrough, long SucceededCount, long FailedCount, long InFlight, long Remaining, int Tps, int? DailyQuota, long ReleasedToday, int MaxInFlight, System.TimeOnly? WindowStart, System.TimeOnly? WindowEnd, string! TimeZoneId, bool WindowOpenNow, double? EtaSecondsAtCurrentTps, System.DateTimeOffset CreatedAt, string! CreatedBy, System.DateTimeOffset? CompletedAt, string? LastVerb, string? Tenant) -> void
 Goldpath.GoldpathCampaignInfo.EnumeratedThrough.get -> long
 Goldpath.GoldpathCampaignInfo.EnumeratedThrough.init -> void
 Goldpath.GoldpathCampaignInfo.EnumerationComplete.get -> bool
@@ -272,7 +270,6 @@ Goldpath.GoldpathCampaignThrottle.ClearWindow.get -> bool
 Goldpath.GoldpathCampaignThrottle.ClearWindow.init -> void
 Goldpath.GoldpathCampaignThrottle.DailyQuota.get -> int?
 Goldpath.GoldpathCampaignThrottle.DailyQuota.init -> void
-Goldpath.GoldpathCampaignThrottle.GoldpathCampaignThrottle(int? Tps = null, int? DailyQuota = null, int? MaxInFlight = null, System.TimeOnly? WindowStart = null, System.TimeOnly? WindowEnd = null, string? TimeZoneId = null, bool ClearDailyQuota = false, bool ClearWindow = false) -> void
 Goldpath.GoldpathCampaignThrottle.MaxInFlight.get -> int?
 Goldpath.GoldpathCampaignThrottle.MaxInFlight.init -> void
 Goldpath.GoldpathCampaignThrottle.TimeZoneId.get -> string?
@@ -299,3 +296,45 @@ static Goldpath.GoldpathCampaignExtensions.AddGoldpathCampaign<TBuilder, TContex
 static Goldpath.GoldpathCampaignExtensions.AddGoldpathCampaignConsumers<TContext>(this MassTransit.IBusRegistrationConfigurator! configurator) -> MassTransit.IBusRegistrationConfigurator!
 static Goldpath.GoldpathCampaignExtensions.AddGoldpathCampaignJobs<TContext>(this Goldpath.GoldpathJobsOptions! jobs, string! pacerCron = "0 * * * * ?", System.TimeSpan? deadline = null) -> Goldpath.GoldpathJobsOptions!
 static Goldpath.GoldpathCampaignModel.AddGoldpathCampaign(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder) -> Microsoft.EntityFrameworkCore.ModelBuilder!
+Goldpath.GoldpathCampaignAdminService<TContext>.ListAsync(string![]? state, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathCampaignInfo!>!>!
+Goldpath.GoldpathCampaignInfo.GoldpathCampaignInfo(System.Guid Id, string! Type, string! Name, string! State, long EnumeratedThrough, bool EnumerationComplete, long ReleasedThrough, long SucceededCount, long FailedCount, long InFlight, long Remaining, int Tps, int? DailyQuota, long ReleasedToday, int MaxInFlight, System.TimeOnly? WindowStart, System.TimeOnly? WindowEnd, string! TimeZoneId, System.Collections.Generic.IReadOnlyList<string!>! ExcludedDays, System.DateOnly? EndDate, int MaxAttempts, bool WindowOpenNow, double? EtaSecondsAtCurrentTps, System.DateTimeOffset CreatedAt, string! CreatedBy, System.DateTimeOffset? CompletedAt, string? LastVerb, string? Tenant) -> void
+Goldpath.GoldpathCampaignThrottle.GoldpathCampaignThrottle(int? Tps = null, int? DailyQuota = null, int? MaxInFlight = null, System.TimeOnly? WindowStart = null, System.TimeOnly? WindowEnd = null, string? TimeZoneId = null, bool ClearDailyQuota = false, bool ClearWindow = false, System.Collections.Generic.IReadOnlyList<string!>? ExcludedDays = null, System.DateOnly? EndDate = null, int? MaxAttempts = null, bool ClearExcludedDays = false, bool ClearEndDate = false) -> void
+Goldpath.GoldpathCampaignState.ExpiredIncomplete = 7 -> Goldpath.GoldpathCampaignState
+Goldpath.GoldpathCampaignItemState.AwaitingRetry = 6 -> Goldpath.GoldpathCampaignItemState
+Goldpath.GoldpathCampaign.ExcludedDays.get -> string?
+Goldpath.GoldpathCampaign.ExcludedDays.set -> void
+Goldpath.GoldpathCampaign.EndDate.get -> System.DateOnly?
+Goldpath.GoldpathCampaign.EndDate.set -> void
+Goldpath.GoldpathCampaign.MaxAttempts.get -> int
+Goldpath.GoldpathCampaign.MaxAttempts.set -> void
+Goldpath.GoldpathCampaignItem.Attempts.get -> int
+Goldpath.GoldpathCampaignItem.Attempts.set -> void
+Goldpath.GoldpathCampaignPolicy.ExcludedDays.get -> System.Collections.Generic.IReadOnlyList<System.DayOfWeek>!
+Goldpath.GoldpathCampaignPolicy.ExcludedDays.init -> void
+Goldpath.GoldpathCampaignPolicy.EndDate.get -> System.DateOnly?
+Goldpath.GoldpathCampaignPolicy.EndDate.init -> void
+Goldpath.GoldpathCampaignPolicy.MaxAttempts.get -> int
+Goldpath.GoldpathCampaignPolicy.MaxAttempts.init -> void
+Goldpath.GoldpathCampaignPolicy.IsDayAllowed(System.DateTimeOffset utcNow) -> bool
+Goldpath.GoldpathCampaignPolicy.IsExpired(System.DateTimeOffset utcNow) -> bool
+static Goldpath.GoldpathCampaignPolicy.RetryBackoff(int attemptsSoFar) -> System.TimeSpan
+static Goldpath.GoldpathCampaignPolicy.ParseDays(string? csv) -> System.Collections.Generic.IReadOnlyList<System.DayOfWeek>!
+Goldpath.GoldpathCampaignOptions.GlobalTps.get -> int?
+Goldpath.GoldpathCampaignOptions.GlobalTps.set -> void
+Goldpath.GoldpathCampaignEngine<TContext>.ReleaseRipeRetriesAsync(System.IServiceProvider! services, Goldpath.GoldpathCampaign! campaign, int allowance, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<int>!
+Goldpath.GoldpathCampaignInfo.ExcludedDays.get -> System.Collections.Generic.IReadOnlyList<string!>!
+Goldpath.GoldpathCampaignInfo.ExcludedDays.init -> void
+Goldpath.GoldpathCampaignInfo.EndDate.get -> System.DateOnly?
+Goldpath.GoldpathCampaignInfo.EndDate.init -> void
+Goldpath.GoldpathCampaignInfo.MaxAttempts.get -> int
+Goldpath.GoldpathCampaignInfo.MaxAttempts.init -> void
+Goldpath.GoldpathCampaignThrottle.ExcludedDays.get -> System.Collections.Generic.IReadOnlyList<string!>?
+Goldpath.GoldpathCampaignThrottle.ExcludedDays.init -> void
+Goldpath.GoldpathCampaignThrottle.EndDate.get -> System.DateOnly?
+Goldpath.GoldpathCampaignThrottle.EndDate.init -> void
+Goldpath.GoldpathCampaignThrottle.MaxAttempts.get -> int?
+Goldpath.GoldpathCampaignThrottle.MaxAttempts.init -> void
+Goldpath.GoldpathCampaignThrottle.ClearExcludedDays.get -> bool
+Goldpath.GoldpathCampaignThrottle.ClearExcludedDays.init -> void
+Goldpath.GoldpathCampaignThrottle.ClearEndDate.get -> bool
+Goldpath.GoldpathCampaignThrottle.ClearEndDate.init -> void

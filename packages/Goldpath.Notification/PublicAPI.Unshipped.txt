@@ -1,3 +1,1 @@
 #nullable enable
-*REMOVED*Goldpath.GoldpathNotificationAdminService<TContext>.GetNotificationsAsync(string? state, string? template, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!
-Goldpath.GoldpathNotificationAdminService<TContext>.GetNotificationsAsync(string![]? state, string![]? template, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!

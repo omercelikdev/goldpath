@@ -186,7 +186,6 @@ Goldpath.GoldpathNotificationAdminEndpoints
 Goldpath.GoldpathNotificationAdminService<TContext>
 Goldpath.GoldpathNotificationAdminService<TContext>.GoldpathNotificationAdminService(Goldpath.GoldpathNotificationOptions! options, Microsoft.Extensions.DependencyInjection.IServiceScopeFactory! scopeFactory, System.TimeProvider! time) -> void
 Goldpath.GoldpathNotificationAdminService<TContext>.GetNotificationAsync(System.Guid id, string? tenant, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathNotificationInfo?>!
-Goldpath.GoldpathNotificationAdminService<TContext>.GetNotificationsAsync(string? state, string? template, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!
 Goldpath.GoldpathNotificationAdminService<TContext>.GetTemplatesAsync(System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationTemplateStatus!>!>!
 Goldpath.GoldpathNotificationInfo
 Goldpath.GoldpathNotificationInfo.Attempts.get -> int
@@ -245,3 +244,4 @@ Goldpath.GoldpathNotificationAdminService<TContext>.GetSuppressionsAsync(string?
 Goldpath.GoldpathNotificationAdminService<TContext>.GetFailuresAsync(string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!
 Goldpath.GoldpathEmailOptions.AllowInsecureTransport.get -> bool
 Goldpath.GoldpathEmailOptions.AllowInsecureTransport.set -> void
+Goldpath.GoldpathNotificationAdminService<TContext>.GetNotificationsAsync(string![]? state, string![]? template, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathNotificationInfo!>!>!

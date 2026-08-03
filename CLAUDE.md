@@ -23,16 +23,17 @@ not propose anything that contradicts them; changes only via a superseding ADR).
 - Code style: `.editorconfig` + analyzers + `dotnet format`; XML summaries mandatory on public APIs.
 
 ## Status (2026-08-03)
-Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.5` train is on
+Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.6` train (the
+operations train: Campaign R1, contract R3, console U6–U9, the housekeeping set) is on
 nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Mockifyr is THE mock system
 (foundation §5.1 — no second provider). Phase D shipped the CorPay reference app
 (`samples/corpay`, proven nightly against the published packages). The console phase is
 COMPLETE: U1–U9 met (`docs/rfc/goldpath-console.md`; family standards ui-standard v1.3
 §7–§9 — one visual family with qorpe/mockifyr), the admin contract is at Revision R3
 (repeatable OR filters), and the console smoke (35 journeys + axe) drives three real
-apps and the app-SERVED console. Next: `docs/strategy/master-plan-2026-08.md` — Campaign R1 →
-housekeeping → preview.6 → ADR-0012 Platform/Module SDK → shapes+CLI wizard → pilot
-product module → scenario campaign → the Insurance/Telco samples as the full-set exam. Live status ledgers —
+apps and the app-SERVED console. Next: `docs/strategy/master-plan-2026-08.md` — ADR-0012
+Platform/Module SDK → shapes+CLI wizard → pilot product module → scenario campaign →
+the Insurance/Telco samples as the full-set exam. Live status ledgers —
 keep them updated in the same PR that changes reality: `docs/strategy/ai-sdlc-status.md`
 (AI-assisted SDLC vs reality), `docs/strategy/coverage-matrix.md` (capability × sample),
 and `docs/strategy/open-threads.md` (deferred work with its TRIGGER and the proof that

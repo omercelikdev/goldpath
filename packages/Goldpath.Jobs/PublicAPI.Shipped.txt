@@ -394,7 +394,6 @@ Goldpath.GoldpathFireFacts.GoldpathFireFacts(string! SchedulerName, string! Inst
 const Goldpath.GoldpathJobsExtensions.TriggeredByKey = "goldpath:triggered-by" -> string!
 Goldpath.GoldpathJobsAdminService<TContext>.AddTriggerAsync(string! fleet, string! job, string! name, Goldpath.GoldpathTriggerSpec! spec, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
 Goldpath.GoldpathJobsAdminService<TContext>.RemoveTriggerAsync(string! fleet, string! job, string! name, string! actor, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathAdminResult!>!
-Goldpath.GoldpathJobsAdminService<TContext>.GetRunsAsync(string! fleet, string? job, int take, System.Threading.CancellationToken ct, string? status = null, System.DateTimeOffset? from = null, System.DateTimeOffset? to = null, System.Guid? afterId = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathJobRun!>!>!
 Goldpath.GoldpathFleetConnection
 Goldpath.GoldpathFleetConnection.GoldpathFleetConnection(string! InstanceId, System.DateTimeOffset? RunningSince, int ThreadPoolSize, int JobsExecuted, bool IsShutdown, bool InStandbyMode) -> void
 Goldpath.GoldpathFleetConnection.InStandbyMode.get -> bool
@@ -422,3 +421,4 @@ Goldpath.GoldpathFleetStatus.Nodes.init -> void
 Goldpath.GoldpathFleetStatus.SchedulerName.get -> string!
 Goldpath.GoldpathFleetStatus.SchedulerName.init -> void
 Goldpath.GoldpathJobsAdminService<TContext>.GetFleetStatusAsync(string! fleet, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<Goldpath.GoldpathFleetStatus?>!
+Goldpath.GoldpathJobsAdminService<TContext>.GetRunsAsync(string! fleet, string? job, int take, System.Threading.CancellationToken ct, string![]? status = null, System.DateTimeOffset? from = null, System.DateTimeOffset? to = null, System.Guid? afterId = null) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathJobRun!>!>!
