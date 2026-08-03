@@ -51,6 +51,16 @@ builder.AddGoldpathJobs<WebApplicationBuilder, ReportsDbContext>(jobs =>
 
 var app = builder.Build();
 
+// This worker's PRIVATE tables (reports, reconciliation): built by the CI bundle in
+// production (migrations D4), applied here in dev so first run works. The shared qrtz_
+// set is NOT touched — the API's context owns that DDL (D3 exclusion above), and the
+// AppHost starts this head only after the API is ready.
+if (app.Environment.IsDevelopment() && reportsDbConnection is not null)
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<ReportsDbContext>().Database.MigrateAsync();
+}
+
 app.MapGoldpathDefaultEndpoints();
 app.MapGoldpathJobsAdmin<ReportsDbContext>(exposeUnsecured: true);   // internal fleet console — keep it behind the cluster boundary (H2 opt-out, visible)
 // The console over that same internal surface, with the SAME visible opt-out: this head

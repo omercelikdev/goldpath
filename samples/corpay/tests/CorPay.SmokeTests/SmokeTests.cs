@@ -44,13 +44,21 @@ public class SmokeTests
         var console = await client.GetAsync("/goldpath/console/", timeout.Token);
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, console.StatusCode);
 
-        // The INTERNAL head also serves a console (its own `exposeUnsecured: true` choice,
-        // the cluster boundary being what protects it) — NOT asserted here, because asking
-        // for its readiness is what uncovered a defect this test cannot fix: the worker
-        // validates the Quartz schema at startup while the API is still migrating the
-        // shared database, so it never becomes ready. Pre-existing, and invisible until
-        // something asked. Recorded as open-threads T12 with what must be proven when it
-        // is fixed.
+        // EVERY head reaches ready — this is T12's exit proof. The EOD worker used to die
+        // right here: its Quartz store validated the shared schema while the API was still
+        // migrating it. The AppHost now starts the workers after the API (which owns the
+        // DDL, migrations D3), and each worker applies its own PRIVATE migrations.
+        var eodWorker = app.CreateHttpClient("eod-worker");
+        await WaitUntilAsync(async () =>
+            (await eodWorker.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
+        var paymentsWorker = app.CreateHttpClient("payments-worker");
+        await WaitUntilAsync(async () =>
+            (await paymentsWorker.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
+
+        // The INTERNAL head's console (its own visible `exposeUnsecured: true` choice — the
+        // cluster boundary is the guard) answers the PAGE, unlike the API's 401 above.
+        var internalConsole = await eodWorker.GetAsync("/goldpath/console/", timeout.Token);
+        Assert.Equal(System.Net.HttpStatusCode.OK, internalConsole.StatusCode);
     }
 
     private static async Task WaitUntilAsync(Func<Task<bool>> condition, CancellationToken cancellationToken)
