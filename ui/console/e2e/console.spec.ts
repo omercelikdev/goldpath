@@ -330,6 +330,37 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(detail).toContainText("checked against the ledger");
   });
 
+  test("filters the batch list by definition through the SERVER, past the page bound (#72)", async ({ page, request }) => {
+    // One refunds batch FIRST, then a full page of NEWER payments batches: narrowing the
+    // 50-row page client-side would answer "no batches" for refunds while one exists —
+    // only the server-side filter can walk past the page bound (T8's exit proof).
+    const post = (definition: string, fileName: string, csv: string) =>
+      request.post(`${service}/goldpath/admin/bulk/batches/${definition}?fileName=${fileName}`, {
+        headers: { "content-type": "application/octet-stream" },
+        data: csv,
+      });
+    expect((await post("refunds", "t8-refund.csv", "EndToEndId,Amount\nT8-R1,5.00\n")).ok()).toBeTruthy();
+    for (let index = 0; index < 52; index += 1) {
+      // Unique content per file — the intake dedups identical bodies into one batch.
+      expect((await post("payments", `t8-pay-${index}.csv`, `EndToEndId,Amount\nT8-P${index},1.00\n`)).ok()).toBeTruthy();
+    }
+
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Bulk intake", exact: true }).click();
+    await expect(page.getByTestId("bulk-panel")).toBeVisible();
+
+    // Unfiltered, the page is all newer payments rows — the refunds batch sits past its end.
+    const batchRows = page.getByTestId("batches").getByRole("row");
+    await expect(batchRows.filter({ hasText: "payments" }).first()).toBeVisible();
+    await expect(batchRows.filter({ hasText: "refunds" })).toHaveCount(0);
+
+    await page.getByTestId("batches").getByRole("button", { name: /Definition/ }).click();
+    await page.getByRole("menuitemcheckbox", { name: "refunds" }).click();
+    await page.keyboard.press("Escape");
+    await expect(batchRows.filter({ hasText: "refunds" }).first()).toBeVisible();
+    await expect(batchRows.filter({ hasText: "payments" })).toHaveCount(0);
+  });
+
   test("governs a live campaign: watches it release, throttles, pauses, resumes, aborts", async ({ page, request }) => {
     // The campaign is CREATED through the API, not the console: its parameters are
     // domain-shaped, so authoring belongs to the app. The console governs what exists.

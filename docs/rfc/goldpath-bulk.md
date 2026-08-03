@@ -129,7 +129,8 @@ public sealed class PaymentRowHandler : IGoldpathBulkRowHandler<PaymentRow>
 - `POST /batches/{definition}` — multipart upload → returns the batch (or the EXISTING
   batch on an identical file: content-hash idempotence).
 - `GET /batches` / `GET /batches/{id}` — states, counts (total/valid/invalid/executed/
-  failed), timings, the run id once executing.
+  failed), timings, the run id once executing; filters by `?state=` and `?definition=`
+  (repeatable, contract R3 semantics) on the server.
 - `GET /batches/{id}/errors` — the validation report (row, field, message; pageable).
 - `POST /batches/{id}/approve` / `POST /batches/{id}/reject` — the gate; actor stamped;
   approve refuses when invalid rows exceed the definition's tolerance (default: ANY

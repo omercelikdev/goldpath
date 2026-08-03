@@ -39,6 +39,7 @@ const GATED = "Validated";
 export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
   const [definitions, setDefinitions] = useState<BulkDefinitionStatus[] | null>(null);
   const [states, setStates] = useState<string[]>([]);
+  const [definitionFilter, setDefinitionFilter] = useState<string[]>([]);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [selected, setSelected] = useState<BulkBatchInfo | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -90,10 +91,14 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
           throw error;
         }
       }
-      const batches = await client.bulkBatches({ state: states.length > 0 ? states : undefined, take });
+      const batches = await client.bulkBatches({
+        state: states.length > 0 ? states : undefined,
+        definition: definitionFilter.length > 0 ? definitionFilter : undefined,
+        take,
+      });
       return { items: batches, nextCursor: null };
     },
-    [client, states, batchQuery, refreshToken],
+    [client, states, definitionFilter, batchQuery, refreshToken],
   );
 
   // The validation report IS keyset-paged: the cursor is the last row number of the page.
@@ -264,6 +269,21 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
                   setSelectedId(null);
                 }}
               />
+          <FacetFilter
+                label="Definition"
+                options={(definitions ?? []).map((status) => ({ value: status.name }))}
+                selected={new Set(definitionFilter)}
+                onToggle={(value) => {
+                  setDefinitionFilter((current) =>
+                    current.includes(value) ? current.filter((v) => v !== value) : [...current, value],
+                  );
+                  setSelectedId(null);
+                }}
+                onClear={() => {
+                  setDefinitionFilter([]);
+                  setSelectedId(null);
+                }}
+              />
           <span className="ms-auto"><DensityToggle /></span>
         </>}
           columns={[
@@ -282,7 +302,7 @@ export function BulkPanel({ client, onOpenRun }: BulkPanelProps) {
           ]}
           loadPage={loadBatches}
           rowKey={(batch) => batch.id}
-          emptyMessage="No batches in this state."
+          emptyMessage="No batches match these filters."
         />
       </section>
 

@@ -18,9 +18,9 @@ All "implemented" modules are published on nuget.org at `0.1.0-preview.2`.
 | [goldpath-data](goldpath-data.md) | Goldpath.Data (golden-path core) | implemented |
 | [goldpath-messaging](goldpath-messaging.md) | Goldpath.Messaging (golden-path core) | implemented |
 | [goldpath-analyzers](goldpath-analyzers.md) | Goldpath.Analyzers (executable standards) | implemented |
-| [goldpath-idempotency](goldpath-idempotency.md) | Goldpath.Idempotency (Ring B) | implemented (ops package = written Phase 2 deferral) |
-| [goldpath-audittrail](goldpath-audittrail.md) | Goldpath.AuditTrail (Ring B) | implemented (ops package = written deferral) |
-| [goldpath-softdelete](goldpath-softdelete.md) | Goldpath.SoftDelete (Ring B) | implemented |
+| [goldpath-idempotency](goldpath-idempotency.md) | Goldpath.Idempotency (Ring B) | implemented (ops runbook + GP1001/1002/1004 shipped 2026-08-03) |
+| [goldpath-audittrail](goldpath-audittrail.md) | Goldpath.AuditTrail (Ring B) | implemented (ops runbook shipped 2026-08-03) |
+| [goldpath-softdelete](goldpath-softdelete.md) | Goldpath.SoftDelete (Ring B) | implemented (ops runbook shipped 2026-08-03) |
 | [goldpath-auth](goldpath-auth.md) | Goldpath.Auth (Ring B) | implemented |
 | [goldpath-multitenancy](goldpath-multitenancy.md) | Goldpath.MultiTenancy (Ring B) | implemented |
 | [goldpath-caching](goldpath-caching.md) | Goldpath.Caching (Ring B) | implemented |

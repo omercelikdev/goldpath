@@ -3,10 +3,14 @@
 > Definition of the "review agent" link in the Foundation 6.4 chain: a second AI set of eyes
 > that runs on every MR BEFORE human review. Status: v1 SHIPPED 2026-07-10 — rule set:
 > `.claude/skills/goldpath-review/SKILL.md`, runner: `scripts/review-agent.sh` (PR mode +
-> `--local <diff>` eval mode). The runner is MANUAL today — there is no CI step; one lands
-> when runner minutes carry gh + claude (deferred, tracked in ai-sdlc-status). Calibration
-> telemetry (section 5) starts as the reply-thread convention the posted comment asks for;
-> automated fate-tracking rides the CI enablement.
+> `--local <diff>` eval mode). The CI step LANDED 2026-08-03 (`review-agent.yml`: every PR,
+> `--gate` fails the job on hard-stop findings only, verdict kept as an artifact) and skips
+> honestly until the `ANTHROPIC_API_KEY` repo secret exists — the repo's first stored
+> secret, an owner decision (tracked as T4's remainder). The output contract is hardened in
+> the runner: schema-valid extraction (fenced/bare/balanced candidates), one corrective
+> retry, loud failure on a second break. Calibration telemetry (section 5) starts as the
+> reply-thread convention the posted comment asks for; automated fate-tracking rides the
+> first keyed CI runs.
 
 ---
 
@@ -52,10 +56,14 @@ construction, not by accident.
 
 ## 4. Output Contract
 
-Finding = `{class, file:line, one-sentence claim, evidence (BR-id / spec anchor / pattern
-name), confidence (high|medium), suggested action}`. One consolidated comment on the MR +
+Finding = `{class, file, line, claim (one sentence), evidence (BR-id / spec anchor / pattern
+name), confidence (high|medium), action}` — the keys as the skill's STRICT contract spells
+them (`file` and `line` are separate keys; this doc previously wrote `file:line` and the two
+specs have been reconciled to the skill's shape). One consolidated comment on the MR +
 labels; if there are no findings, a silent approval comment ("R1-R6 scanned, no findings" —
-so it is not mistaken for "not scanned").
+so it is not mistaken for "not scanned"). The runner accepts ONLY a schema-valid verdict
+(every finding carries a legal class and a claim); anything looser is a broken contract —
+one corrective retry, then a loud failure with the raw output kept.
 
 ## 5. Calibration Loop (via telemetry)
 

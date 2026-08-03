@@ -136,4 +136,42 @@ public class ContractExportTests
         Assert.True(post.TryGetProperty("requestBody", out var body), "the POST must document its requestBody");
         Assert.True(body.GetProperty("content").TryGetProperty("application/json", out _));
     }
+
+    /// <summary>A stand-in context — never resolved: document export does not run handlers.</summary>
+    public sealed class ProbeDb(Microsoft.EntityFrameworkCore.DbContextOptions<ProbeDb> options)
+        : Microsoft.EntityFrameworkCore.DbContext(options);
+
+    /// <summary>
+    /// The RESPONSE side (#98): the admin tenant wrappers type their delegates as IResult,
+    /// which exports a bodyless 200 unless the endpoint declares what it returns. This pins
+    /// the four list endpoints that shipped a full train without a schema.
+    /// </summary>
+    [Fact]
+    public async Task Tenant_wrapped_admin_lists_document_their_response_schema()
+    {
+        var builder = WebApplication.CreateBuilder(new WebApplicationOptions { EnvironmentName = "Development" });
+        builder.WebHost.UseTestServer();
+        builder.AddGoldpathApiDefaults();
+
+        var app = builder.Build();
+        app.MapGoldpathApi();
+        app.MapGoldpathBulkAdmin<ProbeDb>(exposeUnsecured: true);
+        app.MapGoldpathArchivalAdmin<ProbeDb>(exposeUnsecured: true);
+        await app.StartAsync();
+
+        var doc = JsonDocument.Parse(await app.GetTestClient().GetStringAsync("/openapi/v1.json")).RootElement;
+        var paths = doc.GetProperty("paths");
+        foreach (var (path, schema) in new (string, string)[]
+        {
+            ("/goldpath/admin/bulk/batches", "GoldpathBulkBatchInfo"),
+            ("/goldpath/admin/bulk/batches/{batchId}/errors", "GoldpathBulkRowError"),
+            ("/goldpath/admin/archival/holds", "GoldpathLegalHold"),
+            ("/goldpath/admin/archival/erasures", "GoldpathErasureRecord"),
+        })
+        {
+            var ok = paths.GetProperty(path).GetProperty("get").GetProperty("responses").GetProperty("200");
+            Assert.True(ok.TryGetProperty("content", out var content), $"{path} must document its 200 body");
+            Assert.Contains(schema, content.GetProperty("application/json").GetProperty("schema").ToString());
+        }
+    }
 }

@@ -90,6 +90,28 @@ public static class Descriptors
         helpLinkUri: HelpBase + "goldpath-softdelete.md",
         customTags: WellKnownDiagnosticTags.CompilationEnd);
 
+    /// <summary>GP1001: commands stay unprotected while the idempotency layer is composed.</summary>
+    public static readonly DiagnosticDescriptor CommandNotIdempotent = new(
+        "GP1001",
+        "A write-performing command is not [Idempotent] while idempotency is composed",
+        "'{0}' is a Mediant command without [Idempotent] in a compilation that calls AddGoldpathIdempotency() — a client retry would execute it twice",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpBase + "goldpath-idempotency.md",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+    /// <summary>GP1002: broker consumers require the EF inbox (AddGoldpathOutbox) in the composition.</summary>
+    public static readonly DiagnosticDescriptor ConsumerWithoutInbox = new(
+        "GP1002",
+        "A broker consumer is composed without the EF inbox",
+        "'{0}' consumes from the broker but this composition never calls AddGoldpathOutbox() — a redelivery would re-execute the consumer unfiltered",
+        Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpBase + "goldpath-idempotency.md",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
+
     /// <summary>GP1003: [Idempotent] on a query is a no-op.</summary>
     public static readonly DiagnosticDescriptor IdempotentOnQuery = new(
         "GP1003",
@@ -97,6 +119,16 @@ public static class Descriptors
         "'{0}' is a query (already idempotent by contract) — the [Idempotent] attribute is a no-op here",
         Category,
         DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpBase + "goldpath-idempotency.md");
+
+    /// <summary>GP1004: [Idempotent] with neither a key expression nor a detectable natural key.</summary>
+    public static readonly DiagnosticDescriptor IdempotentKeyUndetectable = new(
+        "GP1004",
+        "[Idempotent] has no key expression and no detectable natural key",
+        "'{0}' is [Idempotent] but sets no KeyExpression and carries no natural-key property — the key falls back to the full payload fingerprint, which breaks on any volatile field",
+        Category,
+        DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         helpLinkUri: HelpBase + "goldpath-idempotency.md");
 

@@ -29,7 +29,7 @@ nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Mockifyr is THE mo
 (`samples/corpay`, proven nightly against the published packages). The console phase is
 COMPLETE: U1–U9 met (`docs/rfc/goldpath-console.md`; family standards ui-standard v1.3
 §7–§9 — one visual family with qorpe/mockifyr), the admin contract is at Revision R3
-(repeatable OR filters), and the console smoke (33 journeys + axe) drives three real
+(repeatable OR filters), and the console smoke (35 journeys + axe) drives three real
 apps and the app-SERVED console. Next: `docs/strategy/master-plan-2026-08.md` — Campaign R1 →
 housekeeping → preview.6 → ADR-0012 Platform/Module SDK → shapes+CLI wizard → pilot
 product module → scenario campaign → the Insurance/Telco samples as the full-set exam. Live status ledgers —

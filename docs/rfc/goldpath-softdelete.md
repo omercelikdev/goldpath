@@ -59,7 +59,9 @@ not as Deleted — the two modules tell one consistent story · contributor orde
       invisibility + IgnoreQueryFilters, Suppress() scope boundary, the AuditTrail interplay
       — exactly 3 Modified rows with IsDeleted False→True, never "Deleted" — and undelete)
       · PublicAPI locked (Data gains `Order`)
-- [x] README (4 sections) + CHANGELOG · GP0601 SHIPPED in analyzer batch 2 · ops/GM wiring tracked (same pattern)
+- [x] README (4 sections) + CHANGELOG · GP0601 SHIPPED in analyzer batch 2 · ops runbook
+      SHIPPED (`ops/soft-delete.md`, 2026-08-03 — undelete, filtered-index guidance, the
+      deleted-ratio archival signal, the `Suppress()` audit posture) · GM wiring tracked
 
 ## 9. Decision Points (Ömer)
 - **D1 — Hard-delete escape hatch = explicit `Suppress()` scope** (AsyncLocal): visible in

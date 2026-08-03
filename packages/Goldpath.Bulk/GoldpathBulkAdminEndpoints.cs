@@ -36,12 +36,14 @@ public static class GoldpathBulkAdminEndpoints
             return scope.Refusal ?? Results.Ok(await admin.UploadAsync(definition, http.Request.Body, fileName ?? "upload.csv", scope.Tenant, Actor(http), ct));
         });
 
-        // R3: ?state= repeats — several states are OR'd; absent means all (additive, R2-compatible).
-        group.MapGet("/batches", async ([FromQuery] string[]? state, string? tenant, int? take, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
+        // R3: ?state= and ?definition= repeat — values OR within a filter, filters AND together.
+        // The tenant wrapper's ternary types the delegate as IResult, which hides the 200 from
+        // the OpenAPI exporter (#98) — the list endpoints declare it.
+        group.MapGet("/batches", async ([FromQuery] string[]? state, [FromQuery] string[]? definition, string? tenant, int? take, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
         {
             var scope = await AdminTenantScope.ResolveAsync(http, tenant);
-            return scope.Refusal ?? Results.Ok(await admin.GetBatchesAsync(state, scope.Tenant, take ?? 50, ct));
-        });
+            return scope.Refusal ?? Results.Ok(await admin.GetBatchesAsync(state, definition, scope.Tenant, take ?? 50, ct));
+        }).Produces<IReadOnlyList<GoldpathBulkBatchInfo>>();
 
         group.MapGet("/batches/{batchId:guid}", async (Guid batchId, string? tenant, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct) =>
         {
@@ -59,7 +61,7 @@ public static class GoldpathBulkAdminEndpoints
         {
             var scope = await AdminTenantScope.ResolveAsync(http, null);
             return scope.Refusal ?? Results.Ok(await admin.GetErrorsAsync(batchId, scope.Tenant, afterRow ?? 0, take ?? 200, ct));
-        });
+        }).Produces<IReadOnlyList<GoldpathBulkRowError>>();
 
         group.MapPost("/batches/{batchId:guid}/approve", async (Guid batchId, GoldpathBulkDecisionRequest? request, HttpContext http, [FromServices] GoldpathBulkAdminService<TContext> admin, CancellationToken ct)
             => ToResult(await admin.ApproveAsync(batchId, Actor(http), request?.Note, ct)));

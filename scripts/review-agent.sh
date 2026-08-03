@@ -5,13 +5,18 @@
 # Claude CLI, and posts ONE consolidated comment + labels. It never blocks on its own;
 # the two hard-stop classes only add a label a human must resolve.
 #
-# Usage: review-agent.sh <PR-NUMBER> [--dry-run]
+# Usage: review-agent.sh <PR-NUMBER> [--dry-run] [--gate]
 #   --dry-run: print the comment instead of posting (the local proof mode).
+#   --gate:    exit 3 when a hard-stop finding lands (the CI step's teeth — strategy §0:
+#              the agent never blocks on its own EXCEPT the two hard-stop classes).
+# REVIEW_AGENT_ARTIFACT_DIR, when set, receives verdict.raw/note.md/labels.txt even on
+# success — CI uploads it, so the verdict outlives the runner (the temp dir does not).
 # Needs: gh (authenticated), claude (the CLI), python3.
 set -euo pipefail
 
-PR=${1:?usage: review-agent.sh <PR-NUMBER>|--local <diff-file> [--dry-run]}
-DRY=${2:-}
+PR=${1:?usage: review-agent.sh <PR-NUMBER>|--local <diff-file> [--dry-run] [--gate]}
+DRY=""
+GATE=""
 LOCAL_DIFF=""
 if [ "$PR" = "--local" ]; then
   # Local mode: review a raw diff file with no GitHub round-trip — the harness the
@@ -19,6 +24,12 @@ if [ "$PR" = "--local" ]; then
   LOCAL_DIFF=${2:?usage: review-agent.sh --local <diff-file>}
   DRY="--dry-run"
 fi
+for arg in "${@:2}"; do
+  case "$arg" in
+    --dry-run) DRY="--dry-run" ;;
+    --gate) GATE=1 ;;
+  esac
+done
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
 cd "$ROOT"
 
@@ -102,24 +113,56 @@ echo "── review-agent: thinking (rule set: .claude/skills/goldpath-review/SK
 cat .claude/skills/goldpath-review/SKILL.md "$WORK/context.md" > "$WORK/prompt.md"
 claude -p < "$WORK/prompt.md" > "$WORK/verdict.raw"
 
+# Contract hardening: extraction tolerates a fenced block or surrounding prose but accepts
+# ONLY a complete, schema-valid verdict — a finding missing class/claim is a broken
+# contract, not a finding to guess at. One corrective retry, then fail loudly.
+render_verdict() {
 python3 - "$WORK" <<'PY'
 import json, re, sys
 work = sys.argv[1]
 raw = open(f"{work}/verdict.raw").read()
-# The contract is bare JSON; tolerate a fenced block, nothing looser.
-match = re.search(r"\{.*\}", raw, re.DOTALL)
-if not match:
-    sys.exit("review-agent: the model broke the output contract (no JSON object) — raw output kept in " + work)
-verdict = json.loads(match.group(0))
-findings = verdict.get("findings", [])
+
+def candidates(text):
+    # Fenced blocks first (the contract tolerates exactly that much), then the bare text,
+    # then every balanced top-level {...} — two objects in one answer stay two candidates
+    # instead of one unparseable span (the old greedy regex's failure mode).
+    for fenced in re.findall(r"```(?:json)?\s*(\{.*?\})\s*```", text, re.DOTALL):
+        yield fenced
+    yield text.strip()
+    depth, start = 0, None
+    for index, ch in enumerate(text):
+        if ch == "{":
+            if depth == 0:
+                start = index
+            depth += 1
+        elif ch == "}" and depth > 0:
+            depth -= 1
+            if depth == 0:
+                yield text[start : index + 1]
+
+CLASSES = {"R1", "R2", "R3", "R4", "R5", "R6"}
+verdict = None
+for candidate in candidates(raw):
+    try:
+        parsed = json.loads(candidate)
+    except json.JSONDecodeError:
+        continue
+    if isinstance(parsed, dict) and isinstance(parsed.get("findings"), list):
+        verdict = parsed
+        break
+if verdict is None:
+    sys.exit(42)
+
+findings = verdict["findings"]
+if not all(isinstance(f, dict) and f.get("class") in CLASSES and f.get("claim") for f in findings):
+    sys.exit(42)   # a shapeless finding is a broken contract, not data
 
 labels = sorted({
     {"R1": "review:spec-mismatch", "R2": "review:domain", "R3": "review:logic",
      "R4": "review:security", "R5": "review:test-quality", "R6": "review:simplify"}[f["class"]]
-    for f in findings if f.get("class") in {"R1","R2","R3","R4","R5","R6"}
-})
-if any(f.get("class") in {"R2", "R4"} and f.get("confidence") == "high" for f in findings):
-    labels.append("review:hard-stop")
+    for f in findings
+} | ({"review:hard-stop"} if any(
+    f["class"] in {"R2", "R4"} and f.get("confidence") == "high" for f in findings) else set()))
 
 if not findings:
     body = "**Review agent v1** — R1–R6 scanned, no findings."
@@ -137,9 +180,49 @@ json.dump({"body": body}, open(f"{work}/note.json", "w"))
 open(f"{work}/labels.txt", "w").write(",".join(labels))
 print(body)
 PY
+}
+
+# CI has no durable temp dir: when asked, whatever exists survives the runner — called on
+# the failure paths too, because the double-break verdict.raw is exactly the artifact that
+# explains a red run (review R3 on this very script's PR).
+persist_artifacts() {
+  if [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ]; then
+    mkdir -p "$REVIEW_AGENT_ARTIFACT_DIR"
+    cp "$WORK/verdict.raw" "$WORK/note.json" "$WORK/labels.txt" "$REVIEW_AGENT_ARTIFACT_DIR/" 2>/dev/null || true
+  fi
+}
+
+if ! render_verdict; then
+  echo "── review-agent: the model broke the output contract — one corrective retry"
+  cp "$WORK/verdict.raw" "$WORK/verdict.first-attempt.raw"
+  {
+    cat "$WORK/prompt.md"
+    echo
+    echo "REMINDER: the previous answer broke the output contract. Respond with EXACTLY one"
+    echo "JSON object matching the contract above — no prose around it, no second object,"
+    echo "and every finding carries class (R1–R6) and claim."
+  } > "$WORK/prompt-retry.md"
+  claude -p < "$WORK/prompt-retry.md" > "$WORK/verdict.raw"
+  if ! render_verdict; then
+    persist_artifacts
+    [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ] && cp "$WORK/verdict.first-attempt.raw" "$REVIEW_AGENT_ARTIFACT_DIR/" 2>/dev/null || true
+    echo "review-agent: the output contract broke twice — raw output kept in $WORK" >&2
+    exit 1
+  fi
+fi
+
+persist_artifacts
+
+gate() {
+  if [ -n "$GATE" ] && grep -q "review:hard-stop" "$WORK/labels.txt"; then
+    echo "── review-agent: hard-stop finding — gating the PR (exit 3)"
+    exit 3
+  fi
+}
 
 if [ "$DRY" = "--dry-run" ]; then
   echo "── review-agent: dry run — nothing posted (labels would be: $(cat "$WORK/labels.txt"))"
+  gate
   exit 0
 fi
 
@@ -155,4 +238,5 @@ if [ -n "$LABELS" ]; then
   gh pr edit "$PR" --add-label "$LABELS" >/dev/null
   echo "── review-agent: labels applied: $LABELS"
 fi
+gate
 echo "── review-agent: done"

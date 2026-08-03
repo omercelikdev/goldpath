@@ -119,9 +119,9 @@ public sealed class GoldpathBulkAdminService<TContext>
                      .Where(parsed => parsed is not null)
                      .Select(parsed => parsed!.Value)];
 
-    /// <summary>Recent batches, newest first (optionally by state; tenant-scoped when supplied).</summary>
+    /// <summary>Recent batches, newest first (optionally by state/definition; tenant-scoped when supplied).</summary>
     public async Task<IReadOnlyList<GoldpathBulkBatchInfo>> GetBatchesAsync(
-        string[]? state, string? tenant, int take, CancellationToken ct)
+        string[]? state, string[]? definition, string? tenant, int take, CancellationToken ct)
     {
         using var scope = _scopeFactory.CreateScope();
         var db = scope.ServiceProvider.GetRequiredService<TContext>();
@@ -131,6 +131,11 @@ public sealed class GoldpathBulkAdminService<TContext>
         {
             // Several states are OR'd (contract R3); one behaves exactly as R2 did.
             query = query.Where(b => states.Contains(b.State));
+        }
+
+        if (definition is { Length: > 0 })
+        {
+            query = query.Where(b => definition.Contains(b.Definition));
         }
 
         if (tenant is not null)

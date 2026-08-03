@@ -43,7 +43,10 @@ In-code suppression requires a justification (reviewed like any deviation):
 | GP0501 | `IAuditLogged` entity but the model never calls `AddGoldpathAuditLog()` | **error** |
 | GP0502 | Manual write to audit stamp fields from application code | warn |
 | GP0601 | `ISoftDeletable` entity but the model never calls `ApplyGoldpathSoftDelete()` | **error** |
+| GP1001 | Mediant command without `[Idempotent]` while `AddGoldpathIdempotency()` is composed | warn |
+| GP1002 | Broker consumer composed (`AddGoldpathMessaging`) without the EF inbox (`AddGoldpathOutbox`) | **error** |
 | GP1003 | `[Idempotent]` on a Mediant query (no effect) | info |
+| GP1004 | `[Idempotent]` with no `Key*` argument and no natural-key property (full-payload fingerprint fallback) | warn |
 | GP0701 | Classified property on an integration event | warn |
 | GP0702 | Classified property without the DataProtection module | info |
 | GP0801 | `[Cacheable]` on a command | **error** |

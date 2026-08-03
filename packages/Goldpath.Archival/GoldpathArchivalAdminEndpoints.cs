@@ -48,14 +48,18 @@ public static class GoldpathArchivalAdminEndpoints
         group.MapPost("/entries/{definition}/{key}/lift-hold", async (string definition, string key, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
             => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : ToResult(await admin.LiftHoldAsync(definition, key, Actor(http), ct)));
 
+        // The refusal ternary types these delegates as IResult, which hides the 200 from the
+        // OpenAPI exporter (#98) — the list endpoints declare it.
         group.MapGet("/holds", async (bool? includeLifted, int? take, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : Results.Ok(await admin.GetHoldsAsync(includeLifted ?? false, take ?? 100, ct)));
+            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : Results.Ok(await admin.GetHoldsAsync(includeLifted ?? false, take ?? 100, ct)))
+            .Produces<IReadOnlyList<GoldpathLegalHold>>();
 
         group.MapPost("/entries/{definition}/{key}/erase", async (string definition, string key, GoldpathErasureRequest request, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
             => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : ToResult(await admin.EraseAsync(definition, key, request.SubjectKey, Actor(http), request.Detail, ct)));
 
         group.MapGet("/erasures", async (int? take, HttpContext http, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
-            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : Results.Ok(await admin.GetErasuresAsync(take ?? 100, ct)));
+            => await AdminTenantScope.RequireAllTenantsAsync(http) is { } refusal ? refusal : Results.Ok(await admin.GetErasuresAsync(take ?? 100, ct)))
+            .Produces<IReadOnlyList<GoldpathErasureRecord>>();
 
         group.MapPost("/definitions/{definition}/verify", (string definition, [FromServices] GoldpathArchiveAdminService<TContext> admin, CancellationToken ct)
             => admin.VerifyAsync(definition, ct));

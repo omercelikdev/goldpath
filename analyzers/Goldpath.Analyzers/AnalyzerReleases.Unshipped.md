@@ -44,3 +44,6 @@ GP1702 | Goldpath | Warning | Campaign item handler calls SaveChanges directly
 GP1703 | Goldpath | Info | Campaign item handler messages humans without the notification seam
 GP1801 | Goldpath | Warning | Shared Goldpath tables mapped by a second context without excludeFromMigrations
 GP0904 | Goldpath | Warning | Admin endpoint takes a tenant parameter but never consults AdminTenantScope
+GP1001 | Goldpath | Warning | Mediant command without [Idempotent] while idempotency is composed
+GP1002 | Goldpath | Error | Broker consumer composed without the EF inbox (AddGoldpathOutbox)
+GP1004 | Goldpath | Warning | [Idempotent] with no key expression and no detectable natural key
