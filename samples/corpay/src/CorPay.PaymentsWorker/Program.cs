@@ -41,6 +41,15 @@ builder.AddGoldpathMessaging(bus =>
 
 var app = builder.Build();
 
+// This worker's PRIVATE tables (processed work items + the MassTransit inbox/outbox):
+// built by the CI bundle in production (migrations D4), applied here in dev so the FIRST
+// message finds its inbox instead of failing on it. Shared tables stay the API's (D3).
+if (app.Environment.IsDevelopment() && workDbConnection is not null)
+{
+    using var scope = app.Services.CreateScope();
+    await scope.ServiceProvider.GetRequiredService<WorkDbContext>().Database.MigrateAsync();
+}
+
 app.MapGoldpathDefaultEndpoints();
 // Smoke-visible read model (what has been processed) — intentionally the only endpoint.
 app.MapGet("/api/v1/processed", async (WorkDbContext db) =>

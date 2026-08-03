@@ -15,8 +15,15 @@ public class WorkDbContext(DbContextOptions<WorkDbContext> options) : DbContext(
         modelBuilder.ApplyGoldpathModelDefaults();
 
         // Inbox/outbox tables: the consumer-side dedup store (exactly-once processing).
-        modelBuilder.AddInboxStateEntity();
-        modelBuilder.AddOutboxMessageEntity();
-        modelBuilder.AddOutboxStateEntity();
+        // Mapped for RUNTIME use only — the API's context OWNS their DDL (migrations D3:
+        // one table set, one migration owner). Without the exclusion this head's migration
+        // re-created "InboxState" and crashed the first time anything applied it (T12's
+        // quieter half: these migrations had never been applied anywhere).
+        modelBuilder.AddGoldpathContribution(excludeFromMigrations: true, contribute =>
+        {
+            contribute.AddInboxStateEntity();
+            contribute.AddOutboxMessageEntity();
+            contribute.AddOutboxStateEntity();
+        });
     }
 }
