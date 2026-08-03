@@ -48,6 +48,9 @@ public sealed class GoldpathCampaignEngine<TContext>
             WindowStart = effective.WindowStart,
             WindowEnd = effective.WindowEnd,
             TimeZoneId = effective.TimeZoneId,
+            ExcludedDays = effective.ExcludedDays.Count == 0 ? null : string.Join(",", effective.ExcludedDays),
+            EndDate = effective.EndDate,
+            MaxAttempts = effective.MaxAttempts,
             QuotaDay = effective.LocalDay(_time.GetUtcNow()),
             CreatedAt = _time.GetUtcNow(),
             CreatedBy = actor,
@@ -71,7 +74,12 @@ public sealed class GoldpathCampaignEngine<TContext>
     /// <summary>Reads the live policy snapshot off the row (every field is runtime-adjustable, D6).</summary>
     public static GoldpathCampaignPolicy PolicyOf(GoldpathCampaign campaign)
         => new(campaign.Tps, campaign.DailyQuota, campaign.MaxInFlight,
-            campaign.WindowStart, campaign.WindowEnd, campaign.TimeZoneId);
+            campaign.WindowStart, campaign.WindowEnd, campaign.TimeZoneId)
+        {
+            ExcludedDays = GoldpathCampaignPolicy.ParseDays(campaign.ExcludedDays),
+            EndDate = campaign.EndDate,
+            MaxAttempts = campaign.MaxAttempts,
+        };
 
     /// <summary>
     /// Materializes the next enumeration step (streaming, stable order, resumed BY COUNT
@@ -191,6 +199,52 @@ public sealed class GoldpathCampaignEngine<TContext>
         return count;
     }
 
+    /// <summary>
+    /// Re-releases items whose backoff rung has passed (R1.3): re-publish, then flip
+    /// AwaitingRetry back to Released — the same publish-then-mark order as ReleaseBatch,
+    /// for the same crash-safety reason. Counts against the SAME tick allowance.
+    /// </summary>
+    public async Task<int> ReleaseRipeRetriesAsync(
+        IServiceProvider services, GoldpathCampaign campaign, int allowance, CancellationToken cancellationToken)
+    {
+        if (allowance <= 0 || campaign.MaxAttempts <= 1)
+        {
+            return 0;
+        }
+
+        var db = services.GetRequiredService<TContext>();
+        var now = _time.GetUtcNow();
+        // Ripeness filters BEFORE the allowance truncates (review R3): a backlog of
+        // not-yet-ripe low-Seq items must never starve a ripe item behind them. The
+        // ladder's two rungs translate to two constant cutoffs the store can index.
+        var firstRungBefore = now - GoldpathCampaignPolicy.RetryBackoff(1);
+        var secondRungBefore = now - GoldpathCampaignPolicy.RetryBackoff(2);
+        var due = await db.Set<GoldpathCampaignItem>().AsNoTracking()
+            .Where(i => i.CampaignId == campaign.Id && i.State == GoldpathCampaignItemState.AwaitingRetry
+                && ((i.Attempts <= 1 && i.CompletedAt <= firstRungBefore)
+                    || (i.Attempts > 1 && i.CompletedAt <= secondRungBefore)))
+            .OrderBy(i => i.Seq)
+            .Select(i => i.Seq)
+            .Take(allowance)
+            .ToArrayAsync(cancellationToken);
+        if (due.Length == 0)
+        {
+            return 0;
+        }
+
+        var publisher = services.GetRequiredService<IPublishEndpoint>();
+        foreach (var seq in due)
+        {
+            await publisher.Publish(new GoldpathCampaignItemMessage(campaign.Id, seq, campaign.Type), cancellationToken);
+        }
+
+        await db.Set<GoldpathCampaignItem>()
+            .Where(i => i.CampaignId == campaign.Id && due.Contains(i.Seq) && i.State == GoldpathCampaignItemState.AwaitingRetry)
+            .ExecuteUpdateAsync(s => s.SetProperty(i => i.State, GoldpathCampaignItemState.Released), cancellationToken);
+        GoldpathCampaignMetrics.Released(campaign.Type, due.Length);
+        return due.Length;
+    }
+
     /// <summary>Rolls the quota day when the policy-timezone midnight passed (durable — survives takeover).</summary>
     public async Task RollQuotaDayIfNeededAsync(TContext db, GoldpathCampaign campaign, CancellationToken cancellationToken)
     {
@@ -240,6 +294,10 @@ public sealed class GoldpathCampaignEngine<TContext>
         var now = _time.GetUtcNow();
         var succeeded = outcomes.Where(o => o.Succeeded).Select(o => o.Seq).ToArray();
         var failed = outcomes.Where(o => !o.Succeeded).ToArray();
+        var maxAttempts = failed.Length == 0
+            ? 1
+            : await db.Set<GoldpathCampaign>().AsNoTracking()
+                .Where(c => c.Id == campaignId).Select(c => c.MaxAttempts).SingleAsync(cancellationToken);
 
         if (succeeded.Length > 0)
         {
@@ -250,22 +308,40 @@ public sealed class GoldpathCampaignEngine<TContext>
                     .SetProperty(i => i.CompletedAt, now), cancellationToken);
         }
 
+        var exhausted = 0;
         foreach (var failure in failed)
         {
-            // Failures carry per-item teaching text; they are the RARE path by design.
-            await db.Set<GoldpathCampaignItem>()
-                .Where(i => i.CampaignId == campaignId && i.Seq == failure.Seq && i.State == GoldpathCampaignItemState.Processing)
+            // R1.3: a transient failure with attempts LEFT waits out its rung and the
+            // pacer re-releases it; only exhaustion is a durable failure. Attempts is
+            // bumped here — the outcome is the moment an attempt provably happened.
+            var landed = await db.Set<GoldpathCampaignItem>()
+                .Where(i => i.CampaignId == campaignId && i.Seq == failure.Seq
+                    && i.State == GoldpathCampaignItemState.Processing && i.Attempts + 1 < maxAttempts)
                 .ExecuteUpdateAsync(s => s
-                    .SetProperty(i => i.State, GoldpathCampaignItemState.Failed)
-                    .SetProperty(i => i.CompletedAt, now)
+                    .SetProperty(i => i.State, GoldpathCampaignItemState.AwaitingRetry)
+                    .SetProperty(i => i.Attempts, i => i.Attempts + 1)
+                    .SetProperty(i => i.CompletedAt, now)   // = last failure instant; the rung measures from here
                     .SetProperty(i => i.Error, failure.Error), cancellationToken);
+            if (landed == 0)
+            {
+                // Failures carry per-item teaching text; they are the RARE path by design.
+                // Counted by ROWS TOUCHED: a stray or duplicate outcome whose guard matches
+                // nothing must not inflate FailedCount (the R1 test that found this).
+                exhausted += await db.Set<GoldpathCampaignItem>()
+                    .Where(i => i.CampaignId == campaignId && i.Seq == failure.Seq && i.State == GoldpathCampaignItemState.Processing)
+                    .ExecuteUpdateAsync(s => s
+                        .SetProperty(i => i.State, GoldpathCampaignItemState.Failed)
+                        .SetProperty(i => i.Attempts, i => i.Attempts + 1)
+                        .SetProperty(i => i.CompletedAt, now)
+                        .SetProperty(i => i.Error, failure.Error), cancellationToken);
+            }
         }
 
         await db.Set<GoldpathCampaign>().Where(c => c.Id == campaignId)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(c => c.SucceededCount, c => c.SucceededCount + succeeded.Length)
-                .SetProperty(c => c.FailedCount, c => c.FailedCount + failed.Length), cancellationToken);
-        GoldpathCampaignMetrics.Outcomes(campaignId, succeeded.Length, failed.Length);
+                .SetProperty(c => c.FailedCount, c => c.FailedCount + exhausted), cancellationToken);
+        GoldpathCampaignMetrics.Outcomes(campaignId, succeeded.Length, exhausted);
     }
 
     /// <summary>

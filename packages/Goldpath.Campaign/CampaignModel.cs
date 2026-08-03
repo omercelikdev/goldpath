@@ -25,6 +25,12 @@ public enum GoldpathCampaignState
 
     /// <summary>Operator abort: remaining Pending items were terminal-stamped as Aborted. Terminal.</summary>
     Aborted = 6,
+
+    /// <summary>
+    /// The policy's <see cref="GoldpathCampaign.EndDate"/> passed with work remaining
+    /// (R1.2): whatever is left is a REPORT, never a background surprise. Terminal.
+    /// </summary>
+    ExpiredIncomplete = 7,
 }
 
 /// <summary>One item's journey (lean ON PURPOSE — this table reaches 30M rows).</summary>
@@ -47,6 +53,13 @@ public enum GoldpathCampaignItemState
 
     /// <summary>Campaign aborted before this item released. Terminal.</summary>
     Aborted = 5,
+
+    /// <summary>
+    /// A transient failure with attempts left (R1.3): waits out its backoff rung, then
+    /// the pacer re-releases it. NOT terminal — it still occupies an in-flight slot,
+    /// which is honest backpressure.
+    /// </summary>
+    AwaitingRetry = 6,
 }
 
 /// <summary>A campaign INSTANCE: created at runtime over a code-registered type (D1).</summary>
@@ -86,6 +99,15 @@ public class GoldpathCampaign
 
     /// <summary>IANA/Windows timezone the window and quota-day are evaluated in.</summary>
     public string TimeZoneId { get; set; } = "UTC";
+
+    /// <summary>Days (policy timezone) on which nothing releases (R1.1); CSV of DayOfWeek names, null = none.</summary>
+    public string? ExcludedDays { get; set; }
+
+    /// <summary>Last calendar day (policy timezone) the campaign may release on (R1.2); null = open-ended.</summary>
+    public DateOnly? EndDate { get; set; }
+
+    /// <summary>Attempts per item before it lands in the repair queue (R1.3); 1 = no auto-retry.</summary>
+    public int MaxAttempts { get; set; } = 1;
 
     // ---- watermarks & durable truth (D3) ----
 
@@ -151,6 +173,9 @@ public class GoldpathCampaignItem
 
     /// <summary>Failure detail (bounded; the repair story's teaching text).</summary>
     public string? Error { get; set; }
+
+    /// <summary>Delivery attempts consumed (R1.3) — the ladder's bookkeeping, one small column.</summary>
+    public int Attempts { get; set; }
 }
 
 /// <summary>
@@ -192,6 +217,7 @@ public static class GoldpathCampaignModel
             campaign.Property(c => c.Type).HasMaxLength(128);
             campaign.Property(c => c.Name).HasMaxLength(256);
             campaign.Property(c => c.TimeZoneId).HasMaxLength(64);
+            campaign.Property(c => c.ExcludedDays).HasMaxLength(64);
             campaign.Property(c => c.CreatedBy).HasMaxLength(256);
             campaign.Property(c => c.LastVerb).HasMaxLength(512);
             campaign.Property(c => c.Tenant).HasMaxLength(128);

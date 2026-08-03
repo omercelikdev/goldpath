@@ -21,7 +21,7 @@ async function asOutcome(call: Promise<{ ok: boolean; message: string }>): Promi
 }
 
 /** The pacer's state machine, in its own order. */
-const STATES = ["Created", "Enumerating", "Running", "Paused", "Completed", "CompletedWithFailures", "Aborted"] as const;
+const STATES = ["Created", "Enumerating", "Running", "Paused", "Completed", "CompletedWithFailures", "Aborted", "ExpiredIncomplete"] as const;
 
 /** Only a live campaign can be paused, resumed or aborted; the rest already ended. */
 const LIVE = new Set(["Created", "Enumerating", "Running"]);
@@ -36,6 +36,11 @@ interface ThrottleDraft {
   timeZoneId: string;
   clearDailyQuota: boolean;
   clearWindow: boolean;
+  excludedDays: string[];
+  endDate: string;
+  maxAttempts: string;
+  clearExcludedDays: boolean;
+  clearEndDate: boolean;
 }
 
 const EMPTY_DRAFT: ThrottleDraft = {
@@ -47,6 +52,11 @@ const EMPTY_DRAFT: ThrottleDraft = {
   timeZoneId: "",
   clearDailyQuota: false,
   clearWindow: false,
+  excludedDays: [],
+  endDate: "",
+  maxAttempts: "",
+  clearExcludedDays: false,
+  clearEndDate: false,
 };
 
 /**
@@ -66,6 +76,11 @@ export function toThrottle(draft: ThrottleDraft): CampaignThrottle {
   if (text(draft.timeZoneId)) patch.timeZoneId = text(draft.timeZoneId);
   if (draft.clearDailyQuota) patch.clearDailyQuota = true;
   if (draft.clearWindow) patch.clearWindow = true;
+  if (draft.excludedDays.length > 0) patch.excludedDays = draft.excludedDays;
+  if (text(draft.endDate)) patch.endDate = text(draft.endDate);
+  if (number(draft.maxAttempts) !== undefined) patch.maxAttempts = number(draft.maxAttempts);
+  if (draft.clearExcludedDays) patch.clearExcludedDays = true;
+  if (draft.clearEndDate) patch.clearEndDate = true;
   return patch;
 }
 
@@ -79,6 +94,11 @@ export function describeThrottle(patch: CampaignThrottle): string {
   if (patch.timeZoneId) parts.push(`time zone ${patch.timeZoneId}`);
   if (patch.clearDailyQuota) parts.push("no daily quota");
   if (patch.clearWindow) parts.push("no window (release around the clock)");
+  if (patch.excludedDays) parts.push(`excluded days ${patch.excludedDays.join("+")}`);
+  if (patch.endDate) parts.push(`end date ${patch.endDate}`);
+  if (patch.maxAttempts !== undefined) parts.push(`${patch.maxAttempts} attempts per item`);
+  if (patch.clearExcludedDays) parts.push("no excluded days");
+  if (patch.clearEndDate) parts.push("no end date");
   return parts.join(", ");
 }
 
@@ -325,6 +345,9 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
             <KeyValueRows
               rows={[
                 { key: "Daily quota", value: selected.dailyQuota == null ? "none" : `${selected.releasedToday} of ${selected.dailyQuota} today` },
+                { key: "Excluded days", value: selected.excludedDays.length === 0 ? "none" : selected.excludedDays.join(", ") },
+                { key: "End date", value: selected.endDate ?? "open-ended" },
+                { key: "Retry", value: selected.maxAttempts <= 1 ? "no auto-retry" : `${selected.maxAttempts} attempts per item (30s → 2m → repair queue)` },
                 {
                   key: "Window",
                   value: (
@@ -354,6 +377,7 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                     ["tps", "tps", selected.tps],
                     ["dailyQuota", "daily quota", selected.dailyQuota],
                     ["maxInFlight", "max in-flight", selected.maxInFlight],
+                    ["maxAttempts", "max attempts", selected.maxAttempts],
                   ] as const
                 ).map(([field, label, current]) => (
                   <label key={field} className="flex flex-col gap-1 text-xs text-muted-foreground">
@@ -396,6 +420,36 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                     onChange={(event) => setDraft({ ...draft, timeZoneId: event.target.value })}
                   />
                 </label>
+                <label className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  end date <span className="text-faint">(now {selected.endDate ?? "open"})</span>
+                  <input
+                    type="date"
+                    aria-label="end date"
+                    className="control"
+                    value={draft.endDate}
+                    onChange={(event) => setDraft({ ...draft, endDate: event.target.value })}
+                  />
+                </label>
+                <div className="flex flex-col gap-1 text-xs text-muted-foreground">
+                  excluded days <span className="text-faint">(now {selected.excludedDays.length === 0 ? "none" : selected.excludedDays.join(", ")})</span>
+                  <div className="flex flex-wrap items-center gap-3">
+                    {(["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"] as const).map((day) => (
+                      <Checkbox
+                        key={day}
+                        checked={draft.excludedDays.includes(day)}
+                        onChange={(on) =>
+                          setDraft({
+                            ...draft,
+                            excludedDays: on
+                              ? [...draft.excludedDays, day]
+                              : draft.excludedDays.filter((d) => d !== day),
+                          })
+                        }
+                        label={day.slice(0, 3)}
+                      />
+                    ))}
+                  </div>
+                </div>
                 <Checkbox
                   checked={draft.clearDailyQuota}
                   onChange={(clearDailyQuota) => setDraft({ ...draft, clearDailyQuota })}
@@ -405,6 +459,16 @@ export function CampaignPanel({ client }: CampaignPanelProps) {
                   checked={draft.clearWindow}
                   onChange={(clearWindow) => setDraft({ ...draft, clearWindow })}
                   label="clear window"
+                />
+                <Checkbox
+                  checked={draft.clearExcludedDays}
+                  onChange={(clearExcludedDays) => setDraft({ ...draft, clearExcludedDays })}
+                  label="clear excluded days"
+                />
+                <Checkbox
+                  checked={draft.clearEndDate}
+                  onChange={(clearEndDate) => setDraft({ ...draft, clearEndDate })}
+                  label="clear end date"
                 />
                 {patched && (
                   <VerbButton

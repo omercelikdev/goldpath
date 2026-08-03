@@ -21,6 +21,7 @@ const MAP: Record<string, StatusTone> = {
   Enumerating: "info",    // the leader is materializing targets
   Paused: "warning",      // an operator stopped the release; nothing is wrong yet
   Aborted: "danger",
+  ExpiredIncomplete: "warning",   // the end date said stop — the remainder is a report (R1.2)
   // notification
   Requested: "info",
   Sent: "success",
