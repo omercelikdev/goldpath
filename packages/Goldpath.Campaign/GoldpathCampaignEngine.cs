@@ -214,14 +214,19 @@ public sealed class GoldpathCampaignEngine<TContext>
 
         var db = services.GetRequiredService<TContext>();
         var now = _time.GetUtcNow();
-        var ripe = await db.Set<GoldpathCampaignItem>().AsNoTracking()
-            .Where(i => i.CampaignId == campaign.Id && i.State == GoldpathCampaignItemState.AwaitingRetry)
+        // Ripeness filters BEFORE the allowance truncates (review R3): a backlog of
+        // not-yet-ripe low-Seq items must never starve a ripe item behind them. The
+        // ladder's two rungs translate to two constant cutoffs the store can index.
+        var firstRungBefore = now - GoldpathCampaignPolicy.RetryBackoff(1);
+        var secondRungBefore = now - GoldpathCampaignPolicy.RetryBackoff(2);
+        var due = await db.Set<GoldpathCampaignItem>().AsNoTracking()
+            .Where(i => i.CampaignId == campaign.Id && i.State == GoldpathCampaignItemState.AwaitingRetry
+                && ((i.Attempts <= 1 && i.CompletedAt <= firstRungBefore)
+                    || (i.Attempts > 1 && i.CompletedAt <= secondRungBefore)))
             .OrderBy(i => i.Seq)
-            .Select(i => new { i.Seq, i.Attempts, i.CompletedAt })
+            .Select(i => i.Seq)
             .Take(allowance)
-            .ToListAsync(cancellationToken);
-        var due = ripe.Where(i => i.CompletedAt + GoldpathCampaignPolicy.RetryBackoff(i.Attempts) <= now)
-            .Select(i => i.Seq).ToArray();
+            .ToArrayAsync(cancellationToken);
         if (due.Length == 0)
         {
             return 0;

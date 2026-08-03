@@ -63,9 +63,21 @@ public class R1Tests
     }
 
     [Fact]
-    public void ParseDaysIgnoresUnknownTokens_CaseInsensitively()
+    public void ParseDaysIgnoresUnknownTokens_CaseInsensitively_AndCollapsesDuplicates()
         => Assert.Equal([DayOfWeek.Saturday, DayOfWeek.Sunday],
-            GoldpathCampaignPolicy.ParseDays("saturday, SUNDAY, Fluffyday"));
+            GoldpathCampaignPolicy.ParseDays("saturday, SUNDAY, Fluffyday, Saturday"));
+
+    [Fact]
+    public async Task DuplicatedDayTokensCannotDodgeTheAllSevenRefusal()
+    {
+        using var fixture = new CampaignFixture(FastTicks());
+        var campaign = await fixture.CreateAsync(Generous());
+        var refused = await fixture.Admin().ThrottleAsync(campaign.Id, new GoldpathCampaignThrottle(
+            ExcludedDays: ["Monday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"]),
+            "tester", CancellationToken.None);
+        Assert.False(refused.Ok);
+        Assert.Contains("pause the campaign instead", refused.Message);
+    }
 
     // ---- R1.2 end date ----
 
@@ -141,6 +153,37 @@ public class R1Tests
         Assert.Equal(3, item.Attempts);
         Assert.Equal("timeout C", item.Error);
         Assert.Equal(1, (await ReloadAsync(db, campaign.Id)).FailedCount);
+    }
+
+    [Fact]
+    public async Task ARipeItemIsNeverStarvedBehindUnripeEarlierSeqs()
+    {
+        using var fixture = new CampaignFixture(FastTicks(), sourceSize: 3);
+        var clock = new ManualClock(DateTimeOffset.UtcNow);
+        var engine = new GoldpathCampaignEngine<CampaignTestContext>(
+            fixture.Options, clock, NullLogger<GoldpathCampaignEngine<CampaignTestContext>>.Instance);
+        var campaign = await fixture.CreateAsync(Generous() with { MaxAttempts = 3 });
+        await fixture.EnumerateAllAsync(campaign);
+        using var scope = fixture.Services.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<CampaignTestContext>();
+        await engine.ReleaseBatchAsync(scope.ServiceProvider, campaign, 3, CancellationToken.None);
+
+        // Seq 1 and 2 fail LATE (unripe); Seq 3 failed long ago (ripe).
+        Assert.NotNull(await engine.ClaimAsync(db, campaign.Id, 3, CancellationToken.None));
+        await engine.ApplyOutcomesAsync(db, campaign.Id,
+            [new GoldpathCampaignOutcomeMessage(campaign.Id, 3, false, "old failure")], CancellationToken.None);
+        clock.Now += TimeSpan.FromSeconds(31);
+        Assert.NotNull(await engine.ClaimAsync(db, campaign.Id, 1, CancellationToken.None));
+        Assert.NotNull(await engine.ClaimAsync(db, campaign.Id, 2, CancellationToken.None));
+        await engine.ApplyOutcomesAsync(db, campaign.Id,
+            [new GoldpathCampaignOutcomeMessage(campaign.Id, 1, false, "fresh"),
+             new GoldpathCampaignOutcomeMessage(campaign.Id, 2, false, "fresh")], CancellationToken.None);
+
+        // Allowance 1: the ONLY ripe item is Seq 3 — it must not sit behind 1 and 2.
+        Assert.Equal(1, await engine.ReleaseRipeRetriesAsync(scope.ServiceProvider, campaign, 1, CancellationToken.None));
+        var third = await db.Set<GoldpathCampaignItem>().AsNoTracking()
+            .SingleAsync(i => i.CampaignId == campaign.Id && i.Seq == 3);
+        Assert.Equal(GoldpathCampaignItemState.Released, third.State);
     }
 
     [Fact]

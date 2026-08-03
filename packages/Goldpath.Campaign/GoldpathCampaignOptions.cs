@@ -97,14 +97,19 @@ public sealed record GoldpathCampaignPolicy(
     public static TimeSpan RetryBackoff(int attemptsSoFar)
         => attemptsSoFar <= 1 ? TimeSpan.FromSeconds(30) : TimeSpan.FromMinutes(2);
 
-    /// <summary>Parses the model's CSV day set (unknown tokens are ignored, as filters are).</summary>
+    /// <summary>
+    /// Parses the model's CSV day set — unknown tokens are ignored (as filters are) and
+    /// duplicates COLLAPSE, so "Saturday,Saturday,…" can never dodge a distinct-count
+    /// rule downstream (review R3 on the all-seven refusal).
+    /// </summary>
     public static IReadOnlyList<DayOfWeek> ParseDays(string? csv)
         => csv is null
             ? []
             : [.. csv.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
                      .Select(token => Enum.TryParse<DayOfWeek>(token, ignoreCase: true, out var day) ? day : (DayOfWeek?)null)
                      .Where(day => day is not null)
-                     .Select(day => day!.Value)];
+                     .Select(day => day!.Value)
+                     .Distinct()];
 }
 
 /// <summary>One registered campaign type — code, shipped through PRs (D1). Closures baked.</summary>
