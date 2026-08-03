@@ -35,6 +35,14 @@
 
 ## 2. Coverage Check (every enum value ≥1 GM)
 
+> **Reality note (2026-08-03):** this table is the TARGET, not the present. Today the
+> generator produces ONE shape (modular-monolith × vertical-slice) and CI proves GM-1
+> plus a relaxed GM-4 (see `templates/README.md`, the honest statement). GM-2/5/6 are
+> unrealizable until the shapes package ships (template RFC 7d): oracle/kafka are
+> schema-only, ldap/saml are not in the auth enum, and no microservice/gateway/clean-arch
+> template exists. The Platform & Shapes phase (master plan step 5) closes this gap;
+> until then, treat unchecked rows here as roadmap, never as coverage.
+
 | Dimension | Value → GM |
 |---|---|
 | deploymentModel | monolith→4 · modular-monolith→1,3,5 · microservice→2,6 |

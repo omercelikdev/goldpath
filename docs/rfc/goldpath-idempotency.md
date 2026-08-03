@@ -3,7 +3,7 @@
 > This document is also the **reference example of the module RFC template** (foundation 13.8):
 > every module is born by filling in these eight sections. The template sections are fixed;
 > the content is module-specific.
-> Status: v0.1 draft (2026-07-03) · Ring: B · Dependencies: Data (store), Mediant (behavior), Messaging (inbox)
+> Status: **IMPLEMENTED** (package + template + GM wiring shipped; drafted v0.1 2026-07-03 — the unchecked DoD boxes below, analyzers GP1001/1002/1004 and the ops package, remain the module's OPEN remainder, ledgered for the housekeeping slice) · Ring: B · Dependencies: Data (store), Mediant (behavior), Messaging (inbox)
 
 ---
 

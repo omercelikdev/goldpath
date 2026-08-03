@@ -78,7 +78,7 @@ Template parameters ⇄ manifest fields (deterministic both ways): `--db postgre
       shapes (clean-architecture layout, microservice multi-project, plain monolith). Rationale:
       Ring B modules do not depend on template layout; deferring keeps Phase 1 closable now.
       GM-2/6 join the matrix when 7d ships — written here, not silent
-- [ ] Pipelines re-enabled (MR/main) — ATTEMPTED 2026-07-04: runner environment not ready (jobs stall); reverted to manual-only. Runner fix is a standalone task (infra), NOT a Phase 1 blocker: local validation is the enforced gate
+- [x] Pipelines re-enabled — OVERTAKEN 2026-08-03: the GitLab-runner problem died with the GitHub move; `.github/workflows/ci.yml` runs on every PR and push to main, nightly runs the GM matrix. The original stall never needed fixing.
 - [ ] Phase 1 gate ritual: generate a solution, run it, walk the dashboard — recorded as the demo script
 
 ## 9. Decision Points (Ömer)
