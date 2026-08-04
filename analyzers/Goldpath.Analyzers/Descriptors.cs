@@ -125,8 +125,8 @@ public static class Descriptors
     /// <summary>GP1004: [Idempotent] with neither a key expression nor a detectable natural key.</summary>
     public static readonly DiagnosticDescriptor IdempotentKeyUndetectable = new(
         "GP1004",
-        "[Idempotent] has no key expression and no detectable natural key",
-        "'{0}' is [Idempotent] but sets no KeyExpression and carries no natural-key property — the key falls back to the full payload fingerprint, which breaks on any volatile field",
+        "[Idempotent] has no declared key and no detectable natural key",
+        "'{0}' is [Idempotent] but sets no KeyProperty and carries no natural-key property — the key falls back to the full payload fingerprint, which breaks on any volatile field",
         Category,
         DiagnosticSeverity.Warning,
         isEnabledByDefault: true,

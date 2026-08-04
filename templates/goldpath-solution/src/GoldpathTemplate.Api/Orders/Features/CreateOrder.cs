@@ -5,6 +5,12 @@ using MassTransit;
 namespace GoldpathTemplate.Api.Orders.Features;
 
 [HttpEndpoint("POST", "/api/v1/orders")]
+#if (UseIdempotency)
+// The golden path marks every write-performing command (GP1001 holds the composition to
+// it): a client retry replays the stored answer instead of creating a second order, and
+// the business reference — not the whole payload — is the key.
+[Mediant.Behaviors.Attributes.Idempotent(KeyProperty = nameof(CreateOrderCommand.Reference))]
+#endif
 public record CreateOrderCommand(string Reference, decimal Amount) : ICommand<Result<long>>;
 
 #if (UseBroker)

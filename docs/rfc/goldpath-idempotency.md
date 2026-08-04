@@ -60,7 +60,7 @@ The short form `idempotency: true` = the defaults above. (Schema: goldpath-manif
 
 ```csharp
 services.AddGoldpathIdempotency(opt => { ... });        // single entry point; generated from the manifest
-[Idempotent(KeyExpression = "request.ChequeNo")]    // command-level marker (Mediant behavior)
+[Idempotent(KeyProperty = "ChequeNo")]    // command-level marker (Mediant behavior; KeyProperty names the command's own property)
 public record PresentChequeCommand(...) : ICommand<Result<PresentmentDto>>;
 
 public interface IIdempotencyStore                   // provider seam (database/redis impl)
