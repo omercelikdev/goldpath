@@ -43,8 +43,12 @@ docker run -d --name "$PG_NAME" -e POSTGRES_PASSWORD=smoke -e POSTGRES_DB=smoke 
 CONNECTION="Host=localhost;Port=55432;Database=smoke;Username=postgres;Password=smoke"
 # 120s, not 60: a nightly runner is doing nine other things and a cold image pull plus
 # first-boot initdb has taken longer than a minute there (it did, on 2026-07-27).
-for _ in $(seq 1 120); do docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1 && break; sleep 1; done
-docker exec "$PG_NAME" pg_isready -U postgres >/dev/null 2>&1 || { echo "postgres never came up:"; docker logs "$PG_NAME" 2>&1 | tail -20; exit 1; }
+# TCP on purpose (-h 127.0.0.1): initdb's TEMPORARY server answers pg_isready on the unix
+# socket, so the socket probe can break out during init and find the server "gone" a
+# moment later when the temp server shuts down (it did, on the 2026-08-03 nightly). The
+# real server is the only one that listens on TCP.
+for _ in $(seq 1 120); do docker exec "$PG_NAME" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1 && break; sleep 1; done
+docker exec "$PG_NAME" pg_isready -h 127.0.0.1 -U postgres >/dev/null 2>&1 || { echo "postgres never came up:"; docker logs "$PG_NAME" 2>&1 | tail -20; exit 1; }
 
 echo "── rabbitmq (campaign RELEASES through a broker — campaign RFC D8, no stand-in)"
 docker rm -f "$MQ_NAME" >/dev/null 2>&1 || true
