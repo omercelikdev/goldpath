@@ -3,14 +3,51 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
-## [Unreleased]
+## [0.1.0-preview.6] - 2026-08-03
+
+The operations train. Campaign revision R1 gives long-running campaigns their calendar
+(excluded days, an end date that expires the remainder into a report, a per-item retry
+ladder, one process-wide TPS gate); the admin contract reaches Revision R3 (repeatable
+OR filters); and the console lands its full visual family (U6–U9) plus the housekeeping
+set — typed responses, the bulk definition filter, three ops runbooks, analyzer batch 4.
+Upgrade guide: `docs/upgrades/0.1.0-preview.6.md` (one migration; GP1002 may newly fail
+a build that composes consumers without the EF inbox — deliberate, downgradeable).
+
+### Added
+- **Campaign revision R1 (`Goldpath.Campaign`).** `ExcludedDays` (policy-timezone day
+  set — a paused calendar day, not a paused campaign), `EndDate` → the new
+  `ExpiredIncomplete` terminal state (the remainder is a report, never a surprise send),
+  a per-item retry ladder (`MaxAttempts`, 30s → 2m rungs, the new `AwaitingRetry` item
+  state counts as in-flight and blocks completion; exhaustion goes to the repair queue
+  with the LAST error), and opt-in `GoldpathCampaignOptions.GlobalTps` — one per-process
+  bucket over every running campaign, capping allowance only. All live-adjustable
+  through the throttle verb; refusals teach (excluding all seven days says "pause the
+  campaign instead"). One migration: `goldpath db add CampaignR1`.
+- **Admin contract Revision R3 — repeatable filters.** `?status=`, `?state=`,
+  `?template=` and `?definition=` may repeat: values OR within a filter, filters AND
+  together; a single value behaves exactly as R2 did. The console's facet filters are
+  truly multi-select on the server's answer, never a client-side merge.
+- **Bulk `?definition=` on `/batches` (#72)** — server-side, riding the existing
+  `(Definition, State)` index; the console batch list grows the matching facet.
+- **Typed responses for the four tenant-wrapped admin lists (#98)** — archival
+  holds/erasures and bulk batches/errors declare their 200 schemas; a response-side
+  export test pins the regression class.
+- **Analyzer batch 4 (`Goldpath.Analyzers`, now 42 rules).** GP1001 (command without
+  `[Idempotent]` while `AddGoldpathIdempotency()` is composed, warn), GP1002 (broker
+  consumers composed without the EF inbox `AddGoldpathOutbox()`, **error**), GP1004
+  (`[Idempotent]` with no declared key and no natural-key property, warn).
+- **Ops runbooks for Idempotency, AuditTrail and SoftDelete** — every shipped module now
+  carries `ops/`; honest-signals posture (no unshipped metric is cited).
 
 ### Changed
-- **The console's styling pass (U6).** One component vocabulary in the kit's single token
-  file — cards, row cards, controls, chips — swept across every panel; timestamps quiet to
-  wall-clock seconds (full value on hover), long instance names truncate instead of
-  wrapping the row. No behavioral change; the axe gate and the 30-test console smoke ran
-  green through the sweep. Ships inside `Goldpath.Console` with the next train.
+- **The console's visual family (U6–U9, `Goldpath.Console`).** One component vocabulary
+  in the kit's single token file, swept across every panel; toolbars live INSIDE the
+  table card; facet filters are multi-select; icon actions with tooltips; a density
+  toggle; one hand-rolled Select; add/edit flows in modals; row detail in sheets; the
+  bare console prefix and the bare port both land Home and the brand mark goes there
+  too. The axe gate and the 35-journey console smoke ran green through the whole sweep.
+- `GoldpathBulkAdminService.GetBatchesAsync` gains the `definition` filter parameter
+  (the one shipped-signature change this train; the admin HTTP surface is additive).
 
 ## [0.1.0-preview.5] - 2026-07-28
 

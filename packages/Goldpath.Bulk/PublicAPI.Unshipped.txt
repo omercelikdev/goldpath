@@ -1,3 +1,1 @@
 #nullable enable
-*REMOVED*Goldpath.GoldpathBulkAdminService<TContext>.GetBatchesAsync(string? state, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkBatchInfo!>!>!
-Goldpath.GoldpathBulkAdminService<TContext>.GetBatchesAsync(string![]? state, string![]? definition, string? tenant, int take, System.Threading.CancellationToken ct) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathBulkBatchInfo!>!>!

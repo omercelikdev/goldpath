@@ -225,8 +225,8 @@ Owner decision, 2026-07-28: adopt this three-way split as written.
 ### Why this is a revision, not a break
 
 Additive fields on existing payloads, new routes alongside the frozen ones, and one
-migration that adds two nullable columns. R1 clients keep working unchanged. Ships in the
-train after preview.5, with an upgrade-guide entry for the migration.
+migration that adds two nullable columns. R1 clients keep working unchanged. Shipped in
+preview.5 (the scheduling train), with an upgrade-guide entry for the migration.
 
 ## Revision R3 (2026-08-02) — repeatable filters
 
