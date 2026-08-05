@@ -1,31 +1,13 @@
-<Project Sdk="Microsoft.NET.Sdk.Web">
+<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
-    <!-- Build-time OpenAPI export: the deterministic artifact CI feeds to Spec Engine `drift`. -->
-    <OpenApiDocumentsDirectory>$(MSBuildProjectDirectory)/openapi</OpenApiDocumentsDirectory>
-    <OpenApiGenerateDocuments>true</OpenApiGenerateDocuments>
-    <OpenApiGenerateDocumentsOnBuild>true</OpenApiGenerateDocumentsOnBuild>
   </PropertyGroup>
 
   <ItemGroup>
-    <PackageReference Include="Goldpath.Abstractions" />
-    <!--#if (UseAuth) -->
-    <PackageReference Include="Goldpath.Auth" />
-    <!--#endif -->
-    <PackageReference Include="Goldpath.ApiDefaults" />
-    <PackageReference Include="Goldpath.ServiceDefaults" />
-    <!--#if (UseBroker) -->
-    <PackageReference Include="Goldpath.Messaging" />
-    <PackageReference Include="MassTransit.RabbitMQ" />
-    <!--#endif -->
-    <PackageReference Include="Goldpath.Analyzers" PrivateAssets="all" />
-    <PackageReference Include="Mediant" />
-    <PackageReference Include="Microsoft.Extensions.ApiDescription.Server" PrivateAssets="all" />
-    <PackageReference Include="Mediant.AspNetCore" />
+    <ProjectReference Include="../GoldpathTemplate.Application/GoldpathTemplate.Application.csproj" />
   </ItemGroup>
 
-  <!--#if (!UseCleanArch) -->
   <ItemGroup>
     <!-- goldpath:features packages — the drift profile is the source of these rows -->
     <!--#if (UseMultiTenancy) -->
@@ -69,23 +51,18 @@
     <PackageReference Include="Goldpath.Console" />
     <!--#endif -->
     <PackageReference Include="Goldpath.Data" />
+    <!--#if (UseBroker) -->
+    <PackageReference Include="Goldpath.Messaging" />
+    <!--#endif -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Design" PrivateAssets="all" />
     <!--#if (UsePostgres) -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
     <!--#endif -->
     <!--#if (UseSqlServer) -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" />
+    <!-- NU1903 lift (see Directory.Packages.props) — web SDK projects get this from the framework. -->
+    <PackageReference Include="System.Security.Cryptography.Xml" />
     <!--#endif -->
   </ItemGroup>
-  <!--#endif -->
-
-  <!--#if (UseCleanArch) -->
-  <ItemGroup>
-    <!-- Clean architecture: the composition root references the layers; feature packages
-         live with Infrastructure (the packages anchor rides its csproj). -->
-    <ProjectReference Include="../GoldpathTemplate.Application/GoldpathTemplate.Application.csproj" />
-    <ProjectReference Include="../GoldpathTemplate.Infrastructure/GoldpathTemplate.Infrastructure.csproj" />
-  </ItemGroup>
-  <!--#endif -->
 
 </Project>

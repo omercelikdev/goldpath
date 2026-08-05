@@ -1,0 +1,27 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../GoldpathTemplate.Domain/GoldpathTemplate.Domain.csproj" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Mediant" />
+    <PackageReference Include="Mediant.AspNetCore" />
+    <!-- DbSet/keyset queries compile against EF Core + the page contract via Goldpath.Data. -->
+    <PackageReference Include="Goldpath.Data" />
+    <!--#if (UseBroker) -->
+    <PackageReference Include="MassTransit" />
+    <!--#endif -->
+    <!--#if (UseBulk) -->
+    <PackageReference Include="Goldpath.Bulk" />
+    <!--#endif -->
+    <!--#if (UseCampaign) -->
+    <PackageReference Include="Goldpath.Campaign" />
+    <!--#endif -->
+  </ItemGroup>
+
+</Project>

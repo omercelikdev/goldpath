@@ -44,7 +44,7 @@
         },
         {
           "choice": "none",
-          "description": "No broker (simple internal services \u2014 GM-4 shape)"
+          "description": "No broker (simple internal services — GM-4 shape)"
         }
       ],
       "defaultValue": "rabbitmq",
@@ -123,7 +123,7 @@
         }
       ],
       "defaultValue": "",
-      "description": "Ring B features to enable (comma-separated). Each generates its manifest line, package and wiring \u2014 specdrift-clean by construction."
+      "description": "Ring B features to enable (comma-separated). Each generates its manifest line, package and wiring — specdrift-clean by construction."
     },
     "UseMultiTenancy": {
       "type": "computed",
@@ -202,6 +202,26 @@
       "valueTransform": "owner_slug",
       "replaces": "GoldpathTplOwner",
       "description": "The solution name as an owner slug (dots -> dashes, lowercased) - the manifest owner pattern is kebab."
+    },
+    "layout": {
+      "type": "parameter",
+      "datatype": "choice",
+      "description": "Code organization (the manifest's architecture.codeOrg). vertical-slice: one Api project, folder-per-aggregate. clean-architecture: Domain/Application/Infrastructure/Api projects — handlers depend on the IOrdersDbContext seam, Infrastructure implements it and owns migrations.",
+      "defaultValue": "vertical-slice",
+      "choices": [
+        {
+          "choice": "vertical-slice",
+          "description": "One Api project; features are folders (the golden path default)."
+        },
+        {
+          "choice": "clean-architecture",
+          "description": "Four projects: Domain, Application, Infrastructure, Api (composition root)."
+        }
+      ]
+    },
+    "UseCleanArch": {
+      "type": "computed",
+      "value": "(layout == \"clean-architecture\")"
     }
   },
   "sources": [
@@ -210,50 +230,78 @@
         {
           "condition": "(!UseBroker)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/OrderConfirmed.cs"
+            "src/GoldpathTemplate.Api/Orders/OrderConfirmed.cs",
+            "src/GoldpathTemplate.Domain/Orders/OrderPlaced.cs",
+            "src/GoldpathTemplate.Application/Orders/OrderPlacedConsumer.cs"
           ]
         },
         {
           "condition": "(!UseMultiTenancy)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/Order.MultiTenancy.cs"
+            "src/GoldpathTemplate.Api/Orders/Order.MultiTenancy.cs",
+            "src/GoldpathTemplate.Domain/Orders/Order.MultiTenancy.cs"
           ]
         },
         {
           "condition": "(!UseAuditTrail)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/Order.AuditTrail.cs"
+            "src/GoldpathTemplate.Api/Orders/Order.AuditTrail.cs",
+            "src/GoldpathTemplate.Domain/Orders/Order.AuditTrail.cs"
           ]
         },
         {
           "condition": "(!UseSoftDelete)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/Order.SoftDelete.cs"
+            "src/GoldpathTemplate.Api/Orders/Order.SoftDelete.cs",
+            "src/GoldpathTemplate.Domain/Orders/Order.SoftDelete.cs"
           ]
         },
         {
           "condition": "(!UseDataProtection)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/Order.DataProtection.cs"
+            "src/GoldpathTemplate.Api/Orders/Order.DataProtection.cs",
+            "src/GoldpathTemplate.Domain/Orders/Order.DataProtection.cs"
           ]
         },
         {
           "condition": "(!UseBulk)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/Import/OrderImport.cs"
+            "src/GoldpathTemplate.Api/Orders/Import/OrderImport.cs",
+            "src/GoldpathTemplate.Application/Orders/Import/OrderImport.cs"
           ]
         },
         {
           "condition": "(!UseNotification)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/Notifications/OrderNotifications.cs"
+            "src/GoldpathTemplate.Api/Orders/Notifications/OrderNotifications.cs",
+            "src/GoldpathTemplate.Application/Orders/Notifications/OrderNotifications.cs"
           ]
         },
         {
           "condition": "(!UseCampaign)",
           "exclude": [
-            "src/GoldpathTemplate.Api/Orders/Campaigns/OrderCampaigns.cs"
+            "src/GoldpathTemplate.Api/Orders/Campaigns/OrderCampaigns.cs",
+            "src/GoldpathTemplate.Application/Orders/Campaigns/OrderCampaigns.cs"
           ]
+        },
+        {
+          "condition": "(!UseCleanArch)",
+          "exclude": [
+            "src/GoldpathTemplate.Domain/**",
+            "src/GoldpathTemplate.Application/**",
+            "src/GoldpathTemplate.Infrastructure/**",
+            "GoldpathTemplate.CleanArch.sln"
+          ]
+        },
+        {
+          "condition": "(UseCleanArch)",
+          "exclude": [
+            "src/GoldpathTemplate.Api/Orders/**",
+            "GoldpathTemplate.sln"
+          ],
+          "rename": {
+            "GoldpathTemplate.CleanArch.sln": "GoldpathTemplate.sln"
+          }
         }
       ]
     }

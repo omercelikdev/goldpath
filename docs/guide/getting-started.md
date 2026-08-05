@@ -26,7 +26,8 @@ vertical slice (create + keyset-paginated list + an outboxed integration event r
 tripping the broker), the manifest (`.goldpath/manifest.yaml`) describing exactly what
 was composed, the Initial migration, and the first OpenAPI contract already committed
 to `specs/`. Shape choices: `--db postgresql|sqlserver`, `--broker rabbitmq|none`,
-`--auth openid|apikey|none`, and eleven `--features` (run `dotnet new goldpath-solution -h`).
+`--auth openid|apikey|none`, `--layout vertical-slice|clean-architecture`, and eleven
+`--features` (run `dotnet new goldpath-solution -h`).
 
 ## Run and verify
 
