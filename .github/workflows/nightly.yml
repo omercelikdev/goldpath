@@ -21,6 +21,10 @@ jobs:
             args: "--auth none"
           - name: GmFourSimple
             args: "--db sqlserver --broker none --auth none"
+          # GM-4's OTHER dimension: the same simple shape in clean-architecture — four
+          # projects, the packages anchor riding Infrastructure, migrations owned there.
+          - name: GmFourClean
+            args: "--db sqlserver --broker none --auth none --layout clean-architecture"
           # Dotted solution names are the .NET norm (Company.Product) — issue #24's regression shape.
           - name: Gm.Dotted
             args: "--broker none --auth none"

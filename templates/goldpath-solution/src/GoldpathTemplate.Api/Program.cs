@@ -1,13 +1,3 @@
-using GoldpathTemplate.Api.Orders;
-#if (UseBulk)
-using GoldpathTemplate.Api.Orders.Import;
-#endif
-#if (UseNotification)
-using GoldpathTemplate.Api.Orders.Notifications;
-#endif
-#if (UseCampaign)
-using GoldpathTemplate.Api.Orders.Campaigns;
-#endif
 #if (UseCampaign && !UseBroker)
 #error features.campaign REQUIRES a broker (campaign RFC D8): the release path IS broker fan-out. Regenerate with --broker rabbitmq (or kafka).
 #endif
@@ -139,7 +129,11 @@ builder.AddGoldpathCampaign<WebApplicationBuilder, OrdersDbContext>(campaign =>
 builder.Services.AddScoped<IGoldpathCampaignItemHandler<DormantCustomerTarget>, WinbackHandler>();
 //#endif
 
+//#if (UseCleanArch)
+builder.Services.AddMediant(cfg => cfg.RegisterServicesFromAssembly(typeof(CreateOrderCommand).Assembly));   // handlers live in Application
+//#else
 builder.Services.AddMediant(cfg => cfg.RegisterServicesFromAssembly(typeof(Program).Assembly));
+//#endif
 
 // Connection strings come from the AppHost; under the build-time OpenAPI generator they
 // are absent — configuration stays tolerant, usage would fail loudly anyway.
@@ -169,6 +163,9 @@ builder.AddGoldpathData<WebApplicationBuilder, OrdersDbContext>(options =>
     }
 #endif
 });
+//#if (UseCleanArch)
+builder.Services.AddScoped<IOrdersDbContext>(sp => sp.GetRequiredService<OrdersDbContext>());   // the Application seam resolves to the real context
+//#endif
 
 #if (UseBroker)
 builder.AddGoldpathMessaging(bus =>
@@ -209,7 +206,11 @@ app.UseGoldpathMultiTenancy();                      // resolve the tenant BEFORE
 app.UseGoldpathAuth();
 //#endif
 app.MapGoldpathDefaultEndpoints();
+//#if (UseCleanArch)
+app.MapMediantEndpoints(typeof(CreateOrderCommand).Assembly);   // the endpoints ride the Application assembly's commands
+//#else
 app.MapMediantEndpoints(typeof(Program).Assembly);
+//#endif
 // goldpath:features endpoints — admin surfaces map here (put them behind the auth floor)
 //#if (UseArchival || UseBulk || UseNotification || UseCampaign)
 #if (UseAuth)

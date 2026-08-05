@@ -1,8 +1,10 @@
 # Goldpath.Templates
 
-Golden-path templates. Current: `goldpath-solution` (GM-1 shape: modular-monolith, vertical-slice,
-PostgreSQL, RabbitMQ — the manifest defaults). Further shapes arrive per the template RFC phasing
-(`docs/rfc/goldpath-template.md`, decision D1).
+Golden-path templates. Current: `goldpath-solution` (GM-1 shape defaults: modular-monolith,
+vertical-slice, PostgreSQL, RabbitMQ) — with `--layout clean-architecture` generating the
+four-project split (Domain / Application / Infrastructure / Api; the packages anchor rides
+Infrastructure, which also owns migrations). Further shapes arrive per the template RFC
+phasing (`docs/rfc/goldpath-template.md`, decision D1).
 
 ```
 dotnet new install Goldpath.Templates

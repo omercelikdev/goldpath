@@ -9,10 +9,15 @@
     <!--#endif -->
     <!--#if (UseSqlServer) -->
     <PackageVersion Include="Aspire.Hosting.SqlServer" Version="13.4.6" />
+    <!-- Direct reference lifts a vulnerable transitive under the SqlServer provider in
+         class libraries (NU1903, GHSA-w3x6-4m5h-cxqf) — the web SDK overrides it from the
+         framework, a plain library does not. -->
+    <PackageVersion Include="System.Security.Cryptography.Xml" Version="10.0.10" />
     <PackageVersion Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.0.9" />
     <!--#endif -->
     <!--#if (UseBroker) -->
     <PackageVersion Include="Aspire.Hosting.RabbitMQ" Version="13.4.6" />
+    <PackageVersion Include="MassTransit" Version="8.5.10" />
     <PackageVersion Include="MassTransit.RabbitMQ" Version="8.5.10" />
     <!--#endif -->
     <PackageVersion Include="Aspire.Hosting.Testing" Version="13.4.6" />
