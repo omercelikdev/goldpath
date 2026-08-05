@@ -12,14 +12,14 @@ public static class NewCommand
     {
         if (kind is "service")
         {
-            var serviceName = rest.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal))
+            var serviceName = FirstBareToken(rest)
                 ?? throw new CliUsageException("goldpath new service needs a name: goldpath new service <Name>");
-            return NewServiceCommand.RunService(serviceName, ParseNewPath(rest), runner, output, error);
+            return NewServiceCommand.RunService(serviceName, FindFlagValue(rest, "--path") ?? Directory.GetCurrentDirectory(), runner, output, error);
         }
 
         if (kind is "gateway")
         {
-            return NewServiceCommand.RunGateway(ParseNewPath(rest), runner, output, error);
+            return NewServiceCommand.RunGateway(FindFlagValue(rest, "--path") ?? Directory.GetCurrentDirectory(), runner, output, error);
         }
 
         var template = kind switch
@@ -55,28 +55,39 @@ public static class NewCommand
     }
 
     private static string OutputDirectory(IReadOnlyList<string> rest)
+        => FindFlagValue(rest, "-o", "--output") ?? Directory.GetCurrentDirectory();
+
+    /// <summary>The value following the first matching flag, or null.</summary>
+    private static string? FindFlagValue(IReadOnlyList<string> rest, params string[] flags)
     {
         for (var i = 0; i < rest.Count - 1; i++)
         {
-            if (rest[i] is "-o" or "--output")
+            if (flags.Contains(rest[i], StringComparer.Ordinal))
             {
                 return rest[i + 1];
             }
         }
 
-        return Directory.GetCurrentDirectory();
+        return null;
     }
 
-    private static string ParseNewPath(IReadOnlyList<string> rest)
+    /// <summary>
+    /// The first token that is neither a flag nor a flag's VALUE — so
+    /// `new service --path /app Billing` names Billing, whatever the order (review R3).
+    /// </summary>
+    private static string? FirstBareToken(IReadOnlyList<string> rest)
     {
-        for (var i = 0; i < rest.Count - 1; i++)
+        for (var i = 0; i < rest.Count; i++)
         {
-            if (rest[i] == "--path")
+            if (rest[i].StartsWith("-", StringComparison.Ordinal))
             {
-                return rest[i + 1];
+                i++;   // its value rides with it
+                continue;
             }
+
+            return rest[i];
         }
 
-        return Directory.GetCurrentDirectory();
+        return null;
     }
 }

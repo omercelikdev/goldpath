@@ -93,6 +93,19 @@ public class NewServiceTests
     }
 
     [Fact]
+    public void The_name_survives_any_flag_order()
+    {
+        // review R3: `--path <dir> Billing` must name Billing, never the path value.
+        using var app = new FakeApp();
+        Directory.CreateDirectory(Path.Combine(app.Root, "tests"));
+        GiveSmokeAnchor(app);
+        var runner = new FakeProcessRunner();
+        Assert.Equal(0, CliRunner.Run(["new", "service", "--path", app.Root, "Billing"],
+            runner, TextWriter.Null, TextWriter.Null));
+        Assert.True(Directory.Exists(Path.Combine(app.Root, "src", "Shop.BillingService")));
+    }
+
+    [Fact]
     public void A_red_engine_restores_everything_byte_identical()
     {
         using var app = new FakeApp();
