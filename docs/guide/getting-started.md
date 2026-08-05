@@ -25,7 +25,10 @@ What you now have: an Aspire AppHost (containers wired), an API with a walking-s
 vertical slice (create + keyset-paginated list + an outboxed integration event round-
 tripping the broker), the manifest (`.goldpath/manifest.yaml`) describing exactly what
 was composed, the Initial migration, and the first OpenAPI contract already committed
-to `specs/`. Shape choices: `--db postgresql|sqlserver`, `--broker rabbitmq|none`,
+to `specs/`. Prefer questions over flags? Bare `goldpath new` runs the WIZARD: say which modules the
+app needs and the infrastructure is derived with its reasons ("no broker needed —
+removed"); it prints the equivalent command and generates through the same flow.
+Shape choices: `--db postgresql|sqlserver`, `--broker rabbitmq|none`,
 `--auth openid|apikey|none`, `--layout vertical-slice|clean-architecture`, and eleven
 `--features` (run `dotnet new goldpath-solution -h`). Grow the solution with
 `goldpath new service <Name>` (a service head with its OWN database and manifest) and

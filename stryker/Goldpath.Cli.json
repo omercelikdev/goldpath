@@ -17,7 +17,8 @@
     "mutation-level": "Standard",
     "mutate": [
       "!**/Program.cs",
-      "!**/ConsoleProcessRunner.cs"
+      "!**/ConsoleProcessRunner.cs",
+      "!**/Prompter.cs"
     ]
   }
 }
