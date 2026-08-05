@@ -3,6 +3,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CorPay.Api.Payments.Features;
 
 [HttpEndpoint("POST", "/api/v1/payment-instructions/{id}/reject")]
+[Mediant.Behaviors.Attributes.Idempotent]   // GP1001: keyed by the instruction Id (GP1004-detectable)
 public record RejectPaymentInstructionCommand(long Id, string Reason) : ICommand<Result<long>>;
 
 /// <summary>Rejection is a decision, so it needs a decider and a WHY — both become evidence.</summary>

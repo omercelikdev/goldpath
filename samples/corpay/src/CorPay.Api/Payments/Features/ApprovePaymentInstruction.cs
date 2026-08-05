@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 namespace CorPay.Api.Payments.Features;
 
 [HttpEndpoint("POST", "/api/v1/payment-instructions/{id}/approve")]
+[Mediant.Behaviors.Attributes.Idempotent]   // GP1001: keyed by the instruction Id (GP1004-detectable)
 public record ApprovePaymentInstructionCommand(long Id) : ICommand<Result<long>>;
 
 /// <summary>

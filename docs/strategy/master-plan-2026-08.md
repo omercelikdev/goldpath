@@ -18,9 +18,16 @@ green → merge → ledgers updated in the same PR.
    agent as a CI step + output-contract hardening (waits only on the `ANTHROPIC_API_KEY`
    secret — owner decision) · the monthly bench cadence (bench.yml, 1st of the month) ·
    the GM coverage-table reality note and the stale doc lines (2026-08-03, PR #131).
-3. **preview.6 train** — R3 contract + console U7–U9 + R1 + housekeeping to NuGet;
-   T12 (CorPay EOD worker readiness) rides this train and unblocks T1; CorPay pins +
-   upgrade guide.
+3. **preview.6 train** — **DONE 2026-08-05**: `v0.1.0-preview.6` on nuget.org (R3 +
+   console U6–U9 + Campaign R1 + the housekeeping set; GM matrix + Campaign mutation
+   green before the tag, ADR-0008). T12 closed (every CorPay head reaches ready — and
+   fixing it surfaced the payments worker's D3-violating migration). The pre-flight
+   also found and fixed: five silently red nightlies (the console build never installed
+   the kit), mutation-heavy's missing tool restore, GP1001 catching the TEMPLATE's own
+   unmarked command (the Mediant attribute surface is `KeyProperty`, not the RFC's
+   `KeyExpression` sketch), and console-smoke's pg probe racing initdb. CorPay pins on
+   preview.6 with its four commands `[Idempotent]`-marked; its re-export regained the
+   four T14 schemas and `goldpath check` stays green — T14 closed. T1 unblocked.
 4. **ADR-0012 + Platform/Module SDK RFC** — the philosophy in writing: Goldpath is a
    PLATFORM; first-party product modules (Sync, API Portal, …) ride the shared core,
    stand up standalone, and wear the one console family. Decisions to settle: the SDK
