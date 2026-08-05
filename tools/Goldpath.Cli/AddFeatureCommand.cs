@@ -37,7 +37,7 @@ public static class AddFeatureCommand
 
         // Snapshot BEFORE touching anything: the engine is the acceptance test, and a red
         // engine means the app must come back byte-identical.
-        var touched = new[] { files.ManifestFile, files.ApiProject, files.AppHostProject, files.ProgramFile, files.ModelFile, files.AppHostFile };
+        var touched = new[] { files.ManifestFile, files.ApiProject, files.PackagesProject, files.AppHostProject, files.ProgramFile, files.ModelFile, files.AppHostFile }.Distinct(StringComparer.Ordinal).ToArray();
         var snapshot = touched.Distinct(StringComparer.Ordinal).ToDictionary(path => path, File.ReadAllText, StringComparer.Ordinal);
 
         try
@@ -85,7 +85,7 @@ public static class AddFeatureCommand
         if (plan.ApiPackages.Count > 0)
         {
             var references = plan.ApiPackages.Select(p => $"    <PackageReference Include=\"{p}\" />").ToList();
-            File.WriteAllText(files.ApiProject, TextEdits.InsertAfterAnchor(File.ReadAllText(files.ApiProject), Anchors.Packages, references));
+            File.WriteAllText(files.PackagesProject, TextEdits.InsertAfterAnchor(File.ReadAllText(files.PackagesProject), Anchors.Packages, references));
         }
 
         if (plan.AppHostPackages.Count > 0)

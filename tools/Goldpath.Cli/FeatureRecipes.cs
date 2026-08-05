@@ -83,7 +83,7 @@ public sealed class AppFacts
     {
         var model = File.ReadAllText(files.ModelFile);
         var program = File.ReadAllText(files.ProgramFile);
-        var apiProject = File.ReadAllText(files.ApiProject);
+        var apiProject = File.ReadAllText(files.PackagesProject);
 
         var dbContext = Regex.Match(model, @"class\s+(\w+)");
         if (!dbContext.Success)

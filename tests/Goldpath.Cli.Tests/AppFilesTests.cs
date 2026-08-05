@@ -11,11 +11,35 @@ public class AppFilesTests
         var files = AppFiles.Locate(app.Root);
 
         Assert.Equal(app.ApiProject, files.ApiProject);
+        Assert.Equal(app.ApiProject, files.PackagesProject);   // vertical slice: same file, two roles
         Assert.Equal(app.AppHostProject, files.AppHostProject);
         Assert.Equal(app.Program, files.ProgramFile);
         Assert.Equal(app.Model, files.ModelFile);
         Assert.Equal(app.AppHost, files.AppHostFile);
         Assert.Equal(app.Manifest, files.ManifestFile);
+    }
+
+    [Fact]
+    public void Clean_architecture_splits_the_web_and_packages_roles()
+    {
+        // The clean-arch layout: the packages anchor rides the Infrastructure csproj (the
+        // DbContext's model calls compile there), while the web project carries no anchor.
+        using var app = new FakeApp();
+        var infrastructure = Path.Combine(app.Root, "src/Shop.Infrastructure/Shop.Infrastructure.csproj");
+        Directory.CreateDirectory(Path.GetDirectoryName(infrastructure)!);
+        File.WriteAllText(infrastructure, """
+            <Project Sdk="Microsoft.NET.Sdk">
+              <ItemGroup>
+                <!-- goldpath:features packages — the drift profile is the source of these rows -->
+              </ItemGroup>
+            </Project>
+            """);
+        File.WriteAllText(app.ApiProject, File.ReadAllText(app.ApiProject)
+            .Replace("goldpath:features packages", "packages live with the Infrastructure project"));
+
+        var files = AppFiles.Locate(app.Root);
+        Assert.Equal(app.ApiProject, files.ApiProject);          // still THE web project
+        Assert.Equal(infrastructure, files.PackagesProject);     // the anchor moved, the role followed
     }
 
     [Fact]

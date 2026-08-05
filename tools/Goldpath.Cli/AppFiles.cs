@@ -7,8 +7,15 @@ namespace Goldpath.Cli;
 /// </summary>
 public sealed class AppFiles
 {
-    /// <summary>The Api project file (packages anchor + web SDK).</summary>
+    /// <summary>The Api project file (the app's single web-SDK csproj — naming/identity).</summary>
     public required string ApiProject { get; init; }
+
+    /// <summary>
+    /// The csproj carrying the packages anchor — where feature package references land.
+    /// The Api project itself in the vertical-slice layout; the Infrastructure project in
+    /// clean-architecture (model-touching packages must compile where the DbContext lives).
+    /// </summary>
+    public required string PackagesProject { get; init; }
 
     /// <summary>The AppHost project file (packages anchor + IsAspireHost).</summary>
     public required string AppHostProject { get; init; }
@@ -39,9 +46,16 @@ public sealed class AppFiles
         var models = FindByContent(appRoot, "*.cs", Anchors.Model);
         var hosts = FindByContent(appRoot, "*.cs", Anchors.Resources);
 
+        // The Api project is the app's WEB project, found by SDK rather than by anchor:
+        // in clean-architecture the packages anchor lives with the Infrastructure csproj
+        // (the DbContext's model calls must compile there), so anchor-bearing and web are
+        // different files — in vertical-slice they are the same one.
+        var webProjects = FindByContent(appRoot, "*.csproj", "Microsoft.NET.Sdk.Web");
+
         return new AppFiles
         {
-            ApiProject = Single(projects.Where(p => File.ReadAllText(p).Contains("Microsoft.NET.Sdk.Web", StringComparison.Ordinal)), "Api csproj", Anchors.Packages),
+            ApiProject = Single(webProjects.Where(p => !File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "Api csproj", "Microsoft.NET.Sdk.Web"),
+            PackagesProject = Single(projects.Where(p => !File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "packages csproj", Anchors.Packages),
             AppHostProject = Single(projects.Where(p => File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "AppHost csproj", Anchors.Packages),
             ProgramFile = Single(sources, "Program.cs", Anchors.Registrations),
             ModelFile = Single(models, "DbContext", Anchors.Model),
