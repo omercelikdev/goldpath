@@ -7,8 +7,10 @@
 Goldpath is a PLATFORM, not only an accelerator: first-party PRODUCT modules (Sync, API
 Portal, …) are built ON it as a new shelf beside Ring C — **products** — and they bind to
 the platform exactly the way an adopter does: **published `Goldpath.*` packages plus a
-real `Goldpath.Sdk` package, never source** (foundation §10 — the `packages/shared`
-compile-link seam is an internal privilege that does not leave the monorepo). A product
+real `Goldpath.Sdk` package, never source** — extending downstream the same
+bind-to-the-package discipline foundation §10 sets for Goldpath's own upstream
+dependencies; the `packages/shared` compile-link seam is an internal privilege that
+does not leave the monorepo. A product
 module stands up STANDALONE (its own solution, its own deployment shape — clean or
 vertical, chosen like any generated app), declares itself in the manifest under a
 NAMESPACED product key (`qorpe.sync` — the core `features` enumeration stays closed),

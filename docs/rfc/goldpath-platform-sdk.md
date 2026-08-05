@@ -24,9 +24,11 @@ L1/L2/L3 non-imposition guarantee (§1 — immutable); no third-party marketplac
 
 Today the admin seam (`AdminSurfaceGuard`, `AdminTenantScope`, `AdminPaging`,
 `TraceLink` — 149 lines) is `<Compile Include>`-linked into six packages. Inside the
-monorepo that was the right call (H2: one file, no drift); outside it is a wall —
-foundation §10 forbids source binding, so an out-of-repo module simply cannot build an
-admin surface today.
+monorepo that was the right call (H2: one file, no drift); outside it is a wall — an
+out-of-repo module has no honest way to build an admin surface today except copying the
+files, which is exactly the submodule/source-copy shape foundation §10 forbids for
+Goldpath's OWN upstream dependencies; ADR-0012 extends that same discipline downstream
+(a product module binds to packages the way Goldpath binds to Mediant).
 
 **Decision:** a real `Goldpath.Sdk` package carrying the admin seam (guard, tenant
 scope, paging clamp, trace links) plus the module-authoring surface that today only
