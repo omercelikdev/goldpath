@@ -4,7 +4,9 @@ using Microsoft.EntityFrameworkCore;
 namespace CorPay.Api.Payments.Features;
 
 [HttpEndpoint("POST", "/api/v1/payment-instructions/{id}/approve")]
-[Mediant.Behaviors.Attributes.Idempotent]   // GP1001: keyed by the instruction Id (GP1004-detectable)
+// GP1001: keyed EXPLICITLY on the instruction id — without KeyProperty the key is the
+// full payload fingerprint, which is not the same promise (review R1 on this PR).
+[Mediant.Behaviors.Attributes.Idempotent(KeyProperty = nameof(ApprovePaymentInstructionCommand.Id))]
 public record ApprovePaymentInstructionCommand(long Id) : ICommand<Result<long>>;
 
 /// <summary>
