@@ -28,14 +28,15 @@ green → merge → ledgers updated in the same PR.
    `KeyExpression` sketch), and console-smoke's pg probe racing initdb. CorPay pins on
    preview.6 with its four commands `[Idempotent]`-marked; its re-export regained the
    four T14 schemas and `goldpath check` stays green — T14 closed. T1 unblocked.
-4. **ADR-0012 + Platform/Module SDK RFC** — the philosophy in writing: Goldpath is a
-   PLATFORM; first-party product modules (Sync, API Portal, …) ride the shared core,
-   stand up standalone, and wear the one console family. Decisions to settle: the SDK
-   surface (shared files → packages + semver promise) · namespaced module declarations
-   in the manifest · the console contribution model (per-product console vs plugin
-   panels) · private distribution (repo/feed/license; closed modules on the open
-   core) · publishing the ui kit to npm (the @qorpe/ui question) · the container/deploy
-   story · federation auth across products.
+4. **ADR-0012 + Platform/Module SDK RFC** — **DONE 2026-08-05 (ACCEPTED)**: Goldpath is
+   a PLATFORM; product modules live in their OWN repos, bind to the published train
+   like adopters (never source), declare under namespaced `products` keys, ship their
+   own kit-composed consoles federated by the registry, and may be closed on the open
+   core. D1 `Goldpath.Sdk` + D2 manifest surface + D6 `export compose` ride step 5;
+   D5 `@qorpe/ui` extraction fires at consumer #3 (step 6). The acceptance carries the
+   §2b condition: every risk has a written antidote AND its enforcing mechanism; the
+   two honest GAPs (product-repo train-freshness step, GP20xx no-source-leak analyzer)
+   are the pilot's DoD.
 5. **Shapes + CLI package** (the RFC's implementation) — clean-architecture template ·
    microservice/multi-service layout + gateway · plain-monolith variant ·
    `goldpath new module|service` · the INTERACTIVE wizard (asks which modules, then

@@ -18,4 +18,4 @@ Statuses: `proposed | accepted | superseded-by-XXXX`.
 | [0009](ADR-0009-docs-are-generated.md) | Docs are generated, not handwritten | accepted |
 | [0010](ADR-0010-human-gates-are-fixed.md) | Human gates are fixed | accepted |
 | [0011](ADR-0011-runtime-ai-is-an-opt-in-module.md) | Runtime AI is an opt-in module — the core stays AI-free | accepted |
-| [0012](ADR-0012-goldpath-is-a-platform.md) | Goldpath is a platform — product modules ride the published core | proposed |
+| [0012](ADR-0012-goldpath-is-a-platform.md) | Goldpath is a platform — product modules ride the published core | accepted |
