@@ -163,6 +163,14 @@ public static class ExportCommand
         sb.AppendLine($"      dockerfile: src/{directory}/Dockerfile");
         sb.AppendLine("    ports:");
         sb.AppendLine("      - \"8080\"   # random host port — `docker compose port {0} 8080`".Replace("{0}", project.Name));
+        if (project.HasHealthCheck)
+        {
+            // The aspnet image ships bash but no curl/wget — /dev/tcp is the probe.
+            sb.AppendLine("    healthcheck:");
+            sb.AppendLine("      test: [\"CMD\", \"bash\", \"-c\", \"exec 3<>/dev/tcp/localhost/8080 && printf 'GET /health/ready HTTP/1.0\\r\\n\\r\\n' >&3 && head -1 <&3 | grep -q 200\"]");
+            sb.AppendLine("      interval: 3s");
+            sb.AppendLine("      retries: 40");
+        }
         sb.AppendLine("    environment:");
         sb.AppendLine("      ASPNETCORE_URLS: http://+:8080");
         sb.AppendLine("      # Dev tier: migrations apply on boot; ENVIRONMENTS run the CI bundle (migrations D4).");
@@ -212,7 +220,9 @@ public static class ExportCommand
             sb.AppendLine("    depends_on:");
             foreach (var dependency in dependencies)
             {
-                var condition = dependency.Kind is "postgres" or "rabbitmq" ? "service_healthy" : "service_started";
+                var emitsHealthcheck = dependency.Kind is "postgres" or "rabbitmq"
+                || (dependency.Kind is "project" && dependency.HasHealthCheck);
+                var condition = emitsHealthcheck ? "service_healthy" : "service_started";
                 sb.AppendLine($"      {dependency.Name}:");
                 sb.AppendLine($"        condition: {condition}");
             }

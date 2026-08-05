@@ -59,7 +59,12 @@ public class ExportComposeTests
         Assert.Contains("services__api__http__0: http://api:8080", compose, StringComparison.Ordinal);
         var gatewaySection = compose[compose.IndexOf("  gateway:", StringComparison.Ordinal)..];
         Assert.Contains("depends_on:", gatewaySection, StringComparison.Ordinal);
-        Assert.Contains("      api:", gatewaySection, StringComparison.Ordinal);
+        // The api declares WithHttpHealthCheck → it EMITS a compose healthcheck and its
+        // dependents wait for HEALTHY, not merely started (review R1).
+        Assert.Contains("api:\n        condition: service_healthy", gatewaySection.Replace("\r\n", "\n", StringComparison.Ordinal), StringComparison.Ordinal);
+        var apiSection = compose[compose.IndexOf("  api:", StringComparison.Ordinal)..compose.IndexOf("  gateway:", StringComparison.Ordinal)];
+        Assert.Contains("healthcheck:", apiSection, StringComparison.Ordinal);
+        Assert.Contains("/dev/tcp/localhost/8080", apiSection, StringComparison.Ordinal);
     }
 
     [Fact]

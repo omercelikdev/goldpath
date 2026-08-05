@@ -34,7 +34,7 @@ public static class CliRunner
                 ["add", "worker", var name, .. var rest] => RunAddWorker(name, rest, runner, output, error),
                 ["db", var verb, .. var rest] => RunDb(verb, rest, runner, output, error),
                 ["export", "compose", .. var rest] => ExportCommand.Run(ParsePath(rest), output, error),
-            ["check", .. var rest] => CheckCommand.Run(ParsePath(rest), runner, output, error),
+                ["check", .. var rest] => CheckCommand.Run(ParsePath(rest), runner, output, error),
                 _ => UsageError(error),
             };
         }
