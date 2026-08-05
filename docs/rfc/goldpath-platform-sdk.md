@@ -56,7 +56,11 @@ entry a toggle-plus-options object the product's own RFC schema-fragments into p
 (Implementation note, 2026-08-05: shipped as an ARRAY of `{name, enabled, …}` entries
 rather than a map — the engine's never-guess schema vocabulary has no
 `patternProperties`, and an unvalidatable key is worse than a different shape; the
-namespace guarantee rides `pattern` on `name`, mechanically enforced, corpus-proven.)
+namespace guarantee rides `pattern` on `name`, mechanically enforced, corpus-proven.
+One consequence is a DECISION, not an accident (review R5): duplicate names cannot be
+expressed as invalid in that vocabulary — `uniqueItems` compares whole objects — so the
+refusal belongs to the COMPOSITION layer: the CLI's product wiring rejects a duplicate
+name at generation, mechanical with the pilot; recorded in the schema description.)
 The core `features` enumeration STAYS closed; namespacing means a future core feature
 can never collide with a vendor key. Additive schema change (v1 stays v1), corpus rows
 (valid + invalid: bad namespace, unknown flat key) land with the schema, and no product

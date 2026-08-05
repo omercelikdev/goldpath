@@ -755,7 +755,7 @@
     },
     "products": {
       "type": "array",
-      "description": "First-party product modules riding the platform (ADR-0012; platform RFC D2). Every entry is NAMED with a NAMESPACED vendor.product id (e.g. qorpe.sync) so a future core feature can never collide with a vendor key; the core `features` enumeration stays closed. An array of named entries rather than a map because the engine's never-guess schema vocabulary has no patternProperties — the namespace is enforced by `pattern` on `name`. Each product's own RFC refines its options; `enabled: false` means the product is absent from the composition (ADR-0001 toggle semantics).",
+      "description": "First-party product modules riding the platform (ADR-0012; platform RFC D2). Every entry is NAMED with a NAMESPACED vendor.product id (e.g. qorpe.sync) so a future core feature can never collide with a vendor key; the core `features` enumeration stays closed. An array of named entries rather than a map because the engine's never-guess schema vocabulary has no patternProperties — the namespace is enforced by `pattern` on `name`. Each product's own RFC refines its options; `enabled: false` means the product is absent from the composition (ADR-0001 toggle semantics). DECISION (review R5 on the introducing PR): duplicate names are INVALID, but the engine's vocabulary cannot express name-uniqueness across array entries (uniqueItems compares whole objects) — the refusal lives in the composition layer (goldpath CLI wiring, mechanical with the pilot product); until then a duplicate name is caught at generation, never silently merged.",
       "items": {
         "type": "object",
         "required": [
