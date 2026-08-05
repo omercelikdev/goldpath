@@ -10,12 +10,12 @@ namespace Goldpath.Cli;
 /// </summary>
 public static class WizardCommand
 {
-    /// <summary>The module menu — the eleven features, in the template's vocabulary.</summary>
-    public static readonly IReadOnlyList<string> Modules =
-    [
-        "multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection",
-        "caching", "locking", "archival", "bulk", "notification", "campaign",
-    ];
+    /// <summary>
+    /// The module menu — the CANONICAL feature list `goldpath add feature` understands
+    /// (review R6: one list, referenced, so the menu and the unknown-module filter can
+    /// never desync from what the recipes actually wire).
+    /// </summary>
+    public static IReadOnlyList<string> Modules => FeatureRecipes.Names;
 
     /// <summary>The wizard's answers — one record, so the derivation stays a pure function.</summary>
     public sealed record Answers(
