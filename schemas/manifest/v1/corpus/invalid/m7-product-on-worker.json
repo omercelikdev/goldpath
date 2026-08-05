@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "kind": "worker",
+  "name": "SyncWorker",
+  "description": "REJECTED: products are declared by the OWNING solution/service, never a worker (lean-worker rule)",
+  "owner": "team-sync",
+  "workerType": "consumer-rabbitmq",
+  "products": [
+    {
+      "name": "qorpe.sync"
+    }
+  ]
+}

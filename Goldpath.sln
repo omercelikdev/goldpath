@@ -105,6 +105,8 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Goldpath.Console", "package
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Goldpath.Console.Tests", "tests\Goldpath.Console.Tests\Goldpath.Console.Tests.csproj", "{C44229F0-A168-466E-8E29-EC6321827C59}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Goldpath.Sdk", "packages\Goldpath.Sdk\Goldpath.Sdk.csproj", "{58BE5B0A-D181-48EA-974F-8D924A553186}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -667,6 +669,18 @@ Global
 		{C44229F0-A168-466E-8E29-EC6321827C59}.Release|x64.Build.0 = Release|Any CPU
 		{C44229F0-A168-466E-8E29-EC6321827C59}.Release|x86.ActiveCfg = Release|Any CPU
 		{C44229F0-A168-466E-8E29-EC6321827C59}.Release|x86.Build.0 = Release|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Debug|x64.ActiveCfg = Debug|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Debug|x64.Build.0 = Debug|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Debug|x86.ActiveCfg = Debug|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Debug|x86.Build.0 = Debug|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Release|Any CPU.Build.0 = Release|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Release|x64.ActiveCfg = Release|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Release|x64.Build.0 = Release|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Release|x86.ActiveCfg = Release|Any CPU
+		{58BE5B0A-D181-48EA-974F-8D924A553186}.Release|x86.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -718,5 +732,6 @@ Global
 		{FF196F5A-D8A4-45D1-9EC8-A4A1EABEBC52} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
 		{1616453C-824E-42DB-8FB1-63E824736568} = {809F86A1-1C4C-B159-0CD4-DF9D33D876CE}
 		{C44229F0-A168-466E-8E29-EC6321827C59} = {0AB3BF05-4346-4AA6-1389-037BE0695223}
+		{58BE5B0A-D181-48EA-974F-8D924A553186} = {809F86A1-1C4C-B159-0CD4-DF9D33D876CE}
 	EndGlobalSection
 EndGlobal

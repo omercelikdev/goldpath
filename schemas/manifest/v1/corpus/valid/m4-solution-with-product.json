@@ -1,0 +1,14 @@
+{
+  "schemaVersion": 1,
+  "kind": "solution",
+  "name": "SyncPlatform",
+  "description": "Solution carrying a first-party product module (ADR-0012)",
+  "owner": "team-orders",
+  "products": [
+    {
+      "name": "qorpe.sync",
+      "enabled": true,
+      "mode": "two-way"
+    }
+  ]
+}

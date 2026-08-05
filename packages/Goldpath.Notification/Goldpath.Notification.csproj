@@ -14,6 +14,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <ProjectReference Include="../Goldpath.Sdk/Goldpath.Sdk.csproj" />
     <ProjectReference Include="../Goldpath.Data/Goldpath.Data.csproj" />
     <ProjectReference Include="../Goldpath.Jobs/Goldpath.Jobs.csproj" />
   </ItemGroup>
@@ -24,12 +25,6 @@
     <AdditionalFiles Include="PublicAPI.Shipped.txt" />
     <AdditionalFiles Include="PublicAPI.Unshipped.txt" />
     <None Include="README.md" Pack="true" PackagePath="/" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <Compile Include="../shared/AdminSurfaceGuard.cs" Link="AdminSurfaceGuard.cs" />
-    <Compile Include="../shared/AdminTenantScope.cs" Link="AdminTenantScope.cs" />
-    <Compile Include="../shared/AdminPaging.cs" Link="AdminPaging.cs" />
   </ItemGroup>
 
 </Project>

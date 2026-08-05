@@ -6,19 +6,24 @@ using Microsoft.Extensions.Logging;
 namespace Goldpath;
 
 /// <summary>
-/// Admin-contract revision R1, in ONE place (shared-source link, like the auth floor):
+/// Admin-contract revision R1, in ONE place (one package, like the auth floor — Goldpath.Sdk, the module SDK seam (platform RFC D1)):
 /// on a multi-tenant app every admin read/verb is scoped to the ambient tenant; widening
 /// past it (an explicit `?tenant=` override or the all-tenants view) demands the
 /// <see cref="GoldpathPolicies.OpsAllTenants"/> policy on top of the ops floor, and the
 /// crossing is logged with the actor. Single-tenant apps (no <see cref="ITenantContext"/>
 /// registered) keep the pre-R1 semantics byte-for-byte.
 /// </summary>
-internal static class AdminTenantScope
+public static class AdminTenantScope
 {
     /// <summary>The scope decision: either a refusal result, or the effective tenant filter.</summary>
-    internal readonly record struct Resolution(IResult? Refusal, string? Tenant);
+    public readonly record struct Resolution(IResult? Refusal, string? Tenant);
 
-    internal static async Task<Resolution> ResolveAsync(HttpContext http, string? requested)
+    /// <summary>
+    /// Resolves the effective tenant scope for an admin call: pass-through on a
+    /// single-tenant app; ambient tenant otherwise; an explicit <paramref name="requested"/>
+    /// override (or the all-tenants view) demands <see cref="GoldpathPolicies.OpsAllTenants"/>.
+    /// </summary>
+    public static async Task<Resolution> ResolveAsync(HttpContext http, string? requested)
     {
         if (http.RequestServices.GetService<GoldpathMultiTenancyMarker>() is null)
         {
@@ -66,7 +71,7 @@ internal static class AdminTenantScope
     /// the whole surface is inherently cross-tenant, so it demands the all-tenants
     /// privilege outright. Returns the refusal, or <see langword="null"/> to proceed.
     /// </summary>
-    internal static async Task<IResult?> RequireAllTenantsAsync(HttpContext http)
+    public static async Task<IResult?> RequireAllTenantsAsync(HttpContext http)
     {
         if (http.RequestServices.GetService<GoldpathMultiTenancyMarker>() is null)
         {

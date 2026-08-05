@@ -14,15 +14,11 @@
 
   <ItemGroup>
     <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <ProjectReference Include="../Goldpath.Sdk/Goldpath.Sdk.csproj" />
   </ItemGroup>
 
   <ItemGroup>
     <InternalsVisibleTo Include="Goldpath.Console.Tests" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <!-- The ops floor, from the same shared source every admin mapper links (H2). -->
-    <Compile Include="../shared/AdminSurfaceGuard.cs" Link="AdminSurfaceGuard.cs" />
   </ItemGroup>
 
   <ItemGroup>

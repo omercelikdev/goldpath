@@ -36,10 +36,12 @@ Goldpath's OWN upstream dependencies; ADR-0012 extends that same discipline down
 **Decision:** a real `Goldpath.Sdk` package carrying the admin seam (guard, tenant
 scope, paging clamp, trace links) plus the module-authoring surface that today only
 convention carries (the `Map<Module>Admin` shape, the `GoldpathAdminResult` envelope).
-It rides the D1 lockstep train with its own PublicAPI ledgers. The in-repo packages
-migrate from compile-links to the package reference **on a minor train** (type identity
-moves assembly — a PublicAPI `*REMOVED*`/re-add in six ledgers; D2 says minor may break,
-never silently, and the upgrade guide carries it). `packages/shared` then holds nothing.
+It rides the D1 lockstep train with its own PublicAPI ledgers.
+(Implementation note, 2026-08-05: the migration turned out NON-breaking — the shared
+types were `internal` in every consumer, so no adopter could ever see them and no
+consumer ledger moves; the types go public for the first time in the Sdk's OWN ledger.
+The six in-repo packages swapped compile-links for the package reference in one step;
+`packages/shared` is gone.)
 
 ### D2 — Namespaced product declarations in the manifest
 
@@ -48,9 +50,17 @@ The v1 schema is closed by design: `features` enumerates exactly 12 keys,
 (`modules: [yarpGateway]`). A product cannot declare itself without editing the schema —
 which is correct for CATALOG modules and wrong for products.
 
-**Decision:** a new top-level `products` map, keys namespaced
+**Decision:** a new top-level `products` surface with NAMESPACED ids
 (`^[a-z][a-z0-9-]*\.[a-zA-Z][a-zA-Z0-9]*$` — `qorpe.sync`, `qorpe.apiPortal`), each
-value a toggle-plus-options object the product's own RFC schema-fragments into place.
+entry a toggle-plus-options object the product's own RFC schema-fragments into place.
+(Implementation note, 2026-08-05: shipped as an ARRAY of `{name, enabled, …}` entries
+rather than a map — the engine's never-guess schema vocabulary has no
+`patternProperties`, and an unvalidatable key is worse than a different shape; the
+namespace guarantee rides `pattern` on `name`, mechanically enforced, corpus-proven.
+One consequence is a DECISION, not an accident (review R5): duplicate names cannot be
+expressed as invalid in that vocabulary — `uniqueItems` compares whole objects — so the
+refusal belongs to the COMPOSITION layer: the CLI's product wiring rejects a duplicate
+name at generation, mechanical with the pilot; recorded in the schema description.)
 The core `features` enumeration STAYS closed; namespacing means a future core feature
 can never collide with a vendor key. Additive schema change (v1 stays v1), corpus rows
 (valid + invalid: bad namespace, unknown flat key) land with the schema, and no product
@@ -189,8 +199,10 @@ The SDK inherits the platform's ops posture; a product module's RFC owes its own
 
 - [x] D1–D7 approved by the owner (2026-08-05; ADR-0012 accepted; §2b's risk table is
       the approval's written condition — the two GAP rows are the pilot's DoD)
-- [ ] `Goldpath.Sdk` package + in-repo migration on a minor train (upgrade guide entry)
-- [ ] Manifest `products` map + corpus + schema docs
+- [x] `Goldpath.Sdk` package + in-repo migration (2026-08-05 — non-breaking: the shared
+      types were internal everywhere; no upgrade step needed)
+- [x] Manifest `products` surface + corpus (m4 valid, m6/m7 invalid) + schema docs
+      (2026-08-05)
 - [ ] `@qorpe/ui` extraction plan recorded in ui-standard (execution at consumer #3)
 - [ ] `goldpath export compose` scoped into step 5's CLI work
 - [ ] rfc/README + adr/README indexes current (this PR)
