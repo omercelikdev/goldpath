@@ -32,7 +32,11 @@ Shape choices: `--db postgresql|sqlserver`, `--broker rabbitmq|none`,
 `--auth openid|apikey|none`, `--layout vertical-slice|clean-architecture`, and eleven
 `--features` (run `dotnet new goldpath-solution -h`). Grow the solution with
 `goldpath new service <Name>` (a service head with its OWN database and manifest) and
-`goldpath new gateway` (YARP routing `/{head}/…` over service discovery).
+`goldpath new gateway` (YARP routing `/{head}/…` over service discovery). Past local:
+`goldpath export compose` GENERATES docker-compose.yml (+ per-project Dockerfiles, laid
+once) from the AppHost — the two definitions cannot diverge; re-run after AppHost
+changes. Dev tier on purpose: fixed credentials, migrations on boot; environments stay
+CI-built manifests.
 
 ## Run and verify
 
