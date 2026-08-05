@@ -54,7 +54,14 @@ public sealed class AppFiles
 
         return new AppFiles
         {
-            ApiProject = Single(webProjects.Where(p => !File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "Api csproj", "Microsoft.NET.Sdk.Web"),
+            ApiProject = Single(webProjects.Where(p =>
+            {
+                var text = File.ReadAllText(p);
+                // Additional heads (goldpath new service|gateway) are web projects too —
+                // the marker keeps the PRIMARY head unambiguous for naming and features.
+                return !text.Contains("IsAspireHost", StringComparison.Ordinal)
+                    && !text.Contains("goldpath:service-head", StringComparison.Ordinal);
+            }), "Api csproj", "Microsoft.NET.Sdk.Web"),
             PackagesProject = Single(projects.Where(p => !File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "packages csproj", Anchors.Packages),
             AppHostProject = Single(projects.Where(p => File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "AppHost csproj", Anchors.Packages),
             ProgramFile = Single(sources, "Program.cs", Anchors.Registrations),

@@ -135,7 +135,7 @@ public static class AddWorkerCommand
             : throw new CliUsageException($"'{name}' does not yield a project name — use letters (e.g. payments, eod-report).");
     }
 
-    private static string Kebab(string pascal)
+    internal static string Kebab(string pascal)
     {
         var builder = new StringBuilder(pascal.Length + 4);
         for (var i = 0; i < pascal.Length; i++)

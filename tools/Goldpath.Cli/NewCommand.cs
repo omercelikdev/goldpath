@@ -10,11 +10,23 @@ public static class NewCommand
     /// <summary>Maps the kind to its template and delegates to dotnet new.</summary>
     public static int Run(string kind, IReadOnlyList<string> rest, IProcessRunner runner, TextWriter output, TextWriter error)
     {
+        if (kind is "service")
+        {
+            var serviceName = rest.FirstOrDefault(a => !a.StartsWith("--", StringComparison.Ordinal))
+                ?? throw new CliUsageException("goldpath new service needs a name: goldpath new service <Name>");
+            return NewServiceCommand.RunService(serviceName, ParseNewPath(rest), runner, output, error);
+        }
+
+        if (kind is "gateway")
+        {
+            return NewServiceCommand.RunGateway(ParseNewPath(rest), runner, output, error);
+        }
+
         var template = kind switch
         {
             "solution" => "goldpath-solution",
             "worker" => "goldpath-worker",
-            _ => throw new CliUsageException($"unknown kind '{kind}' — goldpath new solution|worker"),
+            _ => throw new CliUsageException($"unknown kind '{kind}' — goldpath new solution|worker|service|gateway"),
         };
 
         var exitCode = runner.Run("dotnet", ["new", template, .. rest], Directory.GetCurrentDirectory());
@@ -47,6 +59,19 @@ public static class NewCommand
         for (var i = 0; i < rest.Count - 1; i++)
         {
             if (rest[i] is "-o" or "--output")
+            {
+                return rest[i + 1];
+            }
+        }
+
+        return Directory.GetCurrentDirectory();
+    }
+
+    private static string ParseNewPath(IReadOnlyList<string> rest)
+    {
+        for (var i = 0; i < rest.Count - 1; i++)
+        {
+            if (rest[i] == "--path")
             {
                 return rest[i + 1];
             }

@@ -28,6 +28,13 @@ public static class SpecdriftGate
         return runner.Run(fileName, arguments, appRoot);
     }
 
+    /// <summary>Validates an ADDITIONAL manifest (service/gateway heads) — schema only.</summary>
+    public static int ValidateManifest(string appRoot, string manifestRelative, IProcessRunner runner)
+    {
+        var (fileName, prefix) = ResolveEngine();
+        return runner.Run(fileName, [.. prefix, "validate", manifestRelative, "--schema", ExtractEmbeddedSchema()], appRoot);
+    }
+
     /// <summary>Runs <c>specdrift drift</c> against the app root.</summary>
     public static int Drift(string appRoot, IProcessRunner runner)
     {

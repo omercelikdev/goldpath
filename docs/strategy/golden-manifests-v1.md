@@ -38,10 +38,12 @@
 > **Reality note (2026-08-05):** this table is the TARGET, not the present. The
 > generator now produces TWO layouts — vertical-slice and `--layout clean-architecture`
 > (Domain/Application/Infrastructure/Api; the nightly GmFourClean row proves GM-4's
-> codeOrg dimension end to end, real containers included). GM-2/5/6 remain unrealizable
-> until the rest of the shapes package ships: oracle/kafka are schema-only, ldap/saml
-> are not in the auth enum, and no microservice/gateway template exists yet (master plan
-> step 5 continues). Treat unchecked rows here as roadmap, never as coverage.
+> codeOrg dimension end to end, real containers included). The microservice half is
+> real too (2026-08-05): `goldpath new service` (own db, own `kind: service` manifest)
+> and `goldpath new gateway` (YARP over service discovery) — the nightly GmSixGateway
+> row proves generate → verbs → build → ROUTED smoke end to end. GM-2/5/6 as WRITTEN
+> remain roadmap: oracle/kafka are schema-only and ldap/saml are not in the auth enum
+> (their triggers are ledgered). Treat unchecked cells as roadmap, never as coverage.
 
 | Dimension | Value → GM |
 |---|---|

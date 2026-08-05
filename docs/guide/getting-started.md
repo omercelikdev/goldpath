@@ -27,7 +27,9 @@ tripping the broker), the manifest (`.goldpath/manifest.yaml`) describing exactl
 was composed, the Initial migration, and the first OpenAPI contract already committed
 to `specs/`. Shape choices: `--db postgresql|sqlserver`, `--broker rabbitmq|none`,
 `--auth openid|apikey|none`, `--layout vertical-slice|clean-architecture`, and eleven
-`--features` (run `dotnet new goldpath-solution -h`).
+`--features` (run `dotnet new goldpath-solution -h`). Grow the solution with
+`goldpath new service <Name>` (a service head with its OWN database and manifest) and
+`goldpath new gateway` (YARP routing `/{head}/…` over service discovery).
 
 ## Run and verify
 
