@@ -204,5 +204,7 @@ The SDK inherits the platform's ops posture; a product module's RFC owes its own
 - [x] Manifest `products` surface + corpus (m4 valid, m6/m7 invalid) + schema docs
       (2026-08-05)
 - [ ] `@qorpe/ui` extraction plan recorded in ui-standard (execution at consumer #3)
-- [ ] `goldpath export compose` scoped into step 5's CLI work
+- [x] `goldpath export compose` SHIPPED (2026-08-05, step 5 slice 5): compose + laid
+      Dockerfiles GENERATED from the AppHost; proven by a real `docker compose up` — the
+      api answered health AND a business endpoint through the stack
 - [ ] rfc/README + adr/README indexes current (this PR)

@@ -10,7 +10,7 @@ public static class CliRunner
         goldpath — the Goldpath golden-path CLI (thin and deterministic)
 
         usage:
-          goldpath new (wizard) | new solution|worker|service|gateway [dotnet-new args...]   generate from the golden templates
+          goldpath new (wizard) | new solution|worker|service|gateway | export compose [dotnet-new args...]   generate from the golden templates
           goldpath add feature <name> [--path <dir>]          wire a Ring B feature into an existing app
           goldpath add worker <name> [--trigger queue|schedule|jobs] [--path <dir>]
                                                          add a worker project to an existing solution
@@ -33,7 +33,8 @@ public static class CliRunner
                 ["add", "feature", var name, .. var rest] => AddFeatureCommand.Run(name, ParsePath(rest), runner, output, error),
                 ["add", "worker", var name, .. var rest] => RunAddWorker(name, rest, runner, output, error),
                 ["db", var verb, .. var rest] => RunDb(verb, rest, runner, output, error),
-                ["check", .. var rest] => CheckCommand.Run(ParsePath(rest), runner, output, error),
+                ["export", "compose", .. var rest] => ExportCommand.Run(ParsePath(rest), output, error),
+            ["check", .. var rest] => CheckCommand.Run(ParsePath(rest), runner, output, error),
                 _ => UsageError(error),
             };
         }
