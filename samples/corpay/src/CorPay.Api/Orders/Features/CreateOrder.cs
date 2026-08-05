@@ -3,6 +3,7 @@ using MassTransit;
 namespace CorPay.Api.Orders.Features;
 
 [HttpEndpoint("POST", "/api/v1/orders")]
+[Mediant.Behaviors.Attributes.Idempotent(KeyProperty = nameof(CreateOrderCommand.Reference))]   // GP1001: the reference is the key
 public record CreateOrderCommand(string Reference, decimal Amount) : ICommand<Result<long>>;
 
 public class CreateOrderHandler(OrdersDbContext db, IPublishEndpoint publisher)

@@ -5,6 +5,10 @@ using Microsoft.EntityFrameworkCore;
 namespace CorPay.Api.Payments.Features;
 
 [HttpEndpoint("POST", "/api/v1/payment-instructions")]
+// GP1001 (preview.6): every write-performing command is marked while idempotency is
+// composed — the business reference, not the payload, is the key (the HTTP middleware
+// and this marker share one store, so the semantics cannot drift).
+[Mediant.Behaviors.Attributes.Idempotent(KeyProperty = nameof(SubmitPaymentInstructionCommand.Reference))]
 public record SubmitPaymentInstructionCommand(
     string Reference,
     string DebtorIban,

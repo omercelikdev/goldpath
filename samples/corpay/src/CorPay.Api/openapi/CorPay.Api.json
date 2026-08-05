@@ -509,7 +509,10 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -1175,7 +1178,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoldpathLegalHold"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1241,7 +1254,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoldpathErasureRecord"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1346,7 +1369,20 @@
             "name": "state",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            }
+          },
+          {
+            "name": "definition",
+            "in": "query",
+            "schema": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
             }
           },
           {
@@ -1371,7 +1407,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoldpathBulkBatchInfo"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1448,7 +1494,17 @@
         ],
         "responses": {
           "200": {
-            "description": "OK"
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/GoldpathBulkRowError"
+                  }
+                }
+              }
+            }
           }
         }
       }
@@ -1774,6 +1830,129 @@
           }
         }
       },
+      "GoldpathBulkBatchInfo": {
+        "required": [
+          "id",
+          "definition",
+          "state",
+          "tenant",
+          "totalRows",
+          "validRows",
+          "invalidRows",
+          "executedRows",
+          "failedRows",
+          "runId",
+          "receivedAt",
+          "validatedAt",
+          "decidedAt",
+          "decidedBy",
+          "decisionNote",
+          "completedAt"
+        ],
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "definition": {
+            "type": "string"
+          },
+          "state": {
+            "type": "string"
+          },
+          "tenant": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "totalRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "validRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "invalidRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "executedRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "failedRows": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "runId": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "uuid"
+          },
+          "receivedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "validatedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "decidedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          },
+          "decidedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "decisionNote": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "completedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
+          }
+        }
+      },
       "GoldpathBulkDecisionRequest": {
         "required": [
           "note"
@@ -1827,6 +2006,37 @@
               "string"
             ],
             "format": "double"
+          }
+        }
+      },
+      "GoldpathBulkRowError": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "batchId": {
+            "type": "string",
+            "format": "uuid"
+          },
+          "rowNumber": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "field": {
+            "type": "string"
+          },
+          "message": {
+            "type": "string"
           }
         }
       },
@@ -1926,6 +2136,43 @@
           },
           "problem": {
             "type": "string"
+          }
+        }
+      },
+      "GoldpathErasureRecord": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "subjectKey": {
+            "type": "string"
+          },
+          "requestedBy": {
+            "type": "string"
+          },
+          "requestedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "entriesAffected": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int32"
+          },
+          "detail": {
+            "type": [
+              "null",
+              "string"
+            ]
           }
         }
       },
@@ -2186,6 +2433,48 @@
               "string"
             ],
             "format": "int32"
+          }
+        }
+      },
+      "GoldpathLegalHold": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "pattern": "^-?(?:0|[1-9]\\d*)$",
+            "type": [
+              "integer",
+              "string"
+            ],
+            "format": "int64"
+          },
+          "definition": {
+            "type": "string"
+          },
+          "aggregateKey": {
+            "type": "string"
+          },
+          "caseReference": {
+            "type": "string"
+          },
+          "placedBy": {
+            "type": "string"
+          },
+          "placedAt": {
+            "type": "string",
+            "format": "date-time"
+          },
+          "liftedBy": {
+            "type": [
+              "null",
+              "string"
+            ]
+          },
+          "liftedAt": {
+            "type": [
+              "null",
+              "string"
+            ],
+            "format": "date-time"
           }
         }
       },
