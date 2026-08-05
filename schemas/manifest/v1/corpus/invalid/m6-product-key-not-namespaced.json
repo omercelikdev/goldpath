@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "kind": "solution",
+  "name": "BadProductKey",
+  "description": "REJECTED: product names must be namespaced vendor.product \u2014 a flat name could collide with a future core feature",
+  "owner": "team-orders",
+  "products": [
+    {
+      "name": "sync",
+      "enabled": true
+    }
+  ]
+}

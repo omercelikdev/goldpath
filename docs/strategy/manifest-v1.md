@@ -77,6 +77,19 @@ the manifest schema includes them via `$ref`.
 ```yaml
 modules: [yarpGateway]                 # what exists in v1; the catalog is the vision
 ```
+
+### 2.5 `products` — first-party product modules (ADR-0012; platform RFC D2)
+```yaml
+products:                              # solution/service only — never a worker (lean rule)
+  - name: qorpe.sync                   # NAMESPACED vendor.product; pattern-enforced
+    enabled: true                      # ADR-0001 toggle semantics: false = absent
+    mode: two-way                      # product-specific options — the product's RFC refines them
+```
+An array of named entries (the engine's never-guess schema vocabulary has no
+`patternProperties`, so the namespace guarantee rides `pattern` on `name`). The core
+`features` enumeration stays closed — a vendor key can never collide with a future core
+feature. Corpus: `m4-solution-with-product` (valid), `m6-product-key-not-namespaced` and
+`m7-product-on-worker` (invalid).
 Decision (locked): outbox → under `features` (a broker-backed option); pagination → does NOT
 go into the manifest (an ApiDefaults out-of-the-box default — not an option, but the floor).
 

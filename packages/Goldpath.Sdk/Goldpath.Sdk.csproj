@@ -2,8 +2,8 @@
 
   <PropertyGroup>
     <TargetFrameworks>net8.0;net10.0</TargetFrameworks>
-    <PackageId>Goldpath.Archival</PackageId>
-    <Description>The data lifecycle after "hot" for the Goldpath enterprise asset: declarative retention per aggregate, archive runs that move whole GRAPHS into a tamper-evident same-database store (SHA-256 hash chain), row-retention purges for high-volume detail, legal hold, and erasure that composes with retention. Runs execute on Goldpath.Jobs - chunked, checkpointed, resumable, visible in the same console (archival RFC D1-D7).</Description>
+    <PackageId>Goldpath.Sdk</PackageId>
+    <Description>The module SDK seam (platform RFC D1): the admin-surface contract every Goldpath module — first-party or product — composes from. The fail-closed ops floor (AdminSurfaceGuard), tenant scoping per admin-contract R1 (AdminTenantScope), the frozen paging clamp (AdminPaging), and trace links for work born off-request (TraceLink). Out-of-repo product modules bind HERE instead of copying source.</Description>
     <RootNamespace>Goldpath</RootNamespace>
     <PackageReadmeFile>README.md</PackageReadmeFile>
   </PropertyGroup>
@@ -14,9 +14,6 @@
 
   <ItemGroup>
     <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
-    <ProjectReference Include="../Goldpath.Sdk/Goldpath.Sdk.csproj" />
-    <ProjectReference Include="../Goldpath.Data/Goldpath.Data.csproj" />
-    <ProjectReference Include="../Goldpath.Jobs/Goldpath.Jobs.csproj" />
   </ItemGroup>
 
   <ItemGroup>

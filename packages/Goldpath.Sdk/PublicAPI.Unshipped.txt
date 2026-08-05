@@ -1,0 +1,18 @@
+#nullable enable
+Goldpath.AdminPaging
+Goldpath.AdminSurfaceGuard
+Goldpath.AdminTenantScope
+Goldpath.AdminTenantScope.Resolution
+Goldpath.AdminTenantScope.Resolution.Refusal.get -> Microsoft.AspNetCore.Http.IResult?
+Goldpath.AdminTenantScope.Resolution.Refusal.init -> void
+Goldpath.AdminTenantScope.Resolution.Resolution() -> void
+Goldpath.AdminTenantScope.Resolution.Resolution(Microsoft.AspNetCore.Http.IResult? Refusal, string? Tenant) -> void
+Goldpath.AdminTenantScope.Resolution.Tenant.get -> string?
+Goldpath.AdminTenantScope.Resolution.Tenant.init -> void
+Goldpath.TraceLink
+const Goldpath.AdminPaging.MaxTake = 500 -> int
+static Goldpath.AdminPaging.Clamp(int take) -> int
+static Goldpath.AdminSurfaceGuard.Apply(Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, Microsoft.AspNetCore.Routing.RouteGroupBuilder! group, string! prefix, bool exposeUnsecured) -> void
+static Goldpath.AdminTenantScope.RequireAllTenantsAsync(Microsoft.AspNetCore.Http.HttpContext! http) -> System.Threading.Tasks.Task<Microsoft.AspNetCore.Http.IResult?>!
+static Goldpath.AdminTenantScope.ResolveAsync(Microsoft.AspNetCore.Http.HttpContext! http, string? requested) -> System.Threading.Tasks.Task<Goldpath.AdminTenantScope.Resolution>!
+static Goldpath.TraceLink.To(string? traceParent) -> System.Collections.Generic.IEnumerable<System.Diagnostics.ActivityLink>?
