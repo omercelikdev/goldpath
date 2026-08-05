@@ -180,6 +180,7 @@ public class InitTests
             runner.ExitCodeWhenArgumentsContain["validate"] = 1;
             Assert.Throws<CliFailureException>(() => Init(root, runner));
             Assert.False(File.Exists(Path.Combine(root, ".goldpath", "manifest.yaml")));
+            Assert.False(Directory.Exists(Path.Combine(root, ".goldpath")));   // the DIRECTORY too (review R3)
         }
         finally
         {

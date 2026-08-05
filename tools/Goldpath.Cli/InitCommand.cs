@@ -46,7 +46,13 @@ owner: {owner}
 
         if (SpecdriftGate.Validate(appRoot, runner) != 0)
         {
+            // Nothing attached means NOTHING: the directory init created goes with the file.
             File.Delete(manifestFile);
+            if (!Directory.EnumerateFileSystemEntries(manifestDir).Any())
+            {
+                Directory.Delete(manifestDir);
+            }
+
             throw new CliFailureException("the engine rejected the manifest — nothing attached (fix the inputs and retry).");
         }
 
