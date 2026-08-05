@@ -69,13 +69,20 @@ S-FLEET-03 — Two campaigns under one GlobalTps never jointly exceed it
 
 S-FIN-01 — A salary file with one bad row pays everyone except that row, after a second pair of eyes
   modules:  bulk, jobs, notification, console
-  given:    a 10K-row payment file, row 4 121 malformed
-  when:     upload → validation report → a DIFFERENT user approves → execute → the bad row's
-            owner is notified
-  then:     9 999 executed exactly once; row 4 121 in the repair queue with the reason; the
-            approver identity on the audit; the notification evidenced
-  needs:    local
-  evidence: —
+  given:    a 10K-row payment file, row 4 121 refused by core banking at EXECUTION
+            (validation-clean on purpose: an intake-invalid row BLOCKS the gate — that
+            refusal is its own, already-proven story)
+  when:     upload as payroll-clerk → validation report → payroll-SUPERVISOR approves →
+            execute → the bad row's owner is notified (dedup-keyed per batch+row)
+  then:     9 999 executed exactly once; row 4 121 in the repair queue with the refusal's
+            own words; the approver identity stamped (DecidedBy) and the clerk durable in
+            the jobs admin audit; the notification evidenced AND landed in a real inbox
+  needs:    local (testcontainers: postgres + smtp4dev)
+  evidence: tests/Goldpath.IntegrationTests/ScenarioFin01Tests.cs — replay with
+            `dotnet test --filter FullyQualifiedName~ScenarioFin01` (2026-08-06, 1m21s
+            green: 10 000 rows, chunk 500, exactly-once by sink count AND distinct row
+            numbers; the console half of the story is the smoke's four-eyes journey,
+            which drives the SAME contract this scenario drives at the API)
 
 S-FIN-02 — A litigation hold survives an erasure request, and the chain still verifies
   modules:  archival
