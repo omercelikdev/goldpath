@@ -9,7 +9,7 @@ public class CliRunnerTests
     {
         var error = new StringWriter();
         Assert.Equal(2, CliRunner.Run([], new FakeProcessRunner(), TextWriter.Null, error));
-        Assert.Contains("goldpath new solution|worker", error.ToString(), StringComparison.Ordinal);
+        Assert.Contains("goldpath new (wizard) | new solution|worker|service|gateway", error.ToString(), StringComparison.Ordinal);
     }
 
     [Fact]
