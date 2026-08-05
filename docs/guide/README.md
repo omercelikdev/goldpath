@@ -6,9 +6,11 @@ exist per module — this guide is the map, not a copy.
 1. **[Getting started](getting-started.md)** — install to running app in five minutes.
 2. **[Concepts](concepts.md)** — the six ideas everything else hangs on: manifest,
    composition, the run model, migrations discipline, the frozen admin contract, proofs.
-3. **[The CorPay tour](corpay-tour.md)** — a real finance app built ONLY with the public
+3. **[Modules × infrastructure](modules-and-infrastructure.md)** — what each capability
+   actually costs to run, verified against the composition (the wizard derives from it).
+4. **[The CorPay tour](corpay-tour.md)** — a real finance app built ONLY with the public
    verbs, feature by feature, with the bugs the build itself found.
-4. **Proof stories** — why the claims hold: [No double payment under kill -9](../stories/kill9-no-double-payment.md).
+5. **Proof stories** — why the claims hold: [No double payment under kill -9](../stories/kill9-no-double-payment.md).
 
 Operating depth (already written, linked from the concepts): the
 [migrations runbook](../ops/migrations-runbook.md), the

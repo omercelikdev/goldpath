@@ -43,7 +43,10 @@
 > and `goldpath new gateway` (YARP over service discovery) — the nightly GmSixGateway
 > row proves generate → verbs → build → ROUTED smoke end to end. GM-2/5/6 as WRITTEN
 > remain roadmap: oracle/kafka are schema-only and ldap/saml are not in the auth enum
-> (their triggers are ledgered). Treat unchecked cells as roadmap, never as coverage.
+> (their triggers are ledgered). Treat unchecked cells as roadmap, never as coverage. The bulk-only
+> adopter question ("we will use ONLY bulk — what do we run?") has its own row since
+> 2026-08-05: GmBulkOnly proves bulk + jobs + console on NOTHING but the app database
+> (`docs/guide/modules-and-infrastructure.md` is the adopter-facing matrix).
 
 | Dimension | Value → GM |
 |---|---|

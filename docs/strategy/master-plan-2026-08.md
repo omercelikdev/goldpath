@@ -37,12 +37,19 @@ green → merge → ledgers updated in the same PR.
    §2b condition: every risk has a written antidote AND its enforcing mechanism; the
    two honest GAPs (product-repo train-freshness step, GP20xx no-source-leak analyzer)
    are the pilot's DoD.
-5. **Shapes + CLI package** (the RFC's implementation) — clean-architecture template ·
-   microservice/multi-service layout + gateway · plain-monolith variant ·
-   `goldpath new module|service` · the INTERACTIVE wizard (asks which modules, then
-   derives the infrastructure itself: "no broker needed — removed") · `goldpath init`
-   (L2 attach) · GM matrix 6/6 + a bulk-only GM row + the module×infrastructure
-   matrix as an adopter/sales document.
+5. **Shapes + CLI package** — **DONE 2026-08-05**, six slices, each PR'd with an
+   end-to-end proof: `Goldpath.Sdk` + the manifest `products` surface (S1, non-breaking
+   — the shared types were internal everywhere) · `--layout clean-architecture` with
+   GmFourClean real (S2) · `goldpath new service|gateway` — db-per-service manifests,
+   YARP over service discovery, the ROUTED smoke probe, GmSixGateway real (S3) · the
+   bare-`goldpath new` WIZARD deriving infrastructure with reasons ("no broker needed —
+   removed"), pure-function tested (S4) · `goldpath export compose` GENERATED from the
+   AppHost, proven by a real `docker compose up` answering business traffic (S5) ·
+   GmBulkOnly (the bulk-only customer runs ONLY Postgres) + the module×infrastructure
+   matrix (`docs/guide/modules-and-infrastructure.md`) + `goldpath init` L2 attach
+   (manifest + schema gate; rewiring stays the transformation pack's — RFC D5 scope
+   honored) (S6). The plain-monolith variant is declarative (GM-4's no-features shape);
+   `new module` was renamed by ADR-0012: product modules live in their OWN repos.
 6. **Pilot product module** — the API Portal or Sync skeleton: the module path's
    CorPay. Its console composes from the kit — the third consumer that fires the
    @qorpe/ui decision for real.

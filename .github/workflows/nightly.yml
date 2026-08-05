@@ -31,6 +31,10 @@ jobs:
           - name: GmSixGateway
             args: "--auth none"
             post: "new service Billing;new gateway"
+          # The bulk-only customer: bulk (jobs + console riding along) with ONLY the app
+          # database — no broker, no Redis. The module×infrastructure matrix's proof row.
+          - name: GmBulkOnly
+            args: "--features bulk --broker none --auth none"
           # Dotted solution names are the .NET norm (Company.Product) — issue #24's regression shape.
           - name: Gm.Dotted
             args: "--broker none --auth none"
