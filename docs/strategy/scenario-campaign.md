@@ -76,7 +76,10 @@ S-FIN-01 — A salary file with one bad row pays everyone except that row, after
             execute → the bad row's owner is notified (dedup-keyed per batch+row)
   then:     9 999 executed exactly once; row 4 121 in the repair queue with the refusal's
             own words; the approver identity stamped (DecidedBy) and the clerk durable in
-            the jobs admin audit; the notification evidenced AND landed in a real inbox
+            the jobs admin audit; the owner notified THROUGH the app's own
+            failure→notification component (repair queue in, dedup-keyed request out —
+            replaying it answers the same id, never a second mail), evidenced AND landed
+            in a real inbox
   needs:    local (testcontainers: postgres + smtp4dev)
   evidence: tests/Goldpath.IntegrationTests/ScenarioFin01Tests.cs — replay with
             `dotnet test --filter FullyQualifiedName~ScenarioFin01` (2026-08-06, 1m21s

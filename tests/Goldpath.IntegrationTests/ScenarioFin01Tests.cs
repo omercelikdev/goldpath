@@ -65,6 +65,56 @@ public sealed class ScenarioFin01Tests : IAsyncLifetime
         }
     }
 
+    /// <summary>
+    /// APP code, exactly the shape the template teaches (GP1601: the app requests, the
+    /// module sends): after a partial run, map every repair-queue failure to ONE
+    /// dedup-keyed notification to the row's owner. The scenario drives THIS — the
+    /// causal chain (execute fails → owner notified) runs through a real component,
+    /// never a hand-built request (review R1 on the introducing PR).
+    /// </summary>
+    /// <summary>
+    /// APP code, exactly the shape the template teaches (GP1601: the app requests, the
+    /// module sends): after a partial run, resolve the batch's FAILED rows from the
+    /// app's own data (the payload carries the business identity — the repair queue's
+    /// ItemKey is a run coordinate, not a business key), pair them with the run's
+    /// refusal reasons, and request ONE dedup-keyed notification per row to its owner.
+    /// The scenario drives THIS — the causal chain (execute fails → owner notified)
+    /// runs through a real component, never a hand-built request (review R1).
+    /// </summary>
+    public sealed class RepairQueueNotifier(SalaryDb db, GoldpathJobsAdminService<SalaryDb> admin, IGoldpathNotifier notifier)
+    {
+        public async Task<IReadOnlyList<Guid>> NotifyOpenFailuresAsync(Guid batchId, Guid runId, CancellationToken ct)
+        {
+            var detail = await admin.GetRunAsync(runId, ct)
+                ?? throw new InvalidOperationException($"run {runId} not found");
+            var reasons = string.Join("; ", detail.OpenFailures.Select(f => f.Reason).Distinct(StringComparer.Ordinal));
+
+            var failedRows = await db.Set<GoldpathBulkRow>().AsNoTracking()
+                .Where(r => r.BatchId == batchId && r.FailedAt != null)
+                .ToListAsync(ct);
+            var ids = new List<Guid>();
+            foreach (var row in failedRows)
+            {
+                var payload = System.Text.Json.JsonSerializer.Deserialize<SalaryRow>(row.Payload)
+                    ?? throw new InvalidOperationException($"row {row.RowNumber} has no payload");
+                var notification = await notifier.RequestAsync(new GoldpathNotificationRequest(
+                    "salary-row-failed", "email", OwnerOf(payload.EndToEndId), "",
+                    new Dictionary<string, string>
+                    {
+                        ["EndToEndId"] = payload.EndToEndId,
+                        ["Reason"] = reasons,
+                    },
+                    dedupKey: $"salary-row-failed:{batchId}:{row.RowNumber}"), ct);
+                ids.Add(notification.Id);
+            }
+
+            return ids;
+        }
+
+        // The owner lookup is the app's own concern (HR directory in real life).
+        private static string OwnerOf(string endToEndId) => $"owner-{endToEndId.ToLowerInvariant()}@example.test";
+    }
+
     private const int Rows = 10_000;
     private const int BadRow = 4_121;
 
@@ -89,6 +139,7 @@ public sealed class ScenarioFin01Tests : IAsyncLifetime
         builder.Configuration["ConnectionStrings:salarydb"] = _postgres.GetConnectionString();
         builder.Services.AddDbContext<SalaryDb>(o => o.UseNpgsql(_postgres.GetConnectionString()));
         builder.Services.AddScoped<IGoldpathBulkRowHandler<SalaryRow>, SalaryHandler>();
+        builder.Services.AddScoped<RepairQueueNotifier>();
         builder.AddGoldpathBulk<HostApplicationBuilder, SalaryDb>(bulk =>
         {
             bulk.ChunkSize = 500;   // 20 checkpoints across the file
@@ -117,7 +168,7 @@ public sealed class ScenarioFin01Tests : IAsyncLifetime
             notification.AddTemplate("salary-row-failed", t => t
                 .Channel("email", c => c
                     .Subject("", "Salary instruction {{EndToEndId}} could not be paid")
-                    .Body("", "Instruction {{EndToEndId}} (row {{RowNumber}}) was refused: {{Reason}}. It sits in the repair queue for replay."))
+                    .Body("", "Instruction {{EndToEndId}} was refused: {{Reason}}. It sits in the repair queue for replay."))
                 .DeleteBodyAfter(TimeSpan.FromDays(90)));
         });
         builder.AddGoldpathJobs<HostApplicationBuilder, SalaryDb>(jobs =>
@@ -236,22 +287,20 @@ public sealed class ScenarioFin01Tests : IAsyncLifetime
         var failure = Assert.Single(detail!.OpenFailures);
         Assert.Contains("core banking refused", failure.Reason, StringComparison.Ordinal);
 
-        // …and the row's owner is notified: the app requests (GP1601), the module sends —
-        // dedup-keyed so a scenario replay cannot double-mail the same bad row.
+        // …and the row's owner is notified through the APP's own failure→notification
+        // component: repair queue in, dedup-keyed requests out (GP1601). Driving the
+        // component IS the causal chain the story claims (review R1).
         Guid notificationId;
         using (var scope = _host.Services.CreateScope())
         {
-            var notifier = scope.ServiceProvider.GetRequiredService<IGoldpathNotifier>();
-            var notification = await notifier.RequestAsync(new GoldpathNotificationRequest(
-                "salary-row-failed", "email", "owner-4121@example.test", "",
-                new Dictionary<string, string>
-                {
-                    ["EndToEndId"] = $"SAL-{BadRow:D5}",
-                    ["RowNumber"] = BadRow.ToString(),
-                    ["Reason"] = failure.Reason,
-                },
-                dedupKey: $"salary-row-failed:{uploaded.Id}:{BadRow}"), timeout.Token);
-            notificationId = notification.Id;
+            var ids = await scope.ServiceProvider.GetRequiredService<RepairQueueNotifier>()
+                .NotifyOpenFailuresAsync(uploaded.Id, partial.RunId!.Value, timeout.Token);
+            notificationId = Assert.Single(ids);
+
+            // Replaying the component cannot double-mail: the dedup key answers the same id.
+            var again = await scope.ServiceProvider.GetRequiredService<RepairQueueNotifier>()
+                .NotifyOpenFailuresAsync(uploaded.Id, partial.RunId!.Value, timeout.Token);
+            Assert.Equal(notificationId, Assert.Single(again));
         }
 
         Assert.True((await Admin.TriggerAsync(_fleet, "GoldpathNotificationSendJob`1", dryRun: false, "payroll-supervisor", timeout.Token)).Ok);
@@ -266,7 +315,7 @@ public sealed class ScenarioFin01Tests : IAsyncLifetime
         var inbox = await http.GetFromJsonAsync<Smtp4DevPage>("/api/messages", timeout.Token);
         var message = Assert.Single(inbox!.Results);
         Assert.Contains($"SAL-{BadRow:D5}", message.Subject, StringComparison.Ordinal);
-        Assert.Contains("owner-4121@example.test", message.To);
+        Assert.Contains("owner-sal-04121@example.test", message.To);
     }
 
     private sealed record Smtp4DevPage(List<Smtp4DevMessage> Results);
