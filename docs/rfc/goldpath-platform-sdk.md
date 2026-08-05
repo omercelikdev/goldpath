@@ -1,9 +1,12 @@
 # Platform RFC: the Module SDK — how product modules ride the core
 
-> Status: **PROPOSED** (2026-08-05) — the written half of master plan step 4; decisions
-> D1–D7 await the owner. Companion: ADR-0012 (the philosophy this RFC implements).
-> This is a PLATFORM RFC like the console's — the eight module sections apply where they
-> fit; the center of gravity is the decision set.
+> Status: **ACCEPTED** (2026-08-05 — D1–D7 approved by Ömer). The approval carries one
+> governance condition, honored in §2b: every operating risk of this model is listed
+> WITH its antidote AND the mechanism that enforces the antidote — nothing in this
+> model may drift outside our control on discipline alone (ADR-0005: a rule without a
+> verifier does not count). Companion: ADR-0012. This is a PLATFORM RFC like the
+> console's — the eight module sections apply where they fit; the center of gravity is
+> the decision set.
 
 ## 1. Scope / Non-Goals
 
@@ -126,6 +129,27 @@ likeliest firer): the browser-side OIDC client is built ONCE in the kit, so ever
 product console inherits sign-in-once; T10's proof line is unchanged. Token–tenant
 binding (auth RFC) already crosses products because it is claim-based, not origin-based.
 
+## 2b. Risks & antidotes (the acceptance condition)
+
+Every risk of operating this model, with its antidote AND the mechanism that enforces
+the antidote. The rule for this table is the constitution's own (ADR-0005): an antidote
+enforced only by discipline is listed as a GAP until its mechanism ships — nothing here
+is allowed to rest on "we will remember".
+
+| # | Risk | Antidote | Enforced by (mechanism) |
+|---|---|---|---|
+| R-1 | **Version skew** — a product repo silently falls trains behind the core | D3's latest-only support window: a product is supported on the CURRENT train only; falling behind is visible, never ambient | The product repo's CI runs the CorPay lane verbatim — nightly build + `goldpath check` against its PINNED train, plus a train-freshness step that goes RED when nuget.org carries a newer train than the pin (ships with the pilot's CI, step 6) |
+| R-2 | **Source leakage** — a product copies core source instead of binding to packages (the fork that cannot receive updates, foundation §10) | Products bind to published `Goldpath.*` + `Goldpath.Sdk` only; no compile-links leave this monorepo | GP20xx analyzer in the product template: a product assembly declaring types in the `Goldpath` namespace or compile-linking outside its repo goes RED (lands with the pilot — until then this row is an honest GAP guarded by review) |
+| R-3 | **Family drift** — a product console "resembles" the family instead of BEING it | D5: every console composes `@qorpe/ui`; conformance is composition, not imitation | The product console's CI runs the same gates as the core console: axe + the ui-standard family checklist + kit-version pin recorded per train; a console not importing the kit cannot pass the checklist's component-vocabulary rows |
+| R-4 | **Kit breaking changes ripple** to every consumer | The kit gets the NuGet discipline on npm: semver + changelog + upgrade notes; each Goldpath train RECORDS the kit version it was built with | `template-pins.sh` grows a kit-pin row (the same script that already fails the build on a stale Goldpath pin); the kit's publish workflow refuses a version without a changelog entry (mirrors release.yml's awk gate) |
+| R-5 | **Cross-repo change cost** — one seam change = two PRs | The SDK surface is deliberately SMALL and frozen-by-ledger; products feel churn only when the ledger changes | `Goldpath.Sdk` carries PublicAPI Shipped/Unshipped like every package (RS0016/17 build-red on undeclared change) + versioning D2: a ledger removal is a MINOR train with an upgrade-guide entry — mechanical, not memorial |
+| R-6 | **Visibility loss** — separate repos hide what exists and what runs where | The manifest stays the unit of truth (ADR-0001): `goldpath discover` finds manifests, the console registry lists running services — nobody inventories repos by hand | The namespaced `products` key makes every product self-declaring; corpus + GM shape reject an undeclared or malformed product (ADR-0008: no product ships while its GM row is red) |
+| R-7 | **Private feed becomes a second-class citizen** (stale mirror, broken air-gap) | The internal feed is the SAME mechanism the air-gapped scenario already treats as first-class (`nuget.config` override) — one path, not a special case | The product CI restores EXCLUSIVELY from the internal feed (no nuget.org fallback in its `nuget.config`) — a stale mirror fails the product's own nightly loudly, on our side of the fence |
+| R-8 | **Governance drift** — a product ships without an RFC, ops pack, or conformance pass | Foundation §10 intake holds for products exactly as for modules: RFC → constitution conformance check → build; "no runbook = no module" unchanged | The RFC index's completeness rule (every file has a row) + the review agent's R1 class on the product repo (same skill, same script — the product template ships `.claude/` like CorPay's) |
+
+Two rows carry honest GAPs until the pilot (R-2's analyzer, R-1's freshness step) — both
+are the pilot's DoD items in step 6, listed there so they cannot be silently skipped.
+
 ## 3. Manifest surface
 
 D2 above; the schema fragment ships with the first product's RFC, the `products` map and
@@ -163,7 +187,8 @@ The SDK inherits the platform's ops posture; a product module's RFC owes its own
 
 ## 8. DoD
 
-- [ ] D1–D7 approved by the owner (this document flips to ACCEPTED; ADR-0012 to accepted)
+- [x] D1–D7 approved by the owner (2026-08-05; ADR-0012 accepted; §2b's risk table is
+      the approval's written condition — the two GAP rows are the pilot's DoD)
 - [ ] `Goldpath.Sdk` package + in-repo migration on a minor train (upgrade guide entry)
 - [ ] Manifest `products` map + corpus + schema docs
 - [ ] `@qorpe/ui` extraction plan recorded in ui-standard (execution at consumer #3)

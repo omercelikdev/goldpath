@@ -1,7 +1,10 @@
 # ADR-0012: Goldpath is a platform — product modules ride the published core
 
-- Status: **proposed** (2026-08-05) · Composes with ADR-0001 (manifest truth), ADR-0003
-  (configure-not-wrap), ADR-0008 (GM gate); amends foundation §10's commercial line
+- Status: **accepted** (2026-08-05 — D1–D7 approved by Ömer, with the governance
+  condition written into the RFC's Risks & antidotes: every risk carries a named
+  antidote AND the mechanism that enforces it) · Composes with ADR-0001 (manifest
+  truth), ADR-0003 (configure-not-wrap), ADR-0008 (GM gate); amends foundation §10's
+  commercial line
 
 ## Decision
 Goldpath is a PLATFORM, not only an accelerator: first-party PRODUCT modules (Sync, API
