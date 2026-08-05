@@ -103,3 +103,88 @@ public class WizardTests
         Assert.Empty(runner.Calls);
     }
 }
+
+public class InitTests
+{
+    private sealed class SilentPrompter : IPrompter
+    {
+        public string Choose(string question, IReadOnlyList<string> choices, string defaultChoice) => defaultChoice;
+        public IReadOnlyList<string> ChooseMany(string question, IReadOnlyList<string> choices) => [];
+        public bool Confirm(string question, bool defaultAnswer) => defaultAnswer;
+        public string Input(string question) => "";
+    }
+
+    private static int Init(string root, FakeProcessRunner runner)
+        => InitCommand.Run(root, new SilentPrompter(), runner, TextWriter.Null, TextWriter.Null);
+
+    private static string TempSolution()
+    {
+        var root = Path.Combine(Path.GetTempPath(), $"goldpath-init-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(root);
+        File.WriteAllText(Path.Combine(root, "Legacy.sln"), "");
+        return root;
+    }
+
+    [Fact]
+    public void Init_attaches_a_valid_manifest_to_an_existing_solution()
+    {
+        var root = TempSolution();
+        try
+        {
+            var runner = new FakeProcessRunner();
+            Assert.Equal(0, Init(root, runner));
+            var manifest = File.ReadAllText(Path.Combine(root, ".goldpath", "manifest.yaml"));
+            Assert.Contains("kind: solution", manifest, StringComparison.Ordinal);
+            Assert.Contains("init attaches, never rewrites", manifest, StringComparison.Ordinal);
+            Assert.Contains(runner.Calls, c => c.Arguments.Contains("validate"));   // the engine gated it
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void Init_refuses_an_already_attached_solution_and_an_empty_directory()
+    {
+        var root = TempSolution();
+        try
+        {
+            Assert.Equal(0, Init(root, new FakeProcessRunner()));
+            Assert.Throws<CliFailureException>(() => Init(root, new FakeProcessRunner()));
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+
+        var empty = Path.Combine(Path.GetTempPath(), $"goldpath-empty-{Guid.NewGuid():N}");
+        Directory.CreateDirectory(empty);
+        try
+        {
+            Assert.Throws<CliFailureException>(() => Init(empty, new FakeProcessRunner()));
+        }
+        finally
+        {
+            Directory.Delete(empty, recursive: true);
+        }
+    }
+
+    [Fact]
+    public void A_rejected_manifest_leaves_nothing_behind()
+    {
+        var root = TempSolution();
+        try
+        {
+            var runner = new FakeProcessRunner();
+            runner.ExitCodeWhenArgumentsContain["validate"] = 1;
+            Assert.Throws<CliFailureException>(() => Init(root, runner));
+            Assert.False(File.Exists(Path.Combine(root, ".goldpath", "manifest.yaml")));
+            Assert.False(Directory.Exists(Path.Combine(root, ".goldpath")));   // the DIRECTORY too (review R3)
+        }
+        finally
+        {
+            Directory.Delete(root, recursive: true);
+        }
+    }
+}
