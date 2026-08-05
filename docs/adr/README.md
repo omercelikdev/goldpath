@@ -1,8 +1,9 @@
 # ADR Index — The Goldpath Constitution
 
-These ten decisions are the constitution of Goldpath (see [foundation](../strategy/foundation.md) §2).
-If one of them changes, the product has effectively been redesigned; a change requires a new
-superseding ADR. Format: MADR-lite. Statuses: `accepted | superseded-by-XXXX`.
+These decisions are the constitution of Goldpath (see [foundation](../strategy/foundation.md) §2 —
+the first ten; 0011+ extend it by the same process). If one of them changes, the product has
+effectively been redesigned; a change requires a new superseding ADR. Format: MADR-lite.
+Statuses: `proposed | accepted | superseded-by-XXXX`.
 
 | ADR | Title | Status |
 |---|---|---|
@@ -16,3 +17,5 @@ superseding ADR. Format: MADR-lite. Statuses: `accepted | superseded-by-XXXX`.
 | [0008](ADR-0008-first-click-run-is-proven.md) | "Runs with one click" is a proven feature | accepted |
 | [0009](ADR-0009-docs-are-generated.md) | Docs are generated, not handwritten | accepted |
 | [0010](ADR-0010-human-gates-are-fixed.md) | Human gates are fixed | accepted |
+| [0011](ADR-0011-runtime-ai-is-an-opt-in-module.md) | Runtime AI is an opt-in module — the core stays AI-free | accepted |
+| [0012](ADR-0012-goldpath-is-a-platform.md) | Goldpath is a platform — product modules ride the published core | proposed |
