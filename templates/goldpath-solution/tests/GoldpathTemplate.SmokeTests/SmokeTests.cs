@@ -47,6 +47,8 @@ public class SmokeTests
         await WaitUntilAsync(async () =>
             (await client.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
 
+        // goldpath:smoke heads — additional heads (goldpath new service|gateway) prove here
+
 //#if (UseAuth)
         // Secure-by-default proof: with auth enabled and no token, business endpoints are
         // 401 while probes stay green — that IS the first-click contract for authed shapes.

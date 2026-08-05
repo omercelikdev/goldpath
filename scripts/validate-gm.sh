@@ -67,6 +67,16 @@ PY
 echo "── initial migration (goldpath db init — Development migrates, EnsureCreated is gone)"
 (cd "$APP" && dotnet run --project "$ROOT/tools/Goldpath.Cli" -- db init --path .)
 
+# Optional post-generation CLI verbs (';'-separated) — the multi-head shapes are built by
+# the SAME verbs an adopter runs (goldpath new service|gateway), never by a special path.
+if [ -n "${GOLDPATH_GM_POST:-}" ]; then
+  IFS=';' read -ra GM_POSTS <<< "$GOLDPATH_GM_POST"
+  for post in "${GM_POSTS[@]}"; do
+    echo "── goldpath $post"
+    (cd "$APP" && dotnet run --project "$ROOT/tools/Goldpath.Cli" -- $post --path .)
+  done
+fi
+
 echo "── build"
 # -m:1: the generated app has multiple heads referencing the Api project; .NET 10's
 # StaticWebAssets cache (rjsmrazor.dswa.cache.json) races under parallel node builds.

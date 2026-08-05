@@ -39,7 +39,17 @@ public class CliRunnerTests
     public void New_unknown_kind_exits_2_without_running_anything()
     {
         var runner = new FakeProcessRunner();
-        Assert.Equal(2, CliRunner.Run(["new", "gateway"], runner, TextWriter.Null, TextWriter.Null));
+        Assert.Equal(2, CliRunner.Run(["new", "module"], runner, TextWriter.Null, TextWriter.Null));
+        Assert.Empty(runner.Calls);
+    }
+
+    [Fact]
+    public void New_gateway_outside_an_app_teaches_instead_of_scaffolding()
+    {
+        // gateway/service are HEAD verbs: they join an existing app, and outside one the
+        // failure names the manifest instead of dumping files into the working directory.
+        var runner = new FakeProcessRunner();
+        Assert.Equal(1, CliRunner.Run(["new", "gateway", "--path", Path.GetTempPath()], runner, TextWriter.Null, TextWriter.Null));
         Assert.Empty(runner.Calls);
     }
 

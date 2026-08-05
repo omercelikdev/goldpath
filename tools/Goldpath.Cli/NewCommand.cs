@@ -10,11 +10,23 @@ public static class NewCommand
     /// <summary>Maps the kind to its template and delegates to dotnet new.</summary>
     public static int Run(string kind, IReadOnlyList<string> rest, IProcessRunner runner, TextWriter output, TextWriter error)
     {
+        if (kind is "service")
+        {
+            var serviceName = FirstBareToken(rest)
+                ?? throw new CliUsageException("goldpath new service needs a name: goldpath new service <Name>");
+            return NewServiceCommand.RunService(serviceName, FindFlagValue(rest, "--path") ?? Directory.GetCurrentDirectory(), runner, output, error);
+        }
+
+        if (kind is "gateway")
+        {
+            return NewServiceCommand.RunGateway(FindFlagValue(rest, "--path") ?? Directory.GetCurrentDirectory(), runner, output, error);
+        }
+
         var template = kind switch
         {
             "solution" => "goldpath-solution",
             "worker" => "goldpath-worker",
-            _ => throw new CliUsageException($"unknown kind '{kind}' — goldpath new solution|worker"),
+            _ => throw new CliUsageException($"unknown kind '{kind}' — goldpath new solution|worker|service|gateway"),
         };
 
         var exitCode = runner.Run("dotnet", ["new", template, .. rest], Directory.GetCurrentDirectory());
@@ -43,15 +55,39 @@ public static class NewCommand
     }
 
     private static string OutputDirectory(IReadOnlyList<string> rest)
+        => FindFlagValue(rest, "-o", "--output") ?? Directory.GetCurrentDirectory();
+
+    /// <summary>The value following the first matching flag, or null.</summary>
+    private static string? FindFlagValue(IReadOnlyList<string> rest, params string[] flags)
     {
         for (var i = 0; i < rest.Count - 1; i++)
         {
-            if (rest[i] is "-o" or "--output")
+            if (flags.Contains(rest[i], StringComparer.Ordinal))
             {
                 return rest[i + 1];
             }
         }
 
-        return Directory.GetCurrentDirectory();
+        return null;
+    }
+
+    /// <summary>
+    /// The first token that is neither a flag nor a flag's VALUE — so
+    /// `new service --path /app Billing` names Billing, whatever the order (review R3).
+    /// </summary>
+    private static string? FirstBareToken(IReadOnlyList<string> rest)
+    {
+        for (var i = 0; i < rest.Count; i++)
+        {
+            if (rest[i].StartsWith("-", StringComparison.Ordinal))
+            {
+                i++;   // its value rides with it
+                continue;
+            }
+
+            return rest[i];
+        }
+
+        return null;
     }
 }

@@ -10,7 +10,7 @@ public static class CliRunner
         goldpath — the Goldpath golden-path CLI (thin and deterministic)
 
         usage:
-          goldpath new solution|worker [dotnet-new args...]   generate from the golden templates
+          goldpath new solution|worker|service|gateway [dotnet-new args...]   generate from the golden templates
           goldpath add feature <name> [--path <dir>]          wire a Ring B feature into an existing app
           goldpath add worker <name> [--trigger queue|schedule|jobs] [--path <dir>]
                                                          add a worker project to an existing solution

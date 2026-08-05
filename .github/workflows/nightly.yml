@@ -25,6 +25,12 @@ jobs:
           # projects, the packages anchor riding Infrastructure, migrations owned there.
           - name: GmFourClean
             args: "--db sqlserver --broker none --auth none --layout clean-architecture"
+          # GM-6's realizable half: a service head (own db, own manifest) + the YARP
+          # gateway — built by the SAME verbs an adopter runs, with the ROUTED probe in
+          # the generated smoke (gateway /api/health/ready answers through the chain).
+          - name: GmSixGateway
+            args: "--auth none"
+            post: "new service Billing;new gateway"
           # Dotted solution names are the .NET norm (Company.Product) — issue #24's regression shape.
           - name: Gm.Dotted
             args: "--broker none --auth none"
@@ -70,6 +76,7 @@ jobs:
       - name: ${{ matrix.name }}
         env:
           GOLDPATH_GM_TEMPLATE: ${{ matrix.template || 'goldpath-solution' }}
+          GOLDPATH_GM_POST: ${{ matrix.post || '' }}
         run: ./scripts/validate-gm.sh "${{ matrix.name }}" ${{ matrix.args }}
 
   migrations-proofs:
