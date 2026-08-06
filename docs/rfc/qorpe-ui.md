@@ -4,8 +4,12 @@
 - Date: 2026-08-06
 - Executes: [goldpath-platform-sdk](goldpath-platform-sdk.md) D5 — the written trigger
   ("two consumers copy; three justify a package",
-  [ui-standard-v1](../strategy/ui-standard-v1.md) §7.11) fired when the third
-  kit-composed console was committed (ADR-0012 product pilot).
+  [ui-standard-v1](../strategy/ui-standard-v1.md) §7.11). Trigger status: the third
+  kit-composed console (the ADR-0012 product pilot's) is DECIDED but not yet built —
+  the owner sequenced this extraction ahead of it (2026-08-06, step 6.0) precisely so
+  consumer #3 starts from the published package and never source-copies. This RFC
+  therefore fronts the trigger deliberately; if the pilot were cancelled, the
+  extraction would return to waiting on §7.11 as written.
 - Owner-locked names (2026-08-06, never renamed): GitHub org **qorpe** · repo
   **qorpe/ui** (public, Apache-2.0) · npm package **@qorpe/ui** on npmjs.com.
 
