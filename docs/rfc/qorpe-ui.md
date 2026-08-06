@@ -1,6 +1,7 @@
 # RFC: @qorpe/ui — the family UI kit extraction
 
-- Status: **draft** (owner acceptance required before any code moves)
+- Status: **ACCEPTED** (owner, 2026-08-06 — D1–D10 as recommended; extraction fronted
+  ahead of the pilot console per the Executes note)
 - Date: 2026-08-06
 - Executes: [goldpath-platform-sdk](goldpath-platform-sdk.md) D5 — the written trigger
   ("two consumers copy; three justify a package",

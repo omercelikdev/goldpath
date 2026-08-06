@@ -42,4 +42,4 @@ All "implemented" modules are published on nuget.org at `0.1.0-preview.6` (the c
 | [goldpath-platform-sdk](goldpath-platform-sdk.md) | the Module SDK (platform RFC, ADR-0012 companion) | **ACCEPTED** (2026-08-05, D1–D7 + the §2b risk/antidote condition) — implementation rides steps 5–6 |
 | [goldpath-ai](goldpath-ai.md) | Goldpath.Ai — opt-in runtime AI (gateway · tool registry · decision record · confidence gate) | **ACCEPTED** (2026-07-26, D1–D4 as recommended) — implementation opens after the UI phase |
 | [spec-engine-v1](spec-engine-v1.md) | specdrift (separate repo) | implemented — 0.4.2 published (NuGet tool + MCP + Docker + Action) |
-| [qorpe-ui](qorpe-ui.md) | @qorpe/ui — the family UI kit extraction (platform-sdk D5; moves to the qorpe/ui repo) | draft |
+| [qorpe-ui](qorpe-ui.md) | @qorpe/ui — the family UI kit extraction (platform-sdk D5; moves to the qorpe/ui repo) | **ACCEPTED** (2026-08-06, D1–D10 as recommended) — implementation is step 6.0 |
