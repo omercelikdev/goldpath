@@ -5,7 +5,13 @@
 set -euo pipefail
 cd "$(dirname "$0")/../ui/console"
 PINNED=$(node -p "require('./package.json').devDependencies['@qorpe/ui']")
-LATEST=$(npm view @qorpe/ui version)
+# Air-gapped runs are a first-class scenario (constitution): no registry, no verdict —
+# skip HONESTLY, the same convention as review-agent.yml without its key. Freshness is
+# enforced wherever the network exists (hosted CI), never faked where it does not.
+if ! LATEST=$(npm view @qorpe/ui version 2>/dev/null) || [ -z "$LATEST" ]; then
+  echo "kit-freshness: registry unreachable — skipped honestly (air-gapped run; pinned $PINNED unverified, not stale)."
+  exit 0
+fi
 if [ "$PINNED" = "$LATEST" ]; then
   echo "kit-freshness: pinned $PINNED == latest — fresh."
   exit 0
