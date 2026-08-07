@@ -50,9 +50,12 @@ green → merge → ledgers updated in the same PR.
    (manifest + schema gate; rewiring stays the transformation pack's — RFC D5 scope
    honored) (S6). The plain-monolith variant is declarative (GM-4's no-features shape);
    `new module` was renamed by ADR-0012: product modules live in their OWN repos.
-6. **Pilot product module** — the API Portal or Sync skeleton: the module path's
-   CorPay. Its console composes from the kit — the third consumer that fires the
-   @qorpe/ui decision for real.
+6. **Pilot product module** — the API Portal (chosen 2026-08-06; analysis private).
+   **6.0 DONE 2026-08-07**: @qorpe/ui extracted (RFC qorpe-ui accepted; repo
+   github.com/qorpe/ui, gates G1–G6 live, 0.1.0 on npm with the B1–B9
+   standardization series) and THIS console now composes from the PUBLISHED kit —
+   ui/kit deleted, the kit-freshness gate holds the pin honest. Mockifyr's
+   migration and the pilot skeleton are next.
 7. **Scenario campaign** — starts after step 3 and runs alongside: S-FIN-01 first,
    the S-FLEET set once R1 ships, the 30M rig spec co-written before any scale claim.
    All seven seeded scenarios get evidence.

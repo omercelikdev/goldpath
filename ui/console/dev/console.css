@@ -1,5 +1,5 @@
-/* The console's stylesheet: the kit's tokens plus the source globs Tailwind must scan
-   (the kit ships the tokens; the classes live in BOTH packages). */
-@import "../../kit/src/tokens/tokens.css";
+/* The console's stylesheet: the PUBLISHED kit's tokens plus the source globs Tailwind
+   must scan — the kit is prebuilt now, so its class names live in the dist JS. */
+@import "@qorpe/ui/tokens.css";
 @source "../src";
-@source "../../kit/src";
+@source "../node_modules/@qorpe/ui/dist";

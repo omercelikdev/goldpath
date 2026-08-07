@@ -1,7 +1,7 @@
 import { Pause, Pencil, Play, Plus, Trash2, Zap } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, DetailSection, Dialog, KeyValueRows, Select, Sheet, StateBadge, Table, VerbButton, shortStamp } from "@goldpath/kit";
-import type { VerbOutcome } from "@goldpath/kit";
+import { Banner, DetailSection, Dialog, KeyValueRows, Select, Sheet, StateBadge, Table, VerbButton, shortStamp } from "@qorpe/ui";
+import type { VerbOutcome } from "@qorpe/ui";
 import { isPaused, nextFireAt, type AdminClient, type JobInfo, type TriggerInfo } from "./adminClient";
 import { asOutcome } from "./verbs";
 

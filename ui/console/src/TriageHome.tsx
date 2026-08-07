@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, DensityToggle, IconAction, PageHeader, StatCard, StateBadge } from "@goldpath/kit";
+import { Banner, DensityToggle, IconAction, PageHeader, StatCard, StateBadge } from "@qorpe/ui";
 import { RefreshCw } from "lucide-react";
 import { MODULES, type AdminClient, type ModuleName } from "./adminClient";
 import { SECTION_ICON, type Capabilities } from "./sections";

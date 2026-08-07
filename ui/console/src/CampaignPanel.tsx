@@ -1,7 +1,7 @@
 import { Pause, Play, RefreshCw, Square } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, Checkbox, DensityToggle, DetailSection, FacetFilter, IconAction, KeyValueRows, KeysetTable, Sheet, StateBadge, VerbButton, humanizeSeconds } from "@goldpath/kit";
-import type { VerbOutcome } from "@goldpath/kit";
+import { Banner, Checkbox, DensityToggle, DetailSection, FacetFilter, IconAction, KeyValueRows, KeysetTable, Sheet, StateBadge, VerbButton, humanizeSeconds } from "@qorpe/ui";
+import type { VerbOutcome } from "@qorpe/ui";
 import type {
   AdminClient,
   CampaignAuditEntry,

@@ -1,6 +1,6 @@
 import { RefreshCw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, DensityToggle, DetailSection, FacetFilter, IconAction, KeyValueRows, KeysetTable, Sheet, StateBadge, Table, humanizeSeconds } from "@goldpath/kit";
+import { Banner, DensityToggle, DetailSection, FacetFilter, IconAction, KeyValueRows, KeysetTable, Sheet, StateBadge, Table, humanizeSeconds } from "@qorpe/ui";
 import type { AdminClient, NotificationInfo, NotificationTemplateStatus } from "./adminClient";
 
 export interface NotificationPanelProps {

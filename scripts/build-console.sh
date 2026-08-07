@@ -11,13 +11,7 @@ DIST="$ROOT/ui/console/dist"
 TARGET="$ROOT/packages/Goldpath.Console/wwwroot"
 
 echo "── building the console"
-# The kit is consumed as SOURCE by the console's build, and pnpm's isolated layout
-# resolves the kit's own imports (radix, lucide) from ui/kit/node_modules — so the kit
-# must be installed too. Skipping it broke every CI lane that builds the console for
-# five nights (GM matrix, console-smoke, nightly) the moment the kit first imported a
-# package of its own; dev machines never noticed because their kit was installed.
-cd "$ROOT/ui/kit"
-pnpm install --frozen-lockfile
+# The kit arrives PREBUILT from npm (@qorpe/ui) since the extraction — one install.
 cd "$ROOT/ui/console"
 pnpm install --frozen-lockfile
 pnpm exec vite build

@@ -1,6 +1,6 @@
 import { Pause, Play } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, shortStamp, StateBadge, Table, VerbButton } from "@goldpath/kit";
+import { Banner, shortStamp, StateBadge, Table, VerbButton } from "@qorpe/ui";
 import type { AdminAuditRow, AdminClient, FleetStatus } from "./adminClient";
 import { asOutcome } from "./verbs";
 

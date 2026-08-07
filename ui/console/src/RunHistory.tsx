@@ -1,6 +1,6 @@
 import { RotateCcw } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { DensityToggle, FacetFilter, KeysetTable, RunProgress, SearchBox, Sheet, StateBadge, VerbButton, shortStamp } from "@goldpath/kit";
+import { DensityToggle, FacetFilter, KeysetTable, RunProgress, SearchBox, Sheet, StateBadge, VerbButton, shortStamp } from "@qorpe/ui";
 import type { AdminClient, RunDetail, RunSummary } from "./adminClient";
 import { asOutcome } from "./verbs";
 

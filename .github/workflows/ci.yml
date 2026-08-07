@@ -56,7 +56,8 @@ jobs:
             --filter "Category!=Bench" --nologo
         timeout-minutes: 45
 
-  # The console kit (U1): component tests over the ui-standard-v1 contract.
+  # The console (U2+): component tests over the PUBLISHED @qorpe/ui kit — the kit's
+  # own tests live in its repo (github.com/qorpe/ui); here we prove the CONSUMER.
   kit:
     runs-on: ubuntu-latest
     timeout-minutes: 10
@@ -69,13 +70,9 @@ jobs:
         with:
           node-version: 24
           cache: pnpm
-          cache-dependency-path: ui/kit/pnpm-lock.yaml
-      - name: kit tests
-        working-directory: ui/kit
-        run: |
-          pnpm install --frozen-lockfile
-          pnpm test
-          pnpm typecheck
+          cache-dependency-path: ui/console/pnpm-lock.yaml
+      - name: kit freshness gate (@qorpe/ui may not fall behind)
+        run: ./scripts/kit-freshness.sh
       - name: console tests (the run console over the frozen contract)
         working-directory: ui/console
         run: |

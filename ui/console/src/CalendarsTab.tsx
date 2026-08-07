@@ -1,7 +1,7 @@
 import { Plus } from "lucide-react";
 import { useEffect, useState } from "react";
-import { Banner, Dialog, Select, Table, VerbButton } from "@goldpath/kit";
-import type { VerbOutcome } from "@goldpath/kit";
+import { Banner, Dialog, Select, Table, VerbButton } from "@qorpe/ui";
+import type { VerbOutcome } from "@qorpe/ui";
 import type { AdminClient, CalendarInfo, CalendarSpec } from "./adminClient";
 import { asOutcome } from "./verbs";
 

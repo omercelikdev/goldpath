@@ -2,7 +2,7 @@
   "name": "@goldpath/console",
   "version": "0.1.0",
   "private": true,
-  "description": "The Goldpath console: the shipped InfraOps surface, a client of the FROZEN admin contract, composed from @goldpath/kit.",
+  "description": "The Goldpath console: the shipped InfraOps surface, a client of the FROZEN admin contract, composed from the published @qorpe/ui kit.",
   "type": "module",
   "main": "src/index.ts",
   "scripts": {
@@ -18,7 +18,6 @@
   },
   "devDependencies": {
     "@axe-core/playwright": "4.10.1",
-    "@goldpath/kit": "link:../kit",
     "@playwright/test": "1.50.1",
     "@tailwindcss/vite": "^4.3.2",
     "@testing-library/jest-dom": "^6.6.3",
@@ -34,7 +33,8 @@
     "tailwindcss": "^4.0.0",
     "typescript": "^5.7.0",
     "vite": "^8.1.4",
-    "vitest": "^2.1.8"
+    "vitest": "^2.1.8",
+    "@qorpe/ui": "0.1.0"
   },
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.23",
