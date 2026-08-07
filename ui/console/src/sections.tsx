@@ -1,5 +1,5 @@
 import { createElement, type ReactNode } from "react";
-import { Banner } from "@goldpath/kit";
+import { Banner } from "@qorpe/ui";
 import { Archive, Bell, CalendarClock, FileUp, LayoutDashboard, Megaphone } from "lucide-react";
 import { MODULES, type AdminClient, type Capability, type ModuleName } from "./adminClient";
 import { RunConsole } from "./RunConsole";

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Banner, TabPanel, TabStrip } from "@goldpath/kit";
+import { Banner, TabPanel, TabStrip } from "@qorpe/ui";
 import type { AdminClient, FleetInfo } from "./adminClient";
 import { FleetOverview } from "./FleetOverview";
 import { JobsTab } from "./JobsTab";

@@ -6,7 +6,6 @@ export default defineConfig({
   plugins: [react()],
   resolve: {
     alias: {
-      "@goldpath/kit": fileURLToPath(new URL("../kit/src/index.ts", import.meta.url)),
       // kit and console are SEPARATE pnpm stores: lucide required from the kit's store
       // binds the kit's React instance while react-dom renders with the console's —
       // same version, two identities, invalid-hook-call. One physical copy, always.

@@ -1,7 +1,7 @@
 import { Check, Upload, X } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { Banner, DensityToggle, FacetFilter, KeysetTable, SearchBox, Select, Sheet, StateBadge, Table, VerbButton, humanizeSeconds } from "@goldpath/kit";
-import type { VerbOutcome } from "@goldpath/kit";
+import { Banner, DensityToggle, FacetFilter, KeysetTable, SearchBox, Select, Sheet, StateBadge, Table, VerbButton, humanizeSeconds } from "@qorpe/ui";
+import type { VerbOutcome } from "@qorpe/ui";
 import { AdminHttpError, type AdminClient, type BulkBatchInfo, type BulkDefinitionStatus, type BulkRowError } from "./adminClient";
 
 export interface BulkPanelProps {

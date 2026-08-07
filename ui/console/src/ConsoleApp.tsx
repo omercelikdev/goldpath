@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
-import { AppShell, Banner, CommandPalette, DensityProvider, PageHeader, initialCollapsed, openCommand } from "@goldpath/kit";
-import type { CommandGroup, ShellNavItem } from "@goldpath/kit";
+import { AppShell, Banner, CommandPalette, DensityProvider, PageHeader, initialCollapsed, openCommand } from "@qorpe/ui";
+import type { CommandGroup, ShellNavItem } from "@qorpe/ui";
 import { AdminClient, type ModuleName } from "./adminClient";
 import { composedSections, isUnreachable, SECTION_GROUP, SECTION_ICON, SECTION_LABEL, SECTION_PURPOSE, ServicePanels, type Capabilities } from "./sections";
 import { TriageHome } from "./TriageHome";

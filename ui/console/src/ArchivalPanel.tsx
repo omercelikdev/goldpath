@@ -1,7 +1,7 @@
 import { Trash2 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
-import { Banner, Checkbox, CodeBlock, DetailSection, KeyValueRows, KeysetTable, Select, StateBadge, Table, VerbButton, humanizeSeconds } from "@goldpath/kit";
-import type { VerbOutcome } from "@goldpath/kit";
+import { Banner, Checkbox, CodeBlock, DetailSection, KeyValueRows, KeysetTable, Select, StateBadge, Table, VerbButton, humanizeSeconds } from "@qorpe/ui";
+import type { VerbOutcome } from "@qorpe/ui";
 import type {
   AdminClient,
   ArchiveDefinitionStatus,

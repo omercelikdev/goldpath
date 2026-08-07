@@ -1,4 +1,4 @@
-import type { VerbOutcome } from "@goldpath/kit";
+import type { VerbOutcome } from "@qorpe/ui";
 
 /**
  * The frozen verb envelope, adapted to the kit's outcome type. A refusal is DATA, not an

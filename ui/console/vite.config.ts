@@ -11,7 +11,6 @@ export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
     alias: {
-      "@goldpath/kit": fileURLToPath(new URL("../kit/src/index.ts", import.meta.url)),
       // kit and console are separate pnpm stores; lucide loaded from the KIT's store
       // binds the kit's React instance while react-dom renders with the console's —
       // same versions, different identities, invalid-hook-call. Pin lucide to ONE copy.

@@ -1,4 +1,4 @@
-import { deadlineVerdict, humanizeSeconds } from "@goldpath/kit";
+import { deadlineVerdict, humanizeSeconds } from "@qorpe/ui";
 import { MODULES, type AdminClient, type ModuleName } from "./adminClient";
 import { isUnreachable, type Capabilities } from "./sections";
 
