@@ -140,7 +140,7 @@ No Roslyn here; the same "executable standards" idea lands as kit-repo CI:
    each PR'd with its tests.
 3. **Consumer proofs (P4/P5 — the DoD's teeth)**:
    - goldpath console on the PUBLISHED package: `pnpm` swap to the npm dep, console
-     smoke (35 journeys + axe) green, zero visual-diff beyond the two deliberate
+     smoke (28 journeys + axe) green, zero visual-diff beyond the two deliberate
      token divergences (§7.11's closing check re-run).
    - mockifyr on the published package: NativeSelect→Select-in-FormField across its
      four form sites, dropdown-as-select→CheckboxItem, three chips→StateBadge+maps,

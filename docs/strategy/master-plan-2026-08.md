@@ -65,6 +65,50 @@ green → merge → ledgers updated in the same PR.
    G3–G7, GAP-LEDGER #32/#33/#34). `add feature`, `db bundle`, the manifest skill —
    all proven in real use; no empty core cell remains in the coverage matrix.
 
+## Open, with an owner — not parked
+
+An audit (2026-08-09) found three items with an accepted decision, a FIRED trigger and no
+line in this plan. A capability that has an ADR, an RFC and no owner in the ordered list is
+how an asset acquires a surprise:
+
+9. **`Goldpath.Ai`** (ADR-0011 + RFC accepted 2026-07-26, open thread T7) — the trigger was
+   "after the UI phase"; the UI phase is complete, so the trigger has fired and the module
+   is unbuilt. Scope stays as the RFC set it: model gateway, admin tool registry as MCP,
+   AI decision record, confidence gate. **It belongs after the pilot, not before** — the
+   pilot is what will say which of the four an adopter actually reaches for.
+10. **The MassTransit exit RFC** (issue #11, owner-prioritized) — MassTransit v9 has gone
+    commercial (`docs/rfc/goldpath-messaging.md` §strategy). The options recorded there are
+    a v8 fork, Wolverine, or growing Mediant toward transport. This is a **licensing
+    exposure in the core path**, and until now it lived only in an issue comment: an
+    enterprise procurement review asks about third-party licensing on day one. The RFC is
+    owed before any client engagement that includes messaging.
+11. **T1 — the console driven against CorPay** — T12 closed on 2026-08-03, which fired this
+    trigger; the adopter-shaped console proof has not been run since.
+
+## The saga / rules-engine decision (made 2026-08-09, previously an undecided park)
+
+These two sat in the parked list with a trigger that could never fire ("decided inside the
+step-4 RFC" — step 4 completed without deciding). An undecided park is not a deferral, it
+is a hole. The decision:
+
+- **Saga / process manager: NOT Goldpath's to build.** The .NET ecosystem already has
+  mature, battle-tested answers (MassTransit state machines, NServiceBus sagas, Dapr
+  Workflow, Temporal). ADR-0003 says what Microsoft/the ecosystem provides is COMPOSED,
+  never rewritten — an accelerator that ships its own saga engine is rewriting the thing
+  its own constitution forbids. What Goldpath owes instead is the **seam**: the outbox is
+  already atomic with the transaction, the run model already survives kill-9, and idempotency
+  already makes retries safe — those are the three properties a saga library needs from its
+  host. If an adopter mandates orchestration, we compose their choice and document the wiring.
+  **Written as a non-goal, not a roadmap item.**
+- **Rules engine: same verdict, different reason.** Business rules are DOMAIN, and the one
+  thing this accelerator refuses to do is guess a domain. NRules/Microsoft RulesEngine exist
+  for teams that want a rules DSL; most enterprise "rules" turn out to be either
+  configuration (the config registry pattern) or a decision table the domain owns. **Non-goal
+  until an adopter's requirement names one** — and then it composes, like the saga.
+
+Both are recorded here rather than in the parked list so nobody mistakes "we chose not to"
+for "we forgot".
+
 ## Parked on written triggers (deliberately open)
 
 Oracle provider (T16 — first committed Oracle-mandating adopter) · `upgrade` skill
