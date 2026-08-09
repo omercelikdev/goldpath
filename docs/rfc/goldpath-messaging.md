@@ -57,6 +57,12 @@ outbox backlog gauge, redelivery counts. Alerts: error-queue growth, outbox back
 Runbook: poison-message triage (error queue → inspect → fix consumer or park), outbox backlog
 causes (broker down vs consumer slow), redelivery storm response.
 
+**What ships today (corrected 2026-08-09):** the SIGNALS above are real — MassTransit's own meters reach OTel through ServiceDefaults, and the outbox is observable in the database — but
+this package ships **no `ops/` directory**: no Grafana JSON, no runbook of its own. The
+floor's operational pack lives in `Goldpath.ServiceDefaults/ops/` (dashboard-and-alerts,
+runbook, central-logging), and that is what an adopter gets today. The per-package pack
+described above is NOT packaged; recorded as open thread **T17** with its trigger.
+
 ## 7. Test Plan
 - Integration (MassTransit test harness, in-memory transport): publish→consume round trip;
   `IIntegrationEvent` marker respected; tenant+correlation headers propagate and the ambient

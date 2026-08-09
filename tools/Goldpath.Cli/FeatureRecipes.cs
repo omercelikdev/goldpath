@@ -111,7 +111,10 @@ public sealed class AppFacts
 }
 
 /// <summary>
-/// The ten Ring B recipes. Every line mirrors what <c>dotnet new goldpath-solution --features X</c>
+/// The ELEVEN feature recipes — seven Ring B cross-cutting features (multitenancy,
+/// audittrail, softdelete, idempotency, dataprotection, caching, locking) plus the four
+/// execution-ladder modules (archival, bulk, notification, campaign), which the CLI wires
+/// the same way even though they are not Ring B. Every line mirrors what <c>dotnet new goldpath-solution --features X</c>
 /// would have generated — the CLI adds nothing the template would not; specdrift stays the
 /// acceptance test for both paths.
 /// </summary>
