@@ -63,6 +63,12 @@ Adds to baseline dashboard: EF query duration histogram, save-changes duration, 
 version gauge (deployed vs latest). Runbook: pending-migration detection, keyset-pagination
 troubleshooting (wrong order-by = skipped rows), connection-pool exhaustion triage.
 
+**What ships today (corrected 2026-08-09):** the SIGNALS above are real — EF Core's meters reach OTel through ServiceDefaults — but
+this package ships **no `ops/` directory**: no Grafana JSON, no runbook of its own. The
+floor's operational pack lives in `Goldpath.ServiceDefaults/ops/` (dashboard-and-alerts,
+runbook, central-logging), and that is what an adopter gets today. The per-package pack
+described above is NOT packaged; recorded as open thread **T17** with its trigger.
+
 ## 7. Test Plan
 - Unit: keyset predicate construction (asc/desc, 1-2 keys, boundary equality), cursor
   round-trip through executor, contributor pipeline ordering
