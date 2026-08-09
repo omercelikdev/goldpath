@@ -65,6 +65,28 @@ green → merge → ledgers updated in the same PR.
    G3–G7, GAP-LEDGER #32/#33/#34). `add feature`, `db bundle`, the manifest skill —
    all proven in real use; no empty core cell remains in the coverage matrix.
 
+## The finalize set (F1–F3) — DONE 2026-08-09
+
+Run before the pilot, after two audits found the engineering ahead of the paperwork:
+
+- **F1 — the doc truth sweep** (#155): the 42 analyzer rules moved to the SHIPPED ledger
+  (they were shipping while the file read empty); SPEC-GAPS reconciled against the real
+  export — G1/G2 genuinely closed, G3–G7 genuinely open, and G7 (no `security` requirement
+  on any payment operation) flagged as the one a buyer's gateway review hits first; three
+  floor RFCs stopped promising ops packs that do not exist (recorded as T17 with a trigger);
+  the recipe count corrected. Preceded by #154, which reconciled five ledgers with GitHub in
+  BOTH directions and added `ledger-check.sh` + `schema-honesty.sh` so neither drift returns.
+- **F2 — supply chain** (#156): a CycloneDX SBOM (203 libraries, 21 ours) and signed SLSA
+  provenance ride with every train, both generated BEFORE the push so a failure leaves the
+  train unpublished rather than published without evidence; `SECURITY.md` carries the
+  disclosure path, response targets and the honest support window. CRA Art. 14 makes these
+  legal obligations from 2026-09-11.
+- **F3 — the messaging dependency** (#157): [goldpath-messaging-exit](../rfc/goldpath-messaging-exit.md)
+  measures the exposure instead of assuming it, and corrects §9 D1's claim that a move would
+  not touch consumer code — the template's handlers, our FROZEN public API and CorPay's 79
+  references say otherwise. Recommendation: stay pinned on 8.x; a move is a MAJOR version.
+  **Owner decision pending** (the RFC's own DoD item 1).
+
 ## Open, with an owner — not parked
 
 An audit (2026-08-09) found three items with an accepted decision, a FIRED trigger and no

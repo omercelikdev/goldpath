@@ -22,7 +22,7 @@ not propose anything that contradicts them; changes only via a superseding ADR).
 - "latest" dependencies are forbidden; everything is pinned. Air-gapped networks are a first-class scenario.
 - Code style: `.editorconfig` + analyzers + `dotnet format`; XML summaries mandatory on public APIs.
 
-## Status (2026-08-03)
+## Status (2026-08-09)
 Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.6` train (the
 operations train: Campaign R1, contract R3, console U6–U9, the housekeeping set) is on
 nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Mockifyr is THE mock system
@@ -31,9 +31,14 @@ nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Mockifyr is THE mo
 COMPLETE: U1–U9 met (`docs/rfc/goldpath-console.md`; family standards ui-standard v1.3
 §7–§9 — one visual family with qorpe/mockifyr), the admin contract is at Revision R3
 (repeatable OR filters), and the console smoke (28 journeys + axe) drives three real
-apps and the app-SERVED console. Next: `docs/strategy/master-plan-2026-08.md` — ADR-0012
-Platform/Module SDK → shapes+CLI wizard → pilot product module → scenario campaign →
-the Insurance/Telco samples as the full-set exam. Live status ledgers —
+apps and the app-SERVED console. Steps 1–5 of `docs/strategy/master-plan-2026-08.md` are DONE, and so is 6.0: the family UI
+kit is extracted to [qorpe/ui](https://github.com/qorpe/ui), published to npm through OIDC
+trusted publishing, with BOTH consoles running on the published package. The **finalize set
+F1–F3** (2026-08-09) closed the paperwork the engineering had outrun: five ledgers
+reconciled with GitHub behind two new gates (`ledger-check.sh`, `schema-honesty.sh`), an
+SBOM + signed provenance on every train with `SECURITY.md`, and the measured messaging-exit
+RFC. Next: the pilot product module (step 6.1), then the scenario campaign and the
+Insurance/Telco samples as the full-set exam. Live status ledgers —
 keep them updated in the same PR that changes reality: `docs/strategy/ai-sdlc-status.md`
 (AI-assisted SDLC vs reality), `docs/strategy/coverage-matrix.md` (capability × sample),
 and `docs/strategy/open-threads.md` (deferred work with its TRIGGER and the proof that
