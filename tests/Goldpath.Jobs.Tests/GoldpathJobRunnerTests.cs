@@ -213,4 +213,47 @@ public class GoldpathJobRunnerTests
         Assert.Equal(2, fixture.Query(db => db.Set<GoldpathJobRun>().Count()));
         Assert.Equal(4, job.ExecutedChunks.Count);
     }
+    [Fact]
+    public async Task A_kill9_that_lost_a_counter_increment_still_finishes_with_an_HONEST_ledger()
+    {
+        // The defect this pins (CI, 2026-08-07): a chunk's checkpoint (row → Completed) and
+        // the run's CompletedChunks increment are TWO writes. A kill-9 between them loses the
+        // increment forever — the chunk row reads Completed so nobody re-runs it, while the
+        // ledger stays one short. FinalizeAsync decides the status from the ROWS, so the run
+        // flipped to Completed carrying "29/30": a finished run that reports itself unfinished.
+        // Bulk hit this class first (terminal flip recounts from row stamps); jobs now does too.
+        using var fixture = new RunnerFixture();
+        var job = new ScriptedJob { TotalItems = 8, ChunkSize = 2 };
+        await fixture.Runner.RunAsync(job, Define<ScriptedJob>(), fixture.Fire(), CancellationToken.None);
+
+        // The state a kill-9 in that window leaves behind: every chunk row terminal, the run
+        // still open (the dead node never finalized), the counter one increment short.
+        fixture.Mutate(db =>
+        {
+            var run = db.Set<GoldpathJobRun>().Single();
+            run.Status = GoldpathJobRunStatus.Running;
+            run.FinishedAt = null;
+            run.CompletedChunks -= 1;
+            run.ItemFailures -= 1;      // the same write carried the item-failure count
+        });
+
+        // Recovery: the surviving node fires again, finds nothing to claim, and finalizes.
+        var status = await fixture.Runner.RunAsync(job, Define<ScriptedJob>(), fixture.Fire("fire-2", "node-b"), CancellationToken.None);
+
+        Assert.Equal(GoldpathJobRunStatus.Completed, status);
+        var recovered = fixture.Query(db => db.Set<GoldpathJobRun>().Single());
+        Assert.Equal(GoldpathJobRunStatus.Completed, recovered.Status);
+        // The terminal flip RECOUNTS from the row stamps — a completed run can never report
+        // fewer completed chunks than it has completed chunk rows.
+        Assert.Equal(recovered.TotalChunks, recovered.CompletedChunks);
+        Assert.Equal(
+            fixture.Query(db => db.Set<GoldpathJobRunChunk>().Count(c => c.Status == GoldpathJobChunkStatus.Completed)),
+            recovered.CompletedChunks);
+        // The repair queue's rows are the evidence an operator acts on — the run can never
+        // admit to fewer item failures than it actually stored.
+        Assert.Equal(
+            fixture.Query(db => db.Set<GoldpathJobItemFailure>().Count()),
+            recovered.ItemFailures);
+    }
+
 }
