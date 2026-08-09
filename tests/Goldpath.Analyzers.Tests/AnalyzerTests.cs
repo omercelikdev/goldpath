@@ -220,6 +220,21 @@ public class AnalyzerTests
             new DiagnosticResult(Descriptors.PublishEndpointInjected).WithLocation(0).WithArguments("CreateOrderHandler"));
 
     [Fact]
+    public Task GOLDPATH0404_still_fires_when_the_adopter_namespace_merely_STARTS_with_Goldpath()
+        // The template's own namespace is GoldpathTemplate.*; a prefix-based exemption would
+        // have silently spared the exact code this rule guards (review #159 R3).
+        => Verify<PublishEndpointInjectedAnalyzer>("""
+            namespace GoldpathTemplate.Application.Orders.Features
+            {
+                public class CreateOrderHandler
+                {
+                    public CreateOrderHandler(MassTransit.IPublishEndpoint {|#0:publisher|}) { }
+                }
+            }
+            """,
+            new DiagnosticResult(Descriptors.PublishEndpointInjected).WithLocation(0).WithArguments("CreateOrderHandler"));
+
+    [Fact]
     public Task GOLDPATH0404_allows_the_seam_implementation_inside_Goldpath()
         // The seam has to delegate to SOMETHING: Goldpath's own namespace owns that line.
         => Verify<PublishEndpointInjectedAnalyzer>("""

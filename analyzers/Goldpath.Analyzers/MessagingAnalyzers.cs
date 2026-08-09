@@ -134,8 +134,11 @@ public sealed class PublishEndpointInjectedAnalyzer : DiagnosticAnalyzer
 
                 // The seam's own implementation must inject it; so may anything inside the
                 // Goldpath packages, which own the delegation.
+                // SEGMENT match, not prefix: "GoldpathTemplate.Application" starts with
+                // "Goldpath" and is ADOPTER code — a prefix test would have exempted the
+                // very handlers this rule exists to guard (review #159 R3).
                 var containing = parameter.ContainingType?.ContainingNamespace?.ToDisplayString() ?? "";
-                if (containing.StartsWith("Goldpath", StringComparison.Ordinal))
+                if (containing == "Goldpath" || containing.StartsWith("Goldpath.", StringComparison.Ordinal))
                 {
                     return;
                 }

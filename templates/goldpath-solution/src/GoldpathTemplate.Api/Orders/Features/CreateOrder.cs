@@ -1,5 +1,3 @@
-#if (UseBroker)
-#endif
 
 namespace GoldpathTemplate.Api.Orders.Features;
 
