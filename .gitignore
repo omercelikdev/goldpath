@@ -24,3 +24,5 @@ ui/console/public/console.config.json
 # every UI edit and CI lays it before packing.
 packages/Goldpath.Console/wwwroot/*
 !packages/Goldpath.Console/wwwroot/.gitkeep
+
+out/

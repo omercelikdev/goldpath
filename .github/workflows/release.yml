@@ -15,7 +15,9 @@ jobs:
     timeout-minutes: 30
     permissions:
       contents: write   # the GitHub release
-      id-token: write   # the OIDC token Trusted Publishing exchanges
+      id-token: write   # the OIDC token Trusted Publishing exchanges — and the one
+                        # attest-build-provenance signs with (no key is stored either way)
+      attestations: write   # the signed SLSA provenance attached to each .nupkg
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-dotnet@v4
@@ -52,6 +54,25 @@ jobs:
             dotnet pack "$p" --nologo -c Release -o out -p:GoldpathConsoleRequired=true
           done
           ls out
+      # Supply chain, BEFORE the push (CRA Art. 14 from 2026-09-11; enterprise procurement
+      # asks for both today). Order matters: if either step fails the train stays
+      # unpublished, which is recoverable — a published train with no evidence is not.
+      - name: syft (the SBOM generator)
+        uses: anchore/sbom-action/download-syft@v0
+      - name: SBOM of the train (CycloneDX, from the RELEASE outputs)
+        # Strip the tag's leading `v` exactly as the release title does below: an SBOM
+        # stamped "v0.1.0-preview.6" while the release and the CHANGELOG say
+        # "0.1.0-preview.6" is an artifact a procurement reviewer cannot match to a
+        # version by string compare (review #156 R3 — a CI-only path local runs never hit,
+        # because a local run falls back to reading the CHANGELOG).
+        run: |
+          export GOLDPATH_VERSION="${GITHUB_REF_NAME#v}"
+          bash scripts/sbom.sh out/goldpath-sbom.cdx.json
+      - name: provenance for every package (signed, keyless)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: 'out/*.nupkg'
+
       # Login LAST-MINUTE: the exchanged key lives ~1 hour, so it must be born next to
       # the push, never before the pack.
       - name: trusted-publishing login (OIDC -> temp key)
@@ -74,4 +95,5 @@ jobs:
           # (substring matching would let 0.1.0 also capture [0.1.0-preview.1]).
           awk -v v="$version" '/^## \[/{h = substr($0, index($0, "[") + 1); h = substr(h, 1, index(h, "]") - 1); p = (h == v)} p' CHANGELOG.md > notes.md
           gh release create "$GITHUB_REF_NAME" --title "Goldpath $version" \
-            --notes-file notes.md $(case "$version" in *-*) echo --prerelease;; esac)
+            --notes-file notes.md $(case "$version" in *-*) echo --prerelease;; esac) \
+            out/goldpath-sbom.cdx.json
