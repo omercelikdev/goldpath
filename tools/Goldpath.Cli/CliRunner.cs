@@ -17,9 +17,30 @@ public static class CliRunner
           goldpath db init|add <name>|status|bundle [--path <dir>]
                                                          the schema lifecycle (wraps dotnet ef, owner-aware)
           goldpath check [--path <dir>]                       specdrift validate + drift + db status + build
+          goldpath discover [--path <dir>]                    list every manifest under a tree (mono/poly-repo inventory)
+
+          goldpath --help | --version
 
         features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, archival, bulk, notification, campaign
         """;
+
+    /// <summary>
+    /// The tool's own version, read from the assembly the user actually installed — a hardcoded
+    /// string is a lie waiting for the next release to tell.
+    /// </summary>
+    private static string Version =>
+        typeof(CliRunner).Assembly
+            .GetCustomAttributes(typeof(System.Reflection.AssemblyInformationalVersionAttribute), false)
+            .OfType<System.Reflection.AssemblyInformationalVersionAttribute>()
+            .FirstOrDefault()?.InformationalVersion.Split('+')[0]
+        ?? typeof(CliRunner).Assembly.GetName().Version?.ToString()
+        ?? "0.0.0";
+
+    private static int Print(string text, TextWriter output)
+    {
+        output.WriteLine(text);
+        return 0;
+    }
 
     /// <summary>Parses the verb and runs the matching command.</summary>
     public static int Run(string[] args, IProcessRunner runner, TextWriter output, TextWriter error)
@@ -36,6 +57,11 @@ public static class CliRunner
                 ["init", .. var rest] => InitCommand.Run(ParsePath(rest), new ConsolePrompter(), runner, output, error),
                 ["export", "compose", .. var rest] => ExportCommand.Run(ParsePath(rest), output, error),
                 ["check", .. var rest] => CheckCommand.Run(ParsePath(rest), runner, output, error),
+                ["discover", .. var rest] => DiscoverCommand.Run(ParsePath(rest), output, error),
+                // Asking for help is not a usage ERROR: it prints to stdout and exits 0, the way
+                // every tool a `dotnet tool install -g` user already has does.
+                ["--help"] or ["-h"] or ["help"] => Print(Usage, output),
+                ["--version"] or ["-v"] => Print(Version, output),
                 _ => UsageError(error),
             };
         }

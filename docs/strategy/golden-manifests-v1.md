@@ -65,7 +65,8 @@
 - **Every commit (template or core package change):** 6 GMs × [generate → build → `dotnet test`
   (smoke: live end-to-end flow + health) → tear down]. Containers come from the corporate
   registry mirror (the offline scenario is deliberately tested).
-- **Nightly:** plus `goldpath validate` & `drift` for every GM (the Spec Engine also audits its own
+- **Nightly:** plus `goldpath check` for every GM — which is `specdrift validate` + `drift` + db
+  status + build in one verb (the Spec Engine also audits its own
   output), and a package version bump rehearsal (Renovate simulation: are the GMs still green
   with the latest core version).
 - **Negative corpus:** invalid manifests (started with today's m3/m4) are part of the schema
