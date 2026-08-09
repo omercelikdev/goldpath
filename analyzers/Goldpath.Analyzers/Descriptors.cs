@@ -142,6 +142,19 @@ public static class Descriptors
         isEnabledByDefault: true,
         helpLinkUri: HelpBase + "goldpath-messaging.md");
 
+    /// <summary>GP0404: application code injecting the transport's publisher directly.</summary>
+    public static readonly DiagnosticDescriptor PublishEndpointInjected = new(
+        "GP0404",
+        "Publish through the Goldpath seam, not the transport type",
+        "'{0}' injects MassTransit's IPublishEndpoint; inject IIntegrationEventPublisher so a transport change never edits this file",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "The publish seam exists so an adopter's command handlers survive a transport change "
+                   + "(docs/rfc/goldpath-messaging-exit.md). Consumers legitimately use the library's pipeline "
+                   + "and are not flagged; only injecting the publisher is.",
+        helpLinkUri: HelpBase + "goldpath-messaging-exit.md");
+
     /// <summary>GP0402: a type in both event worlds.</summary>
     public static readonly DiagnosticDescriptor NotificationCrossMarked = new(
         "GP0402",

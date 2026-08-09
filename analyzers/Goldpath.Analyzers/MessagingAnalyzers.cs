@@ -95,3 +95,59 @@ public sealed class NotificationCrossMarkedAnalyzer : DiagnosticAnalyzer
         });
     }
 }
+
+/// <summary>
+/// GP0404: flags a constructor or member taking MassTransit's <c>IPublishEndpoint</c>.
+///
+/// The seam it defends: an adopter's command handler should name Goldpath's
+/// <c>IIntegrationEventPublisher</c>, so the day the transport changes their file does not.
+/// Goldpath's OWN packages are exempt — the seam has to delegate to something, and the
+/// implementation is where that happens.
+/// </summary>
+[DiagnosticAnalyzer(LanguageNames.CSharp)]
+public sealed class PublishEndpointInjectedAnalyzer : DiagnosticAnalyzer
+{
+    /// <inheritdoc />
+    public override ImmutableArray<DiagnosticDescriptor> SupportedDiagnostics
+        => ImmutableArray.Create(Descriptors.PublishEndpointInjected);
+
+    /// <inheritdoc />
+    public override void Initialize(AnalysisContext context)
+    {
+        context.ConfigureGeneratedCodeAnalysis(GeneratedCodeAnalysisFlags.None);
+        context.EnableConcurrentExecution();
+        context.RegisterCompilationStartAction(static start =>
+        {
+            var endpoint = start.Compilation.GetTypeByMetadataName("MassTransit.IPublishEndpoint");
+            if (endpoint is null)
+            {
+                return;   // no transport in this compilation — nothing to guard
+            }
+
+            start.RegisterSymbolAction(ctx =>
+            {
+                var parameter = (IParameterSymbol)ctx.Symbol;
+                if (!SymbolEqualityComparer.Default.Equals(parameter.Type, endpoint))
+                {
+                    return;
+                }
+
+                // The seam's own implementation must inject it; so may anything inside the
+                // Goldpath packages, which own the delegation.
+                // SEGMENT match, not prefix: "GoldpathTemplate.Application" starts with
+                // "Goldpath" and is ADOPTER code — a prefix test would have exempted the
+                // very handlers this rule exists to guard (review #159 R3).
+                var containing = parameter.ContainingType?.ContainingNamespace?.ToDisplayString() ?? "";
+                if (containing == "Goldpath" || containing.StartsWith("Goldpath.", StringComparison.Ordinal))
+                {
+                    return;
+                }
+
+                ctx.ReportDiagnostic(Diagnostic.Create(
+                    Descriptors.PublishEndpointInjected,
+                    parameter.Locations[0],
+                    parameter.ContainingType?.Name ?? parameter.Name));
+            }, SymbolKind.Parameter);
+        });
+    }
+}
