@@ -83,10 +83,15 @@ described above is NOT packaged; recorded as open thread **T17** with its trigge
 
 - **D1 — MassTransit version strategy (STRATEGIC):** **MassTransit v9 has gone commercial**
   (the MediatR story repeating); v8 (8.5.10) remains Apache-2.0 OSS with maintenance.
-  **Recommendation: pin the 8.x line** and record an explicit exit strategy in this RFC:
-  the Goldpath surface (`AddGoldpathMessaging`, filters, conventions) is our own thin layer, so a future
-  move (v8 fork, Wolverine, or growing Mediant toward transport) changes the composition,
-  not consumer code. Revisit at Phase 3 with real usage data. The enterprise pitch even
+  **Recommendation: pin the 8.x line** — still correct, and it is what ships (8.5.10).
+  **CORRECTION (2026-08-09):** the second half of this note claimed the move "changes the
+  composition, not consumer code". A measurement disproved it: the template's own handlers
+  take `IPublishEndpoint` and implement `IConsumer<T>`, `PublicAPI.Shipped.txt` of
+  `Goldpath.Campaign` and `Goldpath.Messaging` expose MassTransit types in the FROZEN public
+  API, and CorPay carries 79 references. A move would be a MAJOR version with a migration
+  guide, not an internal swap. The exposure, the options and the triggers are in
+  [goldpath-messaging-exit](goldpath-messaging-exit.md); do not quote the old sentence to a
+  client. Revisit with the pilot's real usage data. The enterprise pitch even
   benefits: "no commercial-license surprise in the golden path."
 - **D2 — The event boundary as specified:** Mediant notifications in-process /
   `IIntegrationEvent`+MassTransit cross-service, analyzer-enforced, never mixed.
