@@ -73,9 +73,34 @@ consume side (which genuinely needs the library's pipeline) could stay as it is.
 narrowing would take the template's per-app exposure from "every command handler" to "only
 consumers".
 
-This is a **candidate**, not a decision: it adds an abstraction ADR-0003 is suspicious of,
-and it must be judged against "does an adopter benefit today, or only in a migration that
-may never come?" It belongs in the second RFC, with the pilot's real usage as evidence.
+**DECIDED and implemented 2026-08-10** — the owner's argument was the one that settles it:
+we have **zero adopters today**, so moving the template's publish line costs nothing; with N
+adopters it costs N migrations plus a guide plus the `upgrade` skill that does not exist.
+The asymmetry is the whole argument.
+
+What shipped:
+
+- `IIntegrationEventPublisher` in `Goldpath.Messaging`, registered by `AddGoldpathMessaging`,
+  implemented by a one-line delegation to `IPublishEndpoint`. **Not** a bus abstraction: no
+  retry policy, no topology, no routing of our own — ADR-0003 stands. Everything Goldpath
+  adds to the publish path already lives in the pipeline filters, where it applies to every
+  publish regardless of caller.
+- Both template layouts publish through it; `using MassTransit` is gone from the command
+  handlers of a generated app.
+- **GP0404** (warning) flags application code injecting `IPublishEndpoint`, exempting the
+  Goldpath namespace that owns the delegation — the seam has an enforcing mechanism, per
+  ADR-0005, so it cannot erode by habit.
+
+**The consume side deliberately stays on the library's types.** A consumer genuinely uses the
+pipeline (headers, retry, redelivery, tenant restore); wrapping that would be a leaky
+abstraction costing more than the migration it saves. So the honest promise to an adopter is
+bounded and true: *if the transport changes, your command handlers do not move; your
+consumers do.*
+
+**Sequencing, learned by building it:** CorPay binds to the PUBLISHED train, so it cannot
+take the seam until preview.7 carries it — the attempt failed to compile against preview.6,
+which is the adopter discipline working exactly as designed. CorPay migrates its four publish
+sites when it takes the next train, in the same slice, the way it took preview.6.
 
 ## 6. Ops Package
 

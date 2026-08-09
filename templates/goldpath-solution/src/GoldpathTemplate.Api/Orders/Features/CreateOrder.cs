@@ -1,5 +1,4 @@
 #if (UseBroker)
-using MassTransit;
 #endif
 
 namespace GoldpathTemplate.Api.Orders.Features;
@@ -14,7 +13,7 @@ namespace GoldpathTemplate.Api.Orders.Features;
 public record CreateOrderCommand(string Reference, decimal Amount) : ICommand<Result<long>>;
 
 #if (UseBroker)
-public class CreateOrderHandler(OrdersDbContext db, IPublishEndpoint publisher)
+public class CreateOrderHandler(OrdersDbContext db, IIntegrationEventPublisher publisher)
     : ICommandHandler<CreateOrderCommand, Result<long>>
 {
     public async ValueTask<Result<long>> Handle(CreateOrderCommand request, CancellationToken cancellationToken)
@@ -28,7 +27,7 @@ public class CreateOrderHandler(OrdersDbContext db, IPublishEndpoint publisher)
         // pattern exists to prevent).
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         await db.SaveChangesAsync(cancellationToken);           // order row (id materializes)
-        await publisher.Publish(new OrderPlaced(order.Id), cancellationToken);
+        await publisher.PublishAsync(new OrderPlaced(order.Id), cancellationToken);
         await db.SaveChangesAsync(cancellationToken);           // outbox row — same transaction
         await transaction.CommitAsync(cancellationToken);       // order + event commit together
 

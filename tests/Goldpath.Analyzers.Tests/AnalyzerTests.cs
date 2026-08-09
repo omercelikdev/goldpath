@@ -205,4 +205,30 @@ public class AnalyzerTests
             public record DomainEvent(string Id) : Mediant.INotification;
             public record IntegrationEvent(string Id) : Goldpath.IIntegrationEvent;
             """);
+
+    [Fact]
+    public Task GOLDPATH0404_flags_application_code_injecting_the_transport_publisher()
+        => Verify<PublishEndpointInjectedAnalyzer>("""
+            namespace Shop.Orders
+            {
+                public class CreateOrderHandler
+                {
+                    public CreateOrderHandler(MassTransit.IPublishEndpoint {|#0:publisher|}) { }
+                }
+            }
+            """,
+            new DiagnosticResult(Descriptors.PublishEndpointInjected).WithLocation(0).WithArguments("CreateOrderHandler"));
+
+    [Fact]
+    public Task GOLDPATH0404_allows_the_seam_implementation_inside_Goldpath()
+        // The seam has to delegate to SOMETHING: Goldpath's own namespace owns that line.
+        => Verify<PublishEndpointInjectedAnalyzer>("""
+            namespace Goldpath
+            {
+                public class MassTransitIntegrationEventPublisher
+                {
+                    public MassTransitIntegrationEventPublisher(MassTransit.IPublishEndpoint endpoint) { }
+                }
+            }
+            """);
 }

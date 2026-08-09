@@ -35,6 +35,11 @@ public static class GoldpathMessagingExtensions
         builder.Services.TryAddScoped<GoldpathMessageTenantContext>();
         builder.Services.TryAddScoped<ITenantContext>(sp => sp.GetRequiredService<GoldpathMessageTenantContext>());
 
+        // The publish seam (RFC goldpath-messaging-exit §5): an application publishes through
+        // Goldpath's own contract, so a transport change never reaches an adopter's command
+        // handlers. Scoped, because the outbox's publish endpoint is.
+        builder.Services.TryAddScoped<IIntegrationEventPublisher, MassTransitIntegrationEventPublisher>();
+
         builder.Services.AddMassTransit(bus =>
         {
             bus.SetKebabCaseEndpointNameFormatter();
