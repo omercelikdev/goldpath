@@ -60,9 +60,14 @@ jobs:
       - name: syft (the SBOM generator)
         uses: anchore/sbom-action/download-syft@v0
       - name: SBOM of the train (CycloneDX, from the RELEASE outputs)
-        run: bash scripts/sbom.sh out/goldpath-sbom.cdx.json
-        env:
-          GOLDPATH_VERSION: ${{ github.ref_name }}
+        # Strip the tag's leading `v` exactly as the release title does below: an SBOM
+        # stamped "v0.1.0-preview.6" while the release and the CHANGELOG say
+        # "0.1.0-preview.6" is an artifact a procurement reviewer cannot match to a
+        # version by string compare (review #156 R3 — a CI-only path local runs never hit,
+        # because a local run falls back to reading the CHANGELOG).
+        run: |
+          export GOLDPATH_VERSION="${GITHUB_REF_NAME#v}"
+          bash scripts/sbom.sh out/goldpath-sbom.cdx.json
       - name: provenance for every package (signed, keyless)
         uses: actions/attest-build-provenance@v2
         with:
