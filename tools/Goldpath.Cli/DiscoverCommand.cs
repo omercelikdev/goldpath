@@ -40,7 +40,7 @@ public static class DiscoverCommand
             var relative = Path.GetRelativePath(start, solutionRoot);
             var products = Products(text);
             output.WriteLine(
-                $"{(relative == "." ? "." : relative)}  kind={Scalar(text, "kind") ?? "?"}  name={Scalar(text, "name") ?? "?"}" +
+                $"{(relative == "." ? "." : relative)}  kind={ManifestEditor.ReadScalar(text, "kind") ?? "?"}  name={ManifestEditor.ReadScalar(text, "name") ?? "?"}" +
                 (products.Count > 0 ? $"  products={string.Join(",", products)}" : ""));
         }
 
@@ -94,25 +94,6 @@ public static class DiscoverCommand
             error.WriteLine($"goldpath: could not read {path} — {exception.Message}");
             return "";
         }
-    }
-
-    /// <summary>
-    /// A top-level scalar (<c>kind: solution</c>). Deliberately string surgery, not a YAML parser:
-    /// discover must never disagree with the ENGINE about what a manifest means — the engine
-    /// (specdrift) validates, this only reports what a reader would see.
-    /// </summary>
-    private static string? Scalar(string manifest, string key)
-    {
-        foreach (var line in manifest.Split('\n'))
-        {
-            if (line.StartsWith($"{key}:", StringComparison.Ordinal))
-            {
-                var value = line[(key.Length + 1)..].Trim();
-                return value.Length == 0 ? null : value.Trim('"', '\'');
-            }
-        }
-
-        return null;
     }
 
     /// <summary>The namespaced product names a manifest declares (ADR-0012's `products` array).</summary>

@@ -13,11 +13,28 @@ public static class ManifestEditor
             .Any(line => line.TrimEnd().StartsWith($"  {manifestKey}:", StringComparison.Ordinal));
 
     /// <summary>Kind of the manifest (features may only be added to solutions).</summary>
-    public static string? ReadKind(string manifestText)
-        => manifestText.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n')
-            .Where(line => line.StartsWith("kind:", StringComparison.Ordinal))
-            .Select(line => line["kind:".Length..].Trim())
-            .FirstOrDefault();
+    public static string? ReadKind(string manifestText) => ReadScalar(manifestText, "kind");
+
+    /// <summary>
+    /// A top-level scalar (<c>kind: solution</c>, <c>name: CorPay</c>). Deliberately string
+    /// surgery, not a YAML parser: the CLI must never disagree with the ENGINE about what a
+    /// manifest MEANS — specdrift validates, this only reports what a reader would see.
+    /// Quotes are stripped so <c>name: "CorPay"</c> and <c>name: CorPay</c> read alike.
+    /// </summary>
+    public static string? ReadScalar(string manifestText, string key)
+    {
+        var prefix = $"{key}:";
+        foreach (var line in manifestText.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n'))
+        {
+            if (line.StartsWith(prefix, StringComparison.Ordinal))
+            {
+                var value = line[prefix.Length..].Trim().Trim('"', '\'');
+                return value.Length == 0 ? null : value;
+            }
+        }
+
+        return null;
+    }
 
     /// <summary>
     /// Adds pre-indented feature lines under <c>features:</c>, creating the block at the end
