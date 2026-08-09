@@ -10,7 +10,9 @@ exist per module — this guide is the map, not a copy.
    actually costs to run, verified against the composition (the wizard derives from it).
 4. **[The CorPay tour](corpay-tour.md)** — a real finance app built ONLY with the public
    verbs, feature by feature, with the bugs the build itself found.
-5. **Proof stories** — why the claims hold: [No double payment under kill -9](../stories/kill9-no-double-payment.md).
+5. **[CLI reference](cli-reference.md)** — every verb the tool has, what it does, and
+   what it deliberately does not.
+6. **Proof stories** — why the claims hold: [No double payment under kill -9](../stories/kill9-no-double-payment.md).
 
 Operating depth (already written, linked from the concepts): the
 [migrations runbook](../ops/migrations-runbook.md), the
