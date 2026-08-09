@@ -1,7 +1,8 @@
 # RFC: the messaging dependency — exposure, and the exit that is not thin
 
-- Status: **draft** (owner decision required — this RFC decides nothing by itself)
-- Date: 2026-08-09
+- Status: **ACCEPTED** — option **A** (stay pinned on the 8.x line), owner-decided 2026-08-10,
+  with **D** as the named fallback and the triggers below as the only things that move us
+- Date: 2026-08-09 (decided and §5 implemented 2026-08-10)
 - Supersedes the recommendation in [goldpath-messaging](goldpath-messaging.md) §9 D1
 - Ledger: issue [#11](https://github.com/omercelikdev/goldpath/issues/11) (owner-prioritized),
   master plan "Open, with an owner" item 10
@@ -12,10 +13,13 @@
 exposure measured rather than assumed. Define what an exit would cost, what would have to
 be true before we take one, and what we do NOW so the cost stops growing.
 
-**Non-goals.** This RFC ships **no code** and moves no dependency. It does not choose a
-replacement library (that is a second RFC, opened only if a trigger below fires), and it
-does not change the manifest, the template or any package. Nothing an adopter runs today
-changes because this document exists.
+**Non-goals.** This RFC **moves no dependency**: MassTransit 8.5.10 stays pinned exactly
+where it was. It does not choose a replacement library — that is a second RFC, opened only
+if a trigger below fires — and it does not change the manifest.
+
+*(As drafted this section also said the RFC ships no code. §5 was then decided and
+implemented, so it ships exactly one thing: the publish seam. Corrected here rather than
+left to read as a promise we broke.)*
 
 ## 2. Seam Map — where MassTransit actually is (measured 2026-08-09)
 
@@ -122,12 +126,16 @@ Recorded now so the cost is not rediscovered later. A move is not done until:
 4. The **golden-manifest matrix** stays green on every broker-bearing shape.
 5. CorPay migrates with a written guide, and the guide is what an adopter would follow.
 
-## 8. DoD
+## 8. DoD — closed 2026-08-10
 
-- [ ] Owner decides A–E (recommendation: **A**, fallback **D**).
-- [ ] The false claim in `goldpath-messaging.md` §9 D1 is corrected in place, pointing here.
-- [ ] The triggers that would move us off A are written into `open-threads.md`: an unpatched
-      CVE in the 8.x line · the vendor's maintenance window closing · an adopter's licensing
-      constraint · a customer requiring a bus we do not compose.
-- [ ] The narrowing candidate in §5 is either scoped into a second RFC or recorded as
-      declined, with the reason.
+- [x] Owner decides A–E → **A** (stay pinned on 8.x), fallback **D**. Decided 2026-08-10.
+- [x] The false claim in `goldpath-messaging.md` §9 D1 is corrected in place, pointing here.
+- [x] The triggers that would move us off A are written into
+      [open-threads.md](../strategy/open-threads.md) as **T18**, each with the proof that
+      must run before the thread closes.
+- [x] The narrowing candidate in §5 is scoped and **shipped** — `IIntegrationEventPublisher`
+      plus GP0404, in the same train as this decision (PR #159).
+
+**What is deliberately NOT closed by this RFC**, so nobody reads A as safety: the 8.x
+maintenance window is finite, and A is a decision to WATCH, not a decision to relax. T18 is
+where that watching lives; if it goes stale, this decision has quietly expired.
