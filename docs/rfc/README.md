@@ -34,12 +34,12 @@ All "implemented" modules are published on nuget.org at `0.1.0-preview.6` (the c
 | [goldpath-template](goldpath-template.md) | `dotnet new` solution pack | implemented |
 | [goldpath-template-completion](goldpath-template-completion.md) | template completion set | implemented |
 | [goldpath-migrations](goldpath-migrations.md) | migrations discipline + `goldpath db` + bundle | implemented (H1) |
-| [goldpath-admin-contract](goldpath-admin-contract.md) | the admin API contract | **FROZEN** + revision R1 ACCEPTED & implemented (tenant scoping, 2026-07-24) |
+| [goldpath-admin-contract](goldpath-admin-contract.md) | the admin API contract | **FROZEN** + revisions R1 (tenant scoping, 2026-07-24), R2 (fleet status, widened trigger DTO, run filters), R3 (repeatable OR filters) — all ACCEPTED & implemented |
 | [goldpath-versioning](goldpath-versioning.md) | SemVer & support promise (H7) | accepted (binding) |
 | [goldpath-event-contracts](goldpath-event-contracts.md) | event contracts idiom (per-app `<Name>.Contracts`) | accepted (2026-07-14) |
 | [goldpath-skills-v1](goldpath-skills-v1.md) | the AI skill layer v1 | implemented — ships inside the template; field status: `../strategy/ai-sdlc-status.md` §2 |
 | [goldpath-console](goldpath-console.md) | Goldpath.Console (the UI phase) | implemented — U1–U9 met (family standards: `../strategy/ui-standard-v1.md` §7–§9); admin contract at Revision R3 |
-| [goldpath-platform-sdk](goldpath-platform-sdk.md) | the Module SDK (platform RFC, ADR-0012 companion) | **ACCEPTED** (2026-08-05, D1–D7 + the §2b risk/antidote condition) — implementation rides steps 5–6 |
+| [goldpath-platform-sdk](goldpath-platform-sdk.md) | the Module SDK (platform RFC, ADR-0012 companion) | **ACCEPTED** (2026-08-05, D1–D7 + the §2b risk/antidote condition) — D1/D2/D5/D6 implemented in step 5 (`Goldpath.Sdk` is on `main`, NOT yet in a published train); the pilot product module and the two §2b DoD gaps (product-repo train-freshness step, GP20xx no-source-leak analyzer) are open |
 | [goldpath-ai](goldpath-ai.md) | Goldpath.Ai — opt-in runtime AI (gateway · tool registry · decision record · confidence gate) | **ACCEPTED** (2026-07-26, D1–D4 as recommended) — implementation opens after the UI phase |
 | [spec-engine-v1](spec-engine-v1.md) | specdrift (separate repo) | implemented — 0.4.2 published (NuGet tool + MCP + Docker + Action) |
-| [qorpe-ui](qorpe-ui.md) | @qorpe/ui — the family UI kit extraction (platform-sdk D5; moves to the qorpe/ui repo) | **ACCEPTED** (2026-08-06, D1–D10 as recommended) — implementation is step 6.0 |
+| [qorpe-ui](qorpe-ui.md) | @qorpe/ui — the family UI kit extraction (platform-sdk D5) | **implemented** (step 6.0, 2026-08-07): the kit lives in [qorpe/ui](https://github.com/qorpe/ui), publishes to npm via OIDC trusted publishing, and BOTH consumers run on the published package — `ui/kit` is deleted from this repo |

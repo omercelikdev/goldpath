@@ -19,6 +19,12 @@ jobs:
         run: dotnet tool install -g specdrift --version 0.4.2
       - name: corpus gate (valid must pass, invalid must fail)
         run: bash scripts/corpus-check.sh
+      - name: ledger honesty (an issue a ledger references must have the state it claims)
+        run: ./scripts/ledger-check.sh
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: schema honesty (a manifest may not declare what no code can run)
+        run: ./scripts/schema-honesty.sh
       - name: docs freshness (no link to a missing file)
         run: bash scripts/docs-freshness.sh
       - name: template pins are on THIS train (a stale pin silently generates an old one)
