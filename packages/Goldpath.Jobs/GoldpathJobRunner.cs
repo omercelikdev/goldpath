@@ -363,14 +363,31 @@ public sealed class GoldpathJobRunner<TContext> : IGoldpathJobRunner
             return GoldpathJobRunStatus.Running;   // interrupted — stays open, the next fire resumes
         }
 
-        var anyFailed = await db.Set<GoldpathJobRunChunk>()
-            .AnyAsync(c => c.RunId == runId && c.Status == GoldpathJobChunkStatus.Failed, ct);
-        var status = anyFailed ? GoldpathJobRunStatus.Failed : GoldpathJobRunStatus.Completed;
+        // The counters are incremented in a write SEPARATE from the chunk's checkpoint, so a
+        // kill-9 in that window loses an increment forever: the chunk row reads Completed (so
+        // nobody re-runs it) while the run's ledger stays one short — a finished run that
+        // reports itself unfinished. The terminal flip is the one moment the rows are quiet
+        // AND authoritative (this method already trusts them to decide the status), so it
+        // RECOUNTS from the stamps. Live progress keeps the cheap incremental counters; only
+        // the closing number is reconciled. Bulk hit this class first (CI kill-9, 2026-07-26).
+        var completedChunks = await db.Set<GoldpathJobRunChunk>()
+            .CountAsync(c => c.RunId == runId && c.Status == GoldpathJobChunkStatus.Completed, ct);
+        var failedChunks = await db.Set<GoldpathJobRunChunk>()
+            .CountAsync(c => c.RunId == runId && c.Status == GoldpathJobChunkStatus.Failed, ct);
+        // Same window, same loss: the item-failure ROWS ride the checkpoint transaction while
+        // this counter rides the second write, so the repair queue could hold more rows than
+        // the run admits to. The rows are the evidence an operator acts on — they win.
+        var itemFailures = await db.Set<GoldpathJobItemFailure>()
+            .CountAsync(f => f.RunId == runId, ct);
+        var status = failedChunks > 0 ? GoldpathJobRunStatus.Failed : GoldpathJobRunStatus.Completed;
         var now = _time.GetUtcNow();
         await db.Set<GoldpathJobRun>()
             .Where(r => r.Id == runId && r.Status == GoldpathJobRunStatus.Running)
             .ExecuteUpdateAsync(s => s
                 .SetProperty(r => r.Status, status)
+                .SetProperty(r => r.CompletedChunks, completedChunks)
+                .SetProperty(r => r.FailedChunks, failedChunks)
+                .SetProperty(r => r.ItemFailures, itemFailures)
                 .SetProperty(r => r.FinishedAt, now), ct);
         return status;
     }
