@@ -23,10 +23,26 @@ FOUND=0
 while IFS= read -r project; do
   PROJECT_DIR=$(cd "$(dirname "$project")" && pwd)
   while IFS= read -r include; do
-    case "$include" in
-      *'$('*) continue ;;   # an MSBuild property we cannot resolve here — not a silent leak
-      /*) ABS="$include" ;;
-      *)  ABS="$PROJECT_DIR/${include//\\//}" ;;
+    # The well-known project-anchored properties resolve exactly; anything else is reported
+    # rather than skipped. Review #162 caught the first version doing a silent `continue`
+    # here, which meant `$(SomeRoot)/../../core/Foo.cs` — a leak spelled with a variable
+    # instead of a literal `..` — came back as CLEAN. That is the same false-green shape as
+    # the train-freshness skip bug: an unverifiable case must never be indistinguishable
+    # from a verified one.
+    RAW="${include//\\//}"
+    RAW="${RAW//\$(MSBuildThisFileDirectory)/$PROJECT_DIR/}"
+    RAW="${RAW//\$(MSBuildProjectDirectory)/$PROJECT_DIR}"
+    RAW="${RAW//\$(ProjectDir)/$PROJECT_DIR/}"
+    case "$RAW" in
+      *'$('*)
+        echo "product-guard: ${project#$ROOT/} has a Compile Include this gate cannot resolve:" >&2
+        echo "                 $include" >&2
+        echo "               An unresolvable path cannot be certified as inside the repo — spell it" >&2
+        echo "               relative to the project, or the guard is only pretending to check." >&2
+        FOUND=1
+        continue ;;
+      /*) ABS="$RAW" ;;
+      *)  ABS="$PROJECT_DIR/$RAW" ;;
     esac
     # Resolve .. without requiring the file to exist (realpath -m is not on macOS).
     RESOLVED=$(python3 -c "import os,sys; print(os.path.normpath(sys.argv[1]))" "$ABS")
