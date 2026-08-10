@@ -122,6 +122,11 @@ is a hole. The decision:
   already makes retries safe — those are the three properties a saga library needs from its
   host. If an adopter mandates orchestration, we compose their choice and document the wiring.
   **Written as a non-goal, not a roadmap item.**
+  **Honesty rider (2026-08-10):** that last sentence is a claim we have never RUN. No sample
+  composes a MassTransit state machine (or any orchestrator) on top of Goldpath, so "it
+  composes cleanly" is a design argument, not a proof. Recorded as thread **T19** with the
+  proof it owes; until that runs, do not tell a client orchestration is proven — tell them
+  it is unproven and cheap to prove.
 - **Rules engine: same verdict, different reason.** Business rules are DOMAIN, and the one
   thing this accelerator refuses to do is guess a domain. NRules/Microsoft RulesEngine exist
   for teams that want a rules DSL; most enterprise "rules" turn out to be either
@@ -137,6 +142,6 @@ Oracle provider (T16 — first committed Oracle-mandating adopter) · `upgrade` 
 (first real preview→preview migration) · console URL routes / OIDC login / tenant
 picker (T9/T10/T11) · ⌘K entity-id search (needs a cross-module lookup endpoint) ·
 stat-card trends (no time series in the contract) · TS mutation for the ui kit (T3) ·
-saga + rules engine (Ring C — decided inside the step-4 RFC) · Phase 3 transformation
+Phase 3 transformation
 package (reverse-engineer, differential-test, strangler guide — the phase after the
 samples).
