@@ -17,7 +17,8 @@
 | Consumer resilience defaults | Retry (immediate ×3) + delayed redelivery (5m/15m/30m) → error queue. Tunable via options; never silently dropped |
 
 **Non-Goals:**
-- No saga orchestration (Ring C, own RFC)
+- No saga orchestration — **a decided non-goal** (2026-08-09, `../strategy/master-plan-2026-08.md`),
+  not a future RFC: the ecosystem ships orchestrators and ADR-0003 says we compose them
 - No request/response over the bus (HTTP is the sync path; the bus is for events — opinionated)
 - No transport abstraction beyond MassTransit's own (we compose, not wrap)
 - No message versioning framework in v1 (convention documented: additive changes only;

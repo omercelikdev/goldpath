@@ -16,7 +16,8 @@ and on a retry **the same response is replayed** (not reprocessed).
 
 **Non-goals:**
 - Does not promise an "exactly-once delivery" guarantee (that would be a lie in a distributed system; the promise: *effectively-once processing*)
-- Saga/compensation flows (the saga module's job)
+- Saga/compensation flows — an orchestrator's job, and **not a Goldpath module**: a decided
+  non-goal (2026-08-09). What this module owes such a flow is safe retry, which it provides
 - GET/HEAD dedup (already idempotent — an analyzer warns on unnecessary usage)
 
 ## 2. Seam Map (foundation 5.0 — touches three of the four seams)

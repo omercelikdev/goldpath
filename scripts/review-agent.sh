@@ -185,6 +185,19 @@ PY
 # CI has no durable temp dir: when asked, whatever exists survives the runner — called on
 # the failure paths too, because the double-break verdict.raw is exactly the artifact that
 # explains a red run (review R3 on this very script's PR).
+# Wraps a file in a code fence LONGER than any backtick run inside it. The raw verdict very
+# often contains ```json … ``` — that is a leading REASON the contract breaks — so a hard-coded
+# three-backtick fence would be closed early by the content and garble the comment (review #161).
+fenced() {
+  python3 - "$1" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read().rstrip("\n")
+runs = [len(m) for m in re.findall(r"`+", text)]
+fence = "`" * max(3, (max(runs) if runs else 0) + 1)
+print(f"{fence}\n{text}\n{fence}")
+PY
+}
+
 persist_artifacts() {
   if [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ]; then
     mkdir -p "$REVIEW_AGENT_ARTIFACT_DIR"
@@ -206,6 +219,29 @@ if ! render_verdict; then
   if ! render_verdict; then
     persist_artifacts
     [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ] && cp "$WORK/verdict.first-attempt.raw" "$REVIEW_AGENT_ARTIFACT_DIR/" 2>/dev/null || true
+    # A broken CONTRACT is not a missing REVIEW. Both attempts usually contain real findings
+    # in prose — this path used to exit silently and drop them on the floor, which is the
+    # worst failure a review tool can have: it looks like "no findings" to whoever merges.
+    # PR #161 proved it: the unparsed verdict named two stale saga promises in adjacent RFCs
+    # that the parsed run would have reported. Post the raw text, clearly labelled unparsed,
+    # and still exit 1 so CI treats the run as failed.
+    if [ "$PR" != "--local" ] && [ "$DRY" != "--dry-run" ]; then
+      {
+        echo "## Review agent — OUTPUT CONTRACT BROKE (unparsed verdict)"
+        echo
+        echo "The agent answered twice without matching the JSON contract, so nothing could be"
+        echo "rendered into findings. **The prose below is unverified and unlabelled — read it"
+        echo "yourself; do not treat this comment as 'no findings'.**"
+        echo
+        echo "### Second attempt"
+        fenced "$WORK/verdict.raw"
+        echo
+        echo "### First attempt"
+        fenced "$WORK/verdict.first-attempt.raw"
+      } > "$WORK/broken.md"
+      gh pr comment "$PR" --body-file "$WORK/broken.md" >/dev/null 2>&1 \
+        && echo "── review-agent: raw verdict posted to PR #$PR (unparsed)"
+    fi
     echo "review-agent: the output contract broke twice — raw output kept in $WORK" >&2
     exit 1
   fi

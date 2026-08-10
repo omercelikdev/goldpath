@@ -143,8 +143,12 @@ Rules:
   multi-tenancy, data protection/PII, distributed locking, caching L1+L2, outbox/inbox.
   **Entry criteria (all four required):** Microsoft doesn't provide it + needed in ≥2 industries + definable
   domain-independently + implementable without leaking into domain code.
-- **C — Advanced modules (NOT cross-cutting):** saga, rules engine, bulk, notification hub —
+- **C — Advanced modules (NOT cross-cutting):** bulk, notification hub, campaign, archival —
   semi-products; a separate shelf, via RFC, vision category. Not presented alongside B in the catalog.
+  **Saga and rules engine are NOT on this shelf** — both were decided as non-goals on 2026-08-09
+  (`master-plan-2026-08.md`), because the ecosystem already ships them and ADR-0003 says we compose
+  rather than rewrite. Listing them here as future modules is how a non-goal quietly becomes a
+  roadmap promise, so the list names only what is actually built.
 
 **The four seams (integration mechanics):** HTTP path = middleware; command/query path = **Mediant
 pipeline behavior**; data path = EF interceptor; message path = MassTransit filter. A module is
