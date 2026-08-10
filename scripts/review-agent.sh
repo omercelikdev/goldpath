@@ -206,6 +206,29 @@ if ! render_verdict; then
   if ! render_verdict; then
     persist_artifacts
     [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ] && cp "$WORK/verdict.first-attempt.raw" "$REVIEW_AGENT_ARTIFACT_DIR/" 2>/dev/null || true
+    # A broken CONTRACT is not a missing REVIEW. Both attempts usually contain real findings
+    # in prose — this path used to exit silently and drop them on the floor, which is the
+    # worst failure a review tool can have: it looks like "no findings" to whoever merges.
+    # PR #161 proved it: the unparsed verdict named two stale saga promises in adjacent RFCs
+    # that the parsed run would have reported. Post the raw text, clearly labelled unparsed,
+    # and still exit 1 so CI treats the run as failed.
+    if [ "$PR" != "--local" ] && [ "$DRY" != "--dry-run" ]; then
+      {
+        echo "## Review agent — OUTPUT CONTRACT BROKE (unparsed verdict)"
+        echo
+        echo "The agent answered twice without matching the JSON contract, so nothing could be"
+        echo "rendered into findings. **The prose below is unverified and unlabelled — read it"
+        echo "yourself; do not treat this comment as 'no findings'.**"
+        echo
+        echo "### Second attempt"
+        echo '```'; cat "$WORK/verdict.raw"; echo '```'
+        echo
+        echo "### First attempt"
+        echo '```'; cat "$WORK/verdict.first-attempt.raw"; echo '```'
+      } > "$WORK/broken.md"
+      gh pr comment "$PR" --body-file "$WORK/broken.md" >/dev/null 2>&1 \
+        && echo "── review-agent: raw verdict posted to PR #$PR (unparsed)"
+    fi
     echo "review-agent: the output contract broke twice — raw output kept in $WORK" >&2
     exit 1
   fi
