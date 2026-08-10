@@ -435,6 +435,16 @@ public static class Descriptors
         isEnabledByDefault: true,
         helpLinkUri: HelpBase + "goldpath-campaign.md");
 
+    /// <summary>GP2001: a product assembly declares types in the Goldpath namespace — the fork's first symptom.</summary>
+    public static readonly DiagnosticDescriptor ProductDeclaresGoldpathNamespace = new(
+        "GP2001",
+        "A product assembly declares a type in the Goldpath namespace",
+        "'{0}' is declared in namespace '{1}' from assembly '{2}', which is not a Goldpath package — a product binds to PUBLISHED packages (ADR-0012); declaring into our namespace is how a copy of the core starts, and a copy cannot receive updates",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        helpLinkUri: HelpBase + "goldpath-platform-sdk.md");
+
     /// <summary>GP1801: two contexts generating DDL for the same shared tables.</summary>
     public static readonly DiagnosticDescriptor SharedTablesDoubleOwnership = new(
         "GP1801",

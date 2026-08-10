@@ -29,6 +29,14 @@ jobs:
         run: bash scripts/docs-freshness.sh
       - name: template pins are on THIS train (a stale pin silently generates an old one)
         run: bash scripts/template-pins.sh
+      # The two product-repo antidotes (platform RFC §2b, R-1/R-2), rehearsed here against
+      # CorPay because CorPay is the adopter-shaped product: it binds to the published train
+      # exactly as qorpe/api-portal will. A gate that has never run somewhere real is a
+      # promise, not a control.
+      - name: train freshness (a product may not silently fall trains behind)
+        run: bash scripts/train-freshness.sh samples/corpay
+      - name: product guard (no compile-linked core source — the invisible fork)
+        run: bash scripts/product-guard.sh samples/corpay
       - name: build
         run: dotnet build Goldpath.sln --nologo
       - name: unit tests
