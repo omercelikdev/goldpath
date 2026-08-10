@@ -185,6 +185,19 @@ PY
 # CI has no durable temp dir: when asked, whatever exists survives the runner — called on
 # the failure paths too, because the double-break verdict.raw is exactly the artifact that
 # explains a red run (review R3 on this very script's PR).
+# Wraps a file in a code fence LONGER than any backtick run inside it. The raw verdict very
+# often contains ```json … ``` — that is a leading REASON the contract breaks — so a hard-coded
+# three-backtick fence would be closed early by the content and garble the comment (review #161).
+fenced() {
+  python3 - "$1" <<'PY'
+import re, sys
+text = open(sys.argv[1]).read().rstrip("\n")
+runs = [len(m) for m in re.findall(r"`+", text)]
+fence = "`" * max(3, (max(runs) if runs else 0) + 1)
+print(f"{fence}\n{text}\n{fence}")
+PY
+}
+
 persist_artifacts() {
   if [ -n "${REVIEW_AGENT_ARTIFACT_DIR:-}" ]; then
     mkdir -p "$REVIEW_AGENT_ARTIFACT_DIR"
@@ -221,10 +234,10 @@ if ! render_verdict; then
         echo "yourself; do not treat this comment as 'no findings'.**"
         echo
         echo "### Second attempt"
-        echo '```'; cat "$WORK/verdict.raw"; echo '```'
+        fenced "$WORK/verdict.raw"
         echo
         echo "### First attempt"
-        echo '```'; cat "$WORK/verdict.first-attempt.raw"; echo '```'
+        fenced "$WORK/verdict.first-attempt.raw"
       } > "$WORK/broken.md"
       gh pr comment "$PR" --body-file "$WORK/broken.md" >/dev/null 2>&1 \
         && echo "── review-agent: raw verdict posted to PR #$PR (unparsed)"
