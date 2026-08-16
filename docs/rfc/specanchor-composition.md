@@ -1,6 +1,6 @@
 # RFC: specanchor Composition — the Transformation Package's Deterministic Core Lives Outside
 
-**Status:** proposed — owner decision pending
+**Status:** **ACCEPTED** (owner, 2026-08-16)
 **Date:** 2026-08-16
 **Constitution grounding:** ADR-0003 (compose, don't rewrite), ADR-0004 (deterministic/agentic split),
 ADR-0005 (executable standards), ADR-0006 (AI lives in the dev layer), foundation §5.1 (the personal-OSS
@@ -77,7 +77,7 @@ Discovery Zero playbook, which is written from the rehearsal's diary (D4) — no
 
 ## 8. DoD
 
-- [ ] This RFC accepted by the owner (merge = the decision record).
+- [x] This RFC accepted by the owner (merged as #165, accepted 2026-08-16).
 - [ ] foundation §9 carries the mapping paragraph; master-plan records the early firing of the
       Phase 3 park as an owner decision; open-threads gains T20 with its trigger and proof.
 - [ ] The rehearsal has run end to end and its diary produced the Discovery Zero playbook — only
