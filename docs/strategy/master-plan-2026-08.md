@@ -141,7 +141,17 @@ for "we forgot".
 Oracle provider (T16 — first committed Oracle-mandating adopter) · `upgrade` skill
 (first real preview→preview migration) · console URL routes / OIDC login / tenant
 picker (T9/T10/T11) · ⌘K entity-id search (needs a cross-module lookup endpoint) ·
-stat-card trends (no time series in the contract) · TS mutation for the ui kit (T3) ·
-Phase 3 transformation
-package (reverse-engineer, differential-test, strangler guide — the phase after the
-samples).
+stat-card trends (no time series in the contract) · TS mutation for the ui kit (T3).
+
+## The transformation park fired early (owner decision, 2026-08-16)
+
+The Phase 3 transformation package sat above with the trigger "the phase after the
+samples". A factoring engagement at a bank moved it — exactly the §5.1 timing rule's
+shape: the toolchain is born as the by-product of a real deliverable with a named first
+customer, not as a third front. The deterministic core now lives OUTSIDE this repo as
+[qorpe/specanchor](https://github.com/qorpe/specanchor) (Apache-2.0, the OSS line), and the
+decision record is [specanchor-composition](../rfc/specanchor-composition.md): §9 keeps the
+method, specanchor keeps the machinery, and **until the rehearsal (fake legacy → Goldpath
+migration) completes, Goldpath owes specanchor exactly the paperwork in that RFC** — the
+pilot product module and the samples keep their order above. Thread T20 carries the proof
+this composition owes.

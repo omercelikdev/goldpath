@@ -413,6 +413,15 @@ and an automated E2E test. The output the business provides and the scenario the
 
 ## 9. The Transformation Package (the peak of the value-add)
 
+> **Mapping (2026-08-16, [specanchor-composition](../rfc/specanchor-composition.md), proposed):**
+> this section keeps the METHOD — the parity contract's three classes, the human diff-triage
+> decision, the fixed gates. The deterministic MACHINERY the steps below need (index, rule
+> extraction with source references, characterization tests, the parity comparator and its
+> known-differences register, catalog gates) lives in [specanchor](https://github.com/qorpe/specanchor),
+> a framework-agnostic toolchain on the qorpe OSS line, composed per §5.1 — so the package also
+> sells when a client mandates their own framework and Goldpath cannot enter. Goldpath is the
+> default TARGET of a transformation, never a prerequisite of its discovery.
+
 Strangler fig + differential testing, productized:
 1. The `reverse-engineer` skill: legacy code/SPs/batches → manifest + spec + domain memory draft
 2. Business approval (implicit rules are caught here — the most critical gate)
