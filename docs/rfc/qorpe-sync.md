@@ -1,6 +1,6 @@
 # RFC: qorpe.sync — the Migration & Co-existence Product Module
 
-**Status:** proposed — owner acceptance pending
+**Status:** accepted (owner, 2026-08-18)
 **Date:** 2026-08-18
 **Constitution grounding:** ADR-0012 (product modules on the platform — Sync is one of the two
 first-party examples the ADR itself names), ADR-0003 (compose, don't rewrite), foundation §9
@@ -70,8 +70,9 @@ count, replay depth, difference-list age). "No runbook = no module" applies unch
 
 ## 8. DoD (v0 — engagement-shaped)
 
-- [ ] RFC accepted by the owner (this row flips on the owner's word; the master-plan records
-      the second-product-repo ordering decision alongside).
+- [x] RFC accepted by the owner (2026-08-18 — the build is scheduled for the following week,
+      two-store rig first; the master-plan records the second-product-repo ordering decision
+      alongside).
 - [ ] Private repo stands with the exported gate set; binds the published train only.
 - [ ] Capture→Stream→Transform→Reconcile runs end to end on the two-store rig; every planted
       difference caught; reconciliation report generated.
