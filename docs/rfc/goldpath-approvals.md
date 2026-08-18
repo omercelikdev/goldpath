@@ -1,6 +1,6 @@
 # RFC: Goldpath.Approvals — Human Approval Workflows
 
-**Status:** proposed
+**Status:** accepted (owner, 2026-08-18) — the owner pulled the Ring B trigger the same day ("nothing left incomplete"); recorded as an explicit owner ordering decision, mirroring qorpe-sync D5
 **Date:** 2026-08-18
 **Constitution grounding:** ADR-0003 (compose, don't rewrite — this module orchestrates PEOPLE'S
 decisions, not systems; process orchestration remains the decided non-goal the closed T19 thread
@@ -75,12 +75,20 @@ ladder's own deadline.
 
 ## 8. DoD
 
-- [ ] RFC accepted; the four Ring B entry criteria confirmed in review (≥2 industries named:
+- [x] RFC accepted; the four Ring B entry criteria confirmed (≥2 industries named:
       banking-class approvals, insurance underwriting sign-off, telco credit overrides).
-- [ ] Ladder/definition schema published; validator wired into the standard gate.
-- [ ] Lifecycle + delegation + escalation proven by the §7 deterministic tests.
+- [x] Ladders declared as data through the fluent surface; declaration-time validation
+      (no top rung / non-increasing ceilings) rejects malformed chains at composition.
+      (A standalone YAML schema for config-file ladders is a follow-on, not shipped.)
+- [x] Lifecycle + delegation + escalation proven by the §7 deterministic tests
+      (17 tests: rung boundaries inclusive, four-eyes, wrong-role refusal, double-decide,
+      escalation resets the rung clock, top-rung expiry, delegation depth-one + expiry,
+      worklist ordering, trail completeness — `tests/Goldpath.Approvals.Tests`).
+- [x] `features.approvals` manifest key + `goldpath add feature approvals` CLI recipe wired
+      (template flag lands with the module's template pass).
 - [ ] Admin surface federates in the family console against a real app.
-- [ ] Ops pack ships (runbook + dashboard JSON).
+- [x] Runbook ships (`packages/Goldpath.Approvals/ops/approvals.md`); dashboard JSON open.
+- [ ] Database-backed `IGoldpathApprovalStore` (the in-memory store is single-node).
 - [ ] The adopter proof runs (§7 last row) — the row that actually closes T21.
 
 ### Decisions

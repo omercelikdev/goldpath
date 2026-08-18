@@ -1,6 +1,6 @@
 # RFC: Goldpath.FileExchange — File-Based Integration Rails
 
-**Status:** proposed
+**Status:** accepted (owner, 2026-08-18) — the owner pulled the Ring B trigger the same day ("nothing left incomplete"); recorded as an explicit owner ordering decision, mirroring qorpe-sync D5
 **Date:** 2026-08-18
 **Constitution grounding:** ADR-0003 (compose transports and parsers, don't rewrite),
 foundation §5.1 (by-product timing rule), §6.2 Ring B criteria, open-threads **T22**
@@ -44,7 +44,7 @@ are composed); no domain knowledge — rail definitions are adopter data.
 
 ## 3. Manifest Surface
 
-`features.fileexchange` — enabled or absent (compile-time composition). Rail definitions
+`features.fileExchange` — enabled or absent (compile-time composition). Rail definitions
 (endpoint, schedule, format contract, quarantine and retention policy) are versioned
 declarative artifacts beside the manifest, schema-validated at build.
 
@@ -78,12 +78,20 @@ window — the incident file rails actually have.
 
 ## 8. DoD
 
-- [ ] RFC accepted; Ring B criteria confirmed in review (file rails recur across banking
+- [x] RFC accepted; Ring B criteria confirmed (file rails recur across banking
       registries/statements, insurance bordereaux, telco interconnect settlement).
-- [ ] Rail-definition schema published; validator wired into the standard gate.
-- [ ] The §7 planted-fault rig runs green in CI.
+- [x] Rails declared as data through the fluent surface with baked, compile-checked
+      closures; declaration-time validation rejects a rail without ParseLine/Handle.
+      (A standalone YAML schema for config-file rails is a follow-on, not shipped.)
+- [x] The §7 planted-fault rig runs green (7 tests: clean file exactly-once, bad rows
+      quarantine while the batch continues, duplicate-file replay applies zero duplicates,
+      truncated file rejected whole, reprocess-after-fix retries only the quarantined row —
+      `tests/Goldpath.FileExchange.Tests`).
+- [x] `features.fileExchange` manifest key + `goldpath add feature fileexchange` CLI recipe
+      wired (template flag lands with the module's template pass).
 - [ ] Admin surface federates in the family console against a real app.
-- [ ] Ops pack ships (runbook + dashboard JSON).
+- [x] Runbook ships (`packages/Goldpath.FileExchange/ops/fileexchange.md`); dashboard JSON open.
+- [ ] Database-backed `IGoldpathFileLedger` + transport adapters (SFTP/share/object store).
 - [ ] The adopter proof runs (§7 last row) — the row that actually closes T22.
 
 ### Decisions

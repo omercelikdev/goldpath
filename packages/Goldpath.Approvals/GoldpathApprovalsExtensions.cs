@@ -1,0 +1,28 @@
+using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.DependencyInjection;
+using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
+
+namespace Goldpath;
+
+/// <summary>
+/// Composition entry point. Declare the ladders with <c>AddGoldpathApprovals</c>; schedule
+/// the escalation sweep through the Jobs module; the events publish through the messaging
+/// seam when a broker is composed (and stay silent when not).
+/// </summary>
+public static class GoldpathApprovalsExtensions
+{
+    /// <summary>Registers the approvals engine and the declared ladders.</summary>
+    public static TBuilder AddGoldpathApprovals<TBuilder>(this TBuilder builder, Action<GoldpathApprovalsOptions> configure)
+        where TBuilder : IHostApplicationBuilder
+    {
+        var options = new GoldpathApprovalsOptions();
+        builder.Configuration.GetSection("Goldpath:Approvals").Bind(options);
+        configure(options);
+        builder.Services.AddSingleton(options);
+        builder.Services.TryAddSingleton(TimeProvider.System);
+        builder.Services.TryAddSingleton<IGoldpathApprovalStore, GoldpathInMemoryApprovalStore>();
+        builder.Services.TryAddSingleton<GoldpathApprovalEngine>();
+        return builder;
+    }
+}

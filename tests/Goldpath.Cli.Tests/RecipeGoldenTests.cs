@@ -352,11 +352,31 @@ public class RecipeGoldenTests
     }
 
     [Fact]
-    public void The_feature_list_is_the_eleven_ring_b_features()
+    public void The_feature_list_is_the_thirteen_recipes()
     {
         Assert.Equal(
-            ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "archival", "bulk", "notification", "campaign"],
+            ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "approvals", "fileexchange", "archival", "bulk", "notification", "campaign"],
             FeatureRecipes.Names);
+    }
+
+    [Fact]
+    public void Approvals_recipe_wires_the_module_without_touching_the_database()
+    {
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = false };
+        var plan = FeatureRecipes.Build("approvals", facts);
+        Assert.Equal(["Goldpath.Approvals"], plan.ApiPackages);
+        Assert.Contains("  approvals: true", plan.ManifestLines);
+        Assert.Contains("builder.AddGoldpathApprovals(approvals =>", plan.Registrations);
+    }
+
+    [Fact]
+    public void Fileexchange_recipe_wires_the_module_without_touching_the_database()
+    {
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = false };
+        var plan = FeatureRecipes.Build("fileexchange", facts);
+        Assert.Equal(["Goldpath.FileExchange"], plan.ApiPackages);
+        Assert.Contains("  fileExchange: true", plan.ManifestLines);
+        Assert.Contains("builder.AddGoldpathFileExchange(files =>", plan.Registrations);
     }
 
     [Fact]

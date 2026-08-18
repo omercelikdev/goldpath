@@ -111,18 +111,20 @@ public sealed class AppFacts
 }
 
 /// <summary>
-/// The ELEVEN feature recipes — seven Ring B cross-cutting features (multitenancy,
-/// audittrail, softdelete, idempotency, dataprotection, caching, locking) plus the four
-/// execution-ladder modules (archival, bulk, notification, campaign), which the CLI wires
-/// the same way even though they are not Ring B. Every line mirrors what <c>dotnet new goldpath-solution --features X</c>
-/// would have generated — the CLI adds nothing the template would not; specdrift stays the
-/// acceptance test for both paths.
+/// The THIRTEEN feature recipes — nine Ring B cross-cutting features (multitenancy,
+/// audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals,
+/// fileexchange) plus the four execution-ladder modules (archival, bulk, notification,
+/// campaign), which the CLI wires the same way even though they are not Ring B. Every line
+/// mirrors what <c>dotnet new goldpath-solution --features X</c> would have generated — the
+/// CLI adds nothing the template would not (approvals/fileexchange land in the template
+/// with their module template pass; until then the CLI is their only automated path);
+/// specdrift stays the acceptance test for both paths.
 /// </summary>
 public static class FeatureRecipes
 {
     /// <summary>The feature names <c>goldpath add feature</c> understands.</summary>
     public static readonly IReadOnlyList<string> Names =
-        ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "archival", "bulk", "notification", "campaign"];
+        ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "approvals", "fileexchange", "archival", "bulk", "notification", "campaign"];
 
     /// <summary>Builds the plan for one feature against the app's read context.</summary>
     public static RecipePlan Build(string feature, AppFacts app)
@@ -230,6 +232,40 @@ public static class FeatureRecipes
                     plan.ManifestLines.Add($"    provider: {app.DatabaseProvider}");
                     plan.ManifestLines.Add($"    connectionName: {connection}");
                     plan.NextSteps.Add("take locks through IGoldpathLockFactory — never raw connections; see the Goldpath.Locking README");
+                    return plan;
+                }
+
+            case "approvals":
+                {
+                    var plan = new RecipePlan { ManifestKey = "approvals" };
+                    plan.ApiPackages.Add("Goldpath.Approvals");
+                    plan.Registrations.Add("builder.AddGoldpathApprovals(approvals =>");
+                    plan.Registrations.Add("{");
+                    plan.Registrations.Add("    // Declare YOUR authority chains here (goldpath never guesses who may approve):");
+                    plan.Registrations.Add("    // approvals.AddLadder(\"credit-limit\", l => l");
+                    plan.Registrations.Add("    //     .Rung(\"expert\", 1_000_000m, TimeSpan.FromHours(8))");
+                    plan.Registrations.Add("    //     .TopRung(\"general-manager\", TimeSpan.FromHours(24)));");
+                    plan.Registrations.Add("});");
+                    plan.ManifestLines.Add("  approvals: true");
+                    plan.NextSteps.Add("declare ladders in AddGoldpathApprovals; schedule EscalateOverdueAsync through the jobs module");
+                    plan.NextSteps.Add("the in-memory store is single-node — compose a database-backed IGoldpathApprovalStore before production");
+                    return plan;
+                }
+
+            case "fileexchange":
+                {
+                    var plan = new RecipePlan { ManifestKey = "fileExchange" };
+                    plan.ApiPackages.Add("Goldpath.FileExchange");
+                    plan.Registrations.Add("builder.AddGoldpathFileExchange(files =>");
+                    plan.Registrations.Add("{");
+                    plan.Registrations.Add("    // Declare YOUR rails here (goldpath never guesses a counterparty format):");
+                    plan.Registrations.Add("    // files.AddRail<MyRow>(\"registry-daily\", r => r.Header(1)");
+                    plan.Registrations.Add("    //     .ParseLine(MyRow.Parse).ValidateRow(x => x.IsValid ? null : \"reason\")");
+                    plan.Registrations.Add("    //     .Handle((row, ct) => ApplyAsync(row, ct)));");
+                    plan.Registrations.Add("});");
+                    plan.ManifestLines.Add("  fileExchange: true");
+                    plan.NextSteps.Add("declare rails in AddGoldpathFileExchange; schedule pick-up through the jobs module");
+                    plan.NextSteps.Add("the in-memory ledger is single-node — compose a database-backed IGoldpathFileLedger before production");
                     return plan;
                 }
 
