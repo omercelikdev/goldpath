@@ -31,8 +31,8 @@ importers:
         specifier: 1.50.1
         version: 1.50.1
       '@qorpe/ui':
-        specifier: 0.1.2
-        version: 0.1.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+        specifier: 0.5.0
+        version: 0.5.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@tailwindcss/vite':
         specifier: ^4.3.2
         version: 4.3.3(vite@8.1.5(jiti@2.7.0))
@@ -451,8 +451,8 @@ packages:
     engines: {node: '>=18'}
     hasBin: true
 
-  '@qorpe/ui@0.1.2':
-    resolution: {integrity: sha512-T+ASwTJbx8lWpRDc6B92OO/mmxN8Llz3MF5eFuSJDk2BT68xrtRojCPu/khFza2mpocBSO9eoDEwnX6d8fEPrA==}
+  '@qorpe/ui@0.5.0':
+    resolution: {integrity: sha512-eCDQv7Y5Rikkb2VtEtrfOylql7WwmtCgVWQUbLdcv/NubiVmi2VWWraNxk33sZC4u0juJmjL/t8cukl/Ie/Rcg==}
     peerDependencies:
       react: ^19.0.0
       react-dom: ^19.0.0
@@ -2802,7 +2802,7 @@ snapshots:
     dependencies:
       playwright: 1.50.1
 
-  '@qorpe/ui@0.1.2(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
+  '@qorpe/ui@0.5.0(@types/react-dom@19.2.3(@types/react@19.2.17))(@types/react@19.2.17)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)':
     dependencies:
       '@codemirror/commands': 6.10.4
       '@codemirror/lang-json': 6.0.2
