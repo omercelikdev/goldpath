@@ -39,6 +39,24 @@ builder.AddGoldpathIdempotency();
 //#if (UseDataProtection)
 builder.AddGoldpathDataProtection();
 //#endif
+//#if (UseApprovals)
+builder.AddGoldpathApprovals<WebApplicationBuilder, OrdersDbContext>(approvals =>
+{
+    // Declare YOUR authority chains here (goldpath never guesses who may approve):
+    // approvals.AddLadder("credit-limit", l => l
+    //     .Rung("expert", 1_000_000m, TimeSpan.FromHours(8))
+    //     .TopRung("general-manager", TimeSpan.FromHours(24)));
+});
+//#endif
+//#if (UseFileExchange)
+builder.AddGoldpathFileExchange<WebApplicationBuilder, OrdersDbContext>(files =>
+{
+    // Declare YOUR rails here (goldpath never guesses a counterparty format):
+    // files.AddRail<MyRow>("registry-daily", r => r.Header(1)
+    //     .ParseLine(MyRow.Parse).ValidateRow(x => x.IsValid ? null : "reason")
+    //     .Handle((row, ct) => ApplyAsync(row, ct)));
+});
+//#endif
 //#if (UseLocking && UsePostgres)
 builder.AddGoldpathLocking(o =>
 {

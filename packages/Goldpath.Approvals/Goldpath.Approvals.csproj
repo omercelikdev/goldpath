@@ -14,6 +14,10 @@
   </ItemGroup>
 
   <ItemGroup>
+    <!-- net10 pins Relational centrally; on net8 the reference stays transitive
+         (Goldpath.Messaging -> MassTransit.EntityFrameworkCore -> Relational 9.0.1),
+         because a direct 8.0.x reference would be a downgrade (NU1605). -->
+    <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
   </ItemGroup>
 

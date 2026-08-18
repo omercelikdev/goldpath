@@ -64,6 +64,12 @@
     <!--#if (UseCampaign) -->
     <PackageReference Include="Goldpath.Campaign" />
     <!--#endif -->
+    <!--#if (UseApprovals) -->
+    <PackageReference Include="Goldpath.Approvals" />
+    <!--#endif -->
+    <!--#if (UseFileExchange) -->
+    <PackageReference Include="Goldpath.FileExchange" />
+    <!--#endif -->
     <!--#if (UseArchival || UseBulk || UseNotification || UseCampaign) -->
     <PackageReference Include="Goldpath.Jobs" />
     <PackageReference Include="Goldpath.Console" />

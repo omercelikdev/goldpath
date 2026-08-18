@@ -16,6 +16,12 @@
     <!--#if (UseAuditTrail) -->
     <PackageReference Include="Goldpath.AuditTrail" />
     <!--#endif -->
+    <!--#if (UseApprovals) -->
+    <PackageReference Include="Goldpath.Approvals" />
+    <!--#endif -->
+    <!--#if (UseFileExchange) -->
+    <PackageReference Include="Goldpath.FileExchange" />
+    <!--#endif -->
     <!--#if (UseSoftDelete) -->
     <PackageReference Include="Goldpath.SoftDelete" />
     <!--#endif -->

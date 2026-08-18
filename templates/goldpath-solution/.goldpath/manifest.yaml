@@ -16,7 +16,7 @@ providers:
   cache: redis
   broker: GOLDPATH-BROKER
   auth: GOLDPATH-AUTH
-#if (UseBroker || UseMultiTenancy || UseAuditTrail || UseSoftDelete || UseIdempotency || UseDataProtection || UseCaching || UseLocking || UseArchival || UseBulk || UseNotification || UseCampaign)
+#if (UseBroker || UseMultiTenancy || UseAuditTrail || UseSoftDelete || UseIdempotency || UseDataProtection || UseCaching || UseLocking || UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
 features:
 #endif
 #if (UseBroker)
@@ -61,4 +61,10 @@ features:
 #endif
 #if (UseCampaign)
   campaign: true
+#endif
+#if (UseApprovals)
+  approvals: true
+#endif
+#if (UseFileExchange)
+  fileExchange: true
 #endif

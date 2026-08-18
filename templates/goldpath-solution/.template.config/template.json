@@ -120,6 +120,14 @@
         {
           "choice": "campaign",
           "description": "Governed mass-execution (L4): paced broker fan-out under a live policy (runs on jobs; REQUIRES a broker)"
+        },
+        {
+          "choice": "approvals",
+          "description": "Human approval workflows: amount ladders as data, four-eyes, delegation, escalation, worklist"
+        },
+        {
+          "choice": "fileexchange",
+          "description": "File rails: format contracts, idempotent (file,line) ingestion, quarantine, zero-duplicate replay"
         }
       ],
       "defaultValue": "",
@@ -168,6 +176,14 @@
     "UseCampaign": {
       "type": "computed",
       "value": "(features == \"campaign\")"
+    },
+    "UseApprovals": {
+      "type": "computed",
+      "value": "(features == \"approvals\")"
+    },
+    "UseFileExchange": {
+      "type": "computed",
+      "value": "(features == \"fileexchange\")"
     },
     "UseAuth": {
       "type": "computed",

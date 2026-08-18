@@ -18,9 +18,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   integration events. 7-test planted-fault rig; `features.fileExchange` +
   `goldpath add feature fileexchange`.
 
-  Both cores ship with in-memory stores behind seams (`IGoldpathApprovalStore`,
-  `IGoldpathFileLedger`); database-backed stores, template flags and console federation
-  are tracked in the RFCs' open DoD rows (T21/T22).
+  Both modules ship database-backed stores on the app's own DbContext
+  (`AddGoldpathApprovalModel` / `AddGoldpathFileExchangeModel`, in-memory fallbacks behind
+  the same seams) and full composition: manifest keys, `goldpath add feature`, and
+  `dotnet new goldpath-solution --features approvals/fileexchange`. Console federation and
+  the adopter proofs are tracked in the RFCs' open DoD rows (T21/T22).
 
 ## [0.1.0-preview.6] - 2026-08-03
 
