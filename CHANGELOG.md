@@ -3,6 +3,25 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [Unreleased]
+
+### Added
+- **Goldpath.Approvals** (new Ring B module, core landed 2026-08-18): human approval
+  workflows — amount-laddered authority chains declared as data, four-eyes/maker-checker
+  enforcement, bounded delegation (depth one), deadline escalation with top-rung expiry,
+  the worklist, and the full audit trail; lifecycle published as integration events.
+  17 deterministic tests; `features.approvals` + `goldpath add feature approvals`.
+- **Goldpath.FileExchange** (new Ring B module, core landed 2026-08-18): file-based
+  integration rails as a unit — rails declared as data with baked closures, file-level
+  contracts, idempotent `(file, line)` ingestion, per-row quarantine that never stops the
+  batch, zero-duplicate replay/reprocess, archive marks; lifecycle published as
+  integration events. 7-test planted-fault rig; `features.fileExchange` +
+  `goldpath add feature fileexchange`.
+
+  Both cores ship with in-memory stores behind seams (`IGoldpathApprovalStore`,
+  `IGoldpathFileLedger`); database-backed stores, template flags and console federation
+  are tracked in the RFCs' open DoD rows (T21/T22).
+
 ## [0.1.0-preview.6] - 2026-08-03
 
 The operations train. Campaign revision R1 gives long-running campaigns their calendar

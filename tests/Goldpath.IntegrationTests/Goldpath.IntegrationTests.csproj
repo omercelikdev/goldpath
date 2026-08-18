@@ -13,6 +13,9 @@
     <PackageReference Include="Microsoft.AspNetCore.TestHost" />
     <PackageReference Include="MassTransit.RabbitMQ" />
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <!-- Direct pin: Testcontainers pulls SSH.NET 2025.1.0, which carries GHSA-q939-rpr3-3284;
+         this override lifts it to the patched line (NU1903 is an error here on purpose). -->
+    <PackageReference Include="SSH.NET" />
     <PackageReference Include="Testcontainers.PostgreSql" />
     <PackageReference Include="Testcontainers.RabbitMq" />
     <PackageReference Include="Testcontainers.Redis" />

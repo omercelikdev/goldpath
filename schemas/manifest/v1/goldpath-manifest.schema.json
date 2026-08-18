@@ -320,7 +320,7 @@
             "oracle"
           ],
           "default": "postgresql",
-          "$comment": "postgresql and sqlserver are WIRED (template + GM matrix). `oracle` is SCHEMA-ONLY \u2014 accepted here so a manifest can declare intent, but no EF provider ships (open thread T16: the first committed Oracle-mandating adopter). Declaring it does not make it run."
+          "$comment": "postgresql and sqlserver are WIRED (template + GM matrix). `oracle` is SCHEMA-ONLY — accepted here so a manifest can declare intent, but no EF provider ships (open thread T16: the first committed Oracle-mandating adopter). Declaring it does not make it run."
         },
         "cache": {
           "enum": [
@@ -337,7 +337,7 @@
             "none"
           ],
           "default": "rabbitmq",
-          "$comment": "rabbitmq and none are WIRED. `kafka` and `inmemory` are SCHEMA-ONLY \u2014 no transport wiring ships for either (issue #11 carries the Kafka rider, triggered by the 30M-scale campaign)."
+          "$comment": "rabbitmq and none are WIRED. `kafka` and `inmemory` are SCHEMA-ONLY — no transport wiring ships for either (issue #11 carries the Kafka rider, triggered by the 30M-scale campaign)."
         },
         "auth": {
           "enum": [
@@ -441,7 +441,7 @@
                     "eventstream"
                   ],
                   "default": "database",
-                  "$comment": "`database` is WIRED. `eventstream` is RESERVED \u2014 a written deferral in the AuditTrail RFC, no code path ships."
+                  "$comment": "`database` is WIRED. `eventstream` is RESERVED — a written deferral in the AuditTrail RFC, no code path ships."
                 }
               },
               "additionalProperties": false
@@ -606,6 +606,14 @@
         "campaign": {
           "$ref": "#/$defs/toggle",
           "description": "Governed mass-execution (L4): durable target plan, single-leader pacing under a LIVE policy (TPS/quota/window/max-in-flight), claim-before-execute broker fan-out, batching outcome sink, audited verbs. Runs on the jobs module and REQUIRES a broker (rule below)."
+        },
+        "approvals": {
+          "$ref": "#/$defs/toggle",
+          "description": "Human approval workflows: amount-laddered authority chains declared as data, four-eyes/maker-checker enforcement, bounded delegation, deadline escalation, and the worklist — every lifecycle step audited and published as integration events."
+        },
+        "fileExchange": {
+          "$ref": "#/$defs/toggle",
+          "description": "File-based integration rails: rails declared as data — file-level contracts, idempotent (file, line) ingestion, per-row quarantine that never stops the batch, zero-duplicate replay/reprocess, archive marks. Scheduled pick-up rides the jobs module."
         }
       },
       "additionalProperties": false
@@ -759,7 +767,7 @@
     },
     "products": {
       "type": "array",
-      "description": "First-party product modules riding the platform (ADR-0012; platform RFC D2). Every entry is NAMED with a NAMESPACED vendor.product id (e.g. qorpe.sync) so a future core feature can never collide with a vendor key; the core `features` enumeration stays closed. An array of named entries rather than a map because the engine's never-guess schema vocabulary has no patternProperties \u2014 the namespace is enforced by `pattern` on `name`. Each product's own RFC refines its options; `enabled: false` means the product is absent from the composition (ADR-0001 toggle semantics). DECISION (review R5 on the introducing PR): duplicate names are INVALID, but the engine's vocabulary cannot express name-uniqueness across array entries (uniqueItems compares whole objects) \u2014 the refusal lives in the composition layer (goldpath CLI wiring, mechanical with the pilot product); until then a duplicate name is caught at generation, never silently merged.",
+      "description": "First-party product modules riding the platform (ADR-0012; platform RFC D2). Every entry is NAMED with a NAMESPACED vendor.product id (e.g. qorpe.sync) so a future core feature can never collide with a vendor key; the core `features` enumeration stays closed. An array of named entries rather than a map because the engine's never-guess schema vocabulary has no patternProperties — the namespace is enforced by `pattern` on `name`. Each product's own RFC refines its options; `enabled: false` means the product is absent from the composition (ADR-0001 toggle semantics). DECISION (review R5 on the introducing PR): duplicate names are INVALID, but the engine's vocabulary cannot express name-uniqueness across array entries (uniqueItems compares whole objects) — the refusal lives in the composition layer (goldpath CLI wiring, mechanical with the pilot product); until then a duplicate name is caught at generation, never silently merged.",
       "items": {
         "type": "object",
         "required": [
