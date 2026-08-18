@@ -155,3 +155,24 @@ Goldpath.IGoldpathApprovalStore.GetDelegationsAsync(System.DateTimeOffset now, S
 Goldpath.IGoldpathApprovalStore.GetPendingAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalRequest!>!>!
 Goldpath.IGoldpathApprovalStore.UpdateAsync(Goldpath.GoldpathApprovalRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 static Goldpath.GoldpathApprovalsExtensions.AddGoldpathApprovals<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathApprovalsOptions!>! configure) -> TBuilder
+Goldpath.GoldpathApprovalDelegationRow
+Goldpath.GoldpathApprovalDelegationRow.GoldpathApprovalDelegationRow() -> void
+Goldpath.GoldpathApprovalDelegationRow.Id.get -> long
+Goldpath.GoldpathApprovalDelegationRow.Id.set -> void
+Goldpath.GoldpathApprovalDelegationRow.From.get -> string!
+Goldpath.GoldpathApprovalDelegationRow.From.set -> void
+Goldpath.GoldpathApprovalDelegationRow.To.get -> string!
+Goldpath.GoldpathApprovalDelegationRow.To.set -> void
+Goldpath.GoldpathApprovalDelegationRow.Until.get -> System.DateTimeOffset
+Goldpath.GoldpathApprovalDelegationRow.Until.set -> void
+Goldpath.GoldpathApprovalModelExtensions
+static Goldpath.GoldpathApprovalModelExtensions.AddGoldpathApprovalModel(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder) -> Microsoft.EntityFrameworkCore.ModelBuilder!
+Goldpath.GoldpathEfApprovalStore<TContext>
+Goldpath.GoldpathEfApprovalStore<TContext>.GoldpathEfApprovalStore(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory! scopes) -> void
+Goldpath.GoldpathEfApprovalStore<TContext>.AddAsync(Goldpath.GoldpathApprovalRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathEfApprovalStore<TContext>.GetAsync(System.Guid id, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Goldpath.GoldpathApprovalRequest?>!
+Goldpath.GoldpathEfApprovalStore<TContext>.UpdateAsync(Goldpath.GoldpathApprovalRequest! request, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathEfApprovalStore<TContext>.GetPendingAsync(System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalRequest!>!>!
+Goldpath.GoldpathEfApprovalStore<TContext>.AddDelegationAsync(Goldpath.GoldpathApprovalDelegation! delegation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathEfApprovalStore<TContext>.GetDelegationsAsync(System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalDelegation!>!>!
+static Goldpath.GoldpathApprovalsExtensions.AddGoldpathApprovals<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathApprovalsOptions!>! configure) -> TBuilder

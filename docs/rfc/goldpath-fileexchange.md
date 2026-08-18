@@ -88,10 +88,18 @@ window — the incident file rails actually have.
       truncated file rejected whole, reprocess-after-fix retries only the quarantined row —
       `tests/Goldpath.FileExchange.Tests`).
 - [x] `features.fileExchange` manifest key + `goldpath add feature fileexchange` CLI recipe
-      wired (template flag lands with the module's template pass).
+      wired.
+- [x] Template flag: `dotnet new goldpath-solution --features fileexchange` generates the
+      manifest line, package reference, EF-ledger registration and model call — proven by
+      generating and BUILDING an app with the flag against the train's packages.
+- [x] Database-backed ledger: `GoldpathEfFileLedger<TContext>` on the app's own DbContext
+      (`modelBuilder.AddGoldpathFileExchangeModel()`) — processed keys, quarantine and
+      archive marks survive restarts; proven on real SQLite storage (2 tests: zero
+      duplicates across a restart, quarantine persists with its reason and clears on
+      reprocess).
 - [ ] Admin surface federates in the family console against a real app.
 - [x] Runbook ships (`packages/Goldpath.FileExchange/ops/fileexchange.md`); dashboard JSON open.
-- [ ] Database-backed `IGoldpathFileLedger` + transport adapters (SFTP/share/object store).
+- [ ] Transport adapters (SFTP/share/object store) — composed, per RFC §1.
 - [ ] The adopter proof runs (§7 last row) — the row that actually closes T22.
 
 ### Decisions

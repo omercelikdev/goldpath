@@ -23,6 +23,12 @@ public class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : DbCont
 #if (UseAuditTrail)
         modelBuilder.AddGoldpathAuditLog();
 #endif
+#if (UseApprovals)
+        modelBuilder.AddGoldpathApprovalModel();      // approvals + delegations (worklist survives restarts)
+#endif
+#if (UseFileExchange)
+        modelBuilder.AddGoldpathFileExchangeModel();  // processed keys + quarantine + archive marks
+#endif
 #if (UseSoftDelete)
         modelBuilder.ApplyGoldpathSoftDelete();
 #endif

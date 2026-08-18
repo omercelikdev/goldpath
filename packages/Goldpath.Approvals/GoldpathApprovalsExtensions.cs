@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
@@ -24,5 +25,18 @@ public static class GoldpathApprovalsExtensions
         builder.Services.TryAddSingleton<IGoldpathApprovalStore, GoldpathInMemoryApprovalStore>();
         builder.Services.TryAddSingleton<GoldpathApprovalEngine>();
         return builder;
+    }
+
+    /// <summary>
+    /// Registers the approvals engine with the DATABASE-backed store on the app's own
+    /// DbContext (map it with <c>modelBuilder.AddGoldpathApprovalModel()</c>) — requests
+    /// survive restarts and every node sees the same worklist.
+    /// </summary>
+    public static TBuilder AddGoldpathApprovals<TBuilder, TContext>(this TBuilder builder, Action<GoldpathApprovalsOptions> configure)
+        where TBuilder : IHostApplicationBuilder
+        where TContext : DbContext
+    {
+        builder.Services.AddSingleton<IGoldpathApprovalStore, GoldpathEfApprovalStore<TContext>>();
+        return builder.AddGoldpathApprovals(configure);
     }
 }

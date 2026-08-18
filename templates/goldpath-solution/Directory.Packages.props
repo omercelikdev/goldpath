@@ -31,6 +31,8 @@
     <PackageVersion Include="Goldpath.Idempotency" Version="0.1.0-preview.6" />
     <PackageVersion Include="Goldpath.DataProtection" Version="0.1.0-preview.6" />
     <PackageVersion Include="Goldpath.Caching" Version="0.1.0-preview.6" />
+    <PackageVersion Include="Goldpath.Approvals" Version="0.1.0-preview.6" />
+    <PackageVersion Include="Goldpath.FileExchange" Version="0.1.0-preview.6" />
     <PackageVersion Include="Goldpath.Locking" Version="0.1.0-preview.6" />
     <PackageVersion Include="Goldpath.Locking.SqlServer" Version="0.1.0-preview.6" />
     <PackageVersion Include="Goldpath.Archival" Version="0.1.0-preview.6" />

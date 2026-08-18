@@ -366,7 +366,8 @@ public class RecipeGoldenTests
         var plan = FeatureRecipes.Build("approvals", facts);
         Assert.Equal(["Goldpath.Approvals"], plan.ApiPackages);
         Assert.Contains("  approvals: true", plan.ManifestLines);
-        Assert.Contains("builder.AddGoldpathApprovals(approvals =>", plan.Registrations);
+        Assert.Contains("builder.AddGoldpathApprovals<WebApplicationBuilder, X>(approvals =>", plan.Registrations);
+        Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathApprovalModel"));
     }
 
     [Fact]
@@ -376,7 +377,8 @@ public class RecipeGoldenTests
         var plan = FeatureRecipes.Build("fileexchange", facts);
         Assert.Equal(["Goldpath.FileExchange"], plan.ApiPackages);
         Assert.Contains("  fileExchange: true", plan.ManifestLines);
-        Assert.Contains("builder.AddGoldpathFileExchange(files =>", plan.Registrations);
+        Assert.Contains("builder.AddGoldpathFileExchange<WebApplicationBuilder, X>(files =>", plan.Registrations);
+        Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathFileExchangeModel"));
     }
 
     [Fact]

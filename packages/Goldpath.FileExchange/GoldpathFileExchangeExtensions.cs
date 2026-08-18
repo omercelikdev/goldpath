@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
 using Microsoft.Extensions.Hosting;
@@ -21,5 +22,18 @@ public static class GoldpathFileExchangeExtensions
         builder.Services.TryAddSingleton<IGoldpathFileLedger, GoldpathInMemoryFileLedger>();
         builder.Services.TryAddSingleton<GoldpathFileRailEngine>();
         return builder;
+    }
+
+    /// <summary>
+    /// Registers the rail engine with the DATABASE-backed ledger on the app's own DbContext
+    /// (map it with <c>modelBuilder.AddGoldpathFileExchangeModel()</c>) — the zero-duplicate
+    /// guarantee survives restarts and holds across nodes.
+    /// </summary>
+    public static TBuilder AddGoldpathFileExchange<TBuilder, TContext>(this TBuilder builder, Action<GoldpathFileExchangeOptions> configure)
+        where TBuilder : IHostApplicationBuilder
+        where TContext : DbContext
+    {
+        builder.Services.AddSingleton<IGoldpathFileLedger, GoldpathEfFileLedger<TContext>>();
+        return builder.AddGoldpathFileExchange(configure);
     }
 }

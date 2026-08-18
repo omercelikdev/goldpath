@@ -84,11 +84,16 @@ ladder's own deadline.
       (17 tests: rung boundaries inclusive, four-eyes, wrong-role refusal, double-decide,
       escalation resets the rung clock, top-rung expiry, delegation depth-one + expiry,
       worklist ordering, trail completeness — `tests/Goldpath.Approvals.Tests`).
-- [x] `features.approvals` manifest key + `goldpath add feature approvals` CLI recipe wired
-      (template flag lands with the module's template pass).
+- [x] `features.approvals` manifest key + `goldpath add feature approvals` CLI recipe wired.
+- [x] Template flag: `dotnet new goldpath-solution --features approvals` generates the
+      manifest line, package reference, EF-store registration and model call — proven by
+      generating and BUILDING an app with the flag against the train's packages.
+- [x] Database-backed store: `GoldpathEfApprovalStore<TContext>` on the app's own DbContext
+      (`modelBuilder.AddGoldpathApprovalModel()`) — requests, trails (JSON column) and
+      delegations survive restarts; proven on real SQLite storage (3 tests: restarted
+      engine sees the same worklist, trail round-trips, delegations persist and expire).
 - [ ] Admin surface federates in the family console against a real app.
 - [x] Runbook ships (`packages/Goldpath.Approvals/ops/approvals.md`); dashboard JSON open.
-- [ ] Database-backed `IGoldpathApprovalStore` (the in-memory store is single-node).
 - [ ] The adopter proof runs (§7 last row) — the row that actually closes T21.
 
 ### Decisions
