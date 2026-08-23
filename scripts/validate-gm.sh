@@ -64,6 +64,25 @@ s = open(path).read().replace("<!-- GOLDPATH_FEED -->", f'<add key="goldpath-loc
 open(path, "w").write(s)
 PY
 
+# The engine, resolved ONCE and BEFORE any CLI verb runs. Pinned, consumed as the
+# PUBLISHED tool (README dependency policy: source references are the exception, not the
+# silent default). A local checkout is used only via an explicit GOLDPATH_SPECDRIFT_SRC
+# and announces itself — a green local run must mean a green CI run.
+#
+# It is exported as GOLDPATH_SPECDRIFT because the post-generation verbs (goldpath new
+# service|gateway) gate their own result through the engine: the nightly's GmSixGateway
+# shape was red for three weeks on "could not run 'specdrift'" — the tool was installed
+# only at spec-lint, AFTER those verbs, and into a directory that is not on PATH.
+SPECDRIFT_VERSION=0.4.2
+if [ -n "${GOLDPATH_SPECDRIFT_SRC:-}" ]; then
+  echo "── engine: using LOCAL specdrift checkout (GOLDPATH_SPECDRIFT_SRC=$GOLDPATH_SPECDRIFT_SRC) — not the $SPECDRIFT_VERSION pin"
+  SPECDRIFT="dotnet run --project $GOLDPATH_SPECDRIFT_SRC/src/Specdrift --"
+else
+  [ -x "$WORK/tools/specdrift" ] || dotnet tool install --tool-path "$WORK/tools" specdrift --version "$SPECDRIFT_VERSION" >/dev/null
+  SPECDRIFT="$WORK/tools/specdrift"
+fi
+export GOLDPATH_SPECDRIFT="$SPECDRIFT"
+
 echo "── initial migration (goldpath db init — Development migrates, EnsureCreated is gone)"
 (cd "$APP" && dotnet run --project "$ROOT/tools/Goldpath.Cli" -- db init --path .)
 
@@ -87,18 +106,6 @@ if [ -d "$APP/src/$NAME.Api" ]; then
 fi
 
 echo "── spec-lint (specdrift: validate + drift)"
-# Pinned engine, consumed as the PUBLISHED tool (README dependency policy: source
-# references are the exception, not the silent default). A local checkout is used only
-# via an explicit GOLDPATH_SPECDRIFT_SRC and announces itself — a green local run must
-# mean a green CI run.
-SPECDRIFT_VERSION=0.4.2
-if [ -n "${GOLDPATH_SPECDRIFT_SRC:-}" ]; then
-  echo "── spec-lint: using LOCAL specdrift checkout (GOLDPATH_SPECDRIFT_SRC=$GOLDPATH_SPECDRIFT_SRC) — not the $SPECDRIFT_VERSION pin"
-  SPECDRIFT="dotnet run --project $GOLDPATH_SPECDRIFT_SRC/src/Specdrift --"
-else
-  [ -x "$WORK/tools/specdrift" ] || dotnet tool install --tool-path "$WORK/tools" specdrift --version "$SPECDRIFT_VERSION" >/dev/null
-  SPECDRIFT="$WORK/tools/specdrift"
-fi
 $SPECDRIFT validate "$APP/.goldpath/manifest.yaml"   --schema "$ROOT/schemas/manifest/v1/goldpath-manifest.schema.json"   --rules "$APP/.specdrift/rules.yaml"
 # First generation: commit the contract (what a team does on day one), then drift must be clean.
 if [ -d "$APP/src/$NAME.Api" ]; then
