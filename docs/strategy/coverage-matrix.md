@@ -61,6 +61,20 @@ for planning · — deliberately absent (the card does not trigger it).
 | specdrift CLI path | ✅ | — |
 | specdrift MCP path (from skills) | 🟡 not exercised in a sample flow | Insurance build runs it |
 
+## Ring C modules (matrix entry pending their sample cards)
+
+| Capability | CorPay (finance) | Insurance | Telco |
+|---|---|---|---|
+| Approvals | 🟡 no sample story yet (the api-portal product proves the pattern end to end) | 🔷 endorsement four-eyes candidate | 🔷 tariff-change four-eyes candidate |
+| FileExchange | 🟡 no sample story yet | 🔷 bordereaux import candidate | 🔷 CDR drop candidate |
+
+## Foundational packages (no matrix row — they underpin EVERY cell)
+
+Abstractions · Sdk · ServiceDefaults · ApiDefaults · Data · Messaging — composed by every
+sample and every generated shape; their proof is the nightly golden-manifest matrix, not a
+sector story. Named here so the docs-freshness inventory can hold this file to the full
+package list.
+
 ## Console panels (post-UI; eyes-on + Playwright per sample)
 
 | Panel | CorPay | Insurance | Telco |

@@ -34,6 +34,13 @@ Spec Engine — it invents no semantics of its own. Exit codes mirror specdrift:
 | `goldpath db status [--path <dir>]` | What is applied, what is pending — also inlined into `check`. |
 | `goldpath db bundle [--path <dir>]` | A self-contained migration bundle for environments where the SDK is not installed. |
 
+## Export
+
+- `goldpath export compose [--path <dir>]` — reads the AppHost (the ONLY definition of the
+  topology) and writes a `docker-compose.yaml` + Dockerfile beside it. Re-runnable; the
+  compose file is an EXPORT, never a second source of truth. Exit 1 with the reason when
+  the AppHost declares no resources or a project has no matching directory.
+
 ## Inspect
 
 | Verb | What it does |
@@ -55,3 +62,8 @@ goldpath/templates/goldpath-worker  kind=worker  name=GoldpathWorker
 - It never edits what the engine would reject: every transform is validated, and a refusal
   rolls the change back whole.
 - It calls no LLM. The AI skills call the CLI and the engine, never the reverse (ADR-0004).
+
+## Help
+
+- `goldpath help` (also `--help`, `-h`) — the verb list with one line each; `--version`/`-v`
+  prints the informational version. Unknown verbs exit 2 with usage — never a silent 0.

@@ -65,3 +65,83 @@ if offences:
     sys.exit(1)
 print("── retired names: none of the retired tools are mentioned")
 PY
+
+# ── INVENTORY SYNC (#174): every public surface is NAMED where readers look for it, and
+#    every numeric claim about a surface matches reality. Same contract as the tests:
+#    "the docs are stale" is a RED state, never a silent one.
+python3 - "$ROOT" <<'PY'
+import os, re, sys
+root = sys.argv[1]
+fail = []
+def read(*parts):
+    path = os.path.join(root, *parts)
+    return open(path, encoding="utf-8", errors="replace").read() if os.path.exists(path) else ""
+
+# 1. Every package is on the live capability ledger.
+ledger = read("docs", "strategy", "coverage-matrix.md")
+packages = sorted(d for d in os.listdir(os.path.join(root, "packages"))
+                  if d.startswith("Goldpath.") and os.path.isdir(os.path.join(root, "packages", d)))
+# The matrix speaks capability SHORT names ("Idempotency"); providers ride their base
+# capability's row ("Locking" covers Locking.SqlServer). Either spelling satisfies.
+for package in packages:
+    short = package.removeprefix("Goldpath.")
+    base = short.split(".")[0]
+    if package not in ledger and short not in ledger and base not in ledger:
+        fail.append(f"package {package} missing from docs/strategy/coverage-matrix.md")
+
+# 2. A doc that COUNTS packages must count them correctly (packages/README said 19 while
+#    23 existed — found by this gate's first run).
+readme = read("packages", "README.md")
+for claim in re.findall(r"(\d+)\s+packages", readme):
+    if int(claim) != len(packages):
+        fail.append(f"packages/README.md claims {claim} packages; there are {len(packages)}")
+
+# 3. Every CLI verb the dispatcher knows is in the CLI reference.
+dispatch = read("tools", "Goldpath.Cli", "CliRunner.cs")
+verbs = set()
+for m in re.finditer(r'\["([a-z]+)"(?:, "([a-z]+)")?', dispatch):
+    verbs.add(m.group(1) if not m.group(2) else f"{m.group(1)} {m.group(2)}")
+verbs -= {"new"} if "new " in " ".join(verbs) else set()
+reference = read("docs", "guide", "cli-reference.md")
+for verb in sorted(verbs):
+    if f"goldpath {verb}" not in reference:
+        fail.append(f"CLI verb 'goldpath {verb}' missing from docs/guide/cli-reference.md")
+
+# 4. Every golden-manifest shape in the nightly matrix is in the golden-manifests doc.
+nightly = read(".github", "workflows", "nightly.yml")
+gm_doc = read("docs", "strategy", "golden-manifests-v1.md")
+for shape in re.findall(r"- name: (Gm[A-Za-z.]+)", nightly):
+    if shape not in gm_doc:
+        fail.append(f"nightly shape {shape} missing from docs/strategy/golden-manifests-v1.md")
+
+# 5. Every script is referenced SOMEWHERE a reader can find it.
+corpus = ""
+for scope in ["README.md", "CLAUDE.md"]:
+    corpus += read(scope)
+for base, dirs, names in os.walk(os.path.join(root, "docs")):
+    for n in names:
+        if n.endswith(".md"):
+            corpus += read(os.path.relpath(os.path.join(base, n), root))
+for n in os.listdir(os.path.join(root, ".github", "workflows")):
+    corpus += read(".github", "workflows", n)
+corpus += "".join(read("scripts", n) for n in os.listdir(os.path.join(root, "scripts")))
+for script in sorted(os.listdir(os.path.join(root, "scripts"))):
+    if script.endswith((".sh", ".py")) and script not in corpus.replace("docs-freshness.sh", script, 0):
+        others = corpus
+        if script not in others:
+            fail.append(f"scripts/{script} is referenced nowhere (README, CLAUDE.md, docs, workflows, other scripts)")
+
+# 6. Every template is in templates/README.md.
+templates_doc = read("templates", "README.md")
+for template in sorted(d for d in os.listdir(os.path.join(root, "templates"))
+                       if d.startswith("goldpath-") and os.path.isdir(os.path.join(root, "templates", d))):
+    if template not in templates_doc:
+        fail.append(f"template {template} missing from templates/README.md")
+
+if fail:
+    print("── inventory sync: the docs stopped telling the truth:")
+    for f in fail:
+        print(f"  {f}")
+    sys.exit(1)
+print(f"── inventory sync: {len(packages)} packages, {len(verbs)} CLI verbs, nightly shapes, scripts and templates all documented")
+PY

@@ -50,7 +50,7 @@ warnings first; a later minor may raise severity, and says so in the guide).
 
 No release tag without all three, in the same release PR:
 
-1. **PublicAPI roll:** every package's `Unshipped.txt` rolls into `Shipped.txt` (the
+1. **PublicAPI roll (`scripts/roll-shipped.sh`):** every package's `Unshipped.txt` rolls into `Shipped.txt` (the
    ledger IS the released surface; the roll script lands with the NuGet release work).
 2. **CHANGELOG entry** for the train (one file, newest on top).
 3. **Upgrade guide:** `docs/upgrades/<version>.md` — step-by-step for every break;
