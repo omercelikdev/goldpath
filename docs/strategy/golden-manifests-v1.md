@@ -87,3 +87,25 @@
 2. A combination that blows up in the field → a GM update or a regression manifest (never deleted).
 3. A GM change demands a review as serious as a schema/template change (these are the product's contract).
 4. Every GM is also an example project usable in sales/demos — narrated by its persona name.
+
+## 6. The nightly matrix today (docs-freshness gate keeps this table honest)
+
+Every shape below runs nightly via `scripts/validate-gm.sh` — pack → generate → build →
+spec-lint → smoke with real containers. A shape name here and in `nightly.yml` may not
+drift apart; the gate fails on either direction.
+
+| Shape | Arguments | What it proves |
+|---|---|---|
+| GmOneAuthDefault | (defaults) | the default shape, auth floor up |
+| GmOneOpenFlow | `--auth none` | open shape drives the full order flow |
+| GmFourSimple | `--db sqlserver --broker none --auth none` | the SqlServer/no-broker quadrant |
+| GmFourClean | `--layout clean-architecture …` | four-project split, migrations in Infrastructure |
+| GmSixGateway | `--auth none` + `new service` + `new gateway` | multi-head by the adopter's own verbs; routed probe |
+| GmBulkOnly | `--features bulk --broker none --auth none` | operational module with ONLY the app database |
+| Gm.Dotted | `--broker none --auth none` | dotted solution names (issue #24 regression) |
+| GmConsole | `--features bulk --auth none` | the console SERVES with its own bundle |
+| GmConsoleAuthed | `--features bulk` | the console's 401 floor branch |
+| GmEverything | all eleven features | maximal composition compiles, boots, smokes |
+| GmWorkerQueue | worker template | queue-triggered worker shape |
+| GmWorkerSchedule | worker `--trigger schedule` | schedule-triggered worker shape |
+| GmWorkerJobs | worker `--trigger jobs` | jobs-profile worker shape |

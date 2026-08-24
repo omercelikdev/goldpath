@@ -140,7 +140,8 @@ replay to the jobs console. The notification rows ARE the audit.
 - Insurance's nightly renewal run: 10k notifications rendered + evidence-stamped against
   a no-op channel — measure rows/s (expectation: template render is string work; the
   channel dominates in production).
-- Render micro-bench: token replacement at p95 (budget: sub-millisecond).
+- Render micro-bench: token replacement at p95 (budget: sub-millisecond). Reference
+  profile: `scripts/bench-notification.sh` → `packages/Goldpath.Notification/ops/notification-benchmarks.md`.
 - Queue-age under a stopped channel: the backlog drains after recovery without loss or
   duplicates (the claim proof, notification-flavored).
 
