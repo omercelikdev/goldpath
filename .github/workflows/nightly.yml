@@ -69,7 +69,7 @@ jobs:
       # The GM lane packs a local feed, and that feed shadows nuget.org for the same
       # version — so the console it packs must carry its assets, or every shape with an
       # operational module serves a 500 where its console should be.
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 10
       - uses: actions/setup-node@v4
