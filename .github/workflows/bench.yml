@@ -36,7 +36,10 @@ jobs:
           grep -a "BENCH-" bench.log >> "$GITHUB_STEP_SUMMARY" || echo "no BENCH- lines found" >> "$GITHUB_STEP_SUMMARY"
           echo '```' >> "$GITHUB_STEP_SUMMARY"
       - uses: actions/upload-artifact@v4
+        # Convenience upload: capped retention; a storage-quota hiccup never paints the run red.
         if: always()
+        continue-on-error: true
         with:
           name: bench-log
           path: bench.log
+          retention-days: 14
