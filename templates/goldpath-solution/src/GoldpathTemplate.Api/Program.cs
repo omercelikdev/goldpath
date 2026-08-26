@@ -298,7 +298,49 @@ if (app.Environment.IsDevelopment() && !isDocGen)
     // a database born from it can never take a migration later — migrations RFC D2).
     using var scope = app.Services.CreateScope();
     var db = scope.ServiceProvider.GetRequiredService<OrdersDbContext>();
-    await db.Database.MigrateAsync();
+
+    // SERIALIZED across replicas: two instances booting together race MigrateAsync into
+    // "relation already exists" (found live in the api-portal product's HA exam, 2026-08).
+    // A database-side application lock lets the first replica migrate while the second
+    // waits and then walks an already-applied history. Single-replica pays one round trip.
+#if (UsePostgres)
+    await db.Database.OpenConnectionAsync();
+    try
+    {
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_lock(727401001)");
+        await db.Database.MigrateAsync();
+        await db.Database.ExecuteSqlRawAsync("SELECT pg_advisory_unlock(727401001)");
+    }
+    finally
+    {
+        await db.Database.CloseConnectionAsync();
+    }
+#endif
+#if (UseSqlServer)
+    // On SqlServer the app database does not exist until MigrateAsync creates it, so the
+    // lock is taken on master — a connection to the APP database here would spin on
+    // "database does not exist" retries until the health deadline (found generating this
+    // very shape). Session-owned: the lock dies with this connection, crash included.
+    var gateBuilder = new Microsoft.Data.SqlClient.SqlConnectionStringBuilder(
+        db.Database.GetConnectionString()!) { InitialCatalog = "master" };
+    await using (var gate = new Microsoft.Data.SqlClient.SqlConnection(gateBuilder.ConnectionString))
+    {
+        await gate.OpenAsync();
+        await using (var acquire = gate.CreateCommand())
+        {
+            acquire.CommandText = "EXEC sp_getapplock @Resource = 'goldpath-dev-migrate', @LockMode = 'Exclusive', @LockOwner = 'Session', @LockTimeout = 300000";
+            await acquire.ExecuteNonQueryAsync();
+        }
+
+        await db.Database.MigrateAsync();
+
+        await using (var release = gate.CreateCommand())
+        {
+            release.CommandText = "EXEC sp_releaseapplock @Resource = 'goldpath-dev-migrate', @LockOwner = 'Session'";
+            await release.ExecuteNonQueryAsync();
+        }
+    }
+#endif
 }
 
 app.Run();
