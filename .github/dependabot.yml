@@ -1,0 +1,18 @@
+# Dependency currency is automated, not remembered (asset convention, 2026-08-24).
+# Pre-release channels are NOT bumped inside groups — beta packages tracking an SDK minor
+# are aligned by hand in the same PR that takes the SDK bump.
+version: 2
+updates:
+  - package-ecosystem: nuget
+    directory: /
+    schedule: { interval: weekly }
+    groups:
+      nuget-dependencies: { patterns: ["*"] }
+  - package-ecosystem: npm
+    directory: /ui/console
+    schedule: { interval: weekly }
+    groups:
+      console-dependencies: { patterns: ["*"] }
+  - package-ecosystem: github-actions
+    directory: /
+    schedule: { interval: weekly }

@@ -27,6 +27,12 @@ jobs:
         run: ./scripts/schema-honesty.sh
       - name: docs freshness (no link to a missing file)
         run: bash scripts/docs-freshness.sh
+      - name: security audit (known CVEs fail the PR — nightly already scans; PRs must too)
+        run: |
+          dotnet restore -v q
+          dotnet list package --vulnerable --include-transitive > vulnerable.txt
+          cat vulnerable.txt
+          ! grep -q "has the following vulnerable packages" vulnerable.txt
       - name: template pins are on THIS train (a stale pin silently generates an old one)
         run: bash scripts/template-pins.sh
       # The two product-repo antidotes (platform RFC §2b, R-1/R-2), rehearsed here against
