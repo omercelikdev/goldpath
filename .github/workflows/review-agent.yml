@@ -46,7 +46,7 @@ jobs:
         run: ./scripts/review-agent.sh "${{ github.event.pull_request.number }}" --gate
       - name: keep the verdict
         if: always() && steps.key.outputs.present == 'true'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         continue-on-error: true
         with:
           name: review-agent-verdict
