@@ -69,7 +69,7 @@ jobs:
           export GOLDPATH_VERSION="${GITHUB_REF_NAME#v}"
           bash scripts/sbom.sh out/goldpath-sbom.cdx.json
       - name: provenance for every package (signed, keyless)
-        uses: actions/attest-build-provenance@v2
+        uses: actions/attest-build-provenance@v4
         with:
           subject-path: 'out/*.nupkg'
 
