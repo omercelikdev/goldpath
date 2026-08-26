@@ -47,7 +47,9 @@ jobs:
       - name: keep the verdict
         if: always() && steps.key.outputs.present == 'true'
         uses: actions/upload-artifact@v4
+        continue-on-error: true
         with:
           name: review-agent-verdict
           path: ${{ runner.temp }}/review-agent
           if-no-files-found: ignore
+          retention-days: 14
