@@ -221,6 +221,7 @@ public static class GoldpathCampaignModel
             campaign.Property(c => c.CreatedBy).HasMaxLength(256);
             campaign.Property(c => c.LastVerb).HasMaxLength(512);
             campaign.Property(c => c.Tenant).HasMaxLength(128);
+            campaign.Property(c => c.ParametersJson).HasMaxLength(-1);   // caller's selector parameters — a DOCUMENT (#198)
             campaign.Property(c => c.State).IsConcurrencyToken();
             campaign.HasIndex(c => new { c.State, c.CreatedAt });
         });
@@ -229,6 +230,7 @@ public static class GoldpathCampaignModel
         {
             item.ToTable("GoldpathCampaignItems");
             item.HasKey(i => new { i.CampaignId, i.Seq });
+            item.Property(i => i.TargetJson).HasMaxLength(-1);   // the serialized target — a DOCUMENT (#198); truncation corrupts every wide row of the 30M-row table
             item.Property(i => i.Error).HasMaxLength(1024);
             item.HasIndex(i => new { i.CampaignId, i.State });
         });

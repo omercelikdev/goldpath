@@ -263,6 +263,10 @@ public static class GoldpathJobsModelExtensions
         modelBuilder.Entity<GoldpathJobRunChunk>(entity =>
         {
             entity.ToTable("GoldpathJobRunChunks");
+            // The job author's own cursor/range encoding — a DOCUMENT (#198): a
+            // conventions host defaults strings to 256 and kills wide plans at PLAN time.
+            entity.Property(e => e.Payload).HasMaxLength(-1);
+            entity.Property(e => e.LastError).HasMaxLength(256);   // the runner truncates to 200 — pin the guarantee in the model too
             entity.Property(e => e.Status).HasMaxLength(16).IsConcurrencyToken();
             entity.HasIndex(e => new { e.RunId, e.Status });
             entity.HasIndex(e => new { e.RunId, e.Index }).IsUnique();
@@ -272,6 +276,7 @@ public static class GoldpathJobsModelExtensions
         {
             entity.ToTable("GoldpathJobItemFailures");
             entity.Property(e => e.ItemKey).HasMaxLength(256);
+            entity.Property(e => e.Reason).HasMaxLength(-1);   // teaches the repair — author text, a DOCUMENT (#198)
             entity.HasIndex(e => e.RunId);
         });
 
@@ -282,6 +287,7 @@ public static class GoldpathJobsModelExtensions
             entity.Property(e => e.Action).HasMaxLength(32);
             entity.Property(e => e.Fleet).HasMaxLength(120);
             entity.Property(e => e.Target).HasMaxLength(256);
+            entity.Property(e => e.Detail).HasMaxLength(1024);   // verb-specific detail — bounded like Campaign's (#198)
             entity.HasIndex(e => e.At);
         });
 
@@ -291,6 +297,7 @@ public static class GoldpathJobsModelExtensions
             entity.Property(e => e.SchedulerName).HasMaxLength(120);
             entity.Property(e => e.JobName).HasMaxLength(150);
             entity.Property(e => e.Outcome).HasMaxLength(16);
+            entity.Property(e => e.Error).HasMaxLength(-1);   // the exception's own message, untruncated — a DOCUMENT (#198)
             entity.HasIndex(e => new { e.SchedulerName, e.JobName });
             entity.HasIndex(e => e.FiredAt);
         });

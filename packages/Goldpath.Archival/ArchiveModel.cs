@@ -145,6 +145,10 @@ public static class GoldpathArchiveModelExtensions
         modelBuilder.Entity<GoldpathArchiveEntry>(entity =>
         {
             entity.ToTable("GoldpathArchiveEntries");
+            // The serialized GRAPH — a DOCUMENT (#198). A conventions host defaults
+            // strings to 256; a capped Document silently truncates every archived
+            // aggregate AND breaks the hash chain it is supposed to prove.
+            entity.Property(e => e.Document).HasMaxLength(-1);
             entity.Property(e => e.Definition).HasMaxLength(120);
             entity.Property(e => e.AggregateKey).HasMaxLength(256);
             entity.Property(e => e.Tenant).HasMaxLength(64);
@@ -183,6 +187,7 @@ public static class GoldpathArchiveModelExtensions
             entity.ToTable("GoldpathErasureRecords");
             entity.Property(e => e.SubjectKey).HasMaxLength(256);
             entity.Property(e => e.RequestedBy).HasMaxLength(256);
+            entity.Property(e => e.Detail).HasMaxLength(1024);   // erasure evidence — truncated compliance context is not evidence (#198)
             entity.HasIndex(e => e.SubjectKey);
         });
 

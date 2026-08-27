@@ -69,7 +69,12 @@ public static class GoldpathApprovalModelExtensions
                         (a, b) => JsonSerializer.Serialize(a, TrailJson) == JsonSerializer.Serialize(b, TrailJson),
                         v => JsonSerializer.Serialize(v, TrailJson).GetHashCode(),
                         v => JsonSerializer.Deserialize<List<GoldpathApprovalTrailEntry>>(JsonSerializer.Serialize(v, TrailJson), TrailJson)!))
-                .UsePropertyAccessMode(PropertyAccessMode.Field);
+                .UsePropertyAccessMode(PropertyAccessMode.Field)
+                // A DOCUMENT, not a scalar (#198): a conventions host defaults strings to
+                // 256, and three trail entries already exceed that — the audit column must
+                // say its own shape.
+                .HasMaxLength(-1);
+            e.Property(x => x.Reason).HasMaxLength(1024);   // human decision text — bounded, but not by accident
         });
 
         modelBuilder.Entity<GoldpathApprovalDelegationRow>(e =>
