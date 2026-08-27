@@ -23,6 +23,12 @@ public interface IGoldpathApprovalStore
 
     /// <summary>Active delegations (unexpired).</summary>
     Task<IReadOnlyList<GoldpathApprovalDelegation>> GetDelegationsAsync(DateTimeOffset now, CancellationToken cancellationToken = default);
+
+    /// <summary>Adds one collected grant toward a rung's quorum.</summary>
+    Task AddSignatureAsync(GoldpathApprovalSignature signature, CancellationToken cancellationToken = default);
+
+    /// <summary>All signatures collected on one request, oldest first.</summary>
+    Task<IReadOnlyList<GoldpathApprovalSignature>> GetSignaturesAsync(Guid requestId, CancellationToken cancellationToken = default);
 }
 
 /// <summary>The outcome of a decision attempt — refusals are values, not exceptions.</summary>
@@ -42,6 +48,15 @@ public enum GoldpathApprovalDecisionOutcome
 
     /// <summary>The decider does not hold the pending rung's role (nor a valid delegation).</summary>
     WrongRole,
+
+    /// <summary>Distinct-eyes: this identity already signed this request — one signature per person, across rungs.</summary>
+    AlreadySigned,
+
+    /// <summary>Rejection without a reason teaches the requester nothing; the reason is mandatory.</summary>
+    ReasonRequired,
+
+    /// <summary>Only the requester may withdraw their own pending request.</summary>
+    NotRequester,
 }
 
 /// <summary>
@@ -100,7 +115,11 @@ public sealed class GoldpathApprovalEngine
         return request;
     }
 
-    /// <summary>Applies a grant/reject decision under four-eyes and role checks.</summary>
+    /// <summary>
+    /// Applies a grant/reject decision under four-eyes, role and distinct-eyes checks. A
+    /// grant on a quorum rung collects a SIGNATURE; the request completes when the rung's
+    /// quorum is met. A rejection is terminal at any point and its reason is mandatory.
+    /// </summary>
     public async Task<GoldpathApprovalDecisionOutcome> DecideAsync(Guid id, string decidedBy, string deciderRole, bool granted, string reason, CancellationToken cancellationToken = default)
     {
         var request = await _store.GetAsync(id, cancellationToken);
@@ -126,22 +145,137 @@ public sealed class GoldpathApprovalEngine
             return GoldpathApprovalDecisionOutcome.WrongRole;
         }
 
-        request.Status = granted ? GoldpathApprovalStatus.Granted : GoldpathApprovalStatus.Rejected;
+        if (!granted)
+        {
+            if (string.IsNullOrWhiteSpace(reason))
+            {
+                return GoldpathApprovalDecisionOutcome.ReasonRequired;
+            }
+
+            request.Status = GoldpathApprovalStatus.Rejected;
+            request.DecidedBy = decidedBy;
+            request.Reason = reason;
+            request.Trail.Add(new GoldpathApprovalTrailEntry(now, decidedBy, "rejected", reason));
+            await _store.UpdateAsync(request, cancellationToken);
+            await PublishAsync(new GoldpathApprovalRejected(request.Id, request.Ladder, request.Subject, decidedBy, reason), cancellationToken);
+            return GoldpathApprovalDecisionOutcome.Applied;
+        }
+
+        // Distinct-eyes reads the WHOLE chain: an identity that signed a lower rung may not
+        // sign again after escalation, even holding the higher role — otherwise a two-step
+        // chain is one person clicking twice.
+        var signatures = await _store.GetSignaturesAsync(request.Id, cancellationToken);
+        if (signatures.Any(s => string.Equals(s.SignedBy, decidedBy, StringComparison.OrdinalIgnoreCase)))
+        {
+            return GoldpathApprovalDecisionOutcome.AlreadySigned;
+        }
+
+        await _store.AddSignatureAsync(new GoldpathApprovalSignature(request.Id, decidedBy, request.PendingRole, now), cancellationToken);
+        // Quorum counts per RUNG (signatures carry the rung they covered); an escalated
+        // request starts its new rung's count from zero while the chain-wide list above
+        // keeps every earlier signer barred.
+        var collected = signatures.Count(s => string.Equals(s.Role, request.PendingRole, StringComparison.OrdinalIgnoreCase)) + 1;
+        var required = RequiredApprovalsFor(request);
+        if (collected < required)
+        {
+            request.Trail.Add(new GoldpathApprovalTrailEntry(now, decidedBy, "signed", $"{collected}/{required} at {request.PendingRole}: {reason}"));
+            await _store.UpdateAsync(request, cancellationToken);
+            return GoldpathApprovalDecisionOutcome.Applied;
+        }
+
+        request.Status = GoldpathApprovalStatus.Granted;
         request.DecidedBy = decidedBy;
         request.Reason = reason;
-        request.Trail.Add(new GoldpathApprovalTrailEntry(now, decidedBy, granted ? "granted" : "rejected", reason));
+        request.Trail.Add(new GoldpathApprovalTrailEntry(now, decidedBy, "granted", reason));
         await _store.UpdateAsync(request, cancellationToken);
-
-        if (granted)
-        {
-            await PublishAsync(new GoldpathApprovalGranted(request.Id, request.Ladder, request.Subject, decidedBy), cancellationToken);
-        }
-        else
-        {
-            await PublishAsync(new GoldpathApprovalRejected(request.Id, request.Ladder, request.Subject, decidedBy, reason), cancellationToken);
-        }
-
+        await PublishAsync(new GoldpathApprovalGranted(request.Id, request.Ladder, request.Subject, decidedBy), cancellationToken);
         return GoldpathApprovalDecisionOutcome.Applied;
+    }
+
+    /// <summary>Takes back a PENDING request — only its requester may; the step lands in the trail.</summary>
+    public async Task<GoldpathApprovalDecisionOutcome> WithdrawAsync(Guid id, string requestedBy, CancellationToken cancellationToken = default)
+    {
+        var request = await _store.GetAsync(id, cancellationToken);
+        if (request is null)
+        {
+            return GoldpathApprovalDecisionOutcome.NotFound;
+        }
+
+        if (request.Status != GoldpathApprovalStatus.Pending)
+        {
+            return GoldpathApprovalDecisionOutcome.NotPending;
+        }
+
+        if (!string.Equals(request.RequestedBy, requestedBy, StringComparison.OrdinalIgnoreCase))
+        {
+            return GoldpathApprovalDecisionOutcome.NotRequester;
+        }
+
+        var now = _time.GetUtcNow();
+        request.Status = GoldpathApprovalStatus.Withdrawn;
+        request.Trail.Add(new GoldpathApprovalTrailEntry(now, requestedBy, "withdrawn", "taken back by the requester"));
+        await _store.UpdateAsync(request, cancellationToken);
+        return GoldpathApprovalDecisionOutcome.Applied;
+    }
+
+    /// <summary>
+    /// Resubmits a REJECTED request as a fresh one: re-routed by the same amount, linked by
+    /// <see cref="GoldpathApprovalRequest.SupersedesId"/>, both trails cross-referenced — the
+    /// audit reads request → reject → rework as one story. Anything but a rejected request
+    /// throws: resubmission is rework, not a retry channel.
+    /// </summary>
+    public async Task<GoldpathApprovalRequest> ResubmitAsync(Guid rejectedId, string requestedBy, CancellationToken cancellationToken = default)
+    {
+        var rejected = await _store.GetAsync(rejectedId, cancellationToken);
+        if (rejected is null)
+        {
+            throw new InvalidOperationException($"Request '{rejectedId}' does not exist — only a rejected request may be resubmitted.");
+        }
+
+        if (rejected.Status != GoldpathApprovalStatus.Rejected)
+        {
+            throw new InvalidOperationException($"Request '{rejectedId}' is {rejected.Status} — only a rejected request may be resubmitted.");
+        }
+
+        if (!_options.Ladders.TryGetValue(rejected.Ladder, out var ladder))
+        {
+            throw new InvalidOperationException($"Ladder '{rejected.Ladder}' is not declared — approvals run on declared ladders only.");
+        }
+
+        var now = _time.GetUtcNow();
+        var rung = ladder.Route(rejected.Amount);
+        var request = new GoldpathApprovalRequest
+        {
+            Id = Guid.NewGuid(),
+            Ladder = ladder.Name,
+            Subject = rejected.Subject,
+            Amount = rejected.Amount,
+            RequestedBy = requestedBy,
+            RequestedAt = now,
+            PendingRole = rung.Role,
+            PendingSince = now,
+            Status = GoldpathApprovalStatus.Pending,
+            SupersedesId = rejected.Id,
+        };
+        request.Trail.Add(new GoldpathApprovalTrailEntry(now, requestedBy, "resubmitted", $"supersedes {rejected.Id}; routed to {rung.Role} for {rejected.Amount}"));
+        await _store.AddAsync(request, cancellationToken);
+
+        rejected.Trail.Add(new GoldpathApprovalTrailEntry(now, requestedBy, "superseded", $"resubmitted as {request.Id}"));
+        await _store.UpdateAsync(rejected, cancellationToken);
+
+        await PublishAsync(new GoldpathApprovalRequested(request.Id, ladder.Name, request.Subject, request.Amount, rung.Role), cancellationToken);
+        return request;
+    }
+
+    private int RequiredApprovalsFor(GoldpathApprovalRequest request)
+    {
+        if (!_options.Ladders.TryGetValue(request.Ladder, out var ladder))
+        {
+            return 1;
+        }
+
+        var rung = ladder.Rungs.FirstOrDefault(r => string.Equals(r.Role, request.PendingRole, StringComparison.OrdinalIgnoreCase));
+        return rung?.RequiredApprovals ?? 1;
     }
 
     /// <summary>
@@ -256,6 +390,7 @@ public sealed class GoldpathInMemoryApprovalStore : IGoldpathApprovalStore
     private readonly object _gate = new();
     private readonly Dictionary<Guid, GoldpathApprovalRequest> _requests = [];
     private readonly List<GoldpathApprovalDelegation> _delegations = [];
+    private readonly List<GoldpathApprovalSignature> _signatures = [];
 
     /// <inheritdoc />
     public Task AddAsync(GoldpathApprovalRequest request, CancellationToken cancellationToken = default)
@@ -317,6 +452,28 @@ public sealed class GoldpathInMemoryApprovalStore : IGoldpathApprovalStore
         {
             IReadOnlyList<GoldpathApprovalDelegation> active = _delegations.Where(d => d.Until > now).ToList();
             return Task.FromResult(active);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task AddSignatureAsync(GoldpathApprovalSignature signature, CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            _signatures.Add(signature);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<GoldpathApprovalSignature>> GetSignaturesAsync(Guid requestId, CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<GoldpathApprovalSignature> signatures =
+                _signatures.Where(s => s.RequestId == requestId).OrderBy(s => s.At).ToList();
+            return Task.FromResult(signatures);
         }
     }
 }

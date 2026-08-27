@@ -70,8 +70,11 @@ public sealed class GoldpathApprovalLadder
     }
 }
 
-/// <summary>One authority rung: a role, its amount ceiling, and its decision deadline.</summary>
-public sealed record GoldpathApprovalRung(string Role, decimal? UpToInclusive, TimeSpan EscalateAfter);
+/// <summary>
+/// One authority rung: a role, its amount ceiling, its decision deadline, and how many
+/// DISTINCT grants complete it ("two managers" is a rung property, not a second ladder).
+/// </summary>
+public sealed record GoldpathApprovalRung(string Role, decimal? UpToInclusive, TimeSpan EscalateAfter, int RequiredApprovals = 1);
 
 /// <summary>Fluent shape for one ladder.</summary>
 public sealed class GoldpathApprovalLadderBuilder
@@ -81,17 +84,17 @@ public sealed class GoldpathApprovalLadderBuilder
 
     internal GoldpathApprovalLadderBuilder(string name) => _name = name;
 
-    /// <summary>Adds a rung with an inclusive amount ceiling and its decision deadline.</summary>
-    public GoldpathApprovalLadderBuilder Rung(string role, decimal upToInclusive, TimeSpan escalateAfter)
+    /// <summary>Adds a rung with an inclusive amount ceiling, its decision deadline, and its quorum (distinct grants required).</summary>
+    public GoldpathApprovalLadderBuilder Rung(string role, decimal upToInclusive, TimeSpan escalateAfter, int requiredApprovals = 1)
     {
-        _rungs.Add(new GoldpathApprovalRung(role, upToInclusive, escalateAfter));
+        _rungs.Add(new GoldpathApprovalRung(role, upToInclusive, escalateAfter, requiredApprovals));
         return this;
     }
 
     /// <summary>Adds the top rung — unbounded ceiling; overdue at the top EXPIRES.</summary>
-    public GoldpathApprovalLadderBuilder TopRung(string role, TimeSpan escalateAfter)
+    public GoldpathApprovalLadderBuilder TopRung(string role, TimeSpan escalateAfter, int requiredApprovals = 1)
     {
-        _rungs.Add(new GoldpathApprovalRung(role, null, escalateAfter));
+        _rungs.Add(new GoldpathApprovalRung(role, null, escalateAfter, requiredApprovals));
         return this;
     }
 
@@ -100,6 +103,11 @@ public sealed class GoldpathApprovalLadderBuilder
         if (_rungs.Count == 0)
         {
             throw new InvalidOperationException($"Ladder '{_name}' declares no rungs — an authority chain must be modeled, never guessed.");
+        }
+
+        if (_rungs.Any(r => r.RequiredApprovals < 1))
+        {
+            throw new InvalidOperationException($"Ladder '{_name}' declares a rung with a quorum below one — a rung nobody can complete is a modeling error.");
         }
 
         if (_rungs[^1].UpToInclusive is not null)

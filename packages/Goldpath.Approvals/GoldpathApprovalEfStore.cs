@@ -21,6 +21,25 @@ public sealed class GoldpathApprovalDelegationRow
     public DateTimeOffset Until { get; set; }
 }
 
+/// <summary>One collected quorum signature as a row (the record itself has no key; the row carries one).</summary>
+public sealed class GoldpathApprovalSignatureRow
+{
+    /// <summary>Row id.</summary>
+    public long Id { get; set; }
+
+    /// <summary>The request the signature belongs to.</summary>
+    public Guid RequestId { get; set; }
+
+    /// <summary>Who signed.</summary>
+    public string SignedBy { get; set; } = "";
+
+    /// <summary>The rung the signature counts for.</summary>
+    public string Role { get; set; } = "";
+
+    /// <summary>When it was signed (UTC).</summary>
+    public DateTimeOffset At { get; set; }
+}
+
 /// <summary>Model mapping for the database-backed approval store.</summary>
 public static class GoldpathApprovalModelExtensions
 {
@@ -60,6 +79,15 @@ public static class GoldpathApprovalModelExtensions
             e.Property(x => x.From).HasMaxLength(128);
             e.Property(x => x.To).HasMaxLength(128);
             e.HasIndex(x => x.Until);
+        });
+
+        modelBuilder.Entity<GoldpathApprovalSignatureRow>(e =>
+        {
+            e.ToTable("GoldpathApprovalSignatures");
+            e.HasKey(x => x.Id);
+            e.Property(x => x.SignedBy).HasMaxLength(128);
+            e.Property(x => x.Role).HasMaxLength(128);
+            e.HasIndex(x => x.RequestId);
         });
 
         return modelBuilder;
@@ -136,5 +164,29 @@ public sealed class GoldpathEfApprovalStore<TContext> : IGoldpathApprovalStore
             .ToListAsync(cancellationToken);
         return rows.Where(r => r.Until > now)
             .Select(r => new GoldpathApprovalDelegation(r.From, r.To, r.Until)).ToList();
+    }
+
+    /// <inheritdoc />
+    public async Task AddSignatureAsync(GoldpathApprovalSignature signature, CancellationToken cancellationToken = default)
+    {
+        await using var scope = _scopes.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<TContext>();
+        db.Add(new GoldpathApprovalSignatureRow { RequestId = signature.RequestId, SignedBy = signature.SignedBy, Role = signature.Role, At = signature.At });
+        await db.SaveChangesAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
+    public async Task<IReadOnlyList<GoldpathApprovalSignature>> GetSignaturesAsync(Guid requestId, CancellationToken cancellationToken = default)
+    {
+        await using var scope = _scopes.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<TContext>();
+        // Ordered client-side for the same provider reason as the delegations above —
+        // DateTimeOffset ordering does not translate on SQLite, and one request's
+        // signatures are few by nature.
+        var rows = await db.Set<GoldpathApprovalSignatureRow>().AsNoTracking()
+            .Where(x => x.RequestId == requestId)
+            .ToListAsync(cancellationToken);
+        return rows.OrderBy(r => r.At)
+            .Select(r => new GoldpathApprovalSignature(r.RequestId, r.SignedBy, r.Role, r.At)).ToList();
     }
 }

@@ -14,6 +14,9 @@ public enum GoldpathApprovalStatus
 
     /// <summary>The top rung's deadline passed without a decision.</summary>
     Expired,
+
+    /// <summary>Taken back by its own requester before any decision.</summary>
+    Withdrawn,
 }
 
 /// <summary>One approval request and its full decision trail.</summary>
@@ -52,6 +55,9 @@ public sealed class GoldpathApprovalRequest
     /// <summary>Decision reason, when terminal.</summary>
     public string? Reason { get; set; }
 
+    /// <summary>The rejected request this one resubmits — the audit chain reads request → reject → rework as ONE story.</summary>
+    public Guid? SupersedesId { get; init; }
+
     /// <summary>Every lifecycle step, oldest first — the audit value e-mail never had.</summary>
     public List<GoldpathApprovalTrailEntry> Trail { get; } = [];
 }
@@ -61,6 +67,14 @@ public sealed record GoldpathApprovalTrailEntry(DateTimeOffset At, string Actor,
 
 /// <summary>An active delegation: <c>From</c>'s pending items may be decided by <c>To</c>.</summary>
 public sealed record GoldpathApprovalDelegation(string From, string To, DateTimeOffset Until);
+
+/// <summary>
+/// One collected grant toward a rung's quorum. <c>Role</c> is the RUNG the signature counts
+/// for (the request's pending role at signing time — a delegated signature still counts for
+/// the rung it covered); the distinct-eyes rule reads <c>SignedBy</c> across ALL of a
+/// request's signatures, regardless of rung.
+/// </summary>
+public sealed record GoldpathApprovalSignature(Guid RequestId, string SignedBy, string Role, DateTimeOffset At);
 
 /// <summary>An approval was requested and routed to a rung.</summary>
 public sealed record GoldpathApprovalRequested(Guid ApprovalId, string Ladder, string Subject, decimal Amount, string PendingRole) : IIntegrationEvent;

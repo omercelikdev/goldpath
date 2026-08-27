@@ -10,7 +10,7 @@ builder.AddGoldpathApprovals(approvals => approvals
     .AddLadder("credit-limit", ladder => ladder
         .Rung("expert", upToInclusive: 1_000_000m, escalateAfter: TimeSpan.FromHours(8))
         .Rung("deputy-manager", 5_000_000m, TimeSpan.FromHours(8))
-        .Rung("manager", 15_000_000m, TimeSpan.FromHours(8))
+        .Rung("manager", 15_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)
         .TopRung("general-manager", TimeSpan.FromHours(24))));
 ```
 
@@ -19,6 +19,16 @@ builder.AddGoldpathApprovals(approvals => approvals
 - **Decide** — `engine.DecideAsync(id, decidedBy, deciderRole, granted, reason)` enforces
   four-eyes (the requester may never decide their own request) and the rung's role.
   Refusals are values (`GoldpathApprovalDecisionOutcome`), not exceptions.
+- **Quorum** — a rung may demand N DISTINCT grants (`requiredApprovals`); each grant is a
+  signature toward the rung, and distinct-eyes holds across the WHOLE chain: one identity
+  signs at most once per request, even after escalation (`AlreadySigned`).
+- **Rejection** — terminal at any point, and its reason is MANDATORY: a blank reason is
+  refused (`ReasonRequired`) — a bare "no" teaches the requester nothing.
+- **Withdraw** — `WithdrawAsync(id, requestedBy)` takes back a pending request; only its
+  requester may (`NotRequester` otherwise), and the step lands in the trail.
+- **Resubmit** — `ResubmitAsync(rejectedId, requestedBy)` reworks a rejected request as a
+  fresh one, linked by `SupersedesId` with both trails cross-referenced — the audit reads
+  request → reject → rework as one story.
 - **Delegate** — bounded window, depth one (a delegate cannot re-delegate; the cycle guard
   is structural).
 - **Escalate** — `EscalateOverdueAsync()` moves overdue requests one rung up; overdue at

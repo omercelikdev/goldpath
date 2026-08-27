@@ -1,6 +1,7 @@
 # RFC: Approvals v2 — the product-proven rules the ladder engine is missing
 
-Status: **Proposed** (owner decision pending — per the constitution, code follows approval).
+Status: **Accepted** (owner, 2026-08-26) — implemented 2026-08-27: all six rules landed in
+`Goldpath.Approvals` with the engine/store tests and the package's own mutation gate.
 Source of truth for the deltas: the api-portal product's approval engine, where every rule
 below shipped, survived contract tests and ran live (multi-stage chains proven 2026-08-24;
 the whole engine exercised daily by three exams).
@@ -50,3 +51,17 @@ the CorPay sample's approval story exercises withdraw + quorum; mutation gate ho
 
 Approve → implementation lands as one PR with tests and ledger updates. Reject/amend →
 this file records why, per the ledger discipline.
+
+## 6. Implementation record (2026-08-27)
+
+All six deltas landed additively: `Withdrawn` status + `WithdrawAsync` (requester-only,
+`NotRequester` refusal), `RequiredApprovals` on the rung with per-rung signature quorum,
+chain-wide distinct-eyes (`AlreadySigned` — held across escalation), `ReasonRequired` on
+blank rejection, `ResubmitAsync` with `SupersedesId` and cross-referenced trails, and the
+store seam's `AddSignatureAsync`/`GetSignaturesAsync` on both stores (the EF store maps a
+`GoldpathApprovalSignatures` table). Refusal-as-value stayed the decision-verb contract;
+`ResubmitAsync` throws on misuse like `RequestAsync`/`DelegateAsync` (creation verbs).
+Proof: 17 new deterministic facts (engine + EF restart/round-trip) beside the original 20,
+and the package joined the mutation gate (`stryker/Goldpath.Approvals.json`, break 70).
+The CorPay approval story remains with T21's adopter proof — the sample does not compose
+approvals yet, so wiring it there would be a demo invented for the test's sake.
