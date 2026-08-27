@@ -97,8 +97,8 @@ public static class GoldpathApprovalModelExtensions
 /// <summary>
 /// The database-backed store: approval state lives in the app's own DbContext (mapped by
 /// <see cref="GoldpathApprovalModelExtensions.AddGoldpathApprovalModel"/>), so requests
-/// survive restarts and every node sees the same worklist. Each call runs in its own scope —
-/// the engine stays a singleton.
+/// survive restarts and every node sees the same worklist. Each call runs in its own scope,
+/// so the store itself carries no scoped state.
 /// </summary>
 public sealed class GoldpathEfApprovalStore<TContext> : IGoldpathApprovalStore
     where TContext : DbContext

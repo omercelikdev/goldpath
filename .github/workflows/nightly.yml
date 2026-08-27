@@ -49,7 +49,7 @@ jobs:
           - name: GmConsoleAuthed
             args: "--features bulk"
           - name: GmEverything
-            args: "--features multitenancy --features audittrail --features softdelete --features idempotency --features dataprotection --features caching --features locking --features archival --features bulk --features notification --features campaign --auth none"
+            args: "--features multitenancy --features audittrail --features softdelete --features idempotency --features dataprotection --features caching --features locking --features approvals --features fileexchange --features archival --features bulk --features notification --features campaign --auth none"
           - name: GmWorkerQueue
             args: ""
             template: goldpath-worker

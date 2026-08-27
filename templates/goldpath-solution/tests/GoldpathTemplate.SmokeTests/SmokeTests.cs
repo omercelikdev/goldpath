@@ -57,7 +57,7 @@ public class SmokeTests
             new { reference = "smoke-001", amount = 42.50m }, timeout.Token);
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, unauthorized.StatusCode);
 
-//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
         // The console rides the same floor: an operator without a principal is refused the
         // PAGE, not just the calls behind it. This app cannot ship an unauthenticated
         // console by accident.
@@ -65,7 +65,7 @@ public class SmokeTests
         Assert.Equal(System.Net.HttpStatusCode.Unauthorized, console.StatusCode);
 //#endif
 //#else
-//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
         // No auth in this shape, so the console SERVES — and its embedded bundle must come
         // with it. A page that loads without its assets is a blank screen with a green
         // status code, which is the worst failure a console can have.

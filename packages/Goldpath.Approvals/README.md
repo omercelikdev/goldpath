@@ -32,7 +32,9 @@ builder.AddGoldpathApprovals(approvals => approvals
 - **Delegate** — bounded window, depth one (a delegate cannot re-delegate; the cycle guard
   is structural).
 - **Escalate** — `EscalateOverdueAsync()` moves overdue requests one rung up; overdue at
-  the top rung expires. Schedule it through the Jobs module.
+  the top rung expires. Schedule it with `jobs.AddGoldpathApprovalsJobs()` (a five-minute
+  sweep by default — rung deadlines are measured in hours, so the granularity never moves
+  an SLA), or call it from your own loop.
 - **Worklist** — `WorklistAsync(identity, role)`: what this person may decide, oldest first.
 
 Events (`GoldpathApprovalRequested/Granted/Rejected/Escalated/Expired`) carry the

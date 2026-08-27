@@ -25,7 +25,10 @@ public class ApprovalCompositionTests
         Assert.IsType<GoldpathInMemoryApprovalStore>(app.Services.GetRequiredService<IGoldpathApprovalStore>());
         var options = app.Services.GetRequiredService<GoldpathApprovalsOptions>();
         Assert.True(options.Ladders.ContainsKey("credit-limit"));
-        Assert.NotNull(app.Services.GetRequiredService<GoldpathApprovalEngine>());
+        // The engine is SCOPED (it may consume the scoped messaging publisher — outbox).
+        using var scope = app.Services.CreateScope();
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<GoldpathApprovalEngine>());
+        Assert.NotNull(scope.ServiceProvider.GetRequiredService<GoldpathApprovalEscalationJob>());
     }
 
     [Fact]

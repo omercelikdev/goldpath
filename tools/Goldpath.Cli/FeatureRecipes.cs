@@ -236,25 +236,74 @@ public static class FeatureRecipes
 
             case "approvals":
                 {
+                    var connection = app.ConnectionName
+                        ?? throw new CliFailureException("no GetConnectionString(...) found in the composition root — the escalation sweep runs on Jobs, which lives in the app database and needs its connection name.");
                     var plan = new RecipePlan { ManifestKey = "approvals" };
                     plan.ApiPackages.Add("Goldpath.Approvals");
+                    plan.ApiPackages.Add("Goldpath.Jobs");
+                    if (app.JobsWired)
+                    {
+                        // ONE scheduler per app: compose into the existing AddGoldpathJobs block.
+                        plan.JobsOptionsLines.Add("    jobs.AddGoldpathApprovalsJobs();               // escalation sweep — overdue rungs move up, the top rung expires");
+                    }
+                    else
+                    {
+                        plan.Registrations.Add($"builder.AddGoldpathJobs<WebApplicationBuilder, {app.DbContextName}>(jobs =>");
+                        plan.Registrations.Add("{");
+                        plan.Registrations.Add($"    jobs.ConnectionName = \"{connection}\";              // runs + schedules live in the app database");
+                        if (app.DatabaseProvider == "sqlserver")
+                        {
+                            plan.Registrations.Add("    jobs.Provider = GoldpathJobStoreProvider.SqlServer;");
+                        }
+
+                        plan.Registrations.Add("    jobs.AddGoldpathApprovalsJobs();               // escalation sweep — overdue rungs move up, the top rung expires");
+                        plan.Registrations.Add("});");
+                    }
+
                     plan.Registrations.Add($"builder.AddGoldpathApprovals<WebApplicationBuilder, {app.DbContextName}>(approvals =>");
                     plan.Registrations.Add("{");
                     plan.Registrations.Add("    // Declare YOUR authority chains here (goldpath never guesses who may approve):");
                     plan.Registrations.Add("    // approvals.AddLadder(\"credit-limit\", l => l");
                     plan.Registrations.Add("    //     .Rung(\"expert\", 1_000_000m, TimeSpan.FromHours(8))");
+                    plan.Registrations.Add("    //     .Rung(\"manager\", 5_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)   // quorum is a rung property");
                     plan.Registrations.Add("    //     .TopRung(\"general-manager\", TimeSpan.FromHours(24)));");
                     plan.Registrations.Add("});");
-                    plan.ModelCalls.Add("        modelBuilder.AddGoldpathApprovalModel();      // approvals + delegations (worklist survives restarts)");
+                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // run console API: trigger/pause/reschedule/audit");
+                    plan.ModelCalls.Add("        modelBuilder.AddGoldpathApprovalModel();      // approvals + delegations + signatures (worklist survives restarts)");
+                    plan.ModelCalls.Add("        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)");
                     plan.ManifestLines.Add("  approvals: true");
-                    plan.NextSteps.Add("declare ladders in AddGoldpathApprovals; schedule EscalateOverdueAsync through the jobs module");
+                    plan.NextSteps.Add("declare ladders in AddGoldpathApprovals — the escalation sweep is already scheduled (AddGoldpathApprovalsJobs, five-minute cron)");
                     return plan;
                 }
 
             case "fileexchange":
                 {
+                    var connection = app.ConnectionName
+                        ?? throw new CliFailureException("no GetConnectionString(...) found in the composition root — file pick-up runs on Jobs, which lives in the app database and needs its connection name.");
                     var plan = new RecipePlan { ManifestKey = "fileExchange" };
                     plan.ApiPackages.Add("Goldpath.FileExchange");
+                    plan.ApiPackages.Add("Goldpath.Jobs");
+                    if (app.JobsWired)
+                    {
+                        // ONE scheduler per app: compose into the existing AddGoldpathJobs block.
+                        plan.JobsOptionsLines.Add("    // your pick-up job rides here (the transport is yours — SFTP/share/object store is composed, not shipped):");
+                        plan.JobsOptionsLines.Add("    // jobs.AddJob<RegistryPickupJob>(j => { j.Cron = \"0 0 6 * * ?\"; j.Deadline = TimeSpan.FromMinutes(30); });");
+                    }
+                    else
+                    {
+                        plan.Registrations.Add($"builder.AddGoldpathJobs<WebApplicationBuilder, {app.DbContextName}>(jobs =>");
+                        plan.Registrations.Add("{");
+                        plan.Registrations.Add($"    jobs.ConnectionName = \"{connection}\";              // runs + schedules live in the app database");
+                        if (app.DatabaseProvider == "sqlserver")
+                        {
+                            plan.Registrations.Add("    jobs.Provider = GoldpathJobStoreProvider.SqlServer;");
+                        }
+
+                        plan.Registrations.Add("    // your pick-up job rides here (the transport is yours — SFTP/share/object store is composed, not shipped):");
+                        plan.Registrations.Add("    // jobs.AddJob<RegistryPickupJob>(j => { j.Cron = \"0 0 6 * * ?\"; j.Deadline = TimeSpan.FromMinutes(30); });");
+                        plan.Registrations.Add("});");
+                    }
+
                     plan.Registrations.Add($"builder.AddGoldpathFileExchange<WebApplicationBuilder, {app.DbContextName}>(files =>");
                     plan.Registrations.Add("{");
                     plan.Registrations.Add("    // Declare YOUR rails here (goldpath never guesses a counterparty format):");
@@ -262,9 +311,11 @@ public static class FeatureRecipes
                     plan.Registrations.Add("    //     .ParseLine(MyRow.Parse).ValidateRow(x => x.IsValid ? null : \"reason\")");
                     plan.Registrations.Add("    //     .Handle((row, ct) => ApplyAsync(row, ct)));");
                     plan.Registrations.Add("});");
+                    plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // run console API: trigger/pause/reschedule/audit");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathFileExchangeModel();  // processed keys + quarantine + archive marks");
+                    plan.ModelCalls.Add("        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)");
                     plan.ManifestLines.Add("  fileExchange: true");
-                    plan.NextSteps.Add("declare rails in AddGoldpathFileExchange; schedule pick-up through the jobs module");
+                    plan.NextSteps.Add("declare rails in AddGoldpathFileExchange, then write the pick-up job for your transport and hang it on the jobs block (IGoldpathJob — chunked, resumable, visible in the console)");
                     return plan;
                 }
 
@@ -275,16 +326,24 @@ public static class FeatureRecipes
                     var plan = new RecipePlan { ManifestKey = "archival" };
                     plan.ApiPackages.Add("Goldpath.Archival");
                     plan.ApiPackages.Add("Goldpath.Jobs");
-                    plan.Registrations.Add($"builder.AddGoldpathJobs<WebApplicationBuilder, {app.DbContextName}>(jobs =>");
-                    plan.Registrations.Add("{");
-                    plan.Registrations.Add($"    jobs.ConnectionName = \"{connection}\";              // runs + schedules live in the app database");
-                    if (app.DatabaseProvider == "sqlserver")
+                    if (app.JobsWired)
                     {
-                        plan.Registrations.Add("    jobs.Provider = GoldpathJobStoreProvider.SqlServer;");
+                        // ONE scheduler per app: compose into the existing AddGoldpathJobs block.
+                        plan.JobsOptionsLines.Add("    jobs.AddGoldpathArchivalJobs<" + app.DbContextName + ">();    // archive nightly, purge chained after it, verify weekly");
                     }
+                    else
+                    {
+                        plan.Registrations.Add($"builder.AddGoldpathJobs<WebApplicationBuilder, {app.DbContextName}>(jobs =>");
+                        plan.Registrations.Add("{");
+                        plan.Registrations.Add($"    jobs.ConnectionName = \"{connection}\";              // runs + schedules live in the app database");
+                        if (app.DatabaseProvider == "sqlserver")
+                        {
+                            plan.Registrations.Add("    jobs.Provider = GoldpathJobStoreProvider.SqlServer;");
+                        }
 
-                    plan.Registrations.Add($"    jobs.AddGoldpathArchivalJobs<{app.DbContextName}>();    // archive nightly, purge chained after it, verify weekly");
-                    plan.Registrations.Add("});");
+                        plan.Registrations.Add($"    jobs.AddGoldpathArchivalJobs<{app.DbContextName}>();    // archive nightly, purge chained after it, verify weekly");
+                        plan.Registrations.Add("});");
+                    }
                     plan.Registrations.Add($"builder.AddGoldpathArchival<WebApplicationBuilder, {app.DbContextName}>(archival =>");
                     plan.Registrations.Add("{");
                     plan.Registrations.Add("    // Declare YOUR lifecycles here (goldpath never guesses domain retention):");

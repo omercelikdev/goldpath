@@ -45,6 +45,7 @@ builder.AddGoldpathApprovals<WebApplicationBuilder, OrdersDbContext>(approvals =
     // Declare YOUR authority chains here (goldpath never guesses who may approve):
     // approvals.AddLadder("credit-limit", l => l
     //     .Rung("expert", 1_000_000m, TimeSpan.FromHours(8))
+    //     .Rung("manager", 5_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)   // quorum is a rung property
     //     .TopRung("general-manager", TimeSpan.FromHours(24)));
 });
 //#endif
@@ -67,7 +68,7 @@ builder.AddGoldpathLocking(o =>
 //#if (UseLocking && UseSqlServer)
 builder.AddGoldpathSqlServerLocking(o => o.ConnectionName = "ordersdb");
 //#endif
-//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
 builder.AddGoldpathJobs<WebApplicationBuilder, OrdersDbContext>(jobs =>
 {
     jobs.ConnectionName = "ordersdb";              // runs + schedules live in the app database
@@ -85,6 +86,13 @@ builder.AddGoldpathJobs<WebApplicationBuilder, OrdersDbContext>(jobs =>
 //#endif
 //#if (UseCampaign)
     jobs.AddGoldpathCampaignJobs<OrdersDbContext>();       // pacer: the cron guarantees a LEADER exists; pacing is in-memory ticks
+//#endif
+//#if (UseApprovals)
+    jobs.AddGoldpathApprovalsJobs();               // escalation sweep — overdue rungs move up, the top rung expires
+//#endif
+//#if (UseFileExchange)
+    // your pick-up job rides here (the transport is yours — SFTP/share/object store is composed, not shipped):
+    // jobs.AddJob<RegistryPickupJob>(j => { j.Cron = "0 0 6 * * ?"; j.Deadline = TimeSpan.FromMinutes(30); });
 //#endif
 });
 //#endif
@@ -230,7 +238,7 @@ app.MapMediantEndpoints(typeof(CreateOrderCommand).Assembly);   // the endpoints
 app.MapMediantEndpoints(typeof(Program).Assembly);
 //#endif
 // goldpath:features endpoints — admin surfaces map here (put them behind the auth floor)
-//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
 #if (UseAuth)
 app.MapGoldpathJobsAdmin<OrdersDbContext>();        // run console API: trigger/pause/reschedule/audit — ops policy REQUIRED (H2)
 #else
@@ -276,7 +284,7 @@ app.MapGoldpathCampaignAdmin<OrdersDbContext>(exposeUnsecured: true);       // a
 #endif
 //#endif
 
-//#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+//#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
 // The console over those surfaces — served by THIS head from the package's embedded
 // assets (no Node in this solution, by construction). One line to remove if your ops team
 // drives the API directly; it adds no capability the surfaces above do not already expose.

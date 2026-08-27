@@ -360,25 +360,29 @@ public class RecipeGoldenTests
     }
 
     [Fact]
-    public void Approvals_recipe_wires_the_module_without_touching_the_database()
+    public void Approvals_recipe_wires_the_module_and_schedules_the_escalation_sweep()
     {
         var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = false };
         var plan = FeatureRecipes.Build("approvals", facts);
-        Assert.Equal(["Goldpath.Approvals"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Approvals", "Goldpath.Jobs"], plan.ApiPackages);
         Assert.Contains("  approvals: true", plan.ManifestLines);
         Assert.Contains("builder.AddGoldpathApprovals<WebApplicationBuilder, X>(approvals =>", plan.Registrations);
+        Assert.Contains(plan.Registrations, r => r.Contains("AddGoldpathApprovalsJobs()"));
         Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathApprovalModel"));
+        Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathJobs()"));
     }
 
     [Fact]
-    public void Fileexchange_recipe_wires_the_module_without_touching_the_database()
+    public void Fileexchange_recipe_wires_the_module_and_brings_the_jobs_block_its_pickup_rides()
     {
         var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = false };
         var plan = FeatureRecipes.Build("fileexchange", facts);
-        Assert.Equal(["Goldpath.FileExchange"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.FileExchange", "Goldpath.Jobs"], plan.ApiPackages);
         Assert.Contains("  fileExchange: true", plan.ManifestLines);
         Assert.Contains("builder.AddGoldpathFileExchange<WebApplicationBuilder, X>(files =>", plan.Registrations);
+        Assert.Contains("builder.AddGoldpathJobs<WebApplicationBuilder, X>(jobs =>", plan.Registrations);
         Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathFileExchangeModel"));
+        Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathJobs()"));
     }
 
     [Fact]

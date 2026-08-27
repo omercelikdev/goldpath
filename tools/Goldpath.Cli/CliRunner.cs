@@ -21,7 +21,7 @@ public static class CliRunner
 
           goldpath --help | --version
 
-        features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, archival, bulk, notification, campaign
+        features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals, fileexchange, archival, bulk, notification, campaign
         """;
 
     /// <summary>

@@ -27,5 +27,9 @@ clean `spec_validate` + `spec_drift` is not done.
 Hooks live in `.claude/hooks/` — delete `settings.json` to opt out (not recommended).
 
 ## Run
+**First run only:** `goldpath db init` — generates the Initial migration this template
+ships without (one migration per feature combination cannot be pre-baked). `goldpath new`
+runs it for you; only a raw `dotnet new` generation still needs it. Without it the app has
+no schema and `/health/ready` hangs.
 `dotnet run --project src/GoldpathTemplate.AppHost` → containers start, dashboard opens.
 `dotnet test` → smoke: the shape's first-click contract (open shapes drive the full order flow; authed shapes prove probes green + the 401 auth floor).
