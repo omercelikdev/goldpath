@@ -27,6 +27,10 @@ KNOWN_LEGACY: dict[str, str] = {
     "Microsoft.NETCore.Platforms": "MIT",
     "Microsoft.VisualStudio.Validation": "MIT",
     "NETStandard.Library": "MIT",
+    # SQLitePCLRaw 3.0.5+ ships native builds via this package; its LICENSE.txt reads
+    # verbatim "SQLite is Public Domain" (https://sqlite.org/copyright.html). Verified
+    # from the 3.53.4 nupkg, 2026-08-27.
+    "SQLite": "Public Domain",
     "SourceGear.sqlite3": "Apache-2.0",
     "System.Buffers": "MIT",
     "System.ComponentModel.Composition": "MIT",
