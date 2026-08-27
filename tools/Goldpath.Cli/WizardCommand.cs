@@ -69,8 +69,9 @@ public static class WizardCommand
     /// <summary>
     /// The derivation table, verified against what the recipes actually wire: campaign is
     /// the only module that MANDATES a broker (RFC D8) and outbox is the only other
-    /// broker reason; caching is the ONLY Redis source; the jobs quartet rides the app
-    /// database and brings the operations console.
+    /// broker reason; caching is the ONLY Redis source; the jobs riders (archival, bulk,
+    /// notification, campaign, approvals, fileexchange) ride the app database and bring
+    /// the operations console.
     /// </summary>
     public static Plan Derive(Answers answers)
     {
@@ -115,7 +116,7 @@ public static class WizardCommand
             }
         }
 
-        var jobsRiders = features.Where(f => f is "archival" or "bulk" or "notification" or "campaign").ToList();
+        var jobsRiders = features.Where(f => f is "archival" or "bulk" or "notification" or "campaign" or "approvals" or "fileexchange").ToList();
         if (jobsRiders.Count > 0)
         {
             notes.Add($"jobs scheduler + the operations console ride the app database ({string.Join(", ", jobsRiders)})");

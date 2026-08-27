@@ -10,6 +10,7 @@
 
   <ItemGroup>
     <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
+    <ProjectReference Include="../Goldpath.Jobs/Goldpath.Jobs.csproj" />
     <ProjectReference Include="../Goldpath.Messaging/Goldpath.Messaging.csproj" />
   </ItemGroup>
 

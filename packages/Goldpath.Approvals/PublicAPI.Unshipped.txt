@@ -214,3 +214,9 @@ Goldpath.GoldpathApprovalSignatureRow.Role.get -> string!
 Goldpath.GoldpathApprovalSignatureRow.Role.set -> void
 Goldpath.GoldpathApprovalSignatureRow.At.get -> System.DateTimeOffset
 Goldpath.GoldpathApprovalSignatureRow.At.set -> void
+Goldpath.GoldpathApprovalEscalationJob
+Goldpath.GoldpathApprovalEscalationJob.GoldpathApprovalEscalationJob(Goldpath.GoldpathApprovalEngine! engine) -> void
+Goldpath.GoldpathApprovalEscalationJob.PlanAsync(Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathJobPlan!>!
+Goldpath.GoldpathApprovalEscalationJob.ExecuteChunkAsync(Goldpath.GoldpathJobChunk! chunk, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathApprovalsJobsExtensions
+static Goldpath.GoldpathApprovalsJobsExtensions.AddGoldpathApprovalsJobs(this Goldpath.GoldpathJobsOptions! jobs, string! escalationCron = "0 */5 * * * ?", System.TimeSpan? deadline = null) -> Goldpath.GoldpathJobsOptions!

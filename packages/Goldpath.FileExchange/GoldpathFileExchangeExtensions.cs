@@ -20,7 +20,11 @@ public static class GoldpathFileExchangeExtensions
         configure(options);
         builder.Services.AddSingleton(options);
         builder.Services.TryAddSingleton<IGoldpathFileLedger, GoldpathInMemoryFileLedger>();
-        builder.Services.TryAddSingleton<GoldpathFileRailEngine>();
+        // SCOPED, not singleton: the messaging seam's publisher is scoped ON PURPOSE (a
+        // publish rides the current request/consumer scope — the outbox pattern), so the
+        // engine that consumes it must live in a scope too. Caught by the GmEverything
+        // exam the moment fileexchange met a broker shape.
+        builder.Services.TryAddScoped<GoldpathFileRailEngine>();
         return builder;
     }
 

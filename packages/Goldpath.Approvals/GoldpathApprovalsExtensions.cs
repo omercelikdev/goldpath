@@ -23,7 +23,12 @@ public static class GoldpathApprovalsExtensions
         builder.Services.AddSingleton(options);
         builder.Services.TryAddSingleton(TimeProvider.System);
         builder.Services.TryAddSingleton<IGoldpathApprovalStore, GoldpathInMemoryApprovalStore>();
-        builder.Services.TryAddSingleton<GoldpathApprovalEngine>();
+        // SCOPED, not singleton: the messaging seam's publisher is scoped ON PURPOSE (a
+        // publish rides the current request/consumer scope — the outbox pattern), so the
+        // engine that consumes it must live in a scope too. Caught by the GmEverything
+        // exam the moment approvals met a broker shape.
+        builder.Services.TryAddScoped<GoldpathApprovalEngine>();
+        builder.Services.TryAddScoped<GoldpathApprovalEscalationJob>();
         return builder;
     }
 

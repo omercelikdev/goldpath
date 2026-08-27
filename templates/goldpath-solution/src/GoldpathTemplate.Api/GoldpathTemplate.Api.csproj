@@ -70,7 +70,7 @@
     <!--#if (UseFileExchange) -->
     <PackageReference Include="Goldpath.FileExchange" />
     <!--#endif -->
-    <!--#if (UseArchival || UseBulk || UseNotification || UseCampaign) -->
+    <!--#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange) -->
     <PackageReference Include="Goldpath.Jobs" />
     <PackageReference Include="Goldpath.Console" />
     <!--#endif -->

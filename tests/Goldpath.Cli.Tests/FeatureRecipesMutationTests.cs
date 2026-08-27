@@ -32,24 +32,45 @@ public class FeatureRecipesMutationTests
     {
         var plan = FeatureRecipes.Build("approvals", Facts());
         Assert.Equal("approvals", plan.ManifestKey);
-        Assert.Equal(["Goldpath.Approvals"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Approvals", "Goldpath.Jobs"], plan.ApiPackages);
         Assert.Equal(
             [
+                "builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>",
+                "{",
+                "    jobs.ConnectionName = \"shopdb\";              // runs + schedules live in the app database",
+                "    jobs.AddGoldpathApprovalsJobs();               // escalation sweep — overdue rungs move up, the top rung expires",
+                "});",
                 "builder.AddGoldpathApprovals<WebApplicationBuilder, ShopDbContext>(approvals =>",
                 "{",
                 "    // Declare YOUR authority chains here (goldpath never guesses who may approve):",
                 "    // approvals.AddLadder(\"credit-limit\", l => l",
                 "    //     .Rung(\"expert\", 1_000_000m, TimeSpan.FromHours(8))",
+                "    //     .Rung(\"manager\", 5_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)   // quorum is a rung property",
                 "    //     .TopRung(\"general-manager\", TimeSpan.FromHours(24)));",
                 "});",
             ],
             plan.Registrations);
-        Assert.Equal(["        modelBuilder.AddGoldpathApprovalModel();      // approvals + delegations (worklist survives restarts)"], plan.ModelCalls);
+        Assert.Equal(
+            [
+                "        modelBuilder.AddGoldpathApprovalModel();      // approvals + delegations + signatures (worklist survives restarts)",
+                "        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)",
+            ],
+            plan.ModelCalls);
         Assert.Equal(["  approvals: true"], plan.ManifestLines);
-        Assert.Equal(["declare ladders in AddGoldpathApprovals; schedule EscalateOverdueAsync through the jobs module"], plan.NextSteps);
-        Assert.Empty(plan.Endpoints);
+        Assert.Equal(["declare ladders in AddGoldpathApprovals — the escalation sweep is already scheduled (AddGoldpathApprovalsJobs, five-minute cron)"], plan.NextSteps);
+        Assert.Equal(["app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit"], plan.Endpoints);
         Assert.Empty(plan.JobsOptionsLines);
         Assert.Empty(plan.BusLines);
+    }
+
+    [Fact]
+    public void Approvals_composes_into_an_existing_jobs_block()
+    {
+        var plan = FeatureRecipes.Build("approvals", Facts(jobs: true));
+        Assert.Equal(
+            ["    jobs.AddGoldpathApprovalsJobs();               // escalation sweep — overdue rungs move up, the top rung expires"],
+            plan.JobsOptionsLines);
+        Assert.DoesNotContain(plan.Registrations, line => line.Contains("AddGoldpathJobs<", StringComparison.Ordinal));
     }
 
     [Fact]
@@ -57,9 +78,15 @@ public class FeatureRecipesMutationTests
     {
         var plan = FeatureRecipes.Build("fileexchange", Facts());
         Assert.Equal("fileExchange", plan.ManifestKey);
-        Assert.Equal(["Goldpath.FileExchange"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.FileExchange", "Goldpath.Jobs"], plan.ApiPackages);
         Assert.Equal(
             [
+                "builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>",
+                "{",
+                "    jobs.ConnectionName = \"shopdb\";              // runs + schedules live in the app database",
+                "    // your pick-up job rides here (the transport is yours — SFTP/share/object store is composed, not shipped):",
+                "    // jobs.AddJob<RegistryPickupJob>(j => { j.Cron = \"0 0 6 * * ?\"; j.Deadline = TimeSpan.FromMinutes(30); });",
+                "});",
                 "builder.AddGoldpathFileExchange<WebApplicationBuilder, ShopDbContext>(files =>",
                 "{",
                 "    // Declare YOUR rails here (goldpath never guesses a counterparty format):",
@@ -69,10 +96,25 @@ public class FeatureRecipesMutationTests
                 "});",
             ],
             plan.Registrations);
-        Assert.Equal(["        modelBuilder.AddGoldpathFileExchangeModel();  // processed keys + quarantine + archive marks"], plan.ModelCalls);
+        Assert.Equal(
+            [
+                "        modelBuilder.AddGoldpathFileExchangeModel();  // processed keys + quarantine + archive marks",
+                "        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)",
+            ],
+            plan.ModelCalls);
         Assert.Equal(["  fileExchange: true"], plan.ManifestLines);
-        Assert.Equal(["declare rails in AddGoldpathFileExchange; schedule pick-up through the jobs module"], plan.NextSteps);
-        Assert.Empty(plan.Endpoints);
+        Assert.Equal(["declare rails in AddGoldpathFileExchange, then write the pick-up job for your transport and hang it on the jobs block (IGoldpathJob — chunked, resumable, visible in the console)"], plan.NextSteps);
+        Assert.Equal(["app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit"], plan.Endpoints);
+    }
+
+    [Fact]
+    public void Archival_composes_into_an_existing_jobs_block_instead_of_opening_a_second_scheduler()
+    {
+        var plan = FeatureRecipes.Build("archival", Facts(jobs: true));
+        Assert.Equal(
+            ["    jobs.AddGoldpathArchivalJobs<ShopDbContext>();    // archive nightly, purge chained after it, verify weekly"],
+            plan.JobsOptionsLines);
+        Assert.DoesNotContain(plan.Registrations, line => line.Contains("AddGoldpathJobs<", StringComparison.Ordinal));
     }
 
     // ---- execution-ladder modules: NextSteps prose is the operator's checklist ----
@@ -503,14 +545,20 @@ public class FeatureRecipesMutationTests
         var anchor = Array.FindIndex(lines, l => l.Contains("goldpath:features registrations", StringComparison.Ordinal));
         Assert.Equal(
             [
+                "builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>",
+                "{",
+                "    jobs.ConnectionName = \"shopdb\";              // runs + schedules live in the app database",
+                "    jobs.AddGoldpathApprovalsJobs();               // escalation sweep — overdue rungs move up, the top rung expires",
+                "});",
                 "builder.AddGoldpathApprovals<WebApplicationBuilder, ShopDbContext>(approvals =>",
                 "{",
                 "    // Declare YOUR authority chains here (goldpath never guesses who may approve):",
                 "    // approvals.AddLadder(\"credit-limit\", l => l",
                 "    //     .Rung(\"expert\", 1_000_000m, TimeSpan.FromHours(8))",
+                "    //     .Rung(\"manager\", 5_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)   // quorum is a rung property",
                 "    //     .TopRung(\"general-manager\", TimeSpan.FromHours(24)));",
                 "});",
             ],
-            lines.Skip(anchor + 1).Take(7));
+            lines.Skip(anchor + 1).Take(13));
     }
 }
