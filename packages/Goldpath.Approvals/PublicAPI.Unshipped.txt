@@ -58,8 +58,8 @@ Goldpath.GoldpathApprovalLadder.Name.get -> string!
 Goldpath.GoldpathApprovalLadder.Route(decimal amount) -> Goldpath.GoldpathApprovalRung!
 Goldpath.GoldpathApprovalLadder.Rungs.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalRung!>!
 Goldpath.GoldpathApprovalLadderBuilder
-Goldpath.GoldpathApprovalLadderBuilder.Rung(string! role, decimal upToInclusive, System.TimeSpan escalateAfter) -> Goldpath.GoldpathApprovalLadderBuilder!
-Goldpath.GoldpathApprovalLadderBuilder.TopRung(string! role, System.TimeSpan escalateAfter) -> Goldpath.GoldpathApprovalLadderBuilder!
+Goldpath.GoldpathApprovalLadderBuilder.Rung(string! role, decimal upToInclusive, System.TimeSpan escalateAfter, int requiredApprovals = 1) -> Goldpath.GoldpathApprovalLadderBuilder!
+Goldpath.GoldpathApprovalLadderBuilder.TopRung(string! role, System.TimeSpan escalateAfter, int requiredApprovals = 1) -> Goldpath.GoldpathApprovalLadderBuilder!
 Goldpath.GoldpathApprovalRejected
 Goldpath.GoldpathApprovalRejected.ApprovalId.get -> System.Guid
 Goldpath.GoldpathApprovalRejected.ApprovalId.init -> void
@@ -112,7 +112,9 @@ Goldpath.GoldpathApprovalRequested.Subject.init -> void
 Goldpath.GoldpathApprovalRung
 Goldpath.GoldpathApprovalRung.EscalateAfter.get -> System.TimeSpan
 Goldpath.GoldpathApprovalRung.EscalateAfter.init -> void
-Goldpath.GoldpathApprovalRung.GoldpathApprovalRung(string! Role, decimal? UpToInclusive, System.TimeSpan EscalateAfter) -> void
+Goldpath.GoldpathApprovalRung.GoldpathApprovalRung(string! Role, decimal? UpToInclusive, System.TimeSpan EscalateAfter, int RequiredApprovals = 1) -> void
+Goldpath.GoldpathApprovalRung.RequiredApprovals.get -> int
+Goldpath.GoldpathApprovalRung.RequiredApprovals.init -> void
 Goldpath.GoldpathApprovalRung.Role.get -> string!
 Goldpath.GoldpathApprovalRung.Role.init -> void
 Goldpath.GoldpathApprovalRung.UpToInclusive.get -> decimal?
@@ -176,3 +178,39 @@ Goldpath.GoldpathEfApprovalStore<TContext>.GetPendingAsync(System.Threading.Canc
 Goldpath.GoldpathEfApprovalStore<TContext>.AddDelegationAsync(Goldpath.GoldpathApprovalDelegation! delegation, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
 Goldpath.GoldpathEfApprovalStore<TContext>.GetDelegationsAsync(System.DateTimeOffset now, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalDelegation!>!>!
 static Goldpath.GoldpathApprovalsExtensions.AddGoldpathApprovals<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathApprovalsOptions!>! configure) -> TBuilder
+Goldpath.GoldpathApprovalStatus.Withdrawn = 4 -> Goldpath.GoldpathApprovalStatus
+Goldpath.GoldpathApprovalDecisionOutcome.AlreadySigned = 5 -> Goldpath.GoldpathApprovalDecisionOutcome
+Goldpath.GoldpathApprovalDecisionOutcome.ReasonRequired = 6 -> Goldpath.GoldpathApprovalDecisionOutcome
+Goldpath.GoldpathApprovalDecisionOutcome.NotRequester = 7 -> Goldpath.GoldpathApprovalDecisionOutcome
+Goldpath.GoldpathApprovalRequest.SupersedesId.get -> System.Guid?
+Goldpath.GoldpathApprovalRequest.SupersedesId.init -> void
+Goldpath.GoldpathApprovalSignature
+Goldpath.GoldpathApprovalSignature.GoldpathApprovalSignature(System.Guid RequestId, string! SignedBy, string! Role, System.DateTimeOffset At) -> void
+Goldpath.GoldpathApprovalSignature.RequestId.get -> System.Guid
+Goldpath.GoldpathApprovalSignature.RequestId.init -> void
+Goldpath.GoldpathApprovalSignature.SignedBy.get -> string!
+Goldpath.GoldpathApprovalSignature.SignedBy.init -> void
+Goldpath.GoldpathApprovalSignature.Role.get -> string!
+Goldpath.GoldpathApprovalSignature.Role.init -> void
+Goldpath.GoldpathApprovalSignature.At.get -> System.DateTimeOffset
+Goldpath.GoldpathApprovalSignature.At.init -> void
+Goldpath.GoldpathApprovalEngine.WithdrawAsync(System.Guid id, string! requestedBy, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Goldpath.GoldpathApprovalDecisionOutcome>!
+Goldpath.GoldpathApprovalEngine.ResubmitAsync(System.Guid rejectedId, string! requestedBy, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Goldpath.GoldpathApprovalRequest!>!
+Goldpath.IGoldpathApprovalStore.AddSignatureAsync(Goldpath.GoldpathApprovalSignature! signature, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.IGoldpathApprovalStore.GetSignaturesAsync(System.Guid requestId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalSignature!>!>!
+Goldpath.GoldpathInMemoryApprovalStore.AddSignatureAsync(Goldpath.GoldpathApprovalSignature! signature, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathInMemoryApprovalStore.GetSignaturesAsync(System.Guid requestId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalSignature!>!>!
+Goldpath.GoldpathEfApprovalStore<TContext>.AddSignatureAsync(Goldpath.GoldpathApprovalSignature! signature, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathEfApprovalStore<TContext>.GetSignaturesAsync(System.Guid requestId, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalSignature!>!>!
+Goldpath.GoldpathApprovalSignatureRow
+Goldpath.GoldpathApprovalSignatureRow.GoldpathApprovalSignatureRow() -> void
+Goldpath.GoldpathApprovalSignatureRow.Id.get -> long
+Goldpath.GoldpathApprovalSignatureRow.Id.set -> void
+Goldpath.GoldpathApprovalSignatureRow.RequestId.get -> System.Guid
+Goldpath.GoldpathApprovalSignatureRow.RequestId.set -> void
+Goldpath.GoldpathApprovalSignatureRow.SignedBy.get -> string!
+Goldpath.GoldpathApprovalSignatureRow.SignedBy.set -> void
+Goldpath.GoldpathApprovalSignatureRow.Role.get -> string!
+Goldpath.GoldpathApprovalSignatureRow.Role.set -> void
+Goldpath.GoldpathApprovalSignatureRow.At.get -> System.DateTimeOffset
+Goldpath.GoldpathApprovalSignatureRow.At.set -> void

@@ -100,6 +100,51 @@ public sealed class EfApprovalStoreTests : IDisposable
             await restarted.DecideAsync(late.Id, "stand-in", "no-role", true, "too late"));
     }
 
+    [Fact]
+    public async Task Quorum_signatures_survive_the_engine_a_restarted_engine_completes_the_rung()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.Parse("2026-08-26T09:00:00Z"));
+        var quorumOptions = new GoldpathApprovalsOptions().AddLadder("payment-run", l => l
+            .Rung("manager", 5_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)
+            .TopRung("general-manager", TimeSpan.FromHours(24)));
+        GoldpathApprovalEngine BuildQuorumEngine() => new(
+            quorumOptions,
+            new GoldpathEfApprovalStore<ApprovalsDbContext>(_provider.GetRequiredService<IServiceScopeFactory>()),
+            clock, NullLogger<GoldpathApprovalEngine>.Instance);
+
+        var first = BuildQuorumEngine();
+        var request = await first.RequestAsync("payment-run", "K26-104", 1_000_000m, "maker");
+        await first.DecideAsync(request.Id, "manager-one", "manager", true, "first signature");
+
+        // A brand-new engine over the SAME database: the collected signature is still there —
+        // the same signer is barred, a distinct one completes the rung.
+        var restarted = BuildQuorumEngine();
+        Assert.Equal(GoldpathApprovalDecisionOutcome.AlreadySigned,
+            await restarted.DecideAsync(request.Id, "manager-one", "manager", true, "again"));
+        Assert.Equal(GoldpathApprovalDecisionOutcome.Applied,
+            await restarted.DecideAsync(request.Id, "manager-two", "manager", true, "second signature"));
+        Assert.Equal(GoldpathApprovalStatus.Granted, (await Reload(request.Id)).Status);
+    }
+
+    [Fact]
+    public async Task Withdraw_and_the_resubmit_chain_round_trip_through_the_database()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.Parse("2026-08-26T09:00:00Z"));
+        var engine = BuildEngine(clock);
+
+        var withdrawn = await engine.RequestAsync("credit-limit", "K26-105", 500_000m, "maker");
+        Assert.Equal(GoldpathApprovalDecisionOutcome.Applied, await engine.WithdrawAsync(withdrawn.Id, "maker"));
+        Assert.Equal(GoldpathApprovalStatus.Withdrawn, (await Reload(withdrawn.Id)).Status);
+
+        var rejected = await engine.RequestAsync("credit-limit", "K26-106", 500_000m, "maker");
+        await engine.DecideAsync(rejected.Id, "checker", "expert", false, "collateral missing");
+        var resubmitted = await engine.ResubmitAsync(rejected.Id, "maker");
+
+        var reloaded = await Reload(resubmitted.Id);
+        Assert.Equal(rejected.Id, reloaded.SupersedesId);
+        Assert.Equal(["requested", "rejected", "superseded"], (await Reload(rejected.Id)).Trail.Select(t => t.Action));
+    }
+
     private async Task<GoldpathApprovalRequest> Reload(Guid id)
     {
         var store = new GoldpathEfApprovalStore<ApprovalsDbContext>(_provider.GetRequiredService<IServiceScopeFactory>());
