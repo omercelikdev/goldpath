@@ -28,7 +28,7 @@ jobs:
       # The console dist is BUILT here and embedded by Goldpath.Console: this is the ONLY
       # place Node is needed, and it is why adopters never run it. The package refuses to
       # pack without it (see its `RefuseAnEmptyConsole` target).
-      - uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v6
         with:
           version: 10
       - uses: actions/setup-node@v4
