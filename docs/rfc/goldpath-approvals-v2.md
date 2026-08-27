@@ -65,3 +65,9 @@ Proof: 17 new deterministic facts (engine + EF restart/round-trip) beside the or
 and the package joined the mutation gate (`stryker/Goldpath.Approvals.json`, break 70).
 The CorPay approval story remains with T21's adopter proof — the sample does not compose
 approvals yet, so wiring it there would be a demo invented for the test's sake.
+
+**2026-08-27 addendum (CLI closeout):** the escalation sweep ships as a job pack —
+`jobs.AddGoldpathApprovalsJobs()` (five-minute cron by default) schedules
+`EscalateOverdueAsync` the same way the other jobs-riding modules schedule their runs, and
+the template, the `add feature` recipe, the wizard's derivation and the GmEverything
+nightly shape all treat approvals (and fileexchange) as jobs riders.

@@ -112,9 +112,13 @@ public static class AddFeatureCommand
             program = TextEdits.InsertAfterAnchor(program, Anchors.Middleware, plan.Middleware);
         }
 
-        if (plan.Endpoints.Count > 0)
+        // One line per insertion: endpoint lines are self-contained statements, and two
+        // jobs-riding features SHARE MapGoldpathJobsAdmin — batch insertion would either
+        // duplicate it or (because the duplicate probe checks only the first line) drop the
+        // second feature's own admin endpoint with it.
+        foreach (var endpoint in plan.Endpoints.AsEnumerable().Reverse())   // each lands at anchor+1 — reverse keeps the declared order
         {
-            program = TextEdits.InsertAfterAnchor(program, Anchors.Endpoints, plan.Endpoints);
+            program = TextEdits.InsertAfterAnchor(program, Anchors.Endpoints, [endpoint]);
         }
 
         if (plan.JobsOptionsLines.Count > 0)
@@ -131,7 +135,15 @@ public static class AddFeatureCommand
 
         if (plan.ModelCalls.Count > 0)
         {
-            File.WriteAllText(files.ModelFile, TextEdits.InsertAfterAnchor(File.ReadAllText(files.ModelFile), Anchors.Model, plan.ModelCalls));
+            // Same per-line rule as the endpoints: AddGoldpathJobs() is shared by every
+            // jobs-riding feature and must land exactly once.
+            var model = File.ReadAllText(files.ModelFile);
+            foreach (var call in plan.ModelCalls.AsEnumerable().Reverse())   // each lands at anchor+1 — reverse keeps the declared order
+            {
+                model = TextEdits.InsertAfterAnchor(model, Anchors.Model, [call]);
+            }
+
+            File.WriteAllText(files.ModelFile, model);
         }
 
         if (plan.Resources.Count > 0 || plan.References.Count > 0)

@@ -121,6 +121,8 @@ public class WizardMutationTests
     [InlineData("bulk")]
     [InlineData("notification")]
     [InlineData("campaign")]
+    [InlineData("approvals")]
+    [InlineData("fileexchange")]
     public void Each_jobs_rider_brings_the_scheduler_note(string rider)
     {
         var plan = Derive(features: [rider]);
@@ -416,7 +418,7 @@ public class CliRunnerMutationTests
         Assert.StartsWith("goldpath — the Goldpath golden-path CLI (thin and deterministic)\n", output, StringComparison.Ordinal);
         Assert.Contains("  goldpath add feature <name> [--path <dir>]          wire a Ring B feature into an existing app\n", output, StringComparison.Ordinal);
         Assert.Contains("  goldpath --help | --version\n", output, StringComparison.Ordinal);
-        Assert.EndsWith("features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, archival, bulk, notification, campaign\n", output, StringComparison.Ordinal);
+        Assert.EndsWith("features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals, fileexchange, archival, bulk, notification, campaign\n", output, StringComparison.Ordinal);
     }
 
     [Theory]

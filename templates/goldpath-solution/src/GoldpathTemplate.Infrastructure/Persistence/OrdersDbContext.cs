@@ -47,7 +47,7 @@ public class OrdersDbContext(DbContextOptions<OrdersDbContext> options) : DbCont
 #if (UseCampaign)
         modelBuilder.AddGoldpathCampaign();       // campaigns + items (the 30M-row table) + verb audit
 #endif
-#if (UseArchival || UseBulk || UseNotification || UseCampaign)
+#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
         modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)
 #endif
 #if (UseBroker)
