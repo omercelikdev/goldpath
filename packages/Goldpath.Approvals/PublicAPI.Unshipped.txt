@@ -220,3 +220,57 @@ Goldpath.GoldpathApprovalEscalationJob.PlanAsync(Goldpath.GoldpathJobContext! co
 Goldpath.GoldpathApprovalEscalationJob.ExecuteChunkAsync(Goldpath.GoldpathJobChunk! chunk, Goldpath.GoldpathJobContext! context, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task!
 Goldpath.GoldpathApprovalsJobsExtensions
 static Goldpath.GoldpathApprovalsJobsExtensions.AddGoldpathApprovalsJobs(this Goldpath.GoldpathJobsOptions! jobs, string! escalationCron = "0 */5 * * * ?", System.TimeSpan? deadline = null) -> Goldpath.GoldpathJobsOptions!
+Goldpath.GoldpathApprovalsMetrics
+Goldpath.IGoldpathApprovalStore.GetRecentAsync(int take, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalRequest!>!>!
+Goldpath.GoldpathInMemoryApprovalStore.GetRecentAsync(int take, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalRequest!>!>!
+Goldpath.GoldpathEfApprovalStore<TContext>.GetRecentAsync(int take, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalRequest!>!>!
+Goldpath.GoldpathApprovalsAdminService
+Goldpath.GoldpathApprovalsAdminService.GoldpathApprovalsAdminService(Goldpath.IGoldpathApprovalStore! store, Goldpath.GoldpathApprovalsOptions! options) -> void
+Goldpath.GoldpathApprovalsAdminService.GetRequestsAsync(string![]? status, string![]? ladder, int take, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalRequestInfo!>!>!
+Goldpath.GoldpathApprovalsAdminService.GetRequestAsync(System.Guid id, System.Threading.CancellationToken cancellationToken) -> System.Threading.Tasks.Task<Goldpath.GoldpathApprovalRequestDetail?>!
+Goldpath.GoldpathApprovalsAdminEndpoints
+static Goldpath.GoldpathApprovalsAdminEndpoints.MapGoldpathApprovalsAdmin(this Microsoft.AspNetCore.Routing.IEndpointRouteBuilder! endpoints, string! prefix = "/goldpath/admin/approvals", bool exposeUnsecured = false) -> Microsoft.AspNetCore.Routing.IEndpointRouteBuilder!
+Goldpath.GoldpathApprovalDecisionRequest
+Goldpath.GoldpathApprovalDecisionRequest.GoldpathApprovalDecisionRequest(string! Role, string? Reason) -> void
+Goldpath.GoldpathApprovalDecisionRequest.Role.get -> string!
+Goldpath.GoldpathApprovalDecisionRequest.Role.init -> void
+Goldpath.GoldpathApprovalDecisionRequest.Reason.get -> string?
+Goldpath.GoldpathApprovalDecisionRequest.Reason.init -> void
+Goldpath.GoldpathApprovalRequestInfo
+Goldpath.GoldpathApprovalRequestInfo.GoldpathApprovalRequestInfo(System.Guid Id, string! Ladder, string! Subject, decimal Amount, string! RequestedBy, System.DateTimeOffset RequestedAt, string! PendingRole, System.DateTimeOffset PendingSince, string! Status, string? DecidedBy, string? Reason, System.Guid? SupersedesId, int SignatureCount, int RequiredApprovals) -> void
+Goldpath.GoldpathApprovalRequestInfo.Id.get -> System.Guid
+Goldpath.GoldpathApprovalRequestInfo.Id.init -> void
+Goldpath.GoldpathApprovalRequestInfo.Ladder.get -> string!
+Goldpath.GoldpathApprovalRequestInfo.Ladder.init -> void
+Goldpath.GoldpathApprovalRequestInfo.Subject.get -> string!
+Goldpath.GoldpathApprovalRequestInfo.Subject.init -> void
+Goldpath.GoldpathApprovalRequestInfo.Amount.get -> decimal
+Goldpath.GoldpathApprovalRequestInfo.Amount.init -> void
+Goldpath.GoldpathApprovalRequestInfo.RequestedBy.get -> string!
+Goldpath.GoldpathApprovalRequestInfo.RequestedBy.init -> void
+Goldpath.GoldpathApprovalRequestInfo.RequestedAt.get -> System.DateTimeOffset
+Goldpath.GoldpathApprovalRequestInfo.RequestedAt.init -> void
+Goldpath.GoldpathApprovalRequestInfo.PendingRole.get -> string!
+Goldpath.GoldpathApprovalRequestInfo.PendingRole.init -> void
+Goldpath.GoldpathApprovalRequestInfo.PendingSince.get -> System.DateTimeOffset
+Goldpath.GoldpathApprovalRequestInfo.PendingSince.init -> void
+Goldpath.GoldpathApprovalRequestInfo.Status.get -> string!
+Goldpath.GoldpathApprovalRequestInfo.Status.init -> void
+Goldpath.GoldpathApprovalRequestInfo.DecidedBy.get -> string?
+Goldpath.GoldpathApprovalRequestInfo.DecidedBy.init -> void
+Goldpath.GoldpathApprovalRequestInfo.Reason.get -> string?
+Goldpath.GoldpathApprovalRequestInfo.Reason.init -> void
+Goldpath.GoldpathApprovalRequestInfo.SupersedesId.get -> System.Guid?
+Goldpath.GoldpathApprovalRequestInfo.SupersedesId.init -> void
+Goldpath.GoldpathApprovalRequestInfo.SignatureCount.get -> int
+Goldpath.GoldpathApprovalRequestInfo.SignatureCount.init -> void
+Goldpath.GoldpathApprovalRequestInfo.RequiredApprovals.get -> int
+Goldpath.GoldpathApprovalRequestInfo.RequiredApprovals.init -> void
+Goldpath.GoldpathApprovalRequestDetail
+Goldpath.GoldpathApprovalRequestDetail.GoldpathApprovalRequestDetail(Goldpath.GoldpathApprovalRequestInfo! Request, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalTrailEntry!>! Trail, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalSignature!>! Signatures) -> void
+Goldpath.GoldpathApprovalRequestDetail.Request.get -> Goldpath.GoldpathApprovalRequestInfo!
+Goldpath.GoldpathApprovalRequestDetail.Request.init -> void
+Goldpath.GoldpathApprovalRequestDetail.Trail.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalTrailEntry!>!
+Goldpath.GoldpathApprovalRequestDetail.Trail.init -> void
+Goldpath.GoldpathApprovalRequestDetail.Signatures.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathApprovalSignature!>!
+Goldpath.GoldpathApprovalRequestDetail.Signatures.init -> void

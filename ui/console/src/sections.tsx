@@ -1,12 +1,13 @@
 import { createElement, type ReactNode } from "react";
 import { Banner } from "@qorpe/ui";
-import { Archive, Bell, CalendarClock, FileUp, LayoutDashboard, Megaphone } from "lucide-react";
+import { Archive, Bell, CalendarClock, ClipboardCheck, FileUp, LayoutDashboard, Megaphone } from "lucide-react";
 import { MODULES, type AdminClient, type Capability, type ModuleName } from "./adminClient";
 import { RunConsole } from "./RunConsole";
 import { BulkPanel } from "./BulkPanel";
 import { CampaignPanel } from "./CampaignPanel";
 import { NotificationPanel } from "./NotificationPanel";
 import { ArchivalPanel } from "./ArchivalPanel";
+import { ApprovalsPanel } from "./ApprovalsPanel";
 
 /** What the rail calls each module — the operator's word, not the package's. */
 export const SECTION_LABEL: Record<ModuleName, string> = {
@@ -15,6 +16,7 @@ export const SECTION_LABEL: Record<ModuleName, string> = {
   bulk: "Bulk intake",
   notification: "Notifications",
   campaign: "Campaigns",
+  approvals: "Approvals",
 };
 
 /**
@@ -34,6 +36,7 @@ export const SECTION_GROUP: Record<ModuleName, string> = {
   campaign: "Modules",
   notification: "Modules",
   archival: "Modules",
+  approvals: "Modules",
 };
 
 /** One lucide icon per section — sparse by design; the icon IS the item when collapsed. */
@@ -44,6 +47,7 @@ export const SECTION_ICON: Record<ModuleName | "today", ReactNode> = {
   notification: createElement(Bell),
   campaign: createElement(Megaphone),
   archival: createElement(Archive),
+  approvals: createElement(ClipboardCheck),
 };
 
 /** The one-line purpose sentence every screen opens with (v1.1 §7.8). */
@@ -54,6 +58,7 @@ export const SECTION_PURPOSE: Record<ModuleName | "today", string> = {
   notification: "Evidence for every send: delivered, suppressed, or failed — in the transport's own words.",
   campaign: "Paced fan-out under your hand: throttle, quota, window, stop.",
   archival: "The legal memory: sealed chains, holds, and erasures that leave a receipt.",
+  approvals: "The authority ladder: who may say yes, four eyes enforced, every step in the trail.",
 };
 
 export type Capabilities = Record<ModuleName, Capability>;
@@ -142,6 +147,7 @@ export function ServicePanels({ client, capabilities, section, now, onOpenRun, o
       {capability.kind === "present" && section === "campaign" && <CampaignPanel client={client} />}
       {capability.kind === "present" && section === "notification" && <NotificationPanel client={client} />}
       {capability.kind === "present" && section === "archival" && <ArchivalPanel client={client} />}
+      {capability.kind === "present" && section === "approvals" && <ApprovalsPanel client={client} />}
     </>
   );
 }

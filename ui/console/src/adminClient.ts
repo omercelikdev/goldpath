@@ -9,8 +9,8 @@ export interface AdminClientOptions {
   fetcher?: typeof fetch;
 }
 
-/** The five module surfaces of the frozen contract. */
-export const MODULES = ["jobs", "archival", "bulk", "notification", "campaign"] as const;
+/** The six module surfaces of the frozen contract. */
+export const MODULES = ["jobs", "archival", "bulk", "notification", "campaign", "approvals"] as const;
 export type ModuleName = (typeof MODULES)[number];
 
 /**
@@ -24,6 +24,7 @@ const PROBE: Record<ModuleName, string> = {
   bulk: "/goldpath/admin/bulk/definitions",
   notification: "/goldpath/admin/notification/templates",
   campaign: "/goldpath/admin/campaign/",
+  approvals: "/goldpath/admin/approvals/requests",
 };
 
 /**
@@ -341,6 +342,47 @@ export interface NotificationTemplateStatus {
   deleteBodyAfter?: string | null;
   byState: Record<string, number>;
   oldestRequestedSeconds?: number | null;
+}
+
+/** One approval request as the admin surface returns it — quorum numbers included. */
+export interface ApprovalRequestInfo {
+  id: string;
+  ladder: string;
+  subject: string;
+  amount: number;
+  requestedBy: string;
+  requestedAt: string;
+  pendingRole: string;
+  pendingSince: string;
+  status: string;
+  decidedBy?: string | null;
+  reason?: string | null;
+  supersedesId?: string | null;
+  signatureCount: number;
+  requiredApprovals: number;
+}
+
+/** One audited lifecycle step of a request. */
+export interface ApprovalTrailEntry {
+  at: string;
+  actor: string;
+  action: string;
+  detail: string;
+}
+
+/** One collected quorum signature. */
+export interface ApprovalSignature {
+  requestId: string;
+  signedBy: string;
+  role: string;
+  at: string;
+}
+
+/** A request's full story: the row plus its trail and signatures. */
+export interface ApprovalRequestDetail {
+  request: ApprovalRequestInfo;
+  trail: ApprovalTrailEntry[];
+  signatures: ApprovalSignature[];
 }
 
 /**
@@ -743,6 +785,30 @@ export class AdminClient {
 
   throttleCampaign(id: string, patch: CampaignThrottle): Promise<AdminResult> {
     return this.verb(`/goldpath/admin/campaign/${encodeURIComponent(id)}/throttle`, patch);
+  }
+
+  /** Recent approval requests, newest first (R3: repeated ?status=/?ladder= OR within, AND across). */
+  approvals(options: { status?: string[]; ladder?: string[]; take?: number } = {}): Promise<ApprovalRequestInfo[]> {
+    const query = new URLSearchParams();
+    for (const value of options.status ?? []) query.append("status", value);
+    for (const value of options.ladder ?? []) query.append("ladder", value);
+    query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
+    return this.get<ApprovalRequestInfo[]>(`/goldpath/admin/approvals/requests?${query.toString()}`);
+  }
+
+  /** One request's full story: the row, its trail, and the collected signatures. */
+  approval(id: string): Promise<ApprovalRequestDetail> {
+    return this.get<ApprovalRequestDetail>(`/goldpath/admin/approvals/requests/${encodeURIComponent(id)}`);
+  }
+
+  /** A grant under the ENGINE's rules — the console is one more decider, not a bypass. */
+  approveApproval(id: string, role: string, reason?: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/approvals/requests/${encodeURIComponent(id)}/approve`, { role, reason });
+  }
+
+  /** A rejection — the reason is mandatory and the ENGINE enforces it, not this client. */
+  rejectApproval(id: string, role: string, reason: string): Promise<AdminResult> {
+    return this.verb(`/goldpath/admin/approvals/requests/${encodeURIComponent(id)}/reject`, { role, reason });
   }
 
   notificationTemplates(): Promise<NotificationTemplateStatus[]> {
