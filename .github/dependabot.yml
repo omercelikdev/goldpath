@@ -3,26 +3,29 @@
 # are aligned by hand in the same PR that takes the SDK bump.
 # MAJORS are deliberate, never grouped (2026-08-27): the first weekly sweep tried to ride
 # MassTransit 9 (license change), Roslyn 5 and vitest 4 into one bump each — a major is a
-# decision with a migration story, taken by hand with its own proof. Library groups take
-# minor/patch only; GitHub Actions majors stay automated (runner-driven, CI-proven).
+# decision with a migration story. Groups take minor/patch only; a major arrives as its
+# OWN pull request (visible, individually decidable, and a closed one is not recreated —
+# the mockifyr-proven pattern, which also keeps security majors visible where a blanket
+# ignore would suppress them). Standing deferrals: open-threads T24. GitHub Actions majors
+# stay grouped (runner-driven, CI-proven).
 version: 2
 updates:
   - package-ecosystem: nuget
     directory: /
     schedule: { interval: weekly }
+    open-pull-requests-limit: 3
     groups:
-      nuget-dependencies: { patterns: ["*"] }
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+      nuget-dependencies:
+        patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: npm
     directory: /ui/console
     schedule: { interval: weekly }
+    open-pull-requests-limit: 3
     groups:
-      console-dependencies: { patterns: ["*"] }
-    ignore:
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
+      console-dependencies:
+        patterns: ["*"]
+        update-types: [minor, patch]
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: weekly }
