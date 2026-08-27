@@ -148,11 +148,17 @@ public static class GoldpathServiceDefaultsExtensions
         });
 
     private static void AddHttpClientDefaults(IHostApplicationBuilder builder)
-        => builder.Services.ConfigureHttpClientDefaults(http =>
+    {
+        // The handler below needs the discovery CORE (endpoint providers: configuration +
+        // DNS pass-through). Without it EVERY factory client — including plain absolute
+        // URLs to an external IdP or webhook — is refused at request time (#164).
+        builder.Services.AddServiceDiscovery();
+        builder.Services.ConfigureHttpClientDefaults(http =>
         {
             http.AddStandardResilienceHandler();
             http.AddServiceDiscovery();
         });
+    }
 
     private static void AddConcurrencyGuard(IHostApplicationBuilder builder, GoldpathServiceDefaultsOptions options)
         => builder.Services.AddRateLimiter(limiter =>

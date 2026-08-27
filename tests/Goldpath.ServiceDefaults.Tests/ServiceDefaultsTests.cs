@@ -215,4 +215,40 @@ public class ServiceDefaultsTests
         Assert.Equal(7, captured!.RateLimiting.ConcurrencyLimit);
         Assert.Equal(ObservabilityProfile.Full, captured.Observability.Profile);
     }
+
+    [Fact]
+    public async Task A_factory_client_reaches_an_absolute_url_through_the_defaults_pipeline()
+    {
+        // The #164 regression: the per-client discovery HANDLER without the discovery
+        // CORE (endpoint providers) refused EVERY absolute URL at request time — an
+        // external IdP or webhook call died with "No provider which supports the
+        // provided service name". Pass-through must resolve a plain host:port.
+        var port = FreeLoopbackPort();
+        using var listener = new HttpListener();
+        listener.Prefixes.Add($"http://127.0.0.1:{port}/");
+        listener.Start();
+        var serve = Task.Run(async () =>
+        {
+            var context = await listener.GetContextAsync();
+            context.Response.StatusCode = 200;
+            context.Response.Close();
+        });
+
+        await using var app = await StartAppAsync();
+        var client = app.Services.GetRequiredService<IHttpClientFactory>().CreateClient("external-idp");
+        var response = await client.GetAsync($"http://127.0.0.1:{port}/");
+
+        Assert.Equal(HttpStatusCode.OK, response.StatusCode);
+        await serve;
+        listener.Stop();
+    }
+
+    private static int FreeLoopbackPort()
+    {
+        var probe = new System.Net.Sockets.TcpListener(IPAddress.Loopback, 0);
+        probe.Start();
+        var port = ((IPEndPoint)probe.LocalEndpoint).Port;
+        probe.Stop();
+        return port;
+    }
 }
