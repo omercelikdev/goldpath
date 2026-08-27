@@ -123,6 +123,7 @@ public static class GoldpathNotificationModel
             notification.Property(n => n.Recipient).HasMaxLength(512);
             notification.Property(n => n.Culture).HasMaxLength(16);
             notification.Property(n => n.Subject).HasMaxLength(1024);
+            notification.Property(n => n.Body).HasMaxLength(-1);   // the RENDERED body — a DOCUMENT (#198); >256 is the normal case, not the edge
             notification.Property(n => n.Detail).HasMaxLength(1024);
             notification.Property(n => n.Tenant).HasMaxLength(128);
             notification.Property(n => n.CorrelationId).HasMaxLength(128);

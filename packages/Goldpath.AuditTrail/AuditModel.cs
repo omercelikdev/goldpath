@@ -58,7 +58,13 @@ public static class GoldpathAuditModelExtensions
         {
             entity.ToTable("GoldpathAuditLog");
             entity.Property(e => e.EntityType).HasMaxLength(256);
+            entity.Property(e => e.EntityKey).HasMaxLength(512);   // composite keys joined with '|' — explicit because it is indexed
             entity.Property(e => e.Action).HasMaxLength(16);
+            // Before/after values copy ANY audited property — the app's own JSON and
+            // long-text columns included. DOCUMENTS (#198): truncated audit evidence is
+            // worse than none, because it reads as complete.
+            entity.Property(e => e.OldValue).HasMaxLength(-1);
+            entity.Property(e => e.NewValue).HasMaxLength(-1);
             entity.HasIndex(e => new { e.EntityType, e.EntityKey });
             entity.HasIndex(e => e.Timestamp);
         });

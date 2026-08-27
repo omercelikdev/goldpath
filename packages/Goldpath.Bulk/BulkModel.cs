@@ -217,6 +217,9 @@ public static class GoldpathBulkModel
         {
             row.ToTable("GoldpathBulkRows");
             row.HasKey(r => new { r.BatchId, r.RowNumber });
+            // The parsed row as JSON — a DOCUMENT (#198): a conventions host defaults
+            // strings to 256, and a truncated row fails to deserialize at execute time.
+            row.Property(r => r.Payload).HasMaxLength(-1);
         });
 
         modelBuilder.Entity<GoldpathBulkRowError>(error =>
