@@ -1,1 +1,129 @@
 #nullable enable
+Goldpath.GoldpathFileExchangeExtensions
+Goldpath.GoldpathFileExchangeOptions
+Goldpath.GoldpathFileExchangeOptions.AddRail<TRow>(string! name, System.Action<Goldpath.GoldpathFileRailBuilder<TRow>!>! configure) -> Goldpath.GoldpathFileExchangeOptions!
+Goldpath.GoldpathFileExchangeOptions.GoldpathFileExchangeOptions() -> void
+Goldpath.GoldpathFileExchangeOptions.Rails.get -> System.Collections.Generic.IReadOnlyDictionary<string!, Goldpath.GoldpathFileRailDefinition!>!
+Goldpath.GoldpathFileIngested
+Goldpath.GoldpathFileIngested.File.get -> string!
+Goldpath.GoldpathFileIngested.File.init -> void
+Goldpath.GoldpathFileIngested.GoldpathFileIngested(string! Rail, string! File, int Processed, int SkippedAsDuplicate, int Quarantined) -> void
+Goldpath.GoldpathFileIngested.Processed.get -> int
+Goldpath.GoldpathFileIngested.Processed.init -> void
+Goldpath.GoldpathFileIngested.Quarantined.get -> int
+Goldpath.GoldpathFileIngested.Quarantined.init -> void
+Goldpath.GoldpathFileIngested.Rail.get -> string!
+Goldpath.GoldpathFileIngested.Rail.init -> void
+Goldpath.GoldpathFileIngested.SkippedAsDuplicate.get -> int
+Goldpath.GoldpathFileIngested.SkippedAsDuplicate.init -> void
+Goldpath.GoldpathFileRailBuilder<TRow>
+Goldpath.GoldpathFileRailBuilder<TRow>.Handle(System.Func<TRow, System.Threading.CancellationToken, System.Threading.Tasks.Task!>! handle) -> Goldpath.GoldpathFileRailBuilder<TRow>!
+Goldpath.GoldpathFileRailBuilder<TRow>.Header(int lines) -> Goldpath.GoldpathFileRailBuilder<TRow>!
+Goldpath.GoldpathFileRailBuilder<TRow>.ParseLine(System.Func<string!, TRow>! parse) -> Goldpath.GoldpathFileRailBuilder<TRow>!
+Goldpath.GoldpathFileRailBuilder<TRow>.ValidateFile(System.Func<System.Collections.Generic.IReadOnlyList<string!>!, string?>! validate) -> Goldpath.GoldpathFileRailBuilder<TRow>!
+Goldpath.GoldpathFileRailBuilder<TRow>.ValidateRow(System.Func<TRow, string?>! validate) -> Goldpath.GoldpathFileRailBuilder<TRow>!
+Goldpath.GoldpathFileRailDefinition
+Goldpath.GoldpathFileRailDefinition.HeaderLines.get -> int
+Goldpath.GoldpathFileRailDefinition.Name.get -> string!
+Goldpath.GoldpathFileRailEngine
+Goldpath.GoldpathFileRailEngine.GoldpathFileRailEngine(Goldpath.GoldpathFileExchangeOptions! options, Goldpath.IGoldpathFileLedger! ledger, Microsoft.Extensions.Logging.ILogger<Goldpath.GoldpathFileRailEngine!>! logger, Goldpath.IIntegrationEventPublisher? publisher = null) -> void
+Goldpath.GoldpathFileRailEngine.ProcessAsync(string! railName, string! file, System.Collections.Generic.IReadOnlyList<string!>! lines, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<Goldpath.GoldpathFileRailResult!>!
+Goldpath.GoldpathFileRailResult
+Goldpath.GoldpathFileRailResult.File.get -> string!
+Goldpath.GoldpathFileRailResult.File.init -> void
+Goldpath.GoldpathFileRailResult.FileRejectedReason.get -> string?
+Goldpath.GoldpathFileRailResult.FileRejectedReason.init -> void
+Goldpath.GoldpathFileRailResult.GoldpathFileRailResult(string! Rail, string! File, string? FileRejectedReason, int Processed, int SkippedAsDuplicate, System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathQuarantinedRow!>! Quarantined) -> void
+Goldpath.GoldpathFileRailResult.Processed.get -> int
+Goldpath.GoldpathFileRailResult.Processed.init -> void
+Goldpath.GoldpathFileRailResult.Quarantined.get -> System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathQuarantinedRow!>!
+Goldpath.GoldpathFileRailResult.Quarantined.init -> void
+Goldpath.GoldpathFileRailResult.Rail.get -> string!
+Goldpath.GoldpathFileRailResult.Rail.init -> void
+Goldpath.GoldpathFileRailResult.SkippedAsDuplicate.get -> int
+Goldpath.GoldpathFileRailResult.SkippedAsDuplicate.init -> void
+Goldpath.GoldpathFileReceived
+Goldpath.GoldpathFileReceived.DataRows.get -> int
+Goldpath.GoldpathFileReceived.DataRows.init -> void
+Goldpath.GoldpathFileReceived.File.get -> string!
+Goldpath.GoldpathFileReceived.File.init -> void
+Goldpath.GoldpathFileReceived.GoldpathFileReceived(string! Rail, string! File, int DataRows) -> void
+Goldpath.GoldpathFileReceived.Rail.get -> string!
+Goldpath.GoldpathFileReceived.Rail.init -> void
+Goldpath.GoldpathFileRejected
+Goldpath.GoldpathFileRejected.File.get -> string!
+Goldpath.GoldpathFileRejected.File.init -> void
+Goldpath.GoldpathFileRejected.GoldpathFileRejected(string! Rail, string! File, string! Reason) -> void
+Goldpath.GoldpathFileRejected.Rail.get -> string!
+Goldpath.GoldpathFileRejected.Rail.init -> void
+Goldpath.GoldpathFileRejected.Reason.get -> string!
+Goldpath.GoldpathFileRejected.Reason.init -> void
+Goldpath.GoldpathInMemoryFileLedger
+Goldpath.GoldpathInMemoryFileLedger.GetQuarantineAsync(string! rail, string! file, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathQuarantinedRow!>!>!
+Goldpath.GoldpathInMemoryFileLedger.GoldpathInMemoryFileLedger() -> void
+Goldpath.GoldpathInMemoryFileLedger.IsProcessedAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+Goldpath.GoldpathInMemoryFileLedger.MarkArchivedAsync(string! rail, string! file, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathInMemoryFileLedger.MarkProcessedAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathInMemoryFileLedger.QuarantineAsync(string! rail, string! file, int line, string! reason, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathInMemoryFileLedger.ReleaseQuarantineAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathQuarantinedRow
+Goldpath.GoldpathQuarantinedRow.File.get -> string!
+Goldpath.GoldpathQuarantinedRow.File.init -> void
+Goldpath.GoldpathQuarantinedRow.GoldpathQuarantinedRow(string! Rail, string! File, int Line, string! Reason) -> void
+Goldpath.GoldpathQuarantinedRow.Line.get -> int
+Goldpath.GoldpathQuarantinedRow.Line.init -> void
+Goldpath.GoldpathQuarantinedRow.Rail.get -> string!
+Goldpath.GoldpathQuarantinedRow.Rail.init -> void
+Goldpath.GoldpathQuarantinedRow.Reason.get -> string!
+Goldpath.GoldpathQuarantinedRow.Reason.init -> void
+Goldpath.GoldpathRowsQuarantined
+Goldpath.GoldpathRowsQuarantined.Count.get -> int
+Goldpath.GoldpathRowsQuarantined.Count.init -> void
+Goldpath.GoldpathRowsQuarantined.File.get -> string!
+Goldpath.GoldpathRowsQuarantined.File.init -> void
+Goldpath.GoldpathRowsQuarantined.GoldpathRowsQuarantined(string! Rail, string! File, int Count) -> void
+Goldpath.GoldpathRowsQuarantined.Rail.get -> string!
+Goldpath.GoldpathRowsQuarantined.Rail.init -> void
+Goldpath.IGoldpathFileLedger
+Goldpath.IGoldpathFileLedger.GetQuarantineAsync(string! rail, string! file, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathQuarantinedRow!>!>!
+Goldpath.IGoldpathFileLedger.IsProcessedAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+Goldpath.IGoldpathFileLedger.MarkArchivedAsync(string! rail, string! file, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.IGoldpathFileLedger.MarkProcessedAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.IGoldpathFileLedger.QuarantineAsync(string! rail, string! file, int line, string! reason, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.IGoldpathFileLedger.ReleaseQuarantineAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+static Goldpath.GoldpathFileExchangeExtensions.AddGoldpathFileExchange<TBuilder>(this TBuilder builder, System.Action<Goldpath.GoldpathFileExchangeOptions!>! configure) -> TBuilder
+Goldpath.GoldpathFileProcessedRow
+Goldpath.GoldpathFileProcessedRow.GoldpathFileProcessedRow() -> void
+Goldpath.GoldpathFileProcessedRow.Rail.get -> string!
+Goldpath.GoldpathFileProcessedRow.Rail.set -> void
+Goldpath.GoldpathFileProcessedRow.File.get -> string!
+Goldpath.GoldpathFileProcessedRow.File.set -> void
+Goldpath.GoldpathFileProcessedRow.Line.get -> int
+Goldpath.GoldpathFileProcessedRow.Line.set -> void
+Goldpath.GoldpathFileQuarantineRow
+Goldpath.GoldpathFileQuarantineRow.GoldpathFileQuarantineRow() -> void
+Goldpath.GoldpathFileQuarantineRow.Rail.get -> string!
+Goldpath.GoldpathFileQuarantineRow.Rail.set -> void
+Goldpath.GoldpathFileQuarantineRow.File.get -> string!
+Goldpath.GoldpathFileQuarantineRow.File.set -> void
+Goldpath.GoldpathFileQuarantineRow.Line.get -> int
+Goldpath.GoldpathFileQuarantineRow.Line.set -> void
+Goldpath.GoldpathFileQuarantineRow.Reason.get -> string!
+Goldpath.GoldpathFileQuarantineRow.Reason.set -> void
+Goldpath.GoldpathFileArchiveRow
+Goldpath.GoldpathFileArchiveRow.GoldpathFileArchiveRow() -> void
+Goldpath.GoldpathFileArchiveRow.Rail.get -> string!
+Goldpath.GoldpathFileArchiveRow.Rail.set -> void
+Goldpath.GoldpathFileArchiveRow.File.get -> string!
+Goldpath.GoldpathFileArchiveRow.File.set -> void
+Goldpath.GoldpathFileExchangeModelExtensions
+static Goldpath.GoldpathFileExchangeModelExtensions.AddGoldpathFileExchangeModel(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder) -> Microsoft.EntityFrameworkCore.ModelBuilder!
+Goldpath.GoldpathEfFileLedger<TContext>
+Goldpath.GoldpathEfFileLedger<TContext>.GoldpathEfFileLedger(Microsoft.Extensions.DependencyInjection.IServiceScopeFactory! scopes) -> void
+Goldpath.GoldpathEfFileLedger<TContext>.IsProcessedAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<bool>!
+Goldpath.GoldpathEfFileLedger<TContext>.MarkProcessedAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathEfFileLedger<TContext>.QuarantineAsync(string! rail, string! file, int line, string! reason, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathEfFileLedger<TContext>.ReleaseQuarantineAsync(string! rail, string! file, int line, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+Goldpath.GoldpathEfFileLedger<TContext>.GetQuarantineAsync(string! rail, string! file, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task<System.Collections.Generic.IReadOnlyList<Goldpath.GoldpathQuarantinedRow!>!>!
+Goldpath.GoldpathEfFileLedger<TContext>.MarkArchivedAsync(string! rail, string! file, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
+static Goldpath.GoldpathFileExchangeExtensions.AddGoldpathFileExchange<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathFileExchangeOptions!>! configure) -> TBuilder

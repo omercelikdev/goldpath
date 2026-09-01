@@ -7,6 +7,19 @@
       "runtimeExecutable": "pnpm",
       "runtimeArgs": ["gallery", "--port", "5199", "--strictPort"],
       "port": 5199
+    },
+    {
+      "name": "approvals-demo-host",
+      "runtimeExecutable": "dotnet",
+      "runtimeArgs": ["run", "--project", "/private/tmp/claude-501/-Users-omercelik/fbea3cc1-118f-45bb-9dea-4a750f09c14c/scratchpad/approvals-demo"],
+      "port": 5310
+    },
+    {
+      "name": "console-dev",
+      "cwd": "ui/console",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["dev", "--port", "5173", "--strictPort"],
+      "port": 5173
     }
   ]
 }

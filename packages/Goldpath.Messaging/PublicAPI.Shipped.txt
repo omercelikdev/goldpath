@@ -23,3 +23,5 @@ Goldpath.GoldpathPublishFilter<T>.Send(MassTransit.PublishContext<T!>! context, 
 static Goldpath.GoldpathMessagingExtensions.AddGoldpathMessaging<TBuilder>(this TBuilder builder, System.Action<MassTransit.IBusRegistrationConfigurator!>! configureBus, System.Action<Goldpath.GoldpathMessagingOptions!>? configureOptions = null) -> TBuilder
 static Goldpath.GoldpathMessagingExtensions.AddGoldpathOutbox<TContext>(this MassTransit.IBusRegistrationConfigurator! configurator, System.Action<MassTransit.IEntityFrameworkOutboxConfigurator!>? configure = null) -> void
 static Goldpath.GoldpathMessagingExtensions.ConfigureGoldpathEndpoints<TEndpoint>(this MassTransit.IBusFactoryConfigurator<TEndpoint>! configurator, MassTransit.IBusRegistrationContext! context) -> void
+Goldpath.IIntegrationEventPublisher
+Goldpath.IIntegrationEventPublisher.PublishAsync<TEvent>(TEvent! integrationEvent, System.Threading.CancellationToken cancellationToken = default(System.Threading.CancellationToken)) -> System.Threading.Tasks.Task!
