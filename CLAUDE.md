@@ -22,7 +22,7 @@ not propose anything that contradicts them; changes only via a superseding ADR).
 - "latest" dependencies are forbidden; everything is pinned. Air-gapped networks are a first-class scenario.
 - Code style: `.editorconfig` + analyzers + `dotnet format`; XML summaries mandatory on public APIs.
 
-## Status (2026-08-09)
+## Status (2026-09-01)
 Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.7` train (the
 platform train: Goldpath.Sdk + ADR-0012, the adopter CLI verbs, Approvals + FileExchange
 on nuget for the first time, the console's sixth module, SBOM + provenance on every

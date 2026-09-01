@@ -121,7 +121,7 @@ a build that composes consumers without the EF inbox — deliberate, downgradeab
   table card; facet filters are multi-select; icon actions with tooltips; a density
   toggle; one hand-rolled Select; add/edit flows in modals; row detail in sheets; the
   bare console prefix and the bare port both land Home and the brand mark goes there
-  too. The axe gate and the 35-journey console smoke ran green through the whole sweep.
+  too. The axe gate and the 28-journey console smoke ran green through the whole sweep.
 - `GoldpathBulkAdminService.GetBatchesAsync` gains the `definition` filter parameter
   (the one shipped-signature change this train; the admin HTTP surface is additive).
 

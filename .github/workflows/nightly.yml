@@ -107,7 +107,7 @@ jobs:
         # and in the release checklist's local cadence.
         package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,
                   Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.MultiTenancy,
-                  Goldpath.Locking, Goldpath.Auth, Goldpath.Cli]
+                  Goldpath.Locking, Goldpath.Auth, Goldpath.Cli, Goldpath.Approvals]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6
