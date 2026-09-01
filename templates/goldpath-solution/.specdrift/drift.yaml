@@ -75,6 +75,20 @@ wiring:
   - feature: features.campaign
     package: Goldpath.Jobs
     call: AddGoldpathJobs
+  # Approvals and FileExchange ride the same jobs guard pair as the other Ring B modules:
+  # a manifest claiming the feature without the wiring (or vice versa) is drift.
+  - feature: features.approvals
+    package: Goldpath.Approvals
+    call: AddGoldpathApprovals
+  - feature: features.approvals
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
+  - feature: features.fileExchange
+    package: Goldpath.FileExchange
+    call: AddGoldpathFileExchange
+  - feature: features.fileExchange
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
 # The build exports the OpenAPI document next to the Api project (OpenApiDocumentsDirectory);
 # the committed contract lives in specs/ so reviews see it change.
 openapi:

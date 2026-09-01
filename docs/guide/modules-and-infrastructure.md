@@ -19,13 +19,15 @@ exactly this table and says the reasons out loud ("no broker needed — removed"
 | **bulk** | **✔ ONLY the app database** | — | — | ✔ | **the bulk-only customer runs Postgres and nothing else** — nightly `GmBulkOnly` proves it |
 | notification | ✔ | — | — | ✔ | SMTP is config, not infrastructure |
 | campaign | ✔ | **✔ REQUIRED** | — | ✔ | the release path IS broker fan-out (RFC D8) — said by the schema, the template, the CLI and the wizard |
+| approvals | ✔ (requests + signatures) | — | — | ✔ | the escalation sweep rides the scheduler; decisions publish lifecycle events through the outbox when composed |
+| fileexchange | ✔ (rails + rows) | — | — | ✔ | file-based rails; ingestion marks publish through the outbox when composed |
 | outbox (integration events) | ✔ | ✔ | — | — | the outbox publishes THROUGH a broker (SPEC0101) |
 
 Cross-cutting facts the table folds in:
 
-- **One scheduler per app**: archival, bulk, notification and campaign ride ONE
-  `AddGoldpathJobs` composition (and bring the operations console with it) — a second
-  module never opens a second scheduler.
+- **One scheduler per app**: archival, bulk, notification, campaign, approvals and
+  fileexchange ride ONE `AddGoldpathJobs` composition (and bring the operations console
+  with it) — a second module never opens a second scheduler.
 - **Auth is orthogonal**: openid/apikey/none changes no infrastructure; `none` makes the
   admin surfaces' opt-out VISIBLE and is acceptable only behind an authenticating
   boundary.

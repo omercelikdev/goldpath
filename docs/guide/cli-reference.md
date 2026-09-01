@@ -22,7 +22,7 @@ Spec Engine — it invents no semantics of its own. Exit codes mirror specdrift:
 
 | Verb | What it does |
 |---|---|
-| `goldpath add feature <name> [--path <dir>]` | Wires a Ring B capability into an existing app: package reference, registration, model, manifest — an anchor-driven textual transform, specdrift-verified, rolled back whole if the engine refuses. Features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, archival, bulk, notification, campaign. |
+| `goldpath add feature <name> [--path <dir>]` | Wires a Ring B capability into an existing app: package reference, registration, model, manifest — an anchor-driven textual transform, specdrift-verified, rolled back whole if the engine refuses. Features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, archival, bulk, notification, campaign, approvals, fileexchange. |
 | `goldpath add worker <name> [--trigger queue\|schedule\|jobs] [--path <dir>]` | Adds a worker PROJECT to an existing solution, wired into the AppHost with the trigger you chose. |
 
 ## Database
@@ -31,13 +31,13 @@ Spec Engine — it invents no semantics of its own. Exit codes mirror specdrift:
 |---|---|
 | `goldpath db init [--path <dir>]` | The Initial migration for a fresh app (the template generates migration-ready, not migration-full). |
 | `goldpath db add <name> [--path <dir>]` | A migration, owner-aware: it knows which project owns the schema (D3). |
-| `goldpath db status [--path <dir>]` | What is applied, what is pending — also inlined into `check`. |
+| `goldpath db status [--path <dir>]` | Whether the MODEL is ahead of the migrations (`ef migrations has-pending-model-changes` per owner) — it never touches a database. Also inlined into `check`. |
 | `goldpath db bundle [--path <dir>]` | A self-contained migration bundle for environments where the SDK is not installed. |
 
 ## Export
 
 - `goldpath export compose [--path <dir>]` — reads the AppHost (the ONLY definition of the
-  topology) and writes a `docker-compose.yaml` + Dockerfile beside it. Re-runnable; the
+  topology) and writes a `docker-compose.yml` + Dockerfile beside it. Re-runnable; the
   compose file is an EXPORT, never a second source of truth. Exit 1 with the reason when
   the AppHost declares no resources or a project has no matching directory.
 

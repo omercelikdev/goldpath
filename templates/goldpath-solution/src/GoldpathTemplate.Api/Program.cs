@@ -283,6 +283,15 @@ app.MapGoldpathCampaignAdmin<OrdersDbContext>();       // audited verbs: create/
 app.MapGoldpathCampaignAdmin<OrdersDbContext>(exposeUnsecured: true);       // audited verbs: create/pause/resume/abort/throttle
 #endif
 //#endif
+//#if (UseApprovals)
+#if (UseAuth)
+app.MapGoldpathApprovalsAdmin();                       // decide verbs through the ENGINE (four eyes holds) — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathApprovalsAdmin(exposeUnsecured: true);                       // decide verbs through the ENGINE (four eyes holds)
+#endif
+//#endif
 
 //#if (UseArchival || UseBulk || UseNotification || UseCampaign || UseApprovals || UseFileExchange)
 // The console over those surfaces — served by THIS head from the package's embedded

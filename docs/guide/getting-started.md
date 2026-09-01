@@ -31,7 +31,7 @@ Prefer questions over flags? Bare `goldpath new` runs the WIZARD: say which modu
 app needs and the infrastructure is derived with its reasons ("no broker needed —
 removed"); it prints the equivalent command and generates through the same flow.
 Shape choices: `--db postgresql|sqlserver`, `--broker rabbitmq|none`,
-`--auth openid|apikey|none`, `--layout vertical-slice|clean-architecture`, and eleven
+`--auth openid|apikey|none`, `--layout vertical-slice|clean-architecture`, and thirteen
 `--features` (run `dotnet new goldpath-solution -h`). Grow the solution with
 `goldpath new service <Name>` (a service head with its OWN database and manifest) and
 `goldpath new gateway` (YARP routing `/{head}/…` over service discovery). Past local:

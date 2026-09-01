@@ -98,7 +98,11 @@ how an asset acquires a surprise:
    is unbuilt. Scope stays as the RFC set it: model gateway, admin tool registry as MCP,
    AI decision record, confidence gate. **It belongs after the pilot, not before** — the
    pilot is what will say which of the four an adopter actually reaches for.
-10. **The MassTransit exit RFC** (issue #11, owner-prioritized) — MassTransit v9 has gone
+10. **The MassTransit exit RFC** — DONE 2026-08-09 (F3, PR #157: `docs/rfc/goldpath-messaging-exit.md`,
+    the measured exit). What REMAINS of this item is only the T18/T24 decision itself —
+    stay pinned on 8.5.10 or take the v9 commercial license — which lives on the
+    open-threads ledger, not here. Original text kept for the record:
+    (issue #11, owner-prioritized) — MassTransit v9 has gone
     commercial (`docs/rfc/goldpath-messaging.md` §strategy). The options recorded there are
     a v8 fork, Wolverine, or growing Mediant toward transport. This is a **licensing
     exposure in the core path**, and until now it lived only in an issue comment: an

@@ -154,18 +154,20 @@ No Roslyn here; the same "executable standards" idea lands as kit-repo CI:
 
 ## 8. DoD
 
-- [ ] qorpe org + qorpe/ui repo exist; kit + standard moved; history note in README.
-- [ ] D1–D10 implemented; B1–B10 backlog empty or explicitly re-triggered.
-- [ ] Gates G1–G6 live in kit CI; both consumers carry the freshness gate.
-- [ ] `@qorpe/ui` published from CI with provenance (owner: npm account, `qorpe`
-      scope, publish token secret — owner-only actions).
-- [ ] Both consumers green ON THE PUBLISHED PACKAGE (the §7.3 proofs) — extraction is
-      not done while any consumer still workspace-links.
-- [ ] goldpath `ui/kit` deleted; `ui-standard-v1.md` replaced by a pointer;
-      docs/rfc/README row flipped to implemented; open-threads T3 row updated to
-      point at the kit repo.
-- [ ] The pilot console (consumer #3) starts from the published package — never from
-      source.
+- [x] qorpe org + qorpe/ui repo exist; kit + standard moved; history note in README.
+- [x] D1–D10 implemented; B1–B10 backlog empty or explicitly re-triggered (step 6.0,
+      2026-08-07 — recorded in master-plan and docs/rfc/README).
+- [x] Gates G1–G6 live in kit CI; both consumers carry the freshness gate
+      (`scripts/kit-freshness.sh` here and in mockifyr).
+- [x] `@qorpe/ui` published from CI with provenance (OIDC trusted publishing; 0.5.x line
+      live on npm).
+- [x] Both consumers green ON THE PUBLISHED PACKAGE (the §7.3 proofs) — no consumer
+      workspace-links.
+- [x] goldpath `ui/kit` deleted (the dead directory's leftovers removed 2026-09-01 —
+      the checkbox lagged the deed); `ui-standard-v1.md` is a pointer; docs/rfc/README
+      row flipped to implemented.
+- [x] The pilot console (consumer #3, qorpe.apiPortal's admin console) starts from the
+      published package — never from source.
 
 ## Appendix — P0 gap audit (2026-08-06, condensed)
 
