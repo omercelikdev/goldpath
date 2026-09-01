@@ -3,7 +3,15 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
-## [Unreleased]
+## [0.1.0-preview.7] - 2026-09-01
+
+The platform train. Goldpath stops being only a set of packages and becomes a PLATFORM
+(ADR-0012): `Goldpath.Sdk` ships, products declare themselves, and the CLI grows the
+verbs an adopter actually starts with — `goldpath new` (service, gateway, bare),
+`goldpath init`, `goldpath discover`, `goldpath export compose`. Two new Ring B modules
+reach nuget for the first time (Approvals, FileExchange), the console federates its
+sixth module, and every train from this one on carries an SBOM and signed provenance.
+Upgrade guide: `docs/upgrades/0.1.0-preview.7.md`.
 
 ### Added
 - **Goldpath.Approvals** (new Ring B module, core landed 2026-08-18): human approval
@@ -21,8 +29,55 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   Both modules ship database-backed stores on the app's own DbContext
   (`AddGoldpathApprovalModel` / `AddGoldpathFileExchangeModel`, in-memory fallbacks behind
   the same seams) and full composition: manifest keys, `goldpath add feature`, and
-  `dotnet new goldpath-solution --features approvals/fileexchange`. Console federation and
-  the adopter proofs are tracked in the RFCs' open DoD rows (T21/T22).
+  `dotnet new goldpath-solution --features approvals/fileexchange`.
+- **Approvals v2 — the six product-proven ladder rules (RFC accepted, #185).** Rung
+  quorums (`RequiredApprovals`), distinct eyes across the whole chain (`AlreadySigned`),
+  mandatory rejection reasons, withdraw + resubmit with the audit chain
+  (`SupersedesId`), the signatures store seam both stores implement, and the SCOPED
+  engine consuming the scoped outbox publisher; `AddGoldpathApprovalsJobs` adds the
+  5-minute escalation sweep as a standard `IGoldpathJob`.
+- **Approvals joins the console (T21, #200).** The sixth federated module: worklist with
+  quorum numbers, detail sheet with signatures and the numbered trail, decide verbs
+  through the ENGINE under the caller's principal, triage rows and the Awaiting-decision
+  Today card. Admin surface at `/goldpath/admin/approvals` (contract §7.1/R3, frozen verb
+  envelope), six `goldpath_approvals_*` counters tagged by ladder, and the Grafana
+  dashboard JSON under `ops/`.
+- **`Goldpath.Sdk` — Goldpath is a platform (ADR-0012, RFC D1+D2, #142).** Products
+  declare themselves; the ops floor (`AdminSurfaceGuard`, `AdminTenantScope`,
+  `AdminPaging`) ships as the SDK every admin surface builds on.
+- **The CLI an adopter starts with.** `goldpath new service|gateway` (#144) and
+  `goldpath new` bare — the wizard that derives infrastructure from intent (#145),
+  `goldpath init` (#147), `goldpath export compose` — the AppHost stays the only
+  definition (#146), `goldpath discover`, `--help`/`--version` and the verb reference
+  (#153), `--layout clean-architecture` (#143), and the closeout that takes
+  approvals/fileexchange through every jobs rider end to end (#191).
+- **Supply chain on every train (#156).** An SBOM (syft) and signed SLSA provenance ride
+  with every published package; `SECURITY.md` says how to report.
+- **Platform hardening from the product's scars (#177, #186).** Template dev-init
+  advisory lock (two replicas boot once), a PR-time CVE gate, and the dependabot policy:
+  majors are deliberate, never grouped.
+- **Ledger honesty gates (#154).** `ledger-check.sh` compares every claimed issue/PR
+  state against GitHub LIVE; `schema-honesty.sh` gates the schema claims.
+
+### Changed
+- **ServiceDefaults registers the discovery core the per-client handler needs (#197).**
+  `AddServiceDiscovery()` rides the defaults, so a generated app's typed clients resolve
+  without the adopter composing the core by hand (the api-portal pilot's
+  delete-when-fixed workaround dies with this train).
+- **Package document columns declare their own shape (#198).** Ten columns that hold
+  DOCUMENTS (payloads, baselines, audit values, erasure evidence) say `HasMaxLength(-1)`
+  instead of inheriting the conventions' 256 default, which refused or silently truncated
+  real content on every conventions-shaped host — found live by the qorpe.apiPortal
+  pilot as a 22001. Bounded human-text columns say their bound on purpose. One
+  migration: `goldpath db add PackageDocumentColumns`.
+- **The console composes from the published `@qorpe/ui` (#150, #151)** — the family kit
+  on npm, both consoles on the same tokens.
+- Dependency refresh (#192): Mediant 1.4.1, EF Core 10.0.x line, 42 pinned updates —
+  and the templates follow the train's pins (the GM matrix enforces the agreement).
+
+### Fixed
+- **Jobs: the terminal flip recounts the ledger from row stamps (#152)** — a chunk
+  landing during the flip can no longer strand a run in `Running`.
 
 ## [0.1.0-preview.6] - 2026-08-03
 

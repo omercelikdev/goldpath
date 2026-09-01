@@ -23,9 +23,10 @@ not propose anything that contradicts them; changes only via a superseding ADR).
 - Code style: `.editorconfig` + analyzers + `dotnet format`; XML summaries mandatory on public APIs.
 
 ## Status (2026-08-09)
-Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.6` train (the
-operations train: Campaign R1, contract R3, console U6–U9, the housekeeping set) is on
-nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Mockifyr is THE mock system
+Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.7` train (the
+platform train: Goldpath.Sdk + ADR-0012, the adopter CLI verbs, Approvals + FileExchange
+on nuget for the first time, the console's sixth module, SBOM + provenance on every
+train) is on nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Mockifyr is THE mock system
 (foundation §5.1 — no second provider). Phase D shipped the CorPay reference app
 (`samples/corpay`, proven nightly against the published packages). The console phase is
 COMPLETE: U1–U9 met (`docs/rfc/goldpath-console.md`; family standards ui-standard v1.3
