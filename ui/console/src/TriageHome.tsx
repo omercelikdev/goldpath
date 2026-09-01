@@ -29,6 +29,7 @@ const CARD: Record<ModuleName, { label: string; tone: "danger" | "warning" }> = 
   campaign: { label: "Failed campaign items", tone: "warning" },
   notification: { label: "Failed notifications", tone: "danger" },
   archival: { label: "Due to archive", tone: "warning" },
+  approvals: { label: "Awaiting decision", tone: "warning" },
 };
 
 /**

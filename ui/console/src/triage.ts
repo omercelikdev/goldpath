@@ -244,6 +244,24 @@ export async function collectServiceTriage(
     }
   }
 
+  if (present("approvals")) {
+    try {
+      const pending = await client.approvals({ status: ["Pending"], take: 500 });
+      for (const request of pending) {
+        rows.push({
+          service,
+          section: "approvals",
+          tone: "warning",
+          headline: `${request.subject} waits at ${request.pendingRole} (${request.ladder})`,
+          detail: `requested by ${request.requestedBy}`,
+        });
+      }
+      stats.approvals = pending.length;
+    } catch {
+      unreachable("approvals", "the approvals surface");
+    }
+  }
+
   if (present("archival")) {
     try {
       let due = 0;

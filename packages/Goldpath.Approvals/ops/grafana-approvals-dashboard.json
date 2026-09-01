@@ -1,0 +1,58 @@
+{
+  "__comment": "Goldpath.Approvals panel (approvals RFC + v2). Datasource: Prometheus scraping the OTel collector. This board owns the DECISION story: volume in, decisions out, and the escalation/expiry pair as the early warning that a rung is understaffed. The pending queue itself is the console's Approvals panel — a decision list is a worklist, not a graph.",
+  "title": "Goldpath Approvals — decision flow & rung health",
+  "uid": "goldpath-approvals",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "approvals"],
+  "time": { "from": "now-24h", "to": "now" },
+  "templating": {
+    "list": [
+      {
+        "name": "ladder",
+        "type": "query",
+        "datasource": { "type": "prometheus", "uid": "${DS_PROMETHEUS}" },
+        "query": "label_values(goldpath_approvals_requested_total, ladder)",
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Requested vs decided (per hour) — a widening gap is a growing queue",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "increase(goldpath_approvals_requested_total{ladder=~\"$ladder\"}[1h])", "legendFormat": "requested {{ladder}}" },
+        { "expr": "increase(goldpath_approvals_granted_total{ladder=~\"$ladder\"}[1h]) + increase(goldpath_approvals_rejected_total{ladder=~\"$ladder\"}[1h])", "legendFormat": "decided {{ladder}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Escalated / expired (per hour) — an understaffed rung pages HERE first (runbook §2)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "thresholds": { "mode": "absolute", "steps": [ { "color": "green", "value": null }, { "color": "orange", "value": 1 }, { "color": "red", "value": 5 } ] } } },
+      "targets": [
+        { "expr": "increase(goldpath_approvals_escalated_total{ladder=~\"$ladder\"}[1h])", "legendFormat": "escalated {{ladder}}" },
+        { "expr": "increase(goldpath_approvals_expired_total{ladder=~\"$ladder\"}[1h])", "legendFormat": "expired {{ladder}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Grant / reject split (per hour) — a reject spike is a policy or data conversation",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "increase(goldpath_approvals_granted_total{ladder=~\"$ladder\"}[1h])", "legendFormat": "granted {{ladder}}" },
+        { "expr": "increase(goldpath_approvals_rejected_total{ladder=~\"$ladder\"}[1h])", "legendFormat": "rejected {{ladder}}" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Withdrawn (per hour) — requesters changing their minds is signal, not noise",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "increase(goldpath_approvals_withdrawn_total{ladder=~\"$ladder\"}[1h])", "legendFormat": "withdrawn {{ladder}}" }
+      ]
+    }
+  ]
+}

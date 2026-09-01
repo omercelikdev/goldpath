@@ -44,6 +44,13 @@ composed — and stay silent when not.
 State lives behind `IGoldpathApprovalStore`; the in-memory store ships for tests and
 single-node hosts, a database-backed store composes through the seam.
 
+- **Console** — `MapGoldpathApprovalsAdmin()` mounts the admin surface
+  (`/goldpath/admin/approvals`, contract §7.1) and the operations console federates on
+  it: the worklist with the quorum said as a number, the trail, and decide verbs that run
+  the ENGINE unchanged — a refusal answers the rule's name.
+- **Metrics** — the `Goldpath.Approvals` meter counts every lifecycle step per ladder;
+  the Grafana board ships in `ops/grafana-approvals-dashboard.json`.
+
 This is a saga's counterpart, not its competitor: a compensating flow orchestrates
 SYSTEMS and may request an approval as one of its steps; Approvals never drives system
 steps itself (RFC D3).

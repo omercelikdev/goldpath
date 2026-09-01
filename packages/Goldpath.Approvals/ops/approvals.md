@@ -26,3 +26,15 @@ needed the highest authority and did not get it in time. Alarm on expiry count >
 ## Store
 The in-memory store loses state on restart — it is for tests and single-node demos.
 Compose a database-backed `IGoldpathApprovalStore` before production.
+
+## The console panel and the admin surface
+`MapGoldpathApprovalsAdmin()` mounts `/goldpath/admin/approvals` (contract §7.1); the
+operations console federates on it — the worklist with quorum said as `n/m`, the trail,
+and decide verbs that run the ENGINE unchanged (the caller's principal is the decider, so
+four-eyes holds on this surface too). A refusal answers the rule's name verbatim.
+
+## Metrics and the dashboard
+The meter `Goldpath.Approvals` counts requested/granted/rejected/escalated/expired/
+withdrawn per ladder; `grafana-approvals-dashboard.json` beside this file reads them.
+§2 rule of thumb: alert on the escalated/expired pair, not on queue length — the queue is
+the console's job, the PAIR is the staffing signal.

@@ -17,6 +17,12 @@ public sealed class EfApprovalStoreTests : IDisposable
 {
     public sealed class ApprovalsDbContext(DbContextOptions<ApprovalsDbContext> options) : DbContext(options)
     {
+        // SQLite cannot ORDER BY a raw DateTimeOffset column; the family answer (same as
+        // the Bulk/Archival test contexts) is the binary converter convention.
+        protected override void ConfigureConventions(ModelConfigurationBuilder configurationBuilder)
+            => configurationBuilder.Properties<DateTimeOffset>()
+                .HaveConversion<Microsoft.EntityFrameworkCore.Storage.ValueConversion.DateTimeOffsetToBinaryConverter>();
+
         protected override void OnModelCreating(ModelBuilder modelBuilder)
             => modelBuilder.AddGoldpathApprovalModel();
     }
@@ -124,6 +130,23 @@ public sealed class EfApprovalStoreTests : IDisposable
         Assert.Equal(GoldpathApprovalDecisionOutcome.Applied,
             await restarted.DecideAsync(request.Id, "manager-two", "manager", true, "second signature"));
         Assert.Equal(GoldpathApprovalStatus.Granted, (await Reload(request.Id)).Status);
+    }
+
+    [Fact]
+    public async Task Recent_comes_newest_first_and_honors_take_on_the_database_store()
+    {
+        var clock = new FakeTimeProvider(DateTimeOffset.Parse("2026-08-28T09:00:00Z"));
+        var engine = BuildEngine(clock);
+        var first = await engine.RequestAsync("credit-limit", "K26-200", 500_000m, "maker");
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var second = await engine.RequestAsync("credit-limit", "K26-201", 500_000m, "maker");
+        clock.Advance(TimeSpan.FromMinutes(1));
+        var third = await engine.RequestAsync("credit-limit", "K26-202", 500_000m, "maker");
+
+        var store = new GoldpathEfApprovalStore<ApprovalsDbContext>(_provider.GetRequiredService<IServiceScopeFactory>());
+        var recent = await store.GetRecentAsync(2);
+        Assert.Equal([third.Id, second.Id], recent.Select(r => r.Id));
+        _ = first;
     }
 
     [Fact]

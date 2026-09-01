@@ -18,6 +18,9 @@ public interface IGoldpathApprovalStore
     /// <summary>All PENDING requests (the worklist and the escalation sweep read this).</summary>
     Task<IReadOnlyList<GoldpathApprovalRequest>> GetPendingAsync(CancellationToken cancellationToken = default);
 
+    /// <summary>The most recent requests in ANY state, newest first (the console's history view).</summary>
+    Task<IReadOnlyList<GoldpathApprovalRequest>> GetRecentAsync(int take, CancellationToken cancellationToken = default);
+
     /// <summary>Adds a delegation.</summary>
     Task AddDelegationAsync(GoldpathApprovalDelegation delegation, CancellationToken cancellationToken = default);
 
@@ -111,6 +114,7 @@ public sealed class GoldpathApprovalEngine
         };
         request.Trail.Add(new GoldpathApprovalTrailEntry(now, requestedBy, "requested", $"routed to {rung.Role} for {amount}"));
         await _store.AddAsync(request, cancellationToken);
+        GoldpathApprovalsMetrics.CountRequested(ladder.Name);
         await PublishAsync(new GoldpathApprovalRequested(request.Id, ladder.Name, subject, amount, rung.Role), cancellationToken);
         return request;
     }
@@ -157,6 +161,7 @@ public sealed class GoldpathApprovalEngine
             request.Reason = reason;
             request.Trail.Add(new GoldpathApprovalTrailEntry(now, decidedBy, "rejected", reason));
             await _store.UpdateAsync(request, cancellationToken);
+            GoldpathApprovalsMetrics.CountRejected(request.Ladder);
             await PublishAsync(new GoldpathApprovalRejected(request.Id, request.Ladder, request.Subject, decidedBy, reason), cancellationToken);
             return GoldpathApprovalDecisionOutcome.Applied;
         }
@@ -188,6 +193,7 @@ public sealed class GoldpathApprovalEngine
         request.Reason = reason;
         request.Trail.Add(new GoldpathApprovalTrailEntry(now, decidedBy, "granted", reason));
         await _store.UpdateAsync(request, cancellationToken);
+        GoldpathApprovalsMetrics.CountGranted(request.Ladder);
         await PublishAsync(new GoldpathApprovalGranted(request.Id, request.Ladder, request.Subject, decidedBy), cancellationToken);
         return GoldpathApprovalDecisionOutcome.Applied;
     }
@@ -215,6 +221,7 @@ public sealed class GoldpathApprovalEngine
         request.Status = GoldpathApprovalStatus.Withdrawn;
         request.Trail.Add(new GoldpathApprovalTrailEntry(now, requestedBy, "withdrawn", "taken back by the requester"));
         await _store.UpdateAsync(request, cancellationToken);
+        GoldpathApprovalsMetrics.CountWithdrawn(request.Ladder);
         return GoldpathApprovalDecisionOutcome.Applied;
     }
 
@@ -332,6 +339,7 @@ public sealed class GoldpathApprovalEngine
                 request.Status = GoldpathApprovalStatus.Expired;
                 request.Trail.Add(new GoldpathApprovalTrailEntry(now, "system", "expired", $"overdue at top rung {rung.Role}"));
                 await _store.UpdateAsync(request, cancellationToken);
+                GoldpathApprovalsMetrics.CountExpired(request.Ladder);
                 await PublishAsync(new GoldpathApprovalExpired(request.Id, request.Ladder, request.Subject, rung.Role), cancellationToken);
             }
             else
@@ -340,6 +348,7 @@ public sealed class GoldpathApprovalEngine
                 request.PendingSince = now;
                 request.Trail.Add(new GoldpathApprovalTrailEntry(now, "system", "escalated", $"{rung.Role} -> {above.Role}"));
                 await _store.UpdateAsync(request, cancellationToken);
+                GoldpathApprovalsMetrics.CountEscalated(request.Ladder);
                 await PublishAsync(new GoldpathApprovalEscalated(request.Id, request.Ladder, request.Subject, rung.Role, above.Role), cancellationToken);
             }
 
@@ -431,6 +440,17 @@ public sealed class GoldpathInMemoryApprovalStore : IGoldpathApprovalStore
             IReadOnlyList<GoldpathApprovalRequest> pending =
                 _requests.Values.Where(r => r.Status == GoldpathApprovalStatus.Pending).ToList();
             return Task.FromResult(pending);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<GoldpathApprovalRequest>> GetRecentAsync(int take, CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<GoldpathApprovalRequest> recent =
+                _requests.Values.OrderByDescending(r => r.RequestedAt).Take(take).ToList();
+            return Task.FromResult(recent);
         }
     }
 

@@ -150,6 +150,21 @@ public sealed class GoldpathEfApprovalStore<TContext> : IGoldpathApprovalStore
     }
 
     /// <inheritdoc />
+    public async Task<IReadOnlyList<GoldpathApprovalRequest>> GetRecentAsync(int take, CancellationToken cancellationToken = default)
+    {
+        await using var scope = _scopes.CreateAsyncScope();
+        var db = scope.ServiceProvider.GetRequiredService<TContext>();
+        // Server-side ORDER BY + Take is the contract: the table grows unboundedly and
+        // the admin window must not pull it whole. SQLite refuses ORDER BY on a raw
+        // DateTimeOffset column — SQLite consumers apply the family convention
+        // (DateTimeOffsetToBinaryConverter in ConfigureConventions), same as Bulk/Archival.
+        return await db.Set<GoldpathApprovalRequest>().AsNoTracking()
+            .OrderByDescending(r => r.RequestedAt)
+            .Take(take)
+            .ToListAsync(cancellationToken);
+    }
+
+    /// <inheritdoc />
     public async Task AddDelegationAsync(GoldpathApprovalDelegation delegation, CancellationToken cancellationToken = default)
     {
         await using var scope = _scopes.CreateAsyncScope();

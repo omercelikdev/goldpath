@@ -78,6 +78,17 @@ versioning note per H7).
 | GET | `/{id}/audit?take=` | per-campaign audit |
 | POST | `/` (create) · `/{id}/pause` · `/resume` · `/abort` · `/throttle` | `GoldpathAdminResult` |
 
+### approvals — `/goldpath/admin/approvals` (T21 console federation, 2026-08-28)
+| Method | Route | Returns |
+|---|---|---|
+| GET | `/requests?status=&ladder=&take=` · `/requests/{id}` | recent requests (R3 repeats) / detail with trail + signatures |
+| POST | `/requests/{id}/approve` · `/reject` (body: role, reason) | `GoldpathAdminResult` — a refusal's message is the ENGINE rule's name (`FourEyesViolation`, `ReasonRequired`, …) |
+
+Decisions run the engine unchanged: the caller's principal is the decider, so four-eyes,
+distinct-eyes, the rung's role and the mandatory rejection reason all hold on this surface
+exactly as anywhere else. The store is not tenant-scoped (the approvals model predates R1's
+scoping and carries no tenant column), so no `?tenant=` parameter exists to lie with.
+
 ## Freeze mechanics
 
 - The campaign surface carries a route-freeze test (`RouteContractTests`) — the pattern

@@ -29,6 +29,7 @@ public static class GoldpathApprovalsExtensions
         // exam the moment approvals met a broker shape.
         builder.Services.TryAddScoped<GoldpathApprovalEngine>();
         builder.Services.TryAddScoped<GoldpathApprovalEscalationJob>();
+        builder.Services.TryAddSingleton<GoldpathApprovalsAdminService>();
         return builder;
     }
 
