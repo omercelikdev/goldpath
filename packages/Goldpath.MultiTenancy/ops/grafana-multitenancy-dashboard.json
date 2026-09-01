@@ -1,0 +1,104 @@
+{
+  "uid": "goldpath-multitenancy",
+  "title": "Goldpath \u00b7 MultiTenancy",
+  "description": "Tenant resolution honesty: requests that resolved to NO tenant, and write-guard trips (an entity written under the wrong tenant \u2014 each one is a bug talking).",
+  "editable": true,
+  "schemaVersion": 39,
+  "tags": [
+    "goldpath"
+  ],
+  "time": {
+    "from": "now-6h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "datasource",
+        "type": "datasource",
+        "query": "prometheus",
+        "label": "Data source"
+      }
+    ]
+  },
+  "panels": [
+    {
+      "id": 1,
+      "type": "timeseries",
+      "title": "Unresolved tenants / min",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 0,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(goldpath_tenant_unresolved_total[5m])) * 60",
+          "legendFormat": "unresolved",
+          "refId": "A"
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "type": "timeseries",
+      "title": "Write-guard trips / min",
+      "gridPos": {
+        "h": 9,
+        "w": 12,
+        "x": 12,
+        "y": 0
+      },
+      "datasource": {
+        "type": "prometheus",
+        "uid": "${datasource}"
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "short",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "red",
+                "value": 1
+              }
+            ]
+          }
+        },
+        "overrides": []
+      },
+      "targets": [
+        {
+          "expr": "sum(rate(goldpath_tenant_write_guard_trips_total[5m])) * 60",
+          "legendFormat": "guard trips",
+          "refId": "A"
+        }
+      ]
+    }
+  ]
+}

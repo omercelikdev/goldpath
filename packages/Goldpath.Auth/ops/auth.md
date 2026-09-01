@@ -25,3 +25,11 @@ Treat as a stolen-token suspicion until proven otherwise:
 A new endpoint returning 401 "for no reason" IS the system working: secure by default.
 The fix is a conscious decision — a token, or an explicit `[AllowAnonymous]` (which GP1201
 will flag for inventory once analyzer batch 3 ships).
+
+## The dashboard
+
+`ops/grafana-auth-dashboard.json` — two panels over the meter's counters: failures per
+minute (the floor refusing), and tenant-binding rejects per minute (a VALID token asking
+for a foreign tenant — after a client rollout, a spike here is a misissued audience or a
+copy-pasted tenant id, not an attack). Import it as-is; the only variable is the data
+source.
