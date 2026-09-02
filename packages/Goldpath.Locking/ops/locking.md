@@ -26,3 +26,10 @@ longer timeouts convert contention into latency, silently.
 - Redis: lock lifetime is lease-based (auto-extend while the handle lives).
 - Postgres/SqlServer: session-scoped — connection pool exhaustion can masquerade as
   "cannot acquire"; watch pool saturation alongside lock metrics.
+
+## The dashboard
+
+`ops/grafana-locking-dashboard.json` — acquires per minute split by `outcome`
+(a rising `timeout` share is contention speaking before any user notices), and the wait
+histogram's p50/p95. A p95 drifting toward your lock timeout means the next step is a
+timeout cliff, not a slowdown. Import as-is; the only variable is the data source.

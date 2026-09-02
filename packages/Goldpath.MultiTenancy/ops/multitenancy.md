@@ -27,3 +27,10 @@ review flag, and GP0903 (analyzer backlog) will flag filter-dodging queries.
 A sudden `goldpath_tenant_unresolved_total` climb is either a client misconfiguration (header
 dropped after a gateway change) or probing. Split by path: probing hits many paths shallowly;
 misconfiguration hammers few paths deeply.
+
+## The dashboard
+
+`ops/grafana-multitenancy-dashboard.json` — unresolved tenants per minute (the triage
+split above tells misconfiguration from probing) and write-guard trips per minute. The
+guard-trip panel carries a red threshold at ONE: every trip is an entity written under
+the wrong tenant caught in the act — a bug to fix, never a rate to tolerate.
