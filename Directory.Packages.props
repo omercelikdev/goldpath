@@ -48,10 +48,10 @@
     <PackageVersion Include="OpenTelemetry.Instrumentation.Runtime" Version="1.18.0" />
     <PackageVersion Include="xunit" Version="2.9.3" />
     <PackageVersion Include="xunit.runner.visualstudio" Version="2.8.2" />
-    <PackageVersion Include="Quartz" Version="3.19.1" />
-    <PackageVersion Include="Quartz.Extensions.DependencyInjection" Version="3.19.1" />
-    <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.19.1" />
-    <PackageVersion Include="Quartz.Serialization.SystemTextJson" Version="3.19.1" />
+    <PackageVersion Include="Quartz" Version="3.20.0" />
+    <PackageVersion Include="Quartz.Extensions.DependencyInjection" Version="3.20.0" />
+    <PackageVersion Include="Quartz.Extensions.Hosting" Version="3.20.0" />
+    <PackageVersion Include="Quartz.Serialization.SystemTextJson" Version="3.20.0" />
   </ItemGroup>
 
   <!-- EF Core tracks the LTS of each target framework (RFC goldpath-data §4). -->
