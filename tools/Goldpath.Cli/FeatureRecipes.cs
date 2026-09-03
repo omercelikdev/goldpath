@@ -50,6 +50,9 @@ public sealed class RecipePlan
     /// <summary>Markers whose lines are removed from Program.cs (retired fallbacks).</summary>
     public List<string> RemoveFromProgram { get; } = [];
 
+    /// <summary>Namespaces Program.cs must import for the emitted lines to compile (idempotent).</summary>
+    public List<string> Usings { get; } = [];
+
     /// <summary>Domain opt-ins the team decides — printed, never guessed.</summary>
     public List<string> NextSteps { get; } = [];
 }
@@ -77,6 +80,12 @@ public sealed class AppFacts
 
     /// <summary>Whether AddGoldpathAuth is wired (admin surfaces: policy by default, VISIBLE opt-out without).</summary>
     public required bool AuthWired { get; init; }
+
+    /// <summary>
+    /// Whether MapGoldpathConsole is already mapped: the FIRST jobs-riding feature brings
+    /// the operations console with it (exactly as the template does); later ones find it.
+    /// </summary>
+    public bool ConsoleWired { get; init; }
 
     /// <summary>Reads the context facts from the located files.</summary>
     public static AppFacts Read(AppFiles files)
@@ -106,6 +115,7 @@ public sealed class AppFacts
             JobsWired = program.Contains("builder.AddGoldpathJobs<", StringComparison.Ordinal),
             MessagingWired = program.Contains("builder.AddGoldpathMessaging(", StringComparison.Ordinal),
             AuthWired = program.Contains("builder.AddGoldpathAuth(", StringComparison.Ordinal),
+            ConsoleWired = program.Contains("app.MapGoldpathConsole(", StringComparison.Ordinal),
         };
     }
 }
@@ -123,13 +133,93 @@ public static class FeatureRecipes
 {
     /// <summary>The feature names <c>goldpath add feature</c> understands.</summary>
     public static readonly IReadOnlyList<string> Names =
-        ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "approvals", "fileexchange", "archival", "bulk", "notification", "campaign"];
+        ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "approvals", "fileexchange", "archival", "bulk", "notification", "campaign", "outbox"];
+
+    /// <summary>The jobs-riding features — the ones that bring the operations console with them.</summary>
+    private static readonly HashSet<string> JobsRiders = new(StringComparer.Ordinal)
+        { "approvals", "fileexchange", "archival", "bulk", "notification", "campaign" };
 
     /// <summary>Builds the plan for one feature against the app's read context.</summary>
     public static RecipePlan Build(string feature, AppFacts app)
     {
+        var plan = BuildCore(feature, app);
+
+        // The console rides the FIRST jobs-riding feature, exactly as the template composes
+        // it (any operational module → MapGoldpathConsole): a CLI-grown app must not end up
+        // with the admin API and no screen over it. Later riders find it already mapped.
+        if (JobsRiders.Contains(feature) && !app.ConsoleWired)
+        {
+            plan.ApiPackages.Add("Goldpath.Console");
+            plan.Endpoints.Add(app.AuthWired
+                ? "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces"
+                : "app.MapGoldpathConsole(exposeUnsecured: true);      // the console over the surfaces above — visible opt-out, acceptable only behind an authenticating boundary");
+        }
+
+        return plan;
+    }
+
+    private static RecipePlan BuildCore(string feature, AppFacts app)
+    {
         switch (feature)
         {
+            case "outbox":
+                {
+                    // The transactional outbox rides the app's bus. Two shapes: the bus is
+                    // already composed (an init'd brownfield app, a `--broker` template with
+                    // the outbox stripped) → the outbox joins it; no bus → the bus is born
+                    // here with the broker resource, exactly as `--broker rabbitmq` generates.
+                    var plan = new RecipePlan { ManifestKey = "outbox" };
+                    string providerLine = app.DatabaseProvider switch
+                    {
+                        "postgres" => "        outbox.UsePostgres();",
+                        "sqlserver" => "        outbox.UseSqlServer();",
+                        _ => throw new CliFailureException("no EF provider reference found in the Api project — the outbox tables live in the app database and need one."),
+                    };
+                    plan.ApiPackages.Add("Goldpath.Messaging");
+                    plan.Usings.Add("MassTransit");
+                    if (app.MessagingWired)
+                    {
+                        plan.BusLines.Add("    bus.AddGoldpathOutbox<" + app.DbContextName + ">(outbox =>");
+                        plan.BusLines.Add("    {");
+                        plan.BusLines.Add(providerLine);
+                        plan.BusLines.Add("    });");
+                    }
+                    else
+                    {
+                        plan.ApiPackages.Add("MassTransit.RabbitMQ");
+                        plan.AppHostPackages.Add("Aspire.Hosting.RabbitMQ");
+                        plan.Resources.Add("var messaging = builder.AddRabbitMQ(\"messaging\");");
+                        plan.References.Add("    .WithReference(messaging).WaitFor(messaging)");
+                        plan.Registrations.Add("builder.AddGoldpathMessaging(bus =>");
+                        plan.Registrations.Add("{");
+                        plan.Registrations.Add("    // goldpath:features consumers — bus-riding features register here");
+                        plan.Registrations.Add("    bus.AddGoldpathOutbox<" + app.DbContextName + ">(outbox =>");
+                        plan.Registrations.Add("    {");
+                        plan.Registrations.Add(providerLine);
+                        plan.Registrations.Add("    });");
+                        plan.Registrations.Add("    bus.UsingRabbitMq((context, cfg) =>");
+                        plan.Registrations.Add("    {");
+                        plan.Registrations.Add("        if (builder.Configuration.GetConnectionString(\"messaging\") is { } messagingConnection)");
+                        plan.Registrations.Add("        {");
+                        plan.Registrations.Add("            cfg.Host(new Uri(messagingConnection));");
+                        plan.Registrations.Add("        }");
+                        plan.Registrations.Add("");
+                        plan.Registrations.Add("        cfg.ConfigureGoldpathEndpoints(context);");
+                        plan.Registrations.Add("    });");
+                        plan.Registrations.Add("});");
+                    }
+
+                    plan.ModelCalls.Add("        // Transactional outbox/inbox tables (features.outbox in the manifest).");
+                    plan.ModelCalls.Add("        modelBuilder.AddInboxStateEntity();");
+                    plan.ModelCalls.Add("        modelBuilder.AddOutboxMessageEntity();");
+                    plan.ModelCalls.Add("        modelBuilder.AddOutboxStateEntity();");
+                    plan.ManifestLines.Add("  outbox: true");
+                    plan.NextSteps.Add("publish through IIntegrationEventPublisher — events implement IIntegrationEvent and leave in the SAME transaction as the write (never a direct bus publish: GP0401)");
+                    plan.NextSteps.Add("register consumers at the `goldpath:features consumers` anchor inside AddGoldpathMessaging");
+                    plan.NextSteps.Add("configure ConnectionStrings:messaging (the AppHost injects it in Development)");
+                    return plan;
+                }
+
             case "multitenancy":
                 {
                     var plan = new RecipePlan { ManifestKey = "multiTenancy" };

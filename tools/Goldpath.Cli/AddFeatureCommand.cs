@@ -102,6 +102,11 @@ public static class AddFeatureCommand
             program = TextEdits.RemoveLinesContaining(program, marker);
         }
 
+        foreach (var ns in plan.Usings)
+        {
+            program = TextEdits.EnsureUsing(program, ns);
+        }
+
         if (plan.Registrations.Count > 0)
         {
             program = TextEdits.InsertAfterAnchor(program, Anchors.Registrations, plan.Registrations);

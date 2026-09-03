@@ -3,6 +3,25 @@
 All notable changes to the Goldpath packages are documented here.
 Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: SemVer.
 
+## [Unreleased]
+
+### Added
+- **`goldpath add feature outbox`** — the fourteenth recipe, the one schema key the CLI could
+  not compose: births the bus with its RabbitMQ resource when the app has none, joins the
+  existing bus when it has one; the three MassTransit tables join the model; the `using`
+  the template hides behind a preprocessor symbol is written for real.
+- **The console rides the FIRST jobs feature through the CLI** — `goldpath add feature
+  archival|bulk|notification|campaign|approvals|fileexchange` now maps `MapGoldpathConsole`
+  (secured, or the visible opt-out) exactly as the template does; a CLI-grown app no longer
+  ends up with the admin API and no screen over it.
+- **`goldpath new` (wizard) births workers too** — kind, trigger and database asked; the
+  equivalent `goldpath new worker` command printed and delegated to.
+
+### Fixed
+- **`goldpath new` without `-o`** resolves the app root to the template's name directory,
+  so the post-generation `db init` and the first-contract commit run instead of silently
+  skipping (they searched `<cwd>/src` before).
+
 ## [0.1.0-preview.7] - 2026-09-01
 
 The platform train. Goldpath stops being only a set of packages and becomes a PLATFORM

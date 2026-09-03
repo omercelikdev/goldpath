@@ -23,7 +23,8 @@ internal sealed class RecordingPrompter(
     public string Choose(string question, IReadOnlyList<string> choices, string defaultChoice)
     {
         Chooses.Add((question, choices, defaultChoice));
-        return Chooses.Count switch { 1 => database, 2 => auth, _ => layout };
+        // The kind question comes first (after the name); the script answers "solution".
+        return Chooses.Count switch { 1 => "solution", 2 => database, 3 => auth, _ => layout };
     }
 
     public IReadOnlyList<string> ChooseMany(string question, IReadOnlyList<string> choices)
@@ -161,17 +162,20 @@ public class WizardMutationTests
 
         WizardCommand.Run(prompter, new FakeProcessRunner(), TextWriter.Null, TextWriter.Null);
 
-        Assert.Equal(["Solution name (e.g. OrderPlatform)"], prompter.Inputs);
-        Assert.Equal(3, prompter.Chooses.Count);
-        Assert.Equal("Database", prompter.Chooses[0].Question);
-        Assert.Equal(["postgresql", "sqlserver"], prompter.Chooses[0].Choices);
-        Assert.Equal("postgresql", prompter.Chooses[0].Default);
-        Assert.Equal("Authentication", prompter.Chooses[1].Question);
-        Assert.Equal(["openid", "apikey", "none"], prompter.Chooses[1].Choices);
-        Assert.Equal("openid", prompter.Chooses[1].Default);
-        Assert.Equal("Code layout", prompter.Chooses[2].Question);
-        Assert.Equal(["vertical-slice", "clean-architecture"], prompter.Chooses[2].Choices);
-        Assert.Equal("vertical-slice", prompter.Chooses[2].Default);
+        Assert.Equal(["Name (e.g. OrderPlatform, or Billing.Nightly for a worker)"], prompter.Inputs);
+        Assert.Equal(4, prompter.Chooses.Count);
+        Assert.Equal("What are we building?", prompter.Chooses[0].Question);
+        Assert.Equal(["solution", "worker"], prompter.Chooses[0].Choices);
+        Assert.Equal("solution", prompter.Chooses[0].Default);
+        Assert.Equal("Database", prompter.Chooses[1].Question);
+        Assert.Equal(["postgresql", "sqlserver"], prompter.Chooses[1].Choices);
+        Assert.Equal("postgresql", prompter.Chooses[1].Default);
+        Assert.Equal("Authentication", prompter.Chooses[2].Question);
+        Assert.Equal(["openid", "apikey", "none"], prompter.Chooses[2].Choices);
+        Assert.Equal("openid", prompter.Chooses[2].Default);
+        Assert.Equal("Code layout", prompter.Chooses[3].Question);
+        Assert.Equal(["vertical-slice", "clean-architecture"], prompter.Chooses[3].Choices);
+        Assert.Equal("vertical-slice", prompter.Chooses[3].Default);
         var modules = Assert.Single(prompter.ChooseManys);
         Assert.Equal("Which modules does this app need?", modules.Question);
         Assert.Equal(WizardCommand.Modules, modules.Choices);
@@ -236,7 +240,7 @@ public class WizardMutationTests
         var exception = Assert.Throws<CliUsageException>(
             () => WizardCommand.Run(prompter, new FakeProcessRunner(), TextWriter.Null, TextWriter.Null));
 
-        Assert.Equal("the wizard needs a solution name.", exception.Message);
+        Assert.Equal("the wizard needs a name.", exception.Message);
         Assert.Empty(prompter.Chooses);
     }
 }
@@ -465,7 +469,7 @@ public class CliRunnerMutationTests
 
         Assert.Equal(2, exit);
         Assert.StartsWith("── goldpath new (wizard): say what the app DOES", output, StringComparison.Ordinal);
-        Assert.Equal("goldpath: the wizard needs a solution name.\n", error);
+        Assert.Equal("goldpath: the wizard needs a name.\n", error);
     }
 
     [Fact]

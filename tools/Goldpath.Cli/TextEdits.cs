@@ -47,6 +47,28 @@ public static class TextEdits
     public static bool ContainsLine(string text, string marker)
         => text.Contains(marker, StringComparison.Ordinal);
 
+    /// <summary>
+    /// Guarantees <c>using &lt;namespace&gt;;</c> at the top of a source file: after the last
+    /// existing using when there are any, else as the first line. Idempotent — a using
+    /// that is already there (global or local) is never written twice. Recipes that emit
+    /// extension-method calls from a package namespace (MassTransit's bus/outbox
+    /// builders) ride this, because the template's own using lives behind a
+    /// preprocessor symbol the generated app no longer carries.
+    /// </summary>
+    public static string EnsureUsing(string text, string ns)
+    {
+        var lines = SplitLines(text);
+        var wanted = $"using {ns};";
+        if (lines.Any(line => line.Trim() == wanted || line.Trim() == $"global using {ns};"))
+        {
+            return string.Join('\n', lines);
+        }
+
+        var lastUsing = lines.FindLastIndex(line => line.TrimStart().StartsWith("using ", StringComparison.Ordinal) && line.TrimEnd().EndsWith(';'));
+        lines.Insert(lastUsing + 1, wanted);
+        return string.Join('\n', lines);
+    }
+
     private static List<string> SplitLines(string text)
         => [.. text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n')];
 }

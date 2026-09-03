@@ -33,10 +33,39 @@ public static class WizardCommand
     public static int Run(IPrompter prompter, IProcessRunner runner, TextWriter output, TextWriter error)
     {
         output.WriteLine("── goldpath new (wizard): say what the app DOES — the infrastructure is derived, with reasons.");
-        var name = prompter.Input("Solution name (e.g. OrderPlatform)");
+        // The name comes FIRST (a blank one is a usage error before any other question —
+        // the pinned contract), then the kind: the solution (a web head, the walking
+        // skeleton) or the worker (a process with a trigger and no HTTP surface). Service
+        // and gateway heads are grown INTO a solution afterwards, never born here.
+        var name = prompter.Input("Name (e.g. OrderPlatform, or Billing.Nightly for a worker)");
         if (string.IsNullOrWhiteSpace(name))
         {
-            throw new CliUsageException("the wizard needs a solution name.");
+            throw new CliUsageException("the wizard needs a name.");
+        }
+
+        var kind = prompter.Choose("What are we building?", ["solution", "worker"], "solution");
+        if (kind == "worker")
+        {
+            var trigger = prompter.Choose("Worker trigger", ["queue", "schedule", "jobs"], "queue");
+            var workerDb = prompter.Choose("Database", ["postgresql", "sqlserver"], "postgresql");
+            output.WriteLine();
+            output.WriteLine("── the derived shape:");
+            output.WriteLine(trigger switch
+            {
+                "queue" => "   trigger: queue — a broker consumer with the outbox/inbox tables in the worker's database",
+                "schedule" => "   trigger: schedule — a PeriodicTimer batch; no scheduler store, so `goldpath db` has no owner here",
+                _ => "   trigger: jobs — the Goldpath jobs scheduler with its admin surface, runs in the worker's database",
+            });
+            output.WriteLine($"   database: {workerDb}");
+            output.WriteLine();
+            output.WriteLine($"   equivalent command: goldpath new worker -n {name.Trim()} --trigger {trigger} --db {workerDb}");
+            if (!prompter.Confirm("Generate?", defaultAnswer: true))
+            {
+                output.WriteLine("── nothing generated.");
+                return 0;
+            }
+
+            return NewCommand.Run("worker", ["-n", name.Trim(), "--trigger", trigger, "--db", workerDb], runner, output, error);
         }
 
         var answers = new Answers(

@@ -10,10 +10,14 @@ public sealed class FakePrompter(
     string layout = "vertical-slice",
     IReadOnlyList<string>? features = null,
     bool outbox = false,
-    bool generate = true) : IPrompter
+    bool generate = true,
+    string kind = "solution",
+    string trigger = "queue") : IPrompter
 {
     public string Choose(string question, IReadOnlyList<string> choices, string defaultChoice)
-        => question.StartsWith("Database", StringComparison.Ordinal) ? database
+        => question.StartsWith("What are we building", StringComparison.Ordinal) ? kind
+        : question.StartsWith("Worker trigger", StringComparison.Ordinal) ? trigger
+        : question.StartsWith("Database", StringComparison.Ordinal) ? database
         : question.StartsWith("Authentication", StringComparison.Ordinal) ? auth
         : layout;
 
@@ -27,6 +31,45 @@ public sealed class FakePrompter(
 
 public class WizardTests
 {
+    [Fact]
+    public void The_wizard_can_birth_a_worker_through_the_same_new_verb()
+    {
+        var runner = new FakeProcessRunner();
+        var output = new StringWriter();
+
+        var exit = WizardCommand.Run(new FakePrompter("Billing.Nightly", kind: "worker", trigger: "schedule", database: "sqlserver"), runner, output, TextWriter.Null);
+
+        Assert.Equal(0, exit);
+        Assert.Equal(["new", "goldpath-worker", "-n", "Billing.Nightly", "--trigger", "schedule", "--db", "sqlserver"], runner.Calls[0].Arguments);
+        Assert.Contains("equivalent command: goldpath new worker -n Billing.Nightly --trigger schedule --db sqlserver", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("trigger: schedule", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Declining_the_worker_generates_nothing()
+    {
+        var runner = new FakeProcessRunner();
+        Assert.Equal(0, WizardCommand.Run(new FakePrompter("W", kind: "worker", generate: false), runner, new StringWriter(), TextWriter.Null));
+        Assert.Empty(runner.Calls);
+    }
+
+    [Fact]
+    public void The_app_root_follows_the_name_directory_when_o_is_omitted()
+    {
+        var cwd = Directory.CreateTempSubdirectory("goldpath-root-").FullName;
+        try
+        {
+            Assert.Equal("/explicit", NewCommand.ResolveAppRoot(["-n", "Shop", "-o", "/explicit"], cwd));
+            Assert.Equal(cwd, NewCommand.ResolveAppRoot(["-n", "Shop"], cwd));   // nothing generated yet → cwd
+            Directory.CreateDirectory(Path.Combine(cwd, "Shop"));
+            Assert.Equal(Path.Combine(cwd, "Shop"), NewCommand.ResolveAppRoot(["-n", "Shop"], cwd));   // preferNameDirectory's home
+        }
+        finally
+        {
+            Directory.Delete(cwd, recursive: true);
+        }
+    }
+
     private static WizardCommand.Plan Derive(IReadOnlyList<string>? features = null, bool outbox = false,
         string db = "postgresql", string auth = "openid", string layout = "vertical-slice")
         => WizardCommand.Derive(new WizardCommand.Answers("Shop", db, auth, layout, features ?? [], outbox));
