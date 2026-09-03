@@ -1,0 +1,42 @@
+{
+  "__comment": "The console has no meter of its own — it is a client of the admin contract — so its board reads ASP.NET Core's request meter on the console and admin routes (exported by Goldpath.ServiceDefaults). Datasource: Prometheus scraping the OTel collector.",
+  "title": "Goldpath Console — operators' traffic on the management head",
+  "uid": "goldpath-console",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "console"],
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Admin-surface requests (per s) by route — what operators are doing",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum(rate(http_server_request_duration_seconds_count{http_route=~\"/goldpath/admin/.*\"}[5m])) by (http_route)", "legendFormat": "{{http_route}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Refusals (per 5m) — 401 is a missing principal, 403 a missing ops role, 400 an unscoped tenant (runbook §2)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(increase(http_server_request_duration_seconds_count{http_route=~\"/goldpath/(admin|console)/.*\", http_response_status_code=\"401\"}[5m]))", "legendFormat": "401" },
+        { "expr": "sum(increase(http_server_request_duration_seconds_count{http_route=~\"/goldpath/(admin|console)/.*\", http_response_status_code=\"403\"}[5m]))", "legendFormat": "403" },
+        { "expr": "sum(increase(http_server_request_duration_seconds_count{http_route=~\"/goldpath/admin/.*\", http_response_status_code=\"400\"}[5m]))", "legendFormat": "400" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Admin read latency p95 (s) — the console can never be faster than this",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket{http_route=~\"/goldpath/admin/.*\", http_request_method=\"GET\"}[5m])) by (le))", "legendFormat": "admin GET p95" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Console page serves (per 5m) — sessions opening; a 5xx here is the missing-assets failure (runbook §1)",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(increase(http_server_request_duration_seconds_count{http_route=~\"/goldpath/console/?\", http_response_status_code=\"200\"}[5m]))", "legendFormat": "served" },
+        { "expr": "sum(increase(http_server_request_duration_seconds_count{http_route=~\"/goldpath/console/.*\", http_response_status_code=~\"5..\"}[5m]))", "legendFormat": "5xx" }
+      ]
+    }
+  ]
+}

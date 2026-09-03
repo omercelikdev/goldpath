@@ -84,7 +84,13 @@ public static class GoldpathServiceDefaultsExtensions
                 // covers every module meter, present and future; MassTransit covers
                 // broker consume/fault when messaging is wired (a no-op otherwise).
                 .AddMeter("Goldpath.*")
-                .AddMeter("MassTransit"))
+                .AddMeter("MassTransit")
+                // The data floor's signals (Data ops pack, 2026-09-03): EF Core's meter
+                // (queries, saved changes, active contexts, cache hits, concurrency and
+                // execution-strategy failures) and Npgsql's pool meter. No-ops when the
+                // app composes neither — a subscription costs nothing without a meter.
+                .AddMeter("Microsoft.EntityFrameworkCore")
+                .AddMeter("Npgsql"))
             .WithTracing(tracing =>
             {
                 tracing

@@ -63,11 +63,12 @@ Adds to the ServiceDefaults baseline dashboard: request rate by API version (dep
 traffic panel — "who still calls v1"), page-size distribution. Runbook: version deprecation
 procedure (headers → comms → sunset), cursor-invalid (400) spike triage.
 
-**What ships today (corrected 2026-08-09):** the SIGNALS above are real — ASP.NET Core's request meters reach OTel through ServiceDefaults — but
-this package ships **no `ops/` directory**: no Grafana JSON, no runbook of its own. The
-floor's operational pack lives in `Goldpath.ServiceDefaults/ops/` (dashboard-and-alerts,
-runbook, central-logging), and that is what an adopter gets today. The per-package pack
-described above is NOT packaged; recorded as open thread **T17** with its trigger.
+**Shipped 2026-09-03 (T17):** `ops/api-defaults.md` — deprecated-version traffic as a
+PromQL over `http_route` (the version is in the route template), the deprecation procedure
+(headers → comms → sunset at a train boundary), cursor-invalid spike triage, the
+problem-details discipline. No board of its own on purpose: the two queries belong in the
+ServiceDefaults baseline board. The page-size distribution panel is not a meter anyone
+ships and is not claimed.
 
 ## 7. Test Plan
 - Unit: cursor codec round-trip + tamper → `TryDecode=false`; `PageRequest` clamping
