@@ -14,7 +14,7 @@ public record ApprovePaymentInstructionCommand(long Id) : ICommand<Result<long>>
 /// instruction — then the same one-transaction execute path as submit (bank receipt,
 /// Executed flip, outboxed event). The approver lands on the row AND in the audit rows.
 /// </summary>
-public class ApprovePaymentInstructionHandler(Orders.OrdersDbContext db, ICoreBankingClient coreBanking, IPublishEndpoint publisher, IUserContext user)
+public class ApprovePaymentInstructionHandler(Orders.OrdersDbContext db, ICoreBankingClient coreBanking, IIntegrationEventPublisher publisher, IUserContext user)
     : ICommandHandler<ApprovePaymentInstructionCommand, Result<long>>
 {
     public async ValueTask<Result<long>> Handle(ApprovePaymentInstructionCommand request, CancellationToken cancellationToken)
@@ -46,7 +46,7 @@ public class ApprovePaymentInstructionHandler(Orders.OrdersDbContext db, ICoreBa
         await using var transaction = await db.Database.BeginTransactionAsync(cancellationToken);
         instruction.ExecutionReceipt = await coreBanking.ExecuteAsync(instruction, cancellationToken);
         instruction.Status = PaymentStatus.Executed;
-        await publisher.Publish(new PaymentExecuted(instruction.Id, instruction.Reference, instruction.Amount, instruction.Currency), cancellationToken);
+        await publisher.PublishAsync(new PaymentExecuted(instruction.Id, instruction.Reference, instruction.Amount, instruction.Currency), cancellationToken);
         await db.SaveChangesAsync(cancellationToken);
         await transaction.CommitAsync(cancellationToken);
 

@@ -209,49 +209,15 @@ public class BreakerFourEyesStateMachineTests : IDisposable
     }
 }
 
-/// <summary>Minimal IPublishEndpoint local to the breaker suite: records, ignores observers.</summary>
-internal sealed class BreakerPublisher : IPublishEndpoint
+/// <summary>The publish SEAM's test double (GP0404): records what the handler published.</summary>
+internal sealed class BreakerPublisher : IIntegrationEventPublisher
 {
     public List<object> Published { get; } = [];
 
-    public Task Publish<T>(T message, CancellationToken cancellationToken = default) where T : class
+    public Task PublishAsync<TEvent>(TEvent integrationEvent, CancellationToken cancellationToken = default)
+        where TEvent : class, IIntegrationEvent
     {
-        Published.Add(message);
+        Published.Add(integrationEvent);
         return Task.CompletedTask;
     }
-
-    public Task Publish<T>(T message, IPipe<PublishContext<T>> publishPipe, CancellationToken cancellationToken = default) where T : class
-        => Publish(message, cancellationToken);
-
-    public Task Publish<T>(T message, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default) where T : class
-        => Publish(message, cancellationToken);
-
-    public Task Publish(object message, CancellationToken cancellationToken = default)
-    {
-        Published.Add(message);
-        return Task.CompletedTask;
-    }
-
-    public Task Publish(object message, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default)
-        => Publish(message, cancellationToken);
-
-    public Task Publish(object message, Type messageType, CancellationToken cancellationToken = default)
-        => Publish(message, cancellationToken);
-
-    public Task Publish(object message, Type messageType, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default)
-        => Publish(message, cancellationToken);
-
-    public Task Publish<T>(object values, CancellationToken cancellationToken = default) where T : class
-    {
-        Published.Add(values);
-        return Task.CompletedTask;
-    }
-
-    public Task Publish<T>(object values, IPipe<PublishContext<T>> publishPipe, CancellationToken cancellationToken = default) where T : class
-        => Publish<T>(values, cancellationToken);
-
-    public Task Publish<T>(object values, IPipe<PublishContext> publishPipe, CancellationToken cancellationToken = default) where T : class
-        => Publish<T>(values, cancellationToken);
-
-    public ConnectHandle ConnectPublishObserver(IPublishObserver observer) => throw new NotSupportedException();
 }

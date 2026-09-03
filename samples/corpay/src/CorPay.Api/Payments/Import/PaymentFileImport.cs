@@ -29,7 +29,7 @@ public sealed class PaymentFileRow
 /// the chunk's batched save (GP1502: no SaveChanges here). Throwing sends the row to the
 /// repair queue; a reference that already executed is replay evidence, not a re-pay.
 /// </summary>
-public sealed class PaymentFileRowHandler(Orders.OrdersDbContext db, ICoreBankingClient coreBanking, IPublishEndpoint publisher)
+public sealed class PaymentFileRowHandler(Orders.OrdersDbContext db, ICoreBankingClient coreBanking, IIntegrationEventPublisher publisher)
     : IGoldpathBulkRowHandler<PaymentFileRow>
 {
     /// <inheritdoc />
@@ -63,7 +63,7 @@ public sealed class PaymentFileRowHandler(Orders.OrdersDbContext db, ICoreBankin
         instruction.ExecutionReceipt = await coreBanking.ExecuteAsync(instruction, cancellationToken);
         instruction.Status = PaymentStatus.Executed;
         db.Set<PaymentInstruction>().Add(instruction);
-        await publisher.Publish(
+        await publisher.PublishAsync(
             new PaymentExecuted(instruction.Id, instruction.Reference, instruction.Amount, instruction.Currency), cancellationToken);
         // the chunk's batched SaveChanges persists the instruction, its audit rows AND the outbox row together
     }
