@@ -19,3 +19,4 @@ Statuses: `proposed | accepted | superseded-by-XXXX`.
 | [0010](ADR-0010-human-gates-are-fixed.md) | Human gates are fixed | accepted |
 | [0011](ADR-0011-runtime-ai-is-an-opt-in-module.md) | Runtime AI is an opt-in module — the core stays AI-free | accepted |
 | [0012](ADR-0012-goldpath-is-a-platform.md) | Goldpath is a platform — product modules ride the published core | accepted |
+| [0013](ADR-0013-messaging-bus-is-a-swappable-engine.md) | The message bus is a swappable engine behind a Goldpath-owned seam (scoped amendment of 0003) | accepted |

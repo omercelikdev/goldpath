@@ -2,8 +2,10 @@
 
 ## Project
 AI-native, spec-driven enterprise .NET accelerator (a golden path; NOT a framework).
-Conceptual grounding: `docs/strategy/foundation.md`. Constitution: `docs/adr/` (10 ADRs — do
-not propose anything that contradicts them; changes only via a superseding ADR).
+Conceptual grounding: `docs/strategy/foundation.md`. Constitution: `docs/adr/` (13 ADRs — do
+not propose anything that contradicts them; changes only via a superseding ADR. ADR-0013 is
+the ONE scoped exception to ADR-0003: the message bus is a swappable engine behind a
+Goldpath-owned seam).
 
 ## Language rule
 - Docs, code, identifiers, XML docs, commits, PRs: ENGLISH
