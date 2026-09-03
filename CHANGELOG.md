@@ -77,6 +77,11 @@ Upgrade guide: `docs/upgrades/0.1.0-preview.7.md`.
   majors are deliberate, never grouped.
 - **Ledger honesty gates (#154).** `ledger-check.sh` compares every claimed issue/PR
   state against GitHub LIVE; `schema-honesty.sh` gates the schema claims.
+- **GP0404 — the publish seam (#159, `Goldpath.Analyzers`).** Application code injecting
+  MassTransit's `IPublishEndpoint` is an ERROR; publish through
+  `IIntegrationEventPublisher` so a transport change never edits a handler (the
+  messaging-exit RFC's first step). The one analyzer on this train that can turn an
+  adopter's build red — the swap is one line per handler; see the upgrade guide.
 
 ### Changed
 - **ServiceDefaults registers the discovery core the per-client handler needs (#197).**

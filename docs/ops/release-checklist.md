@@ -12,7 +12,9 @@ only after that PR merges green.
 - [ ] Mutation scores current for every package whose engine paths changed since the
       last release. Hosted-fit ten: nightly. The big six (Jobs, Archival, Bulk,
       Notification, Campaign, Caching): `mutation-heavy.yml` dispatch when time allows,
-      otherwise the LOCAL run is authoritative (`scripts/mutation-gate.sh <pkg>`).
+      otherwise the LOCAL run is authoritative (`scripts/mutation-gate.sh Goldpath.<Package>` —
+      the FULL config name; the script now refuses a name that matches no config, because
+      `mutation-gate.sh Jobs` once ran nothing and printed GREEN).
 - [ ] Bench reference numbers re-measured (`bench.yml` dispatch) IF any engine path
       changed; ops docs updated from the run.
 

@@ -22,7 +22,7 @@ public record SubmitPaymentInstructionCommand(
 /// Client retries ride the HTTP Idempotency-Key middleware (same key → same instruction,
 /// ONE execution); the per-tenant duplicate-reference check is the belt under that suspender.
 /// </summary>
-public partial class SubmitPaymentInstructionHandler(Orders.OrdersDbContext db, ICoreBankingClient coreBanking, IPublishEndpoint publisher)
+public partial class SubmitPaymentInstructionHandler(Orders.OrdersDbContext db, ICoreBankingClient coreBanking, IIntegrationEventPublisher publisher)
     : ICommandHandler<SubmitPaymentInstructionCommand, Result<long>>
 {
     private static readonly string[] Currencies = ["TRY", "EUR", "USD"];
@@ -70,7 +70,7 @@ public partial class SubmitPaymentInstructionHandler(Orders.OrdersDbContext db, 
 
         instruction.ExecutionReceipt = await coreBanking.ExecuteAsync(instruction, cancellationToken);
         instruction.Status = PaymentStatus.Executed;
-        await publisher.Publish(new PaymentExecuted(instruction.Id, instruction.Reference, instruction.Amount, instruction.Currency), cancellationToken);
+        await publisher.PublishAsync(new PaymentExecuted(instruction.Id, instruction.Reference, instruction.Amount, instruction.Currency), cancellationToken);
         await db.SaveChangesAsync(cancellationToken);           // Executed flip + outbox row
         await transaction.CommitAsync(cancellationToken);
 

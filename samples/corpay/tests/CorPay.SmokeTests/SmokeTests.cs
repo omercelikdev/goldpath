@@ -59,6 +59,24 @@ public class SmokeTests
         // cluster boundary is the guard) answers the PAGE, unlike the API's 401 above.
         var internalConsole = await eodWorker.GetAsync("/goldpath/console/", timeout.Token);
         Assert.Equal(System.Net.HttpStatusCode.OK, internalConsole.StatusCode);
+
+        // T1 — the ADOPTER-shaped console proof: the page this head serves is the real
+        // bundle (the package refuses to pack an empty console), and the frozen admin
+        // contract behind it answers through THIS head — the fleet list names the EOD
+        // scheduler and its status carries the scheduler's own state. This is what the
+        // console's capability probe reads before it lights the Jobs module.
+        var page = await internalConsole.Content.ReadAsStringAsync(timeout.Token);
+        Assert.Contains("<script", page, StringComparison.Ordinal);
+        Assert.Contains("assets/", page, StringComparison.Ordinal);
+
+        var fleets = await eodWorker.GetFromJsonAsync<JsonElement>("/goldpath/admin/jobs/fleets", timeout.Token);
+        Assert.Equal(JsonValueKind.Array, fleets.ValueKind);
+        var fleetName = fleets.EnumerateArray().First().GetProperty("schedulerName").GetString();
+        Assert.False(string.IsNullOrEmpty(fleetName));
+
+        var status = await eodWorker.GetFromJsonAsync<JsonElement>($"/goldpath/admin/jobs/fleets/{fleetName}/status", timeout.Token);
+        Assert.True(status.TryGetProperty("schedulerName", out var scheduler));
+        Assert.False(string.IsNullOrEmpty(scheduler.GetString()));
     }
 
     private static async Task WaitUntilAsync(Func<Task<bool>> condition, CancellationToken cancellationToken)

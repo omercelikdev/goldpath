@@ -15,6 +15,12 @@ if [ -d "$HOME/.dotnet/sdk" ]; then
 fi
 
 cd "$ROOT"
+# A package argument that matches no config is a typo, and a typo must not print GREEN:
+# `mutation-gate.sh Jobs` (config: Goldpath.Jobs) once ran nothing and reported a pass.
+if [ $# -ge 1 ] && [ ! -f "stryker/$1.json" ]; then
+  echo "── MUTATION GATE: no config stryker/$1.json — package names are Goldpath.<Name>; nothing ran."
+  exit 2
+fi
 FAILED=()
 for cfg in stryker/*.json; do
   name=$(basename "$cfg" .json)
