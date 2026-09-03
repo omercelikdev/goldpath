@@ -27,13 +27,13 @@ Goldpath-owned seam).
 ## Status (2026-09-01)
 Phases 0–1 and the hardening set (H1–H8) are complete; the `0.1.0-preview.7` train (the
 platform train: Goldpath.Sdk + ADR-0012, the adopter CLI verbs, Approvals + FileExchange
-on nuget for the first time, the console's sixth module, SBOM + provenance on every
+on nuget for the first time, the console's sixth module (a seventh, File rails, landed 2026-09-03), SBOM + provenance on every
 train) is on nuget.org (plus `specdrift` 0.4.2 as tool/MCP/Docker/Action). Mockifyr is THE mock system
 (foundation §5.1 — no second provider). Phase D shipped the CorPay reference app
 (`samples/corpay`, proven nightly against the published packages). The console phase is
 COMPLETE: U1–U9 met (`docs/rfc/goldpath-console.md`; family standards ui-standard v1.3
 §7–§9 — one visual family with qorpe/mockifyr), the admin contract is at Revision R3
-(repeatable OR filters), and the console smoke (28 journeys + axe) drives three real
+(repeatable OR filters), and the console smoke (29 journeys + axe) drives three real
 apps and the app-SERVED console. Steps 1–5 of `docs/strategy/master-plan-2026-08.md` are DONE, and so is 6.0: the family UI
 kit is extracted to [qorpe/ui](https://github.com/qorpe/ui), published to npm through OIDC
 trusted publishing, with BOTH consoles running on the published package. The **finalize set

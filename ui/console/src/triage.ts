@@ -262,6 +262,27 @@ export async function collectServiceTriage(
     }
   }
 
+  if (present("fileexchange")) {
+    try {
+      let quarantined = 0;
+      for (const rail of await client.fileRails()) {
+        quarantined += rail.quarantineDepth;
+        if (rail.quarantineDepth > 0) {
+          rows.push({
+            service,
+            section: "fileexchange",
+            tone: "warning",
+            headline: `${rail.quarantineDepth} row${rail.quarantineDepth === 1 ? "" : "s"} in quarantine on ${rail.name}`,
+            detail: "each carries its reason — a rising count on one rail is a counterparty format drift",
+          });
+        }
+      }
+      stats.fileexchange = quarantined;
+    } catch {
+      unreachable("fileexchange", "the file-rail surface");
+    }
+  }
+
   if (present("archival")) {
     try {
       let due = 0;

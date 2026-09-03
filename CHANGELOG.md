@@ -6,6 +6,19 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 ## [Unreleased]
 
 ### Added
+- **`Goldpath.FileExchange` admin surface + the console's seventh module** (open-threads T22)
+  — `MapGoldpathFileExchangeAdmin()` mounts `/goldpath/admin/fileexchange` (contract §7.1,
+  READ-ONLY: `/rails` with live counts, `/files` newest-archive-first, `/quarantine` with each
+  row's reason and age; R3 repeats; file names ride the query). The console gains "File rails"
+  (rails, files, the quarantine sheet), a Today card ("Rows in quarantine") and triage rows;
+  the `Goldpath.FileExchange` meter (files received/rejected, rows applied/quarantined/
+  duplicate, per rail) and its Grafana board ship with the package. The reads ride a new
+  `IGoldpathFileLedgerQueries` seam both shipped ledgers implement; a custom ledger without it
+  is refused at startup in words. The templates and `goldpath add feature fileexchange` map
+  the surface at the next train boundary (they may only consume PUBLISHED API — the
+  release checklist carries the line); the console smoke host proves it against source now.
+  **[schema]** `GoldpathFileQuarantine.QuarantinedAt` and `GoldpathFileArchive.ArchivedAt`
+  columns join the ledger model — one additive migration for adopters on the EF ledger.
 - **Worker template concept parity** (open-threads T25, decided 2026-09-03) — `goldpath new
   worker` gains `--auth openid|apikey|none` for the MANAGEMENT head (the jobs admin surface
   and the console now sit behind the ops floor, or carry the visible `exposeUnsecured`

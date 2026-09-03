@@ -89,10 +89,27 @@ distinct-eyes, the rung's role and the mandatory rejection reason all hold on th
 exactly as anywhere else. The store is not tenant-scoped (the approvals model predates R1's
 scoping and carries no tenant column), so no `?tenant=` parameter exists to lie with.
 
+### fileexchange — `/goldpath/admin/fileexchange` (T22 console federation, 2026-09-03; read-only)
+| Method | Route | Returns |
+|---|---|---|
+| GET | `/rails` | every declared rail with live counts (files archived, quarantine depth, last archive) — the probe root answers `[]`-shaped even before a file arrives |
+| GET | `/files?rail=&take=` | recent files, newest archive first (in-flight files first); R3 repeats on `rail` |
+| GET | `/quarantine?rail=&file=&take=` | quarantined rows, oldest first, with the reason and when they FIRST quarantined (an upsert on reprocess keeps the age); R3 repeats on both. File names carry dots and slashes, so they ride the QUERY, never the path |
+
+READ-ONLY by construction, like notification: a file arrives through the composed transport
+and its pick-up job, and re-delivering it IS the reprocess (the engine dedups on the
+`(rail, file, line)` key) — a console verb that "reprocessed" without the file's bytes would
+only pretend. The reads ride a separate `IGoldpathFileLedgerQueries` seam both shipped ledgers
+implement; a custom ledger without it makes `MapGoldpathFileExchangeAdmin` refuse at STARTUP
+with the teaching text. Not tenant-scoped (the ledger carries no tenant column), so no
+`?tenant=` parameter exists to lie with.
+
 ## Freeze mechanics
 
 - The campaign surface carries a route-freeze test (`RouteContractTests`) — the pattern
-  any surface adopts when the UI starts depending on it.
+  any surface adopts when the UI starts depending on it. The approvals and fileexchange
+  surfaces freeze through their endpoint tests over real HTTP (`ApprovalAdminEndpointsTests`,
+  `FileExchangeAdminTests`).
 - Breaking fixes applied at freeze time (cheap now, expensive after the UI):
   campaign `/{id}/failed-items` → `/{id}/failures`; `take` clamp made uniform across all
   five modules (was jobs/archival-only).

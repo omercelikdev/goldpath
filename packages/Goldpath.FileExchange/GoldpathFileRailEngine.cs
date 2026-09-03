@@ -87,11 +87,13 @@ public sealed class GoldpathFileRailEngine
         if (rail.ValidateFileCore(lines) is { } fileReason)
         {
             _logger.LogWarning("Rail {Rail} rejected file {File}: {Reason}", rail.Name, file, fileReason);
+            GoldpathFileExchangeMetrics.CountFileRejected(rail.Name);
             await PublishAsync(new GoldpathFileRejected(rail.Name, file, fileReason), cancellationToken);
             return new GoldpathFileRailResult(rail.Name, file, fileReason, 0, 0, []);
         }
 
         var dataRows = lines.Count - rail.HeaderLines;
+        GoldpathFileExchangeMetrics.CountFileReceived(rail.Name);
         await PublishAsync(new GoldpathFileReceived(rail.Name, file, dataRows), cancellationToken);
 
         var processed = 0;
@@ -124,6 +126,7 @@ public sealed class GoldpathFileRailEngine
         }
 
         await _ledger.MarkArchivedAsync(rail.Name, file, cancellationToken);
+        GoldpathFileExchangeMetrics.CountRows(rail.Name, processed, quarantined.Count, skipped);
         await PublishAsync(new GoldpathFileIngested(rail.Name, file, processed, skipped, quarantined.Count), cancellationToken);
         return new GoldpathFileRailResult(rail.Name, file, null, processed, skipped, quarantined);
     }
@@ -134,12 +137,21 @@ public sealed class GoldpathFileRailEngine
 }
 
 /// <summary>In-memory ledger: tests and single-node hosts; database ledgers compose via the seam.</summary>
-public sealed class GoldpathInMemoryFileLedger : IGoldpathFileLedger
+public sealed class GoldpathInMemoryFileLedger : IGoldpathFileLedger, IGoldpathFileLedgerQueries
 {
     private readonly object _gate = new();
+    private readonly TimeProvider _clock;
     private readonly HashSet<(string Rail, string File, int Line)> _processed = [];
-    private readonly Dictionary<(string Rail, string File, int Line), string> _quarantine = [];
-    private readonly HashSet<(string Rail, string File)> _archived = [];
+    private readonly Dictionary<(string Rail, string File, int Line), (string Reason, DateTimeOffset At)> _quarantine = [];
+    private readonly Dictionary<(string Rail, string File), DateTimeOffset> _archived = [];
+
+    /// <summary>Creates the ledger on the system clock.</summary>
+    public GoldpathInMemoryFileLedger() : this(TimeProvider.System)
+    {
+    }
+
+    /// <summary>Creates the ledger on <paramref name="clock"/> (tests pin the quarantine age).</summary>
+    public GoldpathInMemoryFileLedger(TimeProvider clock) => _clock = clock;
 
     /// <inheritdoc />
     public Task<bool> IsProcessedAsync(string rail, string file, int line, CancellationToken cancellationToken = default)
@@ -166,7 +178,10 @@ public sealed class GoldpathInMemoryFileLedger : IGoldpathFileLedger
     {
         lock (_gate)
         {
-            _quarantine[(rail, file, line)] = reason;
+            // Upsert keeps the FIRST quarantine time: the age an operator triages is how long
+            // the row has been waiting, not how recently the same failure repeated.
+            var at = _quarantine.TryGetValue((rail, file, line), out var existing) ? existing.At : _clock.GetUtcNow();
+            _quarantine[(rail, file, line)] = (reason, at);
         }
 
         return Task.CompletedTask;
@@ -191,7 +206,7 @@ public sealed class GoldpathInMemoryFileLedger : IGoldpathFileLedger
             IReadOnlyList<GoldpathQuarantinedRow> rows = _quarantine
                 .Where(kv => kv.Key.Rail == rail && kv.Key.File == file)
                 .OrderBy(kv => kv.Key.Line)
-                .Select(kv => new GoldpathQuarantinedRow(kv.Key.Rail, kv.Key.File, kv.Key.Line, kv.Value))
+                .Select(kv => new GoldpathQuarantinedRow(kv.Key.Rail, kv.Key.File, kv.Key.Line, kv.Value.Reason))
                 .ToList();
             return Task.FromResult(rows);
         }
@@ -202,9 +217,53 @@ public sealed class GoldpathInMemoryFileLedger : IGoldpathFileLedger
     {
         lock (_gate)
         {
-            _archived.Add((rail, file));
+            _archived.TryAdd((rail, file), _clock.GetUtcNow());
         }
 
         return Task.CompletedTask;
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<GoldpathFileInfo>> ListFilesAsync(string? rail, int take, CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            var keys = _archived.Keys
+                .Concat(_quarantine.Keys.Select(k => (k.Rail, k.File)))
+                .Concat(_processed.Select(k => (k.Rail, k.File)))
+                .Where(k => rail is null || string.Equals(k.Rail, rail, StringComparison.OrdinalIgnoreCase))
+                .Distinct()
+                .ToList();
+            IReadOnlyList<GoldpathFileInfo> files = keys
+                .Select(k => new GoldpathFileInfo(
+                    k.Rail,
+                    k.File,
+                    _processed.Count(p => p.Rail == k.Rail && p.File == k.File),
+                    _quarantine.Keys.Count(q => q.Rail == k.Rail && q.File == k.File),
+                    _archived.ContainsKey(k),
+                    _archived.TryGetValue(k, out var at) ? at : null))
+                .OrderByDescending(f => f.ArchivedAt ?? DateTimeOffset.MaxValue)   // in-flight (unarchived) files first, then newest archive
+                .ThenBy(f => f.Rail, StringComparer.Ordinal).ThenBy(f => f.File, StringComparer.Ordinal)
+                .Take(take)
+                .ToList();
+            return Task.FromResult(files);
+        }
+    }
+
+    /// <inheritdoc />
+    public Task<IReadOnlyList<GoldpathFileQuarantineInfo>> ListQuarantineAsync(string? rail, int take, CancellationToken cancellationToken = default)
+    {
+        lock (_gate)
+        {
+            IReadOnlyList<GoldpathFileQuarantineInfo> rows = _quarantine
+                .Where(kv => rail is null || string.Equals(kv.Key.Rail, rail, StringComparison.OrdinalIgnoreCase))
+                // Same tie-break as the database ledger: age, then rail, file, line — one
+                // order whichever ledger the app composed.
+                .OrderBy(kv => kv.Value.At).ThenBy(kv => kv.Key.Rail, StringComparer.Ordinal).ThenBy(kv => kv.Key.File, StringComparer.Ordinal).ThenBy(kv => kv.Key.Line)
+                .Take(take)
+                .Select(kv => new GoldpathFileQuarantineInfo(kv.Key.Rail, kv.Key.File, kv.Key.Line, kv.Value.Reason, kv.Value.At))
+                .ToList();
+            return Task.FromResult(rows);
+        }
     }
 }

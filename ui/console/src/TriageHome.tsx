@@ -30,6 +30,7 @@ const CARD: Record<ModuleName, { label: string; tone: "danger" | "warning" }> = 
   notification: { label: "Failed notifications", tone: "danger" },
   archival: { label: "Due to archive", tone: "warning" },
   approvals: { label: "Awaiting decision", tone: "warning" },
+  fileexchange: { label: "Rows in quarantine", tone: "warning" },
 };
 
 /**

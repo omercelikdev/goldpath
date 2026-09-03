@@ -9,8 +9,8 @@ export interface AdminClientOptions {
   fetcher?: typeof fetch;
 }
 
-/** The six module surfaces of the frozen contract. */
-export const MODULES = ["jobs", "archival", "bulk", "notification", "campaign", "approvals"] as const;
+/** The seven module surfaces of the frozen contract. */
+export const MODULES = ["jobs", "archival", "bulk", "notification", "campaign", "approvals", "fileexchange"] as const;
 export type ModuleName = (typeof MODULES)[number];
 
 /**
@@ -25,6 +25,7 @@ const PROBE: Record<ModuleName, string> = {
   notification: "/goldpath/admin/notification/templates",
   campaign: "/goldpath/admin/campaign/",
   approvals: "/goldpath/admin/approvals/requests",
+  fileexchange: "/goldpath/admin/fileexchange/rails",
 };
 
 /**
@@ -383,6 +384,34 @@ export interface ApprovalRequestDetail {
   request: ApprovalRequestInfo;
   trail: ApprovalTrailEntry[];
   signatures: ApprovalSignature[];
+}
+
+/** One declared file rail with its live counts (the file-exchange landing view). */
+export interface FileRailInfo {
+  name: string;
+  headerLines: number;
+  filesArchived: number;
+  quarantineDepth: number;
+  lastArchivedAt?: string | null;
+}
+
+/** One file's run outcome: rows applied, rows waiting in quarantine, the archive mark. */
+export interface FileInfo {
+  rail: string;
+  file: string;
+  processedRows: number;
+  quarantinedRows: number;
+  archived: boolean;
+  archivedAt?: string | null;
+}
+
+/** One quarantined row with its reason and when it FIRST quarantined (age survives reprocess). */
+export interface FileQuarantineInfo {
+  rail: string;
+  file: string;
+  line: number;
+  reason: string;
+  quarantinedAt: string;
 }
 
 /**
@@ -809,6 +838,28 @@ export class AdminClient {
   /** A rejection — the reason is mandatory and the ENGINE enforces it, not this client. */
   rejectApproval(id: string, role: string, reason: string): Promise<AdminResult> {
     return this.verb(`/goldpath/admin/approvals/requests/${encodeURIComponent(id)}/reject`, { role, reason });
+  }
+
+  /** Every declared rail with its counts — the probe root, so an app with rails and no files still answers. */
+  fileRails(): Promise<FileRailInfo[]> {
+    return this.get<FileRailInfo[]>("/goldpath/admin/fileexchange/rails");
+  }
+
+  /** Recent files, newest archive first (R3: repeated ?rail= OR within the filter). */
+  files(options: { rail?: string[]; take?: number } = {}): Promise<FileInfo[]> {
+    const query = new URLSearchParams();
+    for (const value of options.rail ?? []) query.append("rail", value);
+    query.set("take", String(Math.min(500, Math.max(1, options.take ?? 50))));
+    return this.get<FileInfo[]>(`/goldpath/admin/fileexchange/files?${query.toString()}`);
+  }
+
+  /** The quarantine, oldest first (R3: ?rail= and ?file= repeat — OR within, AND across). File names ride the query, never the path. */
+  fileQuarantine(options: { rail?: string[]; file?: string[]; take?: number } = {}): Promise<FileQuarantineInfo[]> {
+    const query = new URLSearchParams();
+    for (const value of options.rail ?? []) query.append("rail", value);
+    for (const value of options.file ?? []) query.append("file", value);
+    query.set("take", String(Math.min(500, Math.max(1, options.take ?? 200))));
+    return this.get<FileQuarantineInfo[]>(`/goldpath/admin/fileexchange/quarantine?${query.toString()}`);
   }
 
   notificationTemplates(): Promise<NotificationTemplateStatus[]> {

@@ -529,6 +529,29 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("button", { name: /resend|retry/i })).toHaveCount(0);
   });
 
+  test("reads the file rails: a file the engine ingested, its quarantine with the reason and the age", async ({ page }) => {
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByTestId("shell-rail").getByRole("button", { name: "File rails", exact: true }).click();
+    await expect(page.getByTestId("fileexchange-panel")).toBeVisible();
+
+    // The rail with its live counts — the engine ingested one file at startup: two rows
+    // applied, one quarantined. The banner says the quarantine out loud.
+    const rails = page.getByTestId("rails");
+    await expect(rails.getByRole("row", { name: /registry-daily/ })).toContainText("1");
+    await expect(page.getByRole("status")).toContainText("registry-daily: 1 row in quarantine");
+
+    // The file, newest archive first, opens into the sheet with the quarantined row's
+    // reason in the ENGINE's words — the row-contract reason the rail declared.
+    await page.getByTestId("files").getByRole("button", { name: "registry-2026-09-03.csv" }).click();
+    const detail = page.getByTestId("sheet");
+    await expect(detail).toContainText("non-positive amount");
+    await expect(detail).toContainText("Rows applied");
+    await page.keyboard.press("Escape");
+
+    // Read-only by contract: re-delivering the file IS the reprocess, so no verb exists here.
+    await expect(page.getByRole("button", { name: /reprocess|retry|discard/i })).toHaveCount(0);
+  });
+
   test("archival: verifies the chain, retrieves an entry, holds it, then erases it", async ({ page }) => {
     const openArchival = async () => {
       await page.goto(`/?base=${encodeURIComponent(service)}`);
