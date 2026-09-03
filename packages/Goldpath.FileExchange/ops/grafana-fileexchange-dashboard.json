@@ -1,0 +1,125 @@
+{
+  "__comment": "The file-exchange board: the rail's lifecycle as the Goldpath.FileExchange meter counts it — files in vs rejected whole, rows applied vs quarantined vs skipped as duplicates, per rail. Datasource: Prometheus scraping the OTel collector. Import next to the app board; pair with the Jobs board for the pick-up job's deadline (a missed arrival window alarms THERE, runbook §4).",
+  "title": "Goldpath FileExchange — rails, rows, quarantine",
+  "uid": "goldpath-fileexchange",
+  "schemaVersion": 39,
+  "tags": [
+    "goldpath",
+    "fileexchange"
+  ],
+  "time": {
+    "from": "now-24h",
+    "to": "now"
+  },
+  "templating": {
+    "list": [
+      {
+        "name": "rail",
+        "type": "query",
+        "datasource": {
+          "type": "prometheus",
+          "uid": "${DS_PROMETHEUS}"
+        },
+        "query": "label_values(goldpath_fileexchange_files_received_total, rail)",
+        "includeAll": true,
+        "multi": true
+      }
+    ]
+  },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Files received vs rejected (per hour) — a rejected file ingested NOTHING (runbook §1)",
+      "gridPos": {
+        "x": 0,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(goldpath_fileexchange_files_received_total{rail=~\"$rail\"}[1h])) by (rail)",
+          "legendFormat": "received {{rail}}"
+        },
+        {
+          "expr": "sum(increase(goldpath_fileexchange_files_rejected_total{rail=~\"$rail\"}[1h])) by (rail)",
+          "legendFormat": "rejected {{rail}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Rows applied vs quarantined (per hour) — quarantine on ONE rail is format drift (runbook §2)",
+      "gridPos": {
+        "x": 12,
+        "y": 0,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(goldpath_fileexchange_rows_processed_total{rail=~\"$rail\"}[1h])) by (rail)",
+          "legendFormat": "applied {{rail}}"
+        },
+        {
+          "expr": "sum(increase(goldpath_fileexchange_rows_quarantined_total{rail=~\"$rail\"}[1h])) by (rail)",
+          "legendFormat": "quarantined {{rail}}"
+        }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Rows skipped as duplicates (per hour) — the transport re-delivering, as designed (runbook §3)",
+      "gridPos": {
+        "x": 0,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(goldpath_fileexchange_rows_duplicate_total{rail=~\"$rail\"}[1h])) by (rail)",
+          "legendFormat": "duplicates {{rail}}"
+        }
+      ]
+    },
+    {
+      "type": "stat",
+      "title": "Quarantine share (24h) — quarantined / (applied + quarantined)",
+      "gridPos": {
+        "x": 12,
+        "y": 8,
+        "w": 12,
+        "h": 8
+      },
+      "fieldConfig": {
+        "defaults": {
+          "unit": "percentunit",
+          "thresholds": {
+            "mode": "absolute",
+            "steps": [
+              {
+                "color": "green",
+                "value": null
+              },
+              {
+                "color": "orange",
+                "value": 0.01
+              },
+              {
+                "color": "red",
+                "value": 0.05
+              }
+            ]
+          }
+        }
+      },
+      "targets": [
+        {
+          "expr": "sum(increase(goldpath_fileexchange_rows_quarantined_total{rail=~\"$rail\"}[24h])) / clamp_min(sum(increase(goldpath_fileexchange_rows_processed_total{rail=~\"$rail\"}[24h])) + sum(increase(goldpath_fileexchange_rows_quarantined_total{rail=~\"$rail\"}[24h])), 1)",
+          "legendFormat": "share"
+        }
+      ]
+    }
+  ]
+}

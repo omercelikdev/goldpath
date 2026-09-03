@@ -300,7 +300,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
 
     expect(rows).toHaveLength(1);
     expect(rows[0]).toMatchObject({ tone: "danger", blind: true, service: "auth-floored", section: "jobs" });
-    expect(rows[0].headline).toBe("6 surfaces on auth-floored cannot be read");
+    expect(rows[0].headline).toBe("7 surfaces on auth-floored cannot be read");
     expect(rows[0].detail).toContain("the 'goldpath-ops' role is required");
   });
 
@@ -326,7 +326,7 @@ describe("triage — what is wrong, read from the contract's own lists", () => {
     const { rows } = await collectServiceTriage("payments", client({}), mixed, NOW);
 
     expect(rows).toHaveLength(1);
-    expect(rows[0].headline).toBe("6 surfaces on payments cannot be read");
+    expect(rows[0].headline).toBe("7 surfaces on payments cannot be read");
     expect(rows[0].headline).not.toContain("did not answer at all");
   });
 
@@ -354,7 +354,7 @@ describe("triage stats — the numbers the Today cards print", () => {
     const { stats } = await collectServiceTriage(
       "payments",
       api,
-      capabilities({ campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" }, approvals: { kind: "absent" } }),
+      capabilities({ campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" }, approvals: { kind: "absent" }, fileexchange: { kind: "absent" } }),
       NOW,
     );
 
@@ -381,12 +381,16 @@ describe("triage stats — the numbers the Today cards print", () => {
       "/approvals/requests": [
         { id: "a1", ladder: "credit-limit", subject: "K26-1", amount: 500000, requestedBy: "maker", requestedAt: "2026-07-27T06:00:00Z", pendingRole: "expert", pendingSince: "2026-07-27T06:00:00Z", status: "Pending", signatureCount: 0, requiredApprovals: 1 },
       ],
+      "/fileexchange/rails": [
+        { name: "registry-daily", headerLines: 1, filesArchived: 3, quarantineDepth: 2 },
+        { name: "bank-status", headerLines: 0, filesArchived: 1, quarantineDepth: 0 },
+      ],
     });
 
     const { stats } = await collectServiceTriage("payments", api, capabilities(), NOW);
 
     // One failed run PER FLEET (both fleets answer the same run list here).
-    expect(stats).toEqual({ jobs: 2, bulk: 3, campaign: 2, notification: 3, archival: 4, approvals: 1 });
+    expect(stats).toEqual({ jobs: 2, bulk: 3, campaign: 2, notification: 3, archival: 4, approvals: 1, fileexchange: 2 });
   });
 
   it("a surface that DIED reports no number at all — a count we could not read is not a zero", async () => {
@@ -402,7 +406,7 @@ describe("triage stats — the numbers the Today cards print", () => {
     const { rows, stats } = await collectServiceTriage(
       "payments",
       api,
-      capabilities({ campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" }, approvals: { kind: "absent" } }),
+      capabilities({ campaign: { kind: "absent" }, notification: { kind: "absent" }, archival: { kind: "absent" }, approvals: { kind: "absent" }, fileexchange: { kind: "absent" } }),
       NOW,
     );
 
@@ -421,6 +425,7 @@ describe("triage stats — the numbers the Today cards print", () => {
         notification: { kind: "absent" },
         archival: { kind: "absent" },
         approvals: { kind: "absent" },
+        fileexchange: { kind: "absent" },
       }),
       NOW,
     );

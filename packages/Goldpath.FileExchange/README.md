@@ -34,5 +34,12 @@ single-node hosts, a database-backed ledger composes through the seam. Scheduled
 and drop ride the Jobs module; transports (SFTP, share, object store) are composed
 adapters, never rewritten (RFC §1).
 
+**Console** — `MapGoldpathFileExchangeAdmin()` mounts the read-only admin surface
+(`/goldpath/admin/fileexchange`, contract §7.1: rails with live counts, files newest-first,
+the quarantine with each row's reason and age) and the operations console federates on it
+as its seventh module. Behind the ops floor by default; `exposeUnsecured: true` is the
+visible opt-out. There are no verbs: re-delivering a file IS the reprocess. The reads need
+a ledger that implements `IGoldpathFileLedgerQueries` (both shipped ledgers do).
+
 Boundary with qorpe.sync: Sync migrates and reconciles STORES during a transformation;
 FileExchange is the PERMANENT integration surface with counterparties (RFC D4).

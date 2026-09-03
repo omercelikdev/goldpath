@@ -161,6 +161,20 @@ static async Task RunConsoleHostAsync(
         });
     }
 
+    // FileExchange joins unconditionally: its surface is READ-ONLY, so the gate proves the
+    // rail's story — a file the engine ingested at startup with one row applied and one
+    // quarantined, in the engine's own words (the T22 console federation proof).
+    web.AddGoldpathFileExchange<WebApplicationBuilder, ClusterDb>(files => files
+        .AddRail<SmokeRegistryRow>("registry-daily", rail => rail
+            .Header(1)
+            .ParseLine(line =>
+            {
+                var parts = line.Split(';');
+                return new SmokeRegistryRow(parts[0], decimal.Parse(parts[1], System.Globalization.CultureInfo.InvariantCulture));
+            })
+            .ValidateRow(row => row.Amount > 0 ? null : "non-positive amount")
+            .Handle((_, _) => Task.CompletedTask)));
+
     // Erasure REFUSES without DataProtection — classification is what tells the archive
     // which fields to redact (GP1401), so the smoke composes it and marks the holder's
     // name as personal data.
@@ -278,6 +292,7 @@ static async Task RunConsoleHostAsync(
     app.MapGoldpathBulkAdmin<ClusterDb>(exposeUnsecured: unsecured);
     app.MapGoldpathNotificationAdmin<ClusterDb>(exposeUnsecured: unsecured);
     app.MapGoldpathArchivalAdmin<ClusterDb>(exposeUnsecured: unsecured);
+    app.MapGoldpathFileExchangeAdmin(exposeUnsecured: unsecured);
     // The console SERVED BY THE APP — the shape adopters actually deploy (console RFC D1).
     // Same origin as the admin surfaces, so no CORS is involved in this path at all.
     // The console IS this host's home: whoever lands on the bare port goes there.
@@ -312,6 +327,14 @@ static async Task RunConsoleHostAsync(
             "ops-alert", "email", "ops@example.com", "", new Dictionary<string, string> { ["Text"] = "the night is quiet" }, "smoke:alert:1"), CancellationToken.None);
     }
 
+    // One real file through the rail: two rows apply, one quarantines with its reason —
+    // the panel's story is written by the ENGINE, nothing here forges a ledger row.
+    using (var scope = app.Services.CreateScope())
+    {
+        var rails = scope.ServiceProvider.GetRequiredService<GoldpathFileRailEngine>();
+        await rails.ProcessAsync("registry-daily", "registry-2026-09-03.csv", ["reference;amount", "R-1;10.00", "R-2;0", "R-3;5.50"], CancellationToken.None);
+    }
+
     Console.WriteLine("CONSOLEHOST-READY");
     await app.WaitForShutdownAsync();
 }
@@ -336,8 +359,12 @@ namespace Goldpath.Jobs.TestHost
             modelBuilder.AddGoldpathCampaign();
             modelBuilder.AddGoldpathNotification();
             modelBuilder.AddGoldpathArchiveModel();
+            modelBuilder.AddGoldpathFileExchangeModel();
         }
     }
+
+    /// <summary>One line of the smoke's registry file.</summary>
+    public sealed record SmokeRegistryRow(string Reference, decimal Amount);
 
     /// <summary>The campaign's target population (console smoke).</summary>
     public class SmokeCustomer_Row

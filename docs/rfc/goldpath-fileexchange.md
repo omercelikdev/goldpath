@@ -97,8 +97,13 @@ window — the incident file rails actually have.
       archive marks survive restarts; proven on real SQLite storage (2 tests: zero
       duplicates across a restart, quarantine persists with its reason and clears on
       reprocess).
-- [ ] Admin surface federates in the family console against a real app.
-- [x] Runbook ships (`packages/Goldpath.FileExchange/ops/fileexchange.md`); dashboard JSON open.
+- [x] Admin surface federates in the family console against a real app — 2026-09-03:
+      `MapGoldpathFileExchangeAdmin` (read-only, contract §7.1) + the console's seventh
+      module; the console smoke host ingests a planted file at startup and the 29th journey
+      reads the rail, the file and the quarantined row's reason through the real surface.
+- [x] Runbook ships (`packages/Goldpath.FileExchange/ops/fileexchange.md`); dashboard JSON
+      landed 2026-09-03 (`grafana-fileexchange-dashboard.json` over the `Goldpath.FileExchange`
+      meter: files received/rejected, rows applied/quarantined/duplicate, per rail).
 - [ ] Transport adapters (SFTP/share/object store) — composed, per RFC §1.
 - [ ] The adopter proof runs (§7 last row) — the row that actually closes T22.
 

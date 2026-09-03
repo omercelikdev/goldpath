@@ -25,6 +25,12 @@ public static class GoldpathFileExchangeExtensions
         // engine that consumes it must live in a scope too. Caught by the GmEverything
         // exam the moment fileexchange met a broker shape.
         builder.Services.TryAddScoped<GoldpathFileRailEngine>();
+        // The admin surface's read side rides the composed ledger; a custom ledger that does
+        // not implement the queries makes MapGoldpathFileExchangeAdmin refuse at startup.
+        builder.Services.TryAddSingleton<IGoldpathFileLedgerQueries>(sp =>
+            sp.GetRequiredService<IGoldpathFileLedger>() as IGoldpathFileLedgerQueries
+            ?? throw new InvalidOperationException("the composed IGoldpathFileLedger does not implement IGoldpathFileLedgerQueries — the admin surface cannot read it."));
+        builder.Services.TryAddSingleton<GoldpathFileExchangeAdminService>();
         return builder;
     }
 
@@ -37,7 +43,8 @@ public static class GoldpathFileExchangeExtensions
         where TBuilder : IHostApplicationBuilder
         where TContext : DbContext
     {
-        builder.Services.AddSingleton<IGoldpathFileLedger, GoldpathEfFileLedger<TContext>>();
+        builder.Services.AddSingleton<IGoldpathFileLedger>(sp =>
+            new GoldpathEfFileLedger<TContext>(sp.GetRequiredService<IServiceScopeFactory>(), sp.GetService<TimeProvider>() ?? TimeProvider.System));
         return builder.AddGoldpathFileExchange(configure);
     }
 }

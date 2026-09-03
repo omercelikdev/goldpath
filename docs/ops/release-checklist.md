@@ -33,6 +33,14 @@ only after that PR merges green.
       line "No breaking changes — take it blind."
 - [ ] Admin contract check: if any route/envelope changed, `goldpath-admin-contract.md`
       was updated in the SAME PR that changed it (the route-freeze test forces this).
+- [ ] **Next-train adoptions** — API that landed on main AFTER the last train and that the
+      templates and CLI recipes may only consume once the pins move (the templates must
+      generate apps on the PUBLISHED train, `template-pins.sh`; a CLI recipe writes into an
+      adopter's app on that train too). Wire each in the release PR, then delete its line:
+      - `MapGoldpathFileExchangeAdmin()` (landed 2026-09-03, T22): the `UseFileExchange`
+        endpoint block in BOTH templates' Program.cs (auth branch like the other admin
+        surfaces), and `plan.Endpoints` in the CLI's `fileexchange` recipe (+ its exact-plan
+        test) — the console smoke host already proves the surface against source.
 
 ## After the merge
 

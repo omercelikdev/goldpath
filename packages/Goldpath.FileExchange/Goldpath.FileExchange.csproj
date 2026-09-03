@@ -11,6 +11,7 @@
   <ItemGroup>
     <ProjectReference Include="../Goldpath.Abstractions/Goldpath.Abstractions.csproj" />
     <ProjectReference Include="../Goldpath.Messaging/Goldpath.Messaging.csproj" />
+    <ProjectReference Include="../Goldpath.Sdk/Goldpath.Sdk.csproj" />
   </ItemGroup>
 
   <ItemGroup>
@@ -19,6 +20,7 @@
          because a direct 8.0.x reference would be a downgrade (NU1605). -->
     <PackageReference Include="Microsoft.EntityFrameworkCore.Relational" Condition="'$(TargetFramework)' == 'net10.0'" />
     <PackageReference Include="Microsoft.Extensions.Hosting.Abstractions" />
+    <FrameworkReference Include="Microsoft.AspNetCore.App" />
   </ItemGroup>
 
   <ItemGroup>
