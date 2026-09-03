@@ -114,6 +114,26 @@ for shape in re.findall(r"- name: (Gm[A-Za-z.]+)", nightly):
     if shape not in gm_doc:
         fail.append(f"nightly shape {shape} missing from docs/strategy/golden-manifests-v1.md")
 
+# 4b. Every integration event a PACKAGE publishes is catalogued with its fields in the
+#     events guide — the wire contract a consumer binds to may not be undocumented
+#     (four of eleven were, found by the 2026-09-01 audit).
+events_doc = read("docs", "guide", "integration-events.md")
+event_record = re.compile(r"record\s+(Goldpath\w+)\s*\(([^)]*)\)\s*:\s*IIntegrationEvent")
+for base, dirs, names in os.walk(os.path.join(root, "packages")):
+    dirs[:] = [d for d in dirs if d not in {"bin", "obj"}]
+    for name in names:
+        if not name.endswith(".cs"):
+            continue
+        source = open(os.path.join(base, name), encoding="utf-8", errors="replace").read()
+        for m in event_record.finditer(source):
+            event = m.group(1)
+            if f"`{event}`" not in events_doc:
+                fail.append(f"integration event {event} ({name}) missing from docs/guide/integration-events.md")
+                continue
+            for field in [p.strip().split()[-1] for p in m.group(2).split(",") if p.strip()]:
+                if field not in events_doc:
+                    fail.append(f"integration event {event}: field {field} not named in docs/guide/integration-events.md")
+
 # 5. Every script is referenced SOMEWHERE a reader can find it.
 corpus = ""
 for scope in ["README.md", "CLAUDE.md"]:

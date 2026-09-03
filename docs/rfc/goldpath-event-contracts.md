@@ -23,6 +23,9 @@ Rules of the Contracts project:
 ## Who teaches it
 
 `goldpath add worker` prints the rule in its next-steps; this document is the depth.
+The events the PACKAGES themselves publish (Approvals, FileExchange, Campaign) are not
+adopter contracts — they ship in their package — and are catalogued with fields and
+firing moments in the [integration-events guide](../guide/integration-events.md).
 Template generation of the Contracts project is deliberately deferred — creating an
 empty project every time would violate "a capability that is off does not exist";
 written trigger: the first template shape whose DEFAULT composition crosses processes.

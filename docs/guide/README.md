@@ -12,7 +12,9 @@ exist per module — this guide is the map, not a copy.
    verbs, feature by feature, with the bugs the build itself found.
 5. **[CLI reference](cli-reference.md)** — every verb the tool has, what it does, and
    what it deliberately does not.
-6. **Proof stories** — why the claims hold: [No double payment under kill -9](../stories/kill9-no-double-payment.md).
+6. **[Integration events](integration-events.md)** — every event the packages publish:
+   fields, the moment each fires, what a consumer may rely on.
+7. **Proof stories** — why the claims hold: [No double payment under kill -9](../stories/kill9-no-double-payment.md).
 
 Operating depth (already written, linked from the concepts): the
 [migrations runbook](../ops/migrations-runbook.md), the
