@@ -62,7 +62,9 @@ Template parameters ⇄ manifest fields (deterministic both ways): `--db postgre
       broker {rabbitmq,none} choices; a choice is only OFFERED once its combination is green
       (GM-1 25s + GM-4 shape 65s, both proven via scripts/validate-gm.sh). Broker=none
       generates ZERO messaging code (compile-time composition at the template level)
-- [ ] GM personas green in CI per the D1 phasing (all six at exit — 7c)
+- [x] GM personas green in CI per the D1 phasing — OVERTAKEN: the nightly matrix runs
+      THIRTEEN shapes (six personas + clean-architecture, gateway, bulk-only, dotted,
+      console/authed, three worker triggers), green on the 2026-09-01 dispatch
 - [x] 7b (part 1): Testcontainers suite green on REAL postgres+rabbitmq — outbox ATOMICITY
       proven (rollback publishes nothing / commit delivers exactly once) + Postgres keyset
       parity (composite DateTimeOffset walk, Guid descending, member-init projection).
@@ -74,12 +76,16 @@ Template parameters ⇄ manifest fields (deterministic both ways): `--db postgre
 - [x] 7c (part 2): OpenAPI export artifact live (build-time, docgen-tolerant config; asserted
       in validate-gm) · GM matrix in CI (GmOneDefault + GmFourSimple; manual+allow_failure
       until the DinD spike passes, then promoted to blocking) · pipelines attempted ON, reverted pending runner fix (see below)
-- [ ] OPEN (decision for Ömer, proposed as **7d — parallel to early Phase 2**): architecture
-      shapes (clean-architecture layout, microservice multi-project, plain monolith). Rationale:
-      Ring B modules do not depend on template layout; deferring keeps Phase 1 closable now.
-      GM-2/6 join the matrix when 7d ships — written here, not silent
+- [x] 7d — architecture shapes — RESOLVED BY SHIPPING (2026-08-05): `--layout
+      clean-architecture` (#143), the microservice multi-project by verbs (`goldpath new
+      service|gateway`, #144), the vertical-slice single project as the default monolith;
+      GM-2/6 joined the matrix as GmFourClean and GmSixGateway. (Original text: decision
+      for Ömer, proposed as 7d parallel to early Phase 2; Ring B modules do not depend on
+      template layout, so deferring kept Phase 1 closable.)
 - [x] Pipelines re-enabled — OVERTAKEN 2026-08-03: the GitLab-runner problem died with the GitHub move; `.github/workflows/ci.yml` runs on every PR and push to main, nightly runs the GM matrix. The original stall never needed fixing.
-- [ ] Phase 1 gate ritual: generate a solution, run it, walk the dashboard — recorded as the demo script
+- [x] Phase 1 gate ritual: generate a solution, run it, walk the dashboard — recorded as
+      the adopter's own walk: `docs/guide/getting-started.md` (five minutes to a running
+      app) and `docs/guide/corpay-tour.md` (the real app, verb by verb)
 
 ## 9. Decision Points (Ömer)
 - **D1 — Phased delivery inside the item (multi-MR):** 7a = template core + GM-1 in CI ·
