@@ -56,7 +56,11 @@ describe("the fleet overview (contract R2.1 + the frozen fleet verbs)", () => {
     const { client } = api();
     render(<FleetOverview client={client} fleet="it-cluster" refreshToken={0} onChanged={() => {}} />);
 
-    const panel = await screen.findByTestId("fleet-overview");
+    // WAIT for the status to land, not merely for the panel's shell: the shell renders
+    // before the fetch answers, and on a slow runner the shell alone was found and the
+    // assertion raced the data (a hosted-CI flake, 2026-09-03).
+    await screen.findByText(/accepting fires/);
+    const panel = screen.getByTestId("fleet-overview");
     // The fleet is accepting fires even though the member that ANSWERED is in standby:
     // Quartz metadata is per-instance, and the console asks through a management head.
     expect(panel).toHaveTextContent("accepting fires");

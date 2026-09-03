@@ -76,6 +76,55 @@ public sealed class EfFileLedgerTests : IDisposable
     }
 
     [Fact]
+    public async Task The_archive_mark_is_idempotent_one_run_one_row()
+    {
+        var ledger = new GoldpathEfFileLedger<LedgerDbContext>(_provider.GetRequiredService<IServiceScopeFactory>());
+        await ledger.MarkArchivedAsync("registry-daily", "reg.csv");
+        await ledger.MarkArchivedAsync("registry-daily", "reg.csv");   // the replay marks again
+
+        using var scope = _provider.CreateScope();
+        var db = scope.ServiceProvider.GetRequiredService<LedgerDbContext>();
+        Assert.Equal(1, await db.Set<GoldpathFileArchiveRow>().CountAsync());
+    }
+
+    [Fact]
+    public async Task A_requarantine_UPSERTS_the_reason_and_a_release_of_nothing_is_quiet()
+    {
+        var ledger = new GoldpathEfFileLedger<LedgerDbContext>(_provider.GetRequiredService<IServiceScopeFactory>());
+        await ledger.QuarantineAsync("registry-daily", "reg.csv", 4, "first words");
+        await ledger.QuarantineAsync("registry-daily", "reg.csv", 4, "second words");
+
+        var rows = await ledger.GetQuarantineAsync("registry-daily", "reg.csv");
+        Assert.Equal("second words", Assert.Single(rows).Reason);
+
+        await ledger.ReleaseQuarantineAsync("registry-daily", "reg.csv", 99);   // nothing there — no throw
+        Assert.Single(await ledger.GetQuarantineAsync("registry-daily", "reg.csv"));
+    }
+
+    [Fact]
+    public void The_ledger_model_shape_is_the_contract()
+    {
+        // Table names, composite keys and the bounded columns are shipped schema — a
+        // mutant that renames a table or drops a key length is a broken adopter database.
+        using var scope = _provider.CreateScope();
+        var model = scope.ServiceProvider.GetRequiredService<LedgerDbContext>().Model;
+
+        var processed = model.FindEntityType(typeof(GoldpathFileProcessedRow))!;
+        Assert.Equal("GoldpathFileProcessed", processed.GetTableName());
+        Assert.Equal(["Rail", "File", "Line"], processed.FindPrimaryKey()!.Properties.Select(p => p.Name));
+        Assert.Equal(128, processed.FindProperty("Rail")!.GetMaxLength());
+        Assert.Equal(256, processed.FindProperty("File")!.GetMaxLength());
+
+        var quarantine = model.FindEntityType(typeof(GoldpathFileQuarantineRow))!;
+        Assert.Equal("GoldpathFileQuarantine", quarantine.GetTableName());
+        Assert.Equal(1024, quarantine.FindProperty("Reason")!.GetMaxLength());
+
+        var archive = model.FindEntityType(typeof(GoldpathFileArchiveRow))!;
+        Assert.Equal("GoldpathFileArchive", archive.GetTableName());
+        Assert.Equal(["Rail", "File"], archive.FindPrimaryKey()!.Properties.Select(p => p.Name));
+    }
+
+    [Fact]
     public async Task Quarantine_persists_with_its_reason_and_clears_on_reprocess()
     {
         string[] broken = ["H;2", "A-1;100.50", "A-2;-1"];
