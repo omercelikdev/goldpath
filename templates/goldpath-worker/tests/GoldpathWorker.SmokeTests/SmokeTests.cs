@@ -1,5 +1,8 @@
 using System.Net.Http.Json;
 using Aspire.Hosting.Testing;
+//#if (UseMultiTenancy)
+using Goldpath;
+//#endif
 #if (UseQueue)
 using GoldpathWorker.Host.WorkItems;
 using MassTransit;
@@ -16,13 +19,66 @@ using Xunit;
 
 namespace GoldpathWorker.SmokeTests;
 
+//#if (UseAuth)
+/// <summary>
+/// The "runs with one click" proof for the AUTHED worker: the REAL AppHost starts
+/// (containers included), probes go green, and the management head's floor holds — the
+/// admin surfaces, the console and the read model answer 401 without a token. Driving the
+/// trigger through the admin verbs needs your IdP (Goldpath.Auth README); this smoke
+/// deliberately claims exactly what it asserts.
+/// </summary>
+//#else
 /// <summary>
 /// The "runs with one click" proof for the worker kind: the REAL AppHost starts (containers
 /// included) and the trigger is exercised end to end — a published message lands in the
-/// processed store exactly once (queue), or the interval job ticks (schedule). No mocks.
+/// processed store exactly once (queue), or the interval job ticks (schedule), or the nightly
+/// job runs through the audited admin verbs (jobs). No mocks.
 /// </summary>
+//#endif
 public class SmokeTests
 {
+//#if (UseAuth)
+    [Fact]
+    public async Task Secure_by_default_probes_green_and_the_auth_floor_holds()
+    {
+        using var timeout = new CancellationTokenSource(TimeSpan.FromMinutes(5));
+
+        var appHost = await DistributedApplicationTestingBuilder
+            .CreateAsync<Projects.GoldpathWkrSafe_AppHost>(timeout.Token);
+        await using var app = await appHost.BuildAsync(timeout.Token);
+        await app.StartAsync(timeout.Token);
+
+        var client = app.CreateHttpClient("worker");
+//#if (UseMultiTenancy)
+        client.DefaultRequestHeaders.Add(GoldpathHeaders.TenantId, "smoke-tenant");   // fail-closed tenancy
+//#endif
+
+        // Readiness (containers + schema + bus) — probes stay anonymous on purpose.
+        await WaitUntilAsync(async () =>
+            (await client.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
+
+        // Secure-by-default proof: with auth enabled and no token, the head's surfaces are
+        // 401 while probes stay green — that IS the first-click contract for authed workers.
+#if (UseQueue)
+        var unauthorized = await client.GetAsync("/api/v1/processed", timeout.Token);
+#endif
+#if (UseSchedule)
+        var unauthorized = await client.GetAsync("/api/v1/ticks", timeout.Token);
+#endif
+#if (UseJobs)
+        var unauthorized = await client.GetAsync("/goldpath/admin/jobs/fleets", timeout.Token);
+#endif
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, unauthorized.StatusCode);
+
+//#if (UseOps)
+        // The console rides the same floor: an operator without a principal is refused the
+        // PAGE, not just the calls behind it. This worker cannot ship an unauthenticated
+        // console by accident.
+        var console = await client.GetAsync("/goldpath/console/", timeout.Token);
+        Assert.Equal(System.Net.HttpStatusCode.Unauthorized, console.StatusCode);
+//#endif
+    }
+//#else
 #if (UseQueue)
     [Fact]
     public async Task Queued_work_is_processed_exactly_once()
@@ -35,10 +91,20 @@ public class SmokeTests
         await app.StartAsync(timeout.Token);
 
         var client = app.CreateHttpClient("worker");
+//#if (UseMultiTenancy)
+        client.DefaultRequestHeaders.Add(GoldpathHeaders.TenantId, "smoke-tenant");   // fail-closed tenancy
+//#endif
 
         // Readiness (containers + schema + bus).
         await WaitUntilAsync(async () =>
             (await client.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
+
+//#if (UseOps)
+        // No auth in this shape, so the console SERVES — and its embedded bundle must come
+        // with it. A page that loads without its assets is a blank screen with a green
+        // status code, which is the worst failure a console can have.
+        await AssertConsoleServesAsync(client, timeout.Token);
+//#endif
 
         // Publish INTO the running broker, exactly as an upstream service would.
         var messagingConnection = await app.GetConnectionStringAsync("messaging", timeout.Token);
@@ -48,16 +114,26 @@ public class SmokeTests
         {
             var workItemId = Guid.NewGuid();
             var messageId = Guid.NewGuid();
-            await bus.Publish(new WorkItemQueued(workItemId, "smoke-payload"),
-                ctx => ctx.MessageId = messageId, timeout.Token);
+            await bus.Publish(new WorkItemQueued(workItemId, "smoke-payload"), ctx =>
+            {
+                ctx.MessageId = messageId;
+//#if (UseMultiTenancy)
+                ctx.Headers.Set(GoldpathHeaders.TenantId, "smoke-tenant");   // the consumer restores the tenant from the message
+//#endif
+            }, timeout.Token);
 
             // 1. The message round-trips broker → consumer → processed store.
             await WaitUntilAsync(async () =>
                 (await ProcessedAsync(client, timeout.Token)).Count == 1, timeout.Token);
 
             // 2. Same MessageId again: the inbox must dedup (exactly-once processing).
-            await bus.Publish(new WorkItemQueued(workItemId, "smoke-payload"),
-                ctx => ctx.MessageId = messageId, timeout.Token);
+            await bus.Publish(new WorkItemQueued(workItemId, "smoke-payload"), ctx =>
+            {
+                ctx.MessageId = messageId;
+//#if (UseMultiTenancy)
+                ctx.Headers.Set(GoldpathHeaders.TenantId, "smoke-tenant");
+//#endif
+            }, timeout.Token);
             await Task.Delay(TimeSpan.FromSeconds(5), timeout.Token);
             var processed = Assert.Single(await ProcessedAsync(client, timeout.Token));
             Assert.Equal(workItemId, processed.Id);
@@ -83,8 +159,16 @@ public class SmokeTests
         await app.StartAsync(timeout.Token);
 
         var client = app.CreateHttpClient("worker");
+//#if (UseMultiTenancy)
+        client.DefaultRequestHeaders.Add(GoldpathHeaders.TenantId, "smoke-tenant");   // fail-closed tenancy
+//#endif
         await WaitUntilAsync(async () =>
             (await client.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
+
+        // No auth in this shape, so the console SERVES — and its embedded bundle must come
+        // with it. A page that loads without its assets is a blank screen with a green
+        // status code, which is the worst failure a console can have.
+        await AssertConsoleServesAsync(client, timeout.Token);
 
         // The fleet is discovered from the store (jobs RFC D9) — no configuration here.
         const string fleet = "GoldpathWorker.Host";
@@ -126,6 +210,9 @@ public class SmokeTests
         await app.StartAsync(timeout.Token);
 
         var client = app.CreateHttpClient("worker");
+//#if (UseMultiTenancy)
+        client.DefaultRequestHeaders.Add(GoldpathHeaders.TenantId, "smoke-tenant");   // fail-closed tenancy
+//#endif
         await WaitUntilAsync(async () =>
             (await client.GetAsync("/health/ready", timeout.Token)).IsSuccessStatusCode, timeout.Token);
 
@@ -148,6 +235,19 @@ public class SmokeTests
 
     private sealed record TickReport(int Count);
 #endif
+//#if (UseOps)
+
+    private static async Task AssertConsoleServesAsync(HttpClient client, CancellationToken token)
+    {
+        var console = await client.GetAsync("/goldpath/console/", token);
+        console.EnsureSuccessStatusCode();
+        var consoleHtml = await console.Content.ReadAsStringAsync(token);
+        var bundle = System.Text.RegularExpressions.Regex.Match(consoleHtml, @"src=""\./(assets/[^""]+)""").Groups[1].Value;
+        Assert.False(string.IsNullOrEmpty(bundle), "the served console must reference its own bundle");
+        (await client.GetAsync($"/goldpath/console/{bundle}", token)).EnsureSuccessStatusCode();
+    }
+//#endif
+//#endif
 
     private static async Task WaitUntilAsync(Func<Task<bool>> condition, CancellationToken token)
     {

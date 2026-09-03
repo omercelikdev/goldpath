@@ -35,7 +35,7 @@
         }
       ],
       "defaultValue": "queue",
-      "description": "What drives this worker. Both choices are green golden-manifest combinations."
+      "description": "What drives this worker. Every choice is a green golden-manifest combination."
     },
     "db": {
       "type": "parameter",
@@ -51,7 +51,65 @@
         }
       ],
       "defaultValue": "postgresql",
-      "description": "Database holding the run store (queue: consumer inbox; jobs: clustered Quartz store + run model)."
+      "description": "Database holding the run store (queue: consumer inbox; jobs: clustered Quartz store + run model) and every feature's tables."
+    },
+    "auth": {
+      "type": "parameter",
+      "datatype": "choice",
+      "choices": [
+        {
+          "choice": "openid",
+          "description": "OIDC/JWT bearer against your IdP for the management head (admin surfaces + console behind the ops floor)"
+        },
+        {
+          "choice": "apikey",
+          "description": "Minimal API-key auth for the management head (internal operators, batch runners)"
+        },
+        {
+          "choice": "none",
+          "description": "No auth wiring: the admin surfaces opt out VISIBLY — acceptable only behind an authenticating boundary (mTLS/gateway/cluster)"
+        }
+      ],
+      "defaultValue": "none",
+      "replaces": "GOLDPATH-AUTH",
+      "description": "Authentication for the worker's MANAGEMENT head (probes stay anonymous either way). A worker is internal by default, so the default is none; pick openid or apikey the day operators reach this head beyond the cluster boundary."
+    },
+    "features": {
+      "type": "parameter",
+      "datatype": "choice",
+      "allowMultipleValues": true,
+      "choices": [
+        {
+          "choice": "multitenancy",
+          "description": "Tenant resolution on the management head + EF isolation + write guard (fail-closed); consumers restore the tenant from message headers"
+        },
+        {
+          "choice": "audittrail",
+          "description": "Same-transaction change rows for everything the worker writes"
+        },
+        {
+          "choice": "softdelete",
+          "description": "Deletes become stamped updates behind a global filter"
+        },
+        {
+          "choice": "dataprotection",
+          "description": "Classify once, every sink masks (audit rows, logs)"
+        },
+        {
+          "choice": "locking",
+          "description": "Distributed locks in the worker's database (Medallion) — one instance at a time on a shared resource"
+        },
+        {
+          "choice": "notification",
+          "description": "Transactional notifications: evidence rows, code templates, email/webhook channels (runs on jobs)"
+        },
+        {
+          "choice": "fileexchange",
+          "description": "File rails: format contracts, idempotent (file,line) ingestion, quarantine, zero-duplicate replay — file pick-up IS a job"
+        }
+      ],
+      "defaultValue": "",
+      "description": "Ring B features a worker composes (comma-separated) — the ones whose concept exists in a process without business HTTP. layout, idempotency, caching, archival, bulk, campaign and approvals are solution-shaped; see templates/README.md. Features that own tables need the worker's database: --trigger queue or jobs."
     },
     "UseQueue": {
       "type": "computed",
@@ -72,6 +130,54 @@
     "UseJobs": {
       "type": "computed",
       "value": "(trigger == \"jobs\")"
+    },
+    "UseDb": {
+      "type": "computed",
+      "value": "(trigger == \"queue\" || trigger == \"jobs\")"
+    },
+    "UseAuth": {
+      "type": "computed",
+      "value": "(auth != \"none\")"
+    },
+    "UseApiKey": {
+      "type": "computed",
+      "value": "(auth == \"apikey\")"
+    },
+    "UseMultiTenancy": {
+      "type": "computed",
+      "value": "(features == \"multitenancy\")"
+    },
+    "UseAuditTrail": {
+      "type": "computed",
+      "value": "(features == \"audittrail\")"
+    },
+    "UseSoftDelete": {
+      "type": "computed",
+      "value": "(features == \"softdelete\")"
+    },
+    "UseDataProtection": {
+      "type": "computed",
+      "value": "(features == \"dataprotection\")"
+    },
+    "UseLocking": {
+      "type": "computed",
+      "value": "(features == \"locking\")"
+    },
+    "UseNotification": {
+      "type": "computed",
+      "value": "(features == \"notification\")"
+    },
+    "UseFileExchange": {
+      "type": "computed",
+      "value": "(features == \"fileexchange\")"
+    },
+    "UseRiders": {
+      "type": "computed",
+      "value": "(features == \"notification\" || features == \"fileexchange\")"
+    },
+    "UseOps": {
+      "type": "computed",
+      "value": "(trigger == \"jobs\" || features == \"notification\" || features == \"fileexchange\")"
     },
     "nameSafe": {
       "type": "derived",

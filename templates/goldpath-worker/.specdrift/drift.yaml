@@ -1,7 +1,9 @@
 # Manifest ↔ repository wiring table for the WORKER kind (specdrift profile data). Rows are
 # workerType-gated: a consumer worker must reference the messaging floor and be inbox-guarded
 # (AddGoldpathOutbox wires consumer-side dedup); a batch worker referencing it is dead weight.
-# No openapi section: workers expose probes, not business contracts.
+# The feature rows are the SAME pairs the solution profile carries — a worker composes the
+# features whose concept exists in a process without business HTTP (template README).
+# No openapi section: workers expose probes and admin surfaces, not business contracts.
 version: 1
 manifest: .goldpath/manifest.yaml
 schemaVersion: 1
@@ -22,3 +24,45 @@ wiring:
     in: [scheduler-quartz]
     package: Goldpath.Jobs
     call: MapGoldpathJobsAdmin
+  # The management head's floor: openid/apikey wire Goldpath.Auth; none wires nothing
+  # (the admin surfaces then carry the visible exposeUnsecured opt-out).
+  - feature: providers.auth
+    in: [openid, apikey]
+    package: Goldpath.Auth
+    call: AddGoldpathAuth
+  - feature: features.multiTenancy
+    package: Goldpath.MultiTenancy
+    call: AddGoldpathMultiTenancy
+  - feature: features.auditTrail
+    package: Goldpath.AuditTrail
+    call: AddGoldpathAuditTrail
+  - feature: features.softDelete
+    package: Goldpath.SoftDelete
+    call: AddGoldpathSoftDelete
+  - feature: features.dataProtection
+    package: Goldpath.DataProtection
+    call: AddGoldpathDataProtection
+  # Locking rows are PROVIDER-gated: the sqlserver strategy lives in its own optional
+  # package with its own registration call, so a single toggle row would false-positive.
+  - feature: features.distributedLocking.provider
+    in: [postgres]
+    package: Goldpath.Locking
+    call: AddGoldpathLocking
+  - feature: features.distributedLocking.provider
+    in: [sqlserver]
+    package: Goldpath.Locking.SqlServer
+    call: AddGoldpathSqlServerLocking
+  # Notification runs ON the jobs module (notification RFC D3): two rows guard both halves.
+  - feature: features.notification
+    package: Goldpath.Notification
+    call: AddGoldpathNotification
+  - feature: features.notification
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs
+  # FileExchange's pick-up IS a job: the same guard pair.
+  - feature: features.fileExchange
+    package: Goldpath.FileExchange
+    call: AddGoldpathFileExchange
+  - feature: features.fileExchange
+    package: Goldpath.Jobs
+    call: AddGoldpathJobs

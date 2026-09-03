@@ -17,6 +17,18 @@ public static class WizardCommand
     /// </summary>
     public static IReadOnlyList<string> Modules => FeatureRecipes.Names;
 
+    /// <summary>
+    /// The WORKER's feature menu — the features whose concept exists in a process without
+    /// business HTTP (open-threads T25: concept parity, not full parity). layout, idempotency,
+    /// caching, archival, bulk, campaign and approvals are solution-shaped and not offered.
+    /// </summary>
+    public static IReadOnlyList<string> WorkerModules { get; } =
+        ["multitenancy", "audittrail", "softdelete", "dataprotection", "locking", "notification", "fileexchange"];
+
+    /// <summary>The worker features that own tables — impossible on a schedule worker, which has no database.</summary>
+    public static IReadOnlyList<string> WorkerTableOwners { get; } =
+        ["audittrail", "softdelete", "locking", "notification", "fileexchange"];
+
     /// <summary>The wizard's answers — one record, so the derivation stays a pure function.</summary>
     public sealed record Answers(
         string Name,
@@ -48,6 +60,18 @@ public static class WizardCommand
         {
             var trigger = prompter.Choose("Worker trigger", ["queue", "schedule", "jobs"], "queue");
             var workerDb = prompter.Choose("Database", ["postgresql", "sqlserver"], "postgresql");
+            // The management head's floor: a worker is internal by default, so none is the
+            // default here (the solution defaults to openid because it serves business APIs).
+            var workerAuth = prompter.Choose("Authentication (the management head: admin surfaces + console)", ["openid", "apikey", "none"], "none");
+            var workerFeatures = prompter.ChooseMany("Which features does this worker need?", WorkerModules)
+                .Where(WorkerModules.Contains).Distinct(StringComparer.Ordinal).ToList();
+            var tableOwners = workerFeatures.Where(WorkerTableOwners.Contains).ToList();
+            if (trigger == "schedule" && tableOwners.Count > 0)
+            {
+                throw new CliUsageException(
+                    $"{string.Join(", ", tableOwners)} own tables in the worker's database, and a schedule worker (PeriodicTimer) has none — pick the queue or jobs trigger, or drop them.");
+            }
+
             output.WriteLine();
             output.WriteLine("── the derived shape:");
             output.WriteLine(trigger switch
@@ -57,15 +81,31 @@ public static class WizardCommand
                 _ => "   trigger: jobs — the Goldpath jobs scheduler with its admin surface, runs in the worker's database",
             });
             output.WriteLine($"   database: {workerDb}");
+            output.WriteLine($"   auth: {workerAuth}" + (workerAuth == "none" ? " — admin surfaces opt out VISIBLY; acceptable only behind an authenticating boundary" : " — the admin surfaces and the console sit behind the ops floor"));
+            if (workerFeatures.Count > 0)
+            {
+                output.WriteLine($"   features: {string.Join(", ", workerFeatures)}");
+                if (trigger == "queue" && workerFeatures.Any(f => f is "notification" or "fileexchange"))
+                {
+                    output.WriteLine("   jobs runtime: joins the worker's database next to the inbox — notification/fileexchange ride it, and the console comes with it");
+                }
+            }
+
+            var workerArguments = new List<string> { "--trigger", trigger, "--db", workerDb, "--auth", workerAuth };
+            foreach (var feature in workerFeatures)
+            {
+                workerArguments.AddRange(["--features", feature]);
+            }
+
             output.WriteLine();
-            output.WriteLine($"   equivalent command: goldpath new worker -n {name.Trim()} --trigger {trigger} --db {workerDb}");
+            output.WriteLine($"   equivalent command: goldpath new worker -n {name.Trim()} {string.Join(' ', workerArguments)}");
             if (!prompter.Confirm("Generate?", defaultAnswer: true))
             {
                 output.WriteLine("── nothing generated.");
                 return 0;
             }
 
-            return NewCommand.Run("worker", ["-n", name.Trim(), "--trigger", trigger, "--db", workerDb], runner, output, error);
+            return NewCommand.Run("worker", ["-n", name.Trim(), .. workerArguments], runner, output, error);
         }
 
         var answers = new Answers(

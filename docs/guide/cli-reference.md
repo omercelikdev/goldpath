@@ -11,11 +11,11 @@ Spec Engine — it invents no semantics of its own. Exit codes mirror specdrift:
 
 | Verb | What it does |
 |---|---|
-| `goldpath new` | The **wizard**: asks what the app DOES (modules, auth, layout) and derives the infrastructure, saying why each piece joins or goes ("no broker needed — removed"). Prints the equivalent `new solution` command and delegates to it — no private path. |
+| `goldpath new` | The **wizard**: asks what the app DOES (modules, auth, layout — or, for a worker, trigger, database, the management head's auth and the worker's features) and derives the infrastructure, saying why each piece joins or goes ("no broker needed — removed"). Prints the equivalent `new solution` / `new worker` command and delegates to it — no private path. |
 | `goldpath new solution -n <Name> [--db …] [--auth …] [--layout …] [--features …]` | A whole solution from the golden template: AppHost, api, tests, manifest, migrations. |
 | `goldpath new service <Name> [--path <dir>]` | A second service head INSIDE an existing solution — its own database, its own manifest (`kind: service`), and the deployment model flips to microservice. |
 | `goldpath new gateway [--path <dir>]` | A YARP gateway over service discovery, routing `/{head}/{**rest}` to every head it finds. |
-| `goldpath new worker -n <Name>` | A **standalone** worker solution (its own repo/solution) from the worker template. For a worker INSIDE an existing solution, use `add worker` below — that is the common case. |
+| `goldpath new worker -n <Name> [--trigger queue\|schedule\|jobs] [--db …] [--auth …] [--features …]` | A **standalone** worker solution (its own repo/solution) from the worker template. `--auth` guards the MANAGEMENT head (admin surfaces + console; default `none` = the visible opt-out); `--features` takes the worker's set — multitenancy, audittrail, softdelete, dataprotection, locking, notification, fileexchange (the table-owning ones need the queue or jobs trigger). For a worker INSIDE an existing solution, use `add worker` below — that is the common case. |
 | `goldpath init [--path <dir>]` | **Attach** a manifest to a solution that already exists (L2 brownfield). It attaches, never rewrites: a rejected manifest leaves nothing behind. Rewiring is the transformation pack's job, not this verb's. |
 
 ## Extend

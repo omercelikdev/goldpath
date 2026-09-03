@@ -7,6 +7,9 @@
   <ItemGroup>
     <PackageReference Include="Goldpath.Abstractions" />
     <PackageReference Include="Goldpath.ServiceDefaults" />
+    <!--#if (UseAuth) -->
+    <PackageReference Include="Goldpath.Auth" />
+    <!--#endif -->
     <!--#if (UseQueue || UseJobs) -->
     <PackageReference Include="Goldpath.Data" />
     <!--#endif -->
@@ -14,8 +17,34 @@
     <PackageReference Include="Goldpath.Messaging" />
     <PackageReference Include="MassTransit.RabbitMQ" />
     <!--#endif -->
-    <!--#if (UseJobs) -->
+    <!--#if (UseOps) -->
     <PackageReference Include="Goldpath.Jobs" />
+    <PackageReference Include="Goldpath.Console" />
+    <!--#endif -->
+    <!-- goldpath:features packages — the drift profile is the source of these rows -->
+    <!--#if (UseMultiTenancy) -->
+    <PackageReference Include="Goldpath.MultiTenancy" />
+    <!--#endif -->
+    <!--#if (UseAuditTrail) -->
+    <PackageReference Include="Goldpath.AuditTrail" />
+    <!--#endif -->
+    <!--#if (UseSoftDelete) -->
+    <PackageReference Include="Goldpath.SoftDelete" />
+    <!--#endif -->
+    <!--#if (UseDataProtection) -->
+    <PackageReference Include="Goldpath.DataProtection" />
+    <!--#endif -->
+    <!--#if (UseLocking && UsePostgres) -->
+    <PackageReference Include="Goldpath.Locking" />
+    <!--#endif -->
+    <!--#if (UseLocking && UseSqlServer) -->
+    <PackageReference Include="Goldpath.Locking.SqlServer" />
+    <!--#endif -->
+    <!--#if (UseNotification) -->
+    <PackageReference Include="Goldpath.Notification" />
+    <!--#endif -->
+    <!--#if (UseFileExchange) -->
+    <PackageReference Include="Goldpath.FileExchange" />
     <!--#endif -->
     <!--#if (UsePostgres) -->
     <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
