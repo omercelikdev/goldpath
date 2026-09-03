@@ -116,8 +116,14 @@ public class OutboxRecipeTests
         // No auth strategy: the opt-out is WRITTEN, exactly as the template does it.
         var open = FeatureRecipes.Build("bulk", new AppFacts
         {
-            DbContextName = "ShopDbContext", DatabaseProvider = "postgres", ConnectionName = "shopdb",
-            CachingWired = false, JobsWired = false, MessagingWired = true, AuthWired = false, ConsoleWired = false,
+            DbContextName = "ShopDbContext",
+            DatabaseProvider = "postgres",
+            ConnectionName = "shopdb",
+            CachingWired = false,
+            JobsWired = false,
+            MessagingWired = true,
+            AuthWired = false,
+            ConsoleWired = false,
         });
         Assert.StartsWith("app.MapGoldpathConsole(exposeUnsecured: true);", open.Endpoints[^1], StringComparison.Ordinal);
     }
