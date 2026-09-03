@@ -14,6 +14,12 @@
       "low": 75,
       "break": 70
     },
-    "mutation-level": "Standard"
+    "mutation-level": "Standard",
+    "ignore-methods": [
+      "Log*"
+    ],
+    "mutate": [
+      "!**/GoldpathFileExchangeMetrics.cs"
+    ]
   }
 }

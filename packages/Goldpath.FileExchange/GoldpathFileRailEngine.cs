@@ -257,7 +257,9 @@ public sealed class GoldpathInMemoryFileLedger : IGoldpathFileLedger, IGoldpathF
         {
             IReadOnlyList<GoldpathFileQuarantineInfo> rows = _quarantine
                 .Where(kv => rail is null || string.Equals(kv.Key.Rail, rail, StringComparison.OrdinalIgnoreCase))
-                .OrderBy(kv => kv.Value.At).ThenBy(kv => kv.Key.Line)
+                // Same tie-break as the database ledger: age, then rail, file, line — one
+                // order whichever ledger the app composed.
+                .OrderBy(kv => kv.Value.At).ThenBy(kv => kv.Key.Rail, StringComparer.Ordinal).ThenBy(kv => kv.Key.File, StringComparer.Ordinal).ThenBy(kv => kv.Key.Line)
                 .Take(take)
                 .Select(kv => new GoldpathFileQuarantineInfo(kv.Key.Rail, kv.Key.File, kv.Key.Line, kv.Value.Reason, kv.Value.At))
                 .ToList();

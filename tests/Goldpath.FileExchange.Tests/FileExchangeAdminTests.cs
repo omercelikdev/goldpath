@@ -227,3 +227,158 @@ public sealed class FileExchangeAdminTests : IDisposable
         Assert.Contains("IGoldpathFileLedgerQueries", refusal.Message, StringComparison.Ordinal);
     }
 }
+
+/// <summary>
+/// The corners the first mutation run left alive (2026-09-03, 64%): in-flight files ahead
+/// of archived ones, tie-breaking, case-insensitive rail filters, the window-then-take
+/// logic behind multi-value filters, and the empty rail's nulls — over BOTH ledgers.
+/// </summary>
+public sealed class FileExchangeAdminOrderingTests : IDisposable
+{
+    private sealed record Row(string Reference, decimal Amount);
+
+    public sealed class LedgerDbContext(DbContextOptions<LedgerDbContext> options) : DbContext(options)
+    {
+        protected override void OnModelCreating(ModelBuilder modelBuilder)
+            => modelBuilder.AddGoldpathFileExchangeModel();
+    }
+
+    private static readonly DateTimeOffset T0 = DateTimeOffset.Parse("2026-09-03T06:00:00Z");
+    private readonly SqliteConnection _connection;
+    private readonly ServiceProvider _provider;
+
+    public FileExchangeAdminOrderingTests()
+    {
+        _connection = new SqliteConnection("DataSource=:memory:");
+        _connection.Open();
+        _provider = new ServiceCollection()
+            .AddDbContext<LedgerDbContext>(b => b.UseSqlite(_connection))
+            .BuildServiceProvider(true);
+        using var scope = _provider.CreateScope();
+        scope.ServiceProvider.GetRequiredService<LedgerDbContext>().Database.EnsureCreated();
+    }
+
+    public void Dispose()
+    {
+        _provider.Dispose();
+        _connection.Dispose();
+    }
+
+    public static TheoryData<string> Ledgers => new() { "memory", "ef" };
+
+    private IGoldpathFileLedger Ledger(string kind, TimeProvider clock)
+        => kind == "memory" ? new GoldpathInMemoryFileLedger(clock) : new GoldpathEfFileLedger<LedgerDbContext>(_provider.GetRequiredService<IServiceScopeFactory>(), clock);
+
+    private static GoldpathFileExchangeOptions Options() => new GoldpathFileExchangeOptions()
+        .AddRail<Row>("Registry-Daily", rail => rail.ParseLine(l => new Row(l, l.StartsWith('!') ? 0m : 1m)).ValidateRow(r => r.Amount > 0 ? null : "bad").Handle((_, _) => Task.CompletedTask))
+        .AddRail<Row>("bank-status", rail => rail.ParseLine(l => new Row(l, 1m)).Handle((_, _) => Task.CompletedTask));
+
+    [Theory]
+    [MemberData(nameof(Ledgers))]
+    public async Task An_in_flight_file_comes_first_and_ties_break_by_rail_then_file(string kind)
+    {
+        var clock = new FakeTimeProvider(T0);
+        var ledger = Ledger(kind, clock);
+        var queries = (IGoldpathFileLedgerQueries)ledger;
+
+        // Two files archived at the SAME instant, on two rails; one file only quarantined (never archived).
+        await ledger.MarkArchivedAsync("bank-status", "b-2.txt");
+        await ledger.MarkArchivedAsync("Registry-Daily", "a-1.csv");
+        await ledger.MarkProcessedAsync("Registry-Daily", "a-1.csv", 2);
+        await ledger.QuarantineAsync("Registry-Daily", "in-flight.csv", 5, "bad");
+        await ledger.MarkProcessedAsync("bank-status", "only-processed.txt", 1);
+
+        var files = await queries.ListFilesAsync(null, 50);
+        // In-flight (unarchived) first — the two unarchived files order by rail then file —
+        // then the archived ties by rail ("Registry-Daily" sorts before "bank-status" ordinally).
+        Assert.Equal(["in-flight.csv", "only-processed.txt", "a-1.csv", "b-2.txt"], files.Select(f => f.File));
+        var inFlight = files[0];
+        Assert.False(inFlight.Archived);
+        Assert.Null(inFlight.ArchivedAt);
+        Assert.Equal(1, inFlight.QuarantinedRows);
+        Assert.Equal(0, inFlight.ProcessedRows);
+        Assert.Equal(1, files.Single(f => f.File == "a-1.csv").ProcessedRows);
+        Assert.Equal(0, files.Single(f => f.File == "b-2.txt").ProcessedRows);
+
+        // Take truncates AFTER ordering; the rail filter is exact on the ledger.
+        Assert.Equal(["in-flight.csv", "only-processed.txt"], (await queries.ListFilesAsync(null, 2)).Select(f => f.File));
+        Assert.Equal(["only-processed.txt", "b-2.txt"], (await queries.ListFilesAsync("bank-status", 50)).Select(f => f.File));
+    }
+
+    [Theory]
+    [MemberData(nameof(Ledgers))]
+    public async Task Quarantine_ties_break_by_rail_file_and_line_and_the_rail_filter_is_exact(string kind)
+    {
+        var clock = new FakeTimeProvider(T0);
+        var ledger = Ledger(kind, clock);
+        var queries = (IGoldpathFileLedgerQueries)ledger;
+
+        await ledger.QuarantineAsync("bank-status", "b.txt", 9, "x");
+        await ledger.QuarantineAsync("bank-status", "a.txt", 3, "x");
+        await ledger.QuarantineAsync("bank-status", "a.txt", 1, "x");
+        await ledger.QuarantineAsync("Registry-Daily", "z.csv", 7, "x");
+        clock.Advance(TimeSpan.FromMinutes(1));
+        await ledger.QuarantineAsync("Registry-Daily", "a.csv", 1, "later");
+
+        var rows = await queries.ListQuarantineAsync(null, 50);
+        Assert.Equal([("Registry-Daily", "z.csv", 7), ("bank-status", "a.txt", 1), ("bank-status", "a.txt", 3), ("bank-status", "b.txt", 9), ("Registry-Daily", "a.csv", 1)],
+            rows.Select(r => (r.Rail, r.File, r.Line)));
+        Assert.Equal("later", rows[^1].Reason);
+        Assert.Equal(2, (await queries.ListQuarantineAsync(null, 2)).Count);
+        Assert.Equal(3, (await queries.ListQuarantineAsync("bank-status", 50)).Count);
+        Assert.Empty(await queries.ListQuarantineAsync("nope", 50));
+    }
+
+    [Theory]
+    [MemberData(nameof(Ledgers))]
+    public async Task The_admin_views_match_rails_case_insensitively_and_window_multi_value_filters(string kind)
+    {
+        var clock = new FakeTimeProvider(T0);
+        var ledger = Ledger(kind, clock);
+        var options = Options();
+        var engine = new GoldpathFileRailEngine(options, ledger, NullLogger<GoldpathFileRailEngine>.Instance);
+        var admin = new GoldpathFileExchangeAdminService(options, (IGoldpathFileLedgerQueries)ledger);
+
+        await engine.ProcessAsync("Registry-Daily", "r-1.csv", ["ok", "!bad"]);
+        clock.Advance(TimeSpan.FromMinutes(1));
+        await engine.ProcessAsync("bank-status", "b-1.txt", ["ok"]);
+        clock.Advance(TimeSpan.FromMinutes(1));
+        await engine.ProcessAsync("bank-status", "b-2.txt", ["ok"]);
+
+        // Rails: counts per rail, LastArchivedAt per rail, alphabetical by declared name (ordinal: uppercase first).
+        var rails = await admin.GetRailsAsync(CancellationToken.None);
+        Assert.Equal(["Registry-Daily", "bank-status"], rails.Select(r => r.Name));
+        Assert.Equal(1, rails[0].FilesArchived);
+        Assert.Equal(1, rails[0].QuarantineDepth);
+        Assert.Equal(T0, rails[0].LastArchivedAt);
+        Assert.Equal(2, rails[1].FilesArchived);
+        Assert.Equal(0, rails[1].QuarantineDepth);
+        Assert.Equal(T0.AddMinutes(2), rails[1].LastArchivedAt);
+
+        // A single-value rail filter reaches the ledger as-is (exact on the store — the
+        // console sends the declared name); a multi-value filter windows then ORs, case-insensitively.
+        Assert.Equal(["b-2.txt", "b-1.txt"], (await admin.GetFilesAsync(["bank-status"], 50, CancellationToken.None)).Select(f => f.File));
+        Assert.Equal(["b-2.txt", "b-1.txt", "r-1.csv"], (await admin.GetFilesAsync(["BANK-STATUS", "registry-daily"], 50, CancellationToken.None)).Select(f => f.File));
+        Assert.Equal(["b-2.txt"], (await admin.GetFilesAsync(["BANK-STATUS", "registry-daily"], 1, CancellationToken.None)).Select(f => f.File));
+        Assert.Equal(["r-1.csv"], (await admin.GetFilesAsync(["registry-daily", "nope"], 50, CancellationToken.None)).Select(f => f.File));
+
+        // Quarantine: multi-value rail OR + file AND, case-insensitive on both; take after filtering.
+        Assert.Single(await admin.GetQuarantineAsync(["REGISTRY-DAILY", "bank-status"], ["R-1.CSV"], 50, CancellationToken.None));
+        Assert.Empty(await admin.GetQuarantineAsync(["Registry-Daily", "bank-status"], ["other.csv"], 50, CancellationToken.None));
+        Assert.Single(await admin.GetQuarantineAsync(null, ["r-1.csv"], 1, CancellationToken.None));
+    }
+
+    [Fact]
+    public async Task An_empty_rail_reports_zero_counts_and_no_last_archive()
+    {
+        var ledger = new GoldpathInMemoryFileLedger(new FakeTimeProvider(T0));
+        var options = Options();
+        var admin = new GoldpathFileExchangeAdminService(options, ledger);
+
+        var rails = await admin.GetRailsAsync(CancellationToken.None);
+        Assert.All(rails, rail => Assert.Equal((0, 0, (DateTimeOffset?)null), (rail.FilesArchived, rail.QuarantineDepth, rail.LastArchivedAt)));
+        Assert.Equal(0, rails.Single(r => r.Name == "bank-status").HeaderLines);
+        Assert.Empty(await admin.GetFilesAsync(null, 50, CancellationToken.None));
+        Assert.Empty(await admin.GetQuarantineAsync(null, null, 50, CancellationToken.None));
+    }
+}
