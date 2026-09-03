@@ -19,6 +19,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   release checklist carries the line); the console smoke host proves it against source now.
   **[schema]** `GoldpathFileQuarantine.QuarantinedAt` and `GoldpathFileArchive.ArchivedAt`
   columns join the ledger model — one additive migration for adopters on the EF ledger.
+- **Ops packs for the seven ops-less packages** (open-threads T17 closed) — Messaging
+  (runbook + board over the MassTransit meter), Data (runbook + board over EF Core's and
+  Npgsql's meters), ApiDefaults (runbook: deprecated-version traffic, sunset procedure,
+  cursor-invalid triage), Console (runbook + board over the admin routes), Sdk (the guard's
+  two log lines as alerts), Locking.SqlServer (the applock half of the Locking pack),
+  Abstractions (N/A by construction, written down). `Goldpath.ServiceDefaults` now
+  subscribes to the `Microsoft.EntityFrameworkCore` and `Npgsql` meters — they never
+  reached the collector before, whatever the RFC note said.
 - **Worker template concept parity** (open-threads T25, decided 2026-09-03) — `goldpath new
   worker` gains `--auth openid|apikey|none` for the MANAGEMENT head (the jobs admin surface
   and the console now sit behind the ops floor, or carry the visible `exposeUnsecured`

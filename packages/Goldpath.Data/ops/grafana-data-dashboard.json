@@ -1,0 +1,49 @@
+{
+  "__comment": "The data floor's board over EF Core's meter (Microsoft.EntityFrameworkCore — instruments microsoft.entityframeworkcore.queries, saved_changes, active_dbcontexts, compiled_query_cache_hits/misses, execution_strategy_operation_failures, optimistic_concurrency_failures) and Npgsql's (db.client.connections.usage), both exported by Goldpath.ServiceDefaults since 2026-09-03. Names are spelled as the OTel Prometheus exporter emits them (dots to underscores, _total on counters). Datasource: Prometheus scraping the OTel collector.",
+  "title": "Goldpath Data — EF Core & connection pool",
+  "uid": "goldpath-data",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "data"],
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Queries and save-changes (per s) — the shape of the load",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(rate(microsoft_entityframeworkcore_queries_total[5m]))", "legendFormat": "queries/s" },
+        { "expr": "sum(rate(microsoft_entityframeworkcore_saved_changes_total[5m]))", "legendFormat": "saved changes/s" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Active DbContexts — a line that never returns to baseline is a scope leak (runbook §3)",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum(microsoft_entityframeworkcore_active_dbcontexts)", "legendFormat": "active contexts" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Compiled-query cache misses (per 5m) — climbing = dynamic LINQ defeating the cache",
+      "gridPos": { "x": 0, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "sum(increase(microsoft_entityframeworkcore_compiled_query_cache_misses_total[5m]))", "legendFormat": "misses" },
+        { "expr": "sum(increase(microsoft_entityframeworkcore_compiled_query_cache_hits_total[5m]))", "legendFormat": "hits" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Concurrency & execution-strategy failures (per 5m) — retries the strategy absorbed, and the ones it could not",
+      "gridPos": { "x": 8, "y": 8, "w": 8, "h": 8 },
+      "targets": [
+        { "expr": "sum(increase(microsoft_entityframeworkcore_optimistic_concurrency_failures_total[5m]))", "legendFormat": "optimistic concurrency" },
+        { "expr": "sum(increase(microsoft_entityframeworkcore_execution_strategy_operation_failures_total[5m]))", "legendFormat": "execution strategy" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Npgsql pool usage — busy vs idle; busy pinned at the max is exhaustion (runbook §3)",
+      "gridPos": { "x": 16, "y": 8, "w": 8, "h": 8 },
+      "targets": [{ "expr": "sum(db_client_connections_usage) by (state)", "legendFormat": "{{state}}" }]
+    }
+  ]
+}

@@ -51,6 +51,10 @@ public class ServiceDefaultsTests
         goldpathMeter.CreateCounter<long>("goldpath_proof_total").Add(3);
         using var busMeter = new Meter("MassTransit");
         busMeter.CreateCounter<long>("masstransit_proof_total").Add(1);
+        using var efMeter = new Meter("Microsoft.EntityFrameworkCore");
+        efMeter.CreateCounter<long>("ef_proof_total").Add(1);
+        using var npgsqlMeter = new Meter("Npgsql");
+        npgsqlMeter.CreateCounter<long>("npgsql_proof_total").Add(1);
         using var strangerMeter = new Meter("SomeApp.Internal");
         strangerMeter.CreateCounter<long>("stranger_total").Add(1);
 
@@ -58,6 +62,8 @@ public class ServiceDefaultsTests
 
         Assert.Contains(exported, m => m.Name == "goldpath_proof_total");        // "Goldpath.*" wildcard
         Assert.Contains(exported, m => m.Name == "masstransit_proof_total");
+        Assert.Contains(exported, m => m.Name == "ef_proof_total");             // the data floor's meter (Data ops pack)
+        Assert.Contains(exported, m => m.Name == "npgsql_proof_total");
         Assert.DoesNotContain(exported, m => m.Name == "stranger_total");   // no accidental firehose
     }
 

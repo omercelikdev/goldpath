@@ -1,0 +1,42 @@
+{
+  "__comment": "The messaging floor's board over the MassTransit meter (exported by Goldpath.ServiceDefaults: AddMeter(\"MassTransit\")). Instrument names follow MassTransit's InstrumentationOptions defaults (masstransit.receive, masstransit.consume, masstransit.consume.fault, masstransit.consume.retry, masstransit.publish, masstransit.consume.duration) as the OTel Prometheus exporter spells them; the app board (templates/goldpath-solution/ops) already reads the same consume/fault pair. The OUTBOX has no meter — it is a table; the runbook's SQL is that panel. Datasource: Prometheus scraping the OTel collector.",
+  "title": "Goldpath Messaging — bus, consumers, outbox posture",
+  "uid": "goldpath-messaging",
+  "schemaVersion": 39,
+  "tags": ["goldpath", "messaging"],
+  "time": { "from": "now-6h", "to": "now" },
+  "panels": [
+    {
+      "type": "timeseries",
+      "title": "Receive vs consume vs faults (per s) — a gap between receive and consume is a filter or deserialization failure",
+      "gridPos": { "x": 0, "y": 0, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(rate(masstransit_receive[5m]))", "legendFormat": "receive/s" },
+        { "expr": "sum(rate(masstransit_consume[5m]))", "legendFormat": "consume/s" },
+        { "expr": "sum(rate(masstransit_consume_fault[5m]))", "legendFormat": "faults/s" }
+      ]
+    },
+    {
+      "type": "timeseries",
+      "title": "Consume duration p95 (s) by consumer — a rising line is a slow dependency, not a slow bus",
+      "gridPos": { "x": 12, "y": 0, "w": 12, "h": 8 },
+      "fieldConfig": { "defaults": { "unit": "s" } },
+      "targets": [{ "expr": "histogram_quantile(0.95, sum(rate(masstransit_consume_duration_bucket[5m])) by (le, consumer_type))", "legendFormat": "{{consumer_type}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Retries (per 5m) by consumer — one consumer retrying is a downstream outage (runbook §4)",
+      "gridPos": { "x": 0, "y": 8, "w": 12, "h": 8 },
+      "targets": [{ "expr": "sum(increase(masstransit_consume_retry[5m])) by (consumer_type)", "legendFormat": "{{consumer_type}}" }]
+    },
+    {
+      "type": "timeseries",
+      "title": "Publish rate (per s) — zero while handlers run means nobody publishes through the seam (runbook §3)",
+      "gridPos": { "x": 12, "y": 8, "w": 12, "h": 8 },
+      "targets": [
+        { "expr": "sum(rate(masstransit_publish[5m]))", "legendFormat": "publish/s" },
+        { "expr": "sum(rate(masstransit_publish_fault[5m]))", "legendFormat": "publish faults/s" }
+      ]
+    }
+  ]
+}
