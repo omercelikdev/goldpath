@@ -59,6 +59,18 @@ jobs:
           - name: GmWorkerJobs
             args: "--trigger jobs"
             template: goldpath-worker
+          # Worker concept parity (open-threads T25, 2026-09-03): the jobs worker with the
+          # auth floor UP — the admin surface and the console must answer 401 — carrying the
+          # table-owning features, on sqlserver so the jobs store provider flip is proven.
+          - name: GmWorkerJobsAuthed
+            args: "--trigger jobs --db sqlserver --auth openid --features audittrail --features softdelete --features locking --features fileexchange"
+            template: goldpath-worker
+          # The queue worker with every feature it can compose and NO auth: the tenant rides
+          # the message header, the riders bring the jobs runtime next to the inbox, and the
+          # console SERVES from the worker's own head.
+          - name: GmWorkerQueueFeatures
+            args: "--features multitenancy --features audittrail --features softdelete --features dataprotection --features locking --features notification --auth none"
+            template: goldpath-worker
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6

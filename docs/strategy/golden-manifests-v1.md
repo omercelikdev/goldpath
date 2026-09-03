@@ -109,3 +109,5 @@ drift apart; the gate fails on either direction.
 | GmWorkerQueue | worker template | queue-triggered worker shape |
 | GmWorkerSchedule | worker `--trigger schedule` | schedule-triggered worker shape |
 | GmWorkerJobs | worker `--trigger jobs` | jobs-profile worker shape |
+| GmWorkerJobsAuthed | worker `--trigger jobs --db sqlserver --auth openid --features audittrail,softdelete,locking,fileexchange` | worker concept parity (T25): the management head's auth floor UP — admin surface and console answer 401; the jobs store provider flip on SQL Server |
+| GmWorkerQueueFeatures | worker `--features multitenancy,audittrail,softdelete,dataprotection,locking,notification --auth none` | worker concept parity (T25): the tenant rides the message header, the riders bring the jobs runtime next to the inbox, the console SERVES from the worker's head |

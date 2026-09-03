@@ -1,3 +1,10 @@
+#if (UseSchedule)
+// Nested on purpose: the template engine flattens `A && (B || C)` (found generating the
+// parity shapes 2026-09-03 — every trigger hit the #error), two levels evaluate correctly.
+#if (UseAuditTrail || UseSoftDelete || UseLocking || UseNotification || UseFileExchange)
+#error features.auditTrail / softDelete / distributedLocking / notification / fileExchange own tables in the worker's database, and a schedule worker (PeriodicTimer) has none. Regenerate with --trigger queue or --trigger jobs, or drop those features.
+#endif
+#endif
 #if (UseQueue)
 using GoldpathWorker.Host.WorkItems;
 using MassTransit;
@@ -12,10 +19,16 @@ using Microsoft.EntityFrameworkCore;
 #endif
 
 // A web host on purpose: readiness/liveness probes are the deployment contract of a worker
-// too — the HTTP surface carries probes (and a smoke-visible read model), never business APIs.
+// too — the HTTP surface carries probes, the admin surfaces and a smoke-visible read model,
+// never business APIs.
 var builder = WebApplication.CreateBuilder(args);
 
 builder.AddGoldpathServiceDefaults();
+//#if (UseApiKey)
+builder.AddGoldpathAuth(o => o.Strategy = GoldpathAuthStrategy.ApiKey);   // the management head demands a principal; probes stay anonymous
+//#elif (UseAuth)
+builder.AddGoldpathAuth();   // OpenId: set Goldpath:Auth:Authority AND Audience in configuration (authority without audience refuses to start — A3)
+//#endif
 
 #if (UseQueue)
 // Connection strings come from the AppHost; configuration stays tolerant, usage fails loudly.
@@ -108,20 +121,102 @@ builder.AddGoldpathData<WebApplicationBuilder, ReportsDbContext>(options =>
 builder.AddGoldpathJobs<WebApplicationBuilder, ReportsDbContext>(jobs =>
 {
     jobs.ConnectionName = "workdb";
+#if (UseSqlServer)
+    jobs.Provider = GoldpathJobStoreProvider.SqlServer;
+#endif
     jobs.AddJob<NightlyReportJob>(j =>
     {
         j.Cron = "0 0 1 * * ?";                    // nightly at 01:00
         j.Deadline = TimeSpan.FromHours(2);        // every job has an SLA (GP1302)
         j.MaxParallelChunks = 2;
     });
+//#if (UseNotification)
+    jobs.AddGoldpathNotificationJobs<ReportsDbContext>();   // send (frequent) + body-retention (nightly)
+//#endif
+//#if (UseFileExchange)
+    // your pick-up job rides here (the transport is yours — SFTP/share/object store is composed, not shipped):
+    // jobs.AddJob<RegistryPickupJob>(j => { j.Cron = "0 0 6 * * ?"; j.Deadline = TimeSpan.FromMinutes(30); });
+//#endif
 });
 #endif
 
+// goldpath:features registrations — the drift profile is the source of these rows.
+// WorkerDbContext is the trigger's own context (GlobalUsings.cs), so a feature row reads
+// the same whichever trigger the worker has.
+//#if (UseMultiTenancy)
+builder.AddGoldpathMultiTenancy();                  // the head resolves the tenant; consumers restore it from message headers
+//#endif
+//#if (UseAuditTrail)
+builder.AddGoldpathAuditTrail<WebApplicationBuilder, WorkerDbContext>();
+//#endif
+//#if (UseSoftDelete)
+builder.AddGoldpathSoftDelete();
+//#endif
+//#if (UseDataProtection)
+builder.AddGoldpathDataProtection();
+//#endif
+//#if (UseLocking && UsePostgres)
+builder.AddGoldpathLocking(o =>
+{
+    o.Provider = GoldpathLockProvider.Postgres;     // the lock lives in the worker's database — zero new infra
+    o.ConnectionName = "workdb";
+});
+//#endif
+//#if (UseLocking && UseSqlServer)
+builder.AddGoldpathSqlServerLocking(o => o.ConnectionName = "workdb");
+//#endif
+//#if (UseFileExchange)
+builder.AddGoldpathFileExchange<WebApplicationBuilder, WorkerDbContext>(files =>
+{
+    // Declare YOUR rails here (goldpath never guesses a counterparty format):
+    // files.AddRail<MyRow>("registry-daily", r => r.Header(1)
+    //     .ParseLine(MyRow.Parse).ValidateRow(x => x.IsValid ? null : "reason")
+    //     .Handle((row, ct) => ApplyAsync(row, ct)));
+});
+//#endif
+//#if (UseNotification)
+builder.AddGoldpathNotification<WebApplicationBuilder, WorkerDbContext>(notification =>
+{
+    // Declare YOUR templates here (goldpath never guesses a wording).
+    // Config: Goldpath:Notification:Email { Host, Port, UseSsl, User, Password, From }.
+    // notification.AddTemplate("run-finished", t => t
+    //     .Channel("email", c => c
+    //         .Subject("", "Run {{RunId}} finished")
+    //         .Body("", "The nightly run {{RunId}} finished with {{Failures}} failures."))
+    //     .DeleteBodyAfter(TimeSpan.FromDays(90)));      // evidence survives, content goes
+});
+//#endif
+//#if (UseRiders && !UseJobs)
+// The jobs runtime the riders need (notification RFC D3, fileexchange pick-up): runs and
+// schedules live in the worker's database, next to the inbox.
+builder.AddGoldpathJobs<WebApplicationBuilder, WorkerDbContext>(jobs =>
+{
+    jobs.ConnectionName = "workdb";
+//#if (UseSqlServer)
+    jobs.Provider = GoldpathJobStoreProvider.SqlServer;
+//#endif
+//#if (UseNotification)
+    jobs.AddGoldpathNotificationJobs<WorkerDbContext>();   // send (frequent) + body-retention (nightly)
+//#endif
+//#if (UseFileExchange)
+    // your pick-up job rides here (the transport is yours — SFTP/share/object store is composed, not shipped):
+    // jobs.AddJob<RegistryPickupJob>(j => { j.Cron = "0 0 6 * * ?"; j.Deadline = TimeSpan.FromMinutes(30); });
+//#endif
+});
+//#endif
+
 var app = builder.Build();
 
+// goldpath:features middleware — the drift profile is the source of these rows
+//#if (UseMultiTenancy)
+app.UseGoldpathMultiTenancy();                      // resolve the tenant BEFORE auth binds to it
+//#endif
+//#if (UseAuth)
+app.UseGoldpathAuth();
+//#endif
 app.MapGoldpathDefaultEndpoints();
 #if (UseQueue)
-// Smoke-visible read model (what has been processed) — intentionally the only endpoint.
+// Smoke-visible read model (what has been processed) — intentionally the only business-shaped endpoint.
 app.MapGet("/api/v1/processed", async (WorkDbContext db) =>
     await db.ProcessedWorkItems.OrderBy(w => w.ProcessedAt).ToListAsync());
 
@@ -140,12 +235,6 @@ if (app.Environment.IsDevelopment() && workDbConnection is not null)
 app.MapGet("/api/v1/ticks", (IntervalJob job) => new { count = job.TickCount });
 #endif
 #if (UseJobs)
-// The fleet's ops surface (§7.1): trigger/pause/reschedule/runs/audit — every verb audited.
-// Put it behind the auth floor before exposing beyond the cluster boundary.
-// Workers are internal services (no auth strategy of their own): the opt-out is
-// WRITTEN HERE so the decision stays visible — keep the fleet behind the cluster boundary.
-app.MapGoldpathJobsAdmin<ReportsDbContext>(exposeUnsecured: true);
-
 // Skip schema work when no database is wired (e.g. tooling runs outside the AppHost).
 if (app.Environment.IsDevelopment() && reportsDbConnection is not null)
 {
@@ -156,5 +245,38 @@ if (app.Environment.IsDevelopment() && reportsDbConnection is not null)
     await db.Database.MigrateAsync();
 }
 #endif
+
+// goldpath:features endpoints — admin surfaces map here (put them behind the auth floor)
+//#if (UseOps)
+// The fleet's ops surface (jobs RFC §7.1): trigger/pause/reschedule/runs/audit — every verb audited.
+#if (UseAuth)
+app.MapGoldpathJobsAdmin<WorkerDbContext>();        // ops policy REQUIRED (H2): the goldpath-ops role
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway/cluster).
+app.MapGoldpathJobsAdmin<WorkerDbContext>(exposeUnsecured: true);
+#endif
+//#endif
+//#if (UseNotification)
+#if (UseAuth)
+app.MapGoldpathNotificationAdmin<WorkerDbContext>();   // read-only evidence views (recipients masked) — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway/cluster).
+app.MapGoldpathNotificationAdmin<WorkerDbContext>(exposeUnsecured: true);   // read-only evidence views (recipients masked)
+#endif
+//#endif
+//#if (UseOps)
+// The console over those surfaces — served by THIS head from the package's embedded
+// assets (no Node in this solution, by construction). One line to remove if your ops team
+// drives the API directly; it adds no capability the surfaces above do not already expose.
+#if (UseAuth)
+app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway/cluster).
+app.MapGoldpathConsole(exposeUnsecured: true);
+#endif
+//#endif
 
 app.Run();

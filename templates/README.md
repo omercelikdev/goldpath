@@ -5,7 +5,18 @@ vertical-slice, PostgreSQL, RabbitMQ) — with `--layout clean-architecture` gen
 four-project split (Domain / Application / Infrastructure / Api; the packages anchor rides
 Infrastructure, which also owns migrations). Also current: `goldpath-worker` — the
 headless worker shape (queue / schedule / jobs triggers; probes instead of business
-contracts, no OpenAPI artifact). Further shapes arrive per the template RFC phasing
+contracts, no OpenAPI artifact) with **concept parity** to the solution (2026-09-03,
+open-threads T25): `--auth openid|apikey|none` guards its MANAGEMENT head (the jobs admin
+surface and the console it serves; `none` keeps the visible `exposeUnsecured` opt-out) and
+`--features` composes the Ring B features whose concept exists in a process without business
+HTTP — multitenancy, audittrail, softdelete, dataprotection, locking, notification,
+fileexchange. Deliberately NOT offered on the worker: `layout` (meaningless in one project),
+`idempotency` (request-shaped; a worker's replay protection is the inbox), `caching`,
+`archival`, `bulk`, `campaign`, `approvals` (their verbs are solution-head admin APIs — they
+join the worker head the day a worker-only scenario needs them). The table-owning features
+need the worker's database, so `--trigger schedule` refuses them at build with teaching
+text. Ships the same `.claude/` guardrails (stop gate, format hook, `goldpath-manifest`
+skill, `breaker` agent) and a day-one Grafana board (`ops/grafana-worker-dashboard.json`). Further shapes arrive per the template RFC phasing
 (`docs/rfc/goldpath-template.md`, decision D1).
 
 ```

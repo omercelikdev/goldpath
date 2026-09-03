@@ -85,6 +85,15 @@ Home: the goldpath repo (`tools/Goldpath.Cli`), packaged like the rest; same gat
   is template-parameterized via GOLDPATH_GM_TEMPLATE). The queue smoke proves exactly-once with a
   duplicated MessageId against the real broker; the schedule tick is time-abstracted AND
   observed live (AppHost pins Worker:Interval=1s for the dev loop).
+  **2026-09-03 addendum — concept parity (open-threads T25):** "lean by schema design" was
+  overtaken by reality: the worker's head already served the jobs admin surface (and, in
+  CorPay, the console) with a hard-coded `exposeUnsecured`, because the kind had no auth
+  symbol. The owner decided parity where the concept exists: `--auth` for the management
+  head, the seven process-agnostic features, guardrails and a dashboard — `layout` and
+  `idempotency` deliberately out, the solution-head admin verbs (archival/bulk/campaign/
+  approvals) deferred to the first worker-only scenario. The schema's worker branch now
+  accepts `providers.auth` + those features; GM gains `GmWorkerJobsAuthed` and
+  `GmWorkerQueueFeatures`.
 - [x] C: `goldpath new/add/check` against a generated app end to end; `add feature` proven by
   specdrift before/after (engine-red → byte-identical rollback, tested); packaged with the
   standard gates (tools/Goldpath.Cli, PackAsTool `goldpath`, mutation gate ≥70 with the IO shells

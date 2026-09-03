@@ -246,6 +246,12 @@
             },
             "additionalProperties": false
           },
+          "providers": {
+            "$ref": "#/$defs/providersWorker"
+          },
+          "features": {
+            "$ref": "#/$defs/featuresWorker"
+          },
           "nfr": {
             "$ref": "#/$defs/nfr"
           }
@@ -787,6 +793,44 @@
         "additionalProperties": true
       },
       "uniqueItems": true
+    },
+    "providersWorker": {
+      "type": "object",
+      "description": "A worker declares only the floor on its MANAGEMENT head (probes, admin surfaces, console). Its database and broker follow from workerType — they are not repeated here.",
+      "properties": {
+        "auth": {
+          "$ref": "#/$defs/providersFull/properties/auth"
+        }
+      },
+      "additionalProperties": false
+    },
+    "featuresWorker": {
+      "type": "object",
+      "description": "The Ring B features a worker composes — the ones whose concept exists in a process without business HTTP (template README). The rest are solution-shaped and rejected here on purpose; the ones that own tables need the worker's database (queue or jobs trigger).",
+      "properties": {
+        "multiTenancy": {
+          "$ref": "#/$defs/features/properties/multiTenancy"
+        },
+        "auditTrail": {
+          "$ref": "#/$defs/features/properties/auditTrail"
+        },
+        "softDelete": {
+          "$ref": "#/$defs/features/properties/softDelete"
+        },
+        "dataProtection": {
+          "$ref": "#/$defs/features/properties/dataProtection"
+        },
+        "distributedLocking": {
+          "$ref": "#/$defs/features/properties/distributedLocking"
+        },
+        "notification": {
+          "$ref": "#/$defs/features/properties/notification"
+        },
+        "fileExchange": {
+          "$ref": "#/$defs/features/properties/fileExchange"
+        }
+      },
+      "additionalProperties": false
     }
   }
 }

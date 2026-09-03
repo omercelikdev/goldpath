@@ -6,6 +6,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 ## [Unreleased]
 
 ### Added
+- **Worker template concept parity** (open-threads T25, decided 2026-09-03) — `goldpath new
+  worker` gains `--auth openid|apikey|none` for the MANAGEMENT head (the jobs admin surface
+  and the console now sit behind the ops floor, or carry the visible `exposeUnsecured`
+  opt-out under `none`) and `--features multitenancy|audittrail|softdelete|dataprotection|
+  locking|notification|fileexchange` — the features whose concept exists in a process
+  without business HTTP. The riders (notification, fileexchange) bring the jobs runtime and
+  the console to a queue worker; the jobs worker on SQL Server now sets the jobs store
+  provider (it silently defaulted to the postgres delegate before). The manifest schema's
+  worker branch accepts `providers.auth` and the seven feature keys; the worker's drift
+  profile carries the same feature⇄package⇄call pairs the solution has; the worker ships the
+  `.claude/` guardrails (stop gate, format hook, `goldpath-manifest`, `breaker`) and
+  `ops/grafana-worker-dashboard.json`. The wizard asks the worker the same questions and
+  refuses table-owning features on a schedule worker with teaching text. Two nightly shapes
+  prove it: `GmWorkerJobsAuthed` (401 on the admin surface and the console, sqlserver) and
+  `GmWorkerQueueFeatures` (tenant on the message header, riders next to the inbox, console served).
 - **`goldpath add feature outbox`** — the fourteenth recipe, the one schema key the CLI could
   not compose: births the bus with its RabbitMQ resource when the app has none, joins the
   existing bus when it has one; the three MassTransit tables join the model; the `using`

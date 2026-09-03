@@ -1,6 +1,7 @@
 # Single source of truth (Goldpath ADR-0001). Validates against schemas/manifest/v1.
-# Worker manifests are LEAN by schema design: no providers/features here — infrastructure
-# is declared once, in the owning solution's manifest.
+# A worker manifest declares what the WORKER is: its trigger, the auth on its management
+# head, and the Ring B features it composes. The database and the broker follow from the
+# trigger (queue/jobs own a database; queue owns a broker) — they are not repeated here.
 schemaVersion: 1
 kind: worker
 name: GoldpathWorker
@@ -20,4 +21,37 @@ trigger:
 # Plain interval batch: BCL PeriodicTimer, cadence in configuration (Worker:Interval).
 # A cron trigger arrives with the Ring C Jobs module — declaring one here would be a lie.
 workerType: batch
+#endif
+providers:
+  auth: GOLDPATH-AUTH   # the management head's floor (probes stay anonymous); none = the visible opt-out
+#if (UseMultiTenancy || UseAuditTrail || UseSoftDelete || UseDataProtection || UseLocking || UseNotification || UseFileExchange)
+features:
+#endif
+#if (UseMultiTenancy)
+  multiTenancy: true
+#endif
+#if (UseAuditTrail)
+  auditTrail: true
+#endif
+#if (UseSoftDelete)
+  softDelete: true
+#endif
+#if (UseDataProtection)
+  dataProtection: true
+#endif
+#if (UseLocking && UsePostgres)
+  distributedLocking:
+    provider: postgres
+    connectionName: workdb
+#endif
+#if (UseLocking && UseSqlServer)
+  distributedLocking:
+    provider: sqlserver
+    connectionName: workdb
+#endif
+#if (UseNotification)
+  notification: true
+#endif
+#if (UseFileExchange)
+  fileExchange: true
 #endif

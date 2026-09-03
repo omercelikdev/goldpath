@@ -40,9 +40,42 @@ public class WizardTests
         var exit = WizardCommand.Run(new FakePrompter("Billing.Nightly", kind: "worker", trigger: "schedule", database: "sqlserver"), runner, output, TextWriter.Null);
 
         Assert.Equal(0, exit);
-        Assert.Equal(["new", "goldpath-worker", "-n", "Billing.Nightly", "--trigger", "schedule", "--db", "sqlserver"], runner.Calls[0].Arguments);
-        Assert.Contains("equivalent command: goldpath new worker -n Billing.Nightly --trigger schedule --db sqlserver", output.ToString(), StringComparison.Ordinal);
+        Assert.Equal(["new", "goldpath-worker", "-n", "Billing.Nightly", "--trigger", "schedule", "--db", "sqlserver", "--auth", "openid"], runner.Calls[0].Arguments);
+        Assert.Contains("equivalent command: goldpath new worker -n Billing.Nightly --trigger schedule --db sqlserver --auth openid", output.ToString(), StringComparison.Ordinal);
         Assert.Contains("trigger: schedule", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("auth: openid", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_worker_carries_its_features_and_names_the_jobs_runtime_the_riders_bring()
+    {
+        var runner = new FakeProcessRunner();
+        var output = new StringWriter();
+
+        var exit = WizardCommand.Run(
+            new FakePrompter("Ingest", kind: "worker", trigger: "queue", auth: "none", features: ["multitenancy", "fileexchange", "caching"]),
+            runner, output, TextWriter.Null);
+
+        Assert.Equal(0, exit);
+        // caching is solution-shaped: filtered out, never passed through.
+        Assert.Equal(["new", "goldpath-worker", "-n", "Ingest", "--trigger", "queue", "--db", "postgresql", "--auth", "none", "--features", "multitenancy", "--features", "fileexchange"], runner.Calls[0].Arguments);
+        Assert.Contains("features: multitenancy, fileexchange", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("jobs runtime: joins the worker's database", output.ToString(), StringComparison.Ordinal);
+        Assert.Contains("opt out VISIBLY", output.ToString(), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_schedule_worker_refuses_table_owning_features_with_teaching_text()
+    {
+        var runner = new FakeProcessRunner();
+
+        var refusal = Assert.Throws<CliUsageException>(() => WizardCommand.Run(
+            new FakePrompter("Nightly", kind: "worker", trigger: "schedule", features: ["audittrail", "dataprotection"]),
+            runner, new StringWriter(), TextWriter.Null));
+
+        Assert.Contains("audittrail own tables", refusal.Message, StringComparison.Ordinal);
+        Assert.Contains("queue or jobs trigger", refusal.Message, StringComparison.Ordinal);
+        Assert.Empty(runner.Calls);
     }
 
     [Fact]

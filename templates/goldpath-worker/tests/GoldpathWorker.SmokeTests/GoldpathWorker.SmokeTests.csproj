@@ -8,6 +8,9 @@
 
   <ItemGroup>
     <PackageReference Include="Aspire.Hosting.Testing" />
+    <!--#if (UseMultiTenancy) -->
+    <PackageReference Include="Goldpath.Abstractions" />
+    <!--#endif -->
     <!--#if (UseQueue) -->
     <PackageReference Include="MassTransit.RabbitMQ" />
     <!--#endif -->
