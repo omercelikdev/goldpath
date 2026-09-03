@@ -46,8 +46,9 @@ A dotnet tool (`goldpath`) that WRAPS what exists — no new semantics:
   model call + manifest line) to an EXISTING app — the textual, documented-boundary
   transform; ends with specdrift validate+drift (fail = rollback, loudly)
 - `goldpath check` → specdrift validate+drift + build in one verb
-- `goldpath init` (L2 attach) is OUT of v1 — attaching to arbitrary brownfield needs the
-  transformation pack's analysis; recorded, not silent.
+- `goldpath init` (L2 attach) was OUT of v1 when this was written — it SHIPPED on
+  2026-08-05 (#147) as the manifest-attach verb: validates, refuses loudly, rewires no code
+  (the transformation pack still owns brownfield REWIRING; see D5 below).
 Home: the goldpath repo (`tools/Goldpath.Cli`), packaged like the rest; same gates.
 
 ## 3. Decision Points (Ömer)
@@ -64,7 +65,9 @@ Home: the goldpath repo (`tools/Goldpath.Cli`), packaged like the rest; same gat
   as the drift engine; Roslyn-grade rewriting is explicitly out.
   **Recommendation: anchors + textual.**
 - **D5 — `goldpath init` deferred to the transformation pack** with its trigger written.
-  **Recommendation: defer.**
+  **Recommendation: defer.** *Superseded 2026-08-05 (#147): the ATTACH half shipped as
+  `goldpath init` (manifest + validation, no code rewiring); only brownfield rewiring
+  stays with the transformation pack (T20).*
 
 ## 4. DoD (per slice; sequential MRs)
 - [x] A: all 7 features generate wired (multi-choice `--features`, repeated-flag syntax:

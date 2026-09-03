@@ -118,4 +118,6 @@ The public API diff is tracked with PublicApiAnalyzers (foundation section 5).
       11 flag/quiet facts, composition-scoped wiring detection (see the analyzers RFC ledger)
 - [x] Ops runbook (`ops/idempotency.md`, 2026-08-03) — honest-signals posture: no dedicated
       meter shipped, none cited; the sketched meters stay in §6 as the open option
-- [ ] Golden manifest impact: idempotency joins GM-2/3/5/6 when those shapes ship (7d)
+- [x] Golden manifest impact: idempotency rides the nightly `GmEverything` shape (every
+      feature on) and the generated smoke — green on the 2026-09-01 dispatch after the
+      preview.7 pin fix

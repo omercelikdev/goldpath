@@ -203,8 +203,11 @@ The SDK inherits the platform's ops posture; a product module's RFC owes its own
       types were internal everywhere; no upgrade step needed)
 - [x] Manifest `products` surface + corpus (m4 valid, m6/m7 invalid) + schema docs
       (2026-08-05)
-- [ ] `@qorpe/ui` extraction plan recorded in ui-standard (execution at consumer #3)
+- [x] `@qorpe/ui` extraction plan recorded (RFC qorpe-ui, accepted 2026-08-06) and
+      EXECUTED (step 6.0, 2026-08-07); consumer #3 — the api-portal admin console — starts
+      from the published package
 - [x] `goldpath export compose` SHIPPED (2026-08-05, step 5 slice 5): compose + laid
       Dockerfiles GENERATED from the AppHost; proven by a real `docker compose up` — the
       api answered health AND a business endpoint through the stack
-- [ ] rfc/README + adr/README indexes current (this PR)
+- [x] rfc/README + adr/README indexes current (verified by the 2026-09-01 repo audit:
+      every RFC and ADR indexed, every link resolving; docs-freshness gates the links)

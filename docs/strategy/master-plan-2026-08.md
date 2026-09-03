@@ -54,8 +54,17 @@ green → merge → ledgers updated in the same PR.
    **6.0 DONE 2026-08-07**: @qorpe/ui extracted (RFC qorpe-ui accepted; repo
    github.com/qorpe/ui, gates G1–G6 live, 0.1.0 on npm with the B1–B9
    standardization series) and THIS console now composes from the PUBLISHED kit —
-   ui/kit deleted, the kit-freshness gate holds the pin honest. Mockifyr's
-   migration and the pilot skeleton are next.
+   ui/kit deleted, the kit-freshness gate holds the pin honest.
+   **6.1 — the pilot, IN PROGRESS (recorded 2026-09-03)**: qorpe.apiPortal (private
+   repo) stands on the published train — 69 merged PRs by 2026-09-03, on
+   0.1.0-preview.7 the day it shipped, the two §2b riders in its CI (train-freshness,
+   product-guard/GP2001) plus the npm kit-freshness twin, its admin console composed
+   from @qorpe/ui (consumer #3), and Mockifyr on the published kit too. The pilot has
+   already fed the platform four fixes it found live: Approvals v2's ladder rules
+   (#185), the service-discovery core (#197), the document-column widening (#198),
+   and the console federation of Approvals (#200). What 6.1 still owes: the STC
+   customer's M1 answers (the BRD baseline, the fee-collection boundary, NFR numbers)
+   decide the pilot's next investment.
 7. **Scenario campaign** — starts after step 3 and runs alongside: S-FIN-01 first,
    the S-FLEET set once R1 ships, the 30M rig spec co-written before any scale claim.
    All seven seeded scenarios get evidence.
