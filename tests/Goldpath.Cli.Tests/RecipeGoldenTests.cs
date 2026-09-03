@@ -156,7 +156,7 @@ public class RecipeGoldenTests
     {
         var plan = FeatureRecipes.Build("archival", Postgres);
         Assert.Equal("archival", plan.ManifestKey);
-        Assert.Equal(["Goldpath.Archival", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Archival", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Equal(
             [
                 "builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>",
@@ -177,6 +177,7 @@ public class RecipeGoldenTests
             [
                 "app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit",
                 "app.MapGoldpathArchivalAdmin<ShopDbContext>();    // lifecycle verbs: retrieve/hold/erase/verify",
+                "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces",
             ],
             plan.Endpoints);
         Assert.Equal(
@@ -210,7 +211,7 @@ public class RecipeGoldenTests
     {
         var plan = FeatureRecipes.Build("bulk", Postgres);
         Assert.Equal("bulk", plan.ManifestKey);
-        Assert.Equal(["Goldpath.Bulk", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Bulk", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Empty(plan.JobsOptionsLines);
         Assert.Equal(
             [
@@ -232,6 +233,7 @@ public class RecipeGoldenTests
             [
                 "app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit",
                 "app.MapGoldpathBulkAdmin<ShopDbContext>();        // intake verbs: upload/report/approve/reject",
+                "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces",
             ],
             plan.Endpoints);
         Assert.Equal(["  bulk: true"], plan.ManifestLines);
@@ -263,7 +265,7 @@ public class RecipeGoldenTests
     {
         var plan = FeatureRecipes.Build("notification", Postgres);
         Assert.Equal("notification", plan.ManifestKey);
-        Assert.Equal(["Goldpath.Notification", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Notification", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Empty(plan.JobsOptionsLines);
         Assert.Contains("builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>", plan.Registrations);
         Assert.Contains("    jobs.AddGoldpathNotificationJobs<ShopDbContext>();   // send (frequent) + body-retention (nightly)", plan.Registrations);
@@ -272,6 +274,7 @@ public class RecipeGoldenTests
             [
                 "app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit",
                 "app.MapGoldpathNotificationAdmin<ShopDbContext>();   // read-only evidence views (recipients masked)",
+                "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces",
             ],
             plan.Endpoints);
         Assert.Equal(
@@ -300,7 +303,7 @@ public class RecipeGoldenTests
     {
         var plan = FeatureRecipes.Build("campaign", Postgres);
         Assert.Equal("campaign", plan.ManifestKey);
-        Assert.Equal(["Goldpath.Campaign", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Campaign", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Empty(plan.JobsOptionsLines);
         Assert.Contains("builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>", plan.Registrations);
         Assert.Contains("    jobs.AddGoldpathCampaignJobs<ShopDbContext>();       // pacer: the cron guarantees a LEADER exists; pacing is in-memory ticks", plan.Registrations);
@@ -312,6 +315,7 @@ public class RecipeGoldenTests
             [
                 "app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit",
                 "app.MapGoldpathCampaignAdmin<ShopDbContext>();       // audited verbs: create/pause/resume/abort/throttle",
+                "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces",
             ],
             plan.Endpoints);
         Assert.Equal(
@@ -352,10 +356,10 @@ public class RecipeGoldenTests
     }
 
     [Fact]
-    public void The_feature_list_is_the_thirteen_recipes()
+    public void The_feature_list_is_the_fourteen_recipes()
     {
         Assert.Equal(
-            ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "approvals", "fileexchange", "archival", "bulk", "notification", "campaign"],
+            ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "approvals", "fileexchange", "archival", "bulk", "notification", "campaign", "outbox"],
             FeatureRecipes.Names);
     }
 
@@ -364,7 +368,7 @@ public class RecipeGoldenTests
     {
         var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = false };
         var plan = FeatureRecipes.Build("approvals", facts);
-        Assert.Equal(["Goldpath.Approvals", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Approvals", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Contains("  approvals: true", plan.ManifestLines);
         Assert.Contains("builder.AddGoldpathApprovals<WebApplicationBuilder, X>(approvals =>", plan.Registrations);
         Assert.Contains(plan.Registrations, r => r.Contains("AddGoldpathApprovalsJobs()"));
@@ -377,7 +381,7 @@ public class RecipeGoldenTests
     {
         var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = false };
         var plan = FeatureRecipes.Build("fileexchange", facts);
-        Assert.Equal(["Goldpath.FileExchange", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.FileExchange", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Contains("  fileExchange: true", plan.ManifestLines);
         Assert.Contains("builder.AddGoldpathFileExchange<WebApplicationBuilder, X>(files =>", plan.Registrations);
         Assert.Contains("builder.AddGoldpathJobs<WebApplicationBuilder, X>(jobs =>", plan.Registrations);

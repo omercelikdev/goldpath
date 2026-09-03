@@ -32,7 +32,7 @@ public class FeatureRecipesMutationTests
     {
         var plan = FeatureRecipes.Build("approvals", Facts());
         Assert.Equal("approvals", plan.ManifestKey);
-        Assert.Equal(["Goldpath.Approvals", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.Approvals", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Equal(
             [
                 "builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>",
@@ -58,7 +58,7 @@ public class FeatureRecipesMutationTests
             plan.ModelCalls);
         Assert.Equal(["  approvals: true"], plan.ManifestLines);
         Assert.Equal(["declare ladders in AddGoldpathApprovals — the escalation sweep is already scheduled (AddGoldpathApprovalsJobs, five-minute cron)"], plan.NextSteps);
-        Assert.Equal(["app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit"], plan.Endpoints);
+        Assert.Equal(["app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit", "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces"], plan.Endpoints);
         Assert.Empty(plan.JobsOptionsLines);
         Assert.Empty(plan.BusLines);
     }
@@ -78,7 +78,7 @@ public class FeatureRecipesMutationTests
     {
         var plan = FeatureRecipes.Build("fileexchange", Facts());
         Assert.Equal("fileExchange", plan.ManifestKey);
-        Assert.Equal(["Goldpath.FileExchange", "Goldpath.Jobs"], plan.ApiPackages);
+        Assert.Equal(["Goldpath.FileExchange", "Goldpath.Jobs", "Goldpath.Console"], plan.ApiPackages);
         Assert.Equal(
             [
                 "builder.AddGoldpathJobs<WebApplicationBuilder, ShopDbContext>(jobs =>",
@@ -104,7 +104,7 @@ public class FeatureRecipesMutationTests
             plan.ModelCalls);
         Assert.Equal(["  fileExchange: true"], plan.ManifestLines);
         Assert.Equal(["declare rails in AddGoldpathFileExchange, then write the pick-up job for your transport and hang it on the jobs block (IGoldpathJob — chunked, resumable, visible in the console)"], plan.NextSteps);
-        Assert.Equal(["app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit"], plan.Endpoints);
+        Assert.Equal(["app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit", "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces"], plan.Endpoints);
     }
 
     [Fact]
@@ -269,6 +269,7 @@ public class FeatureRecipesMutationTests
             [
                 "app.MapGoldpathJobsAdmin<ShopDbContext>(exposeUnsecured: true);        // run console API: trigger/pause/reschedule/audit",
                 moduleAdmin,
+                "app.MapGoldpathConsole(exposeUnsecured: true);      // the console over the surfaces above — visible opt-out, acceptable only behind an authenticating boundary",
             ],
             plan.Endpoints);
     }
@@ -313,7 +314,7 @@ public class FeatureRecipesMutationTests
     {
         var e = Assert.Throws<CliUsageException>(() => FeatureRecipes.Build("quantumsafe", Facts()));
         Assert.Equal(
-            "unknown feature 'quantumsafe' — one of: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals, fileexchange, archival, bulk, notification, campaign",
+            "unknown feature 'quantumsafe' — one of: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals, fileexchange, archival, bulk, notification, campaign, outbox",
             e.Message);
     }
 

@@ -55,7 +55,28 @@ public static class NewCommand
     }
 
     private static string OutputDirectory(IReadOnlyList<string> rest)
-        => FindFlagValue(rest, "-o", "--output") ?? Directory.GetCurrentDirectory();
+        => ResolveAppRoot(rest, Directory.GetCurrentDirectory());
+
+    /// <summary>
+    /// Where the generated app lives: <c>-o</c> when given; otherwise the template's
+    /// <c>preferNameDirectory</c> put it under <c>&lt;cwd&gt;/&lt;name&gt;</c> — resolve THAT when
+    /// it exists, so the post-generation db init and the first-contract commit find the
+    /// app instead of silently skipping it (they searched <c>&lt;cwd&gt;/src</c> before).
+    /// </summary>
+    public static string ResolveAppRoot(IReadOnlyList<string> rest, string currentDirectory)
+    {
+        if (FindFlagValue(rest, "-o", "--output") is { } explicitOutput)
+        {
+            return explicitOutput;
+        }
+
+        if (FindFlagValue(rest, "-n", "--name") is { } name && Directory.Exists(Path.Combine(currentDirectory, name)))
+        {
+            return Path.Combine(currentDirectory, name);
+        }
+
+        return currentDirectory;
+    }
 
     /// <summary>The value following the first matching flag, or null.</summary>
     private static string? FindFlagValue(IReadOnlyList<string> rest, params string[] flags)

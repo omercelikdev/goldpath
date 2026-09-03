@@ -14,6 +14,15 @@ public class TextEditsTests
     }
 
     [Fact]
+    public void EnsureUsing_lands_after_the_last_using_or_first_and_never_twice()
+    {
+        Assert.Equal("using A;\nusing B;\nusing MassTransit;\nvar x = 1;", TextEdits.EnsureUsing("using A;\nusing B;\nvar x = 1;", "MassTransit"));
+        Assert.Equal("using MassTransit;\nvar x = 1;", TextEdits.EnsureUsing("var x = 1;", "MassTransit"));
+        Assert.Equal("using MassTransit;\nvar x = 1;", TextEdits.EnsureUsing("using MassTransit;\nvar x = 1;", "MassTransit"));
+        Assert.Equal("global using MassTransit;\nvar x = 1;", TextEdits.EnsureUsing("global using MassTransit;\nvar x = 1;", "MassTransit"));
+    }
+
+    [Fact]
     public void Insert_is_idempotent_at_block_level()
     {
         var once = TextEdits.InsertAfterAnchor("// a\n", "// a", ["x", "y"]);
