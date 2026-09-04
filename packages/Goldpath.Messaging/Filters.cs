@@ -47,7 +47,7 @@ public sealed class GoldpathPublishFilter<T> : IFilter<PublishContext<T>>
             context.Headers.Set(GoldpathHeaders.TenantId, tenant.Value);
         }
 
-        if (Activity.Current?.GetTagItem("goldpath.correlation_id") is string correlationId)
+        if (CorrelationOf(Activity.Current) is { } correlationId)
         {
             context.Headers.Set(GoldpathHeaders.CorrelationId, correlationId);
         }
@@ -57,6 +57,23 @@ public sealed class GoldpathPublishFilter<T> : IFilter<PublishContext<T>>
 
     /// <inheritdoc />
     public void Probe(ProbeContext context) => context.CreateFilterScope("goldpathPublish");
+
+    // The tag sits on the REQUEST (or consume) activity; by the time this filter runs,
+    // MassTransit has started its own child activity for the send, so Activity.Current
+    // is one level down. Walk up — found by the Messaging mutation gate (2026-09-03):
+    // the old single-level read never stamped the header from inside a real request.
+    private static string? CorrelationOf(Activity? activity)
+    {
+        for (var current = activity; current is not null; current = current.Parent)
+        {
+            if (current.GetTagItem("goldpath.correlation_id") is string correlationId)
+            {
+                return correlationId;
+            }
+        }
+
+        return null;
+    }
 }
 
 /// <summary>

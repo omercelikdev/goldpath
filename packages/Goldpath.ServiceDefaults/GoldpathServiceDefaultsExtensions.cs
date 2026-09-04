@@ -118,7 +118,7 @@ public static class GoldpathServiceDefaultsExtensions
         }
     }
 
-    private static Sampler CreateSampler(GoldpathServiceDefaultsOptions options, bool isDevelopment)
+    internal static Sampler CreateSampler(GoldpathServiceDefaultsOptions options, bool isDevelopment)
     {
         if (isDevelopment)
         {

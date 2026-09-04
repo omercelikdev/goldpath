@@ -27,6 +27,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   Abstractions (N/A by construction, written down). `Goldpath.ServiceDefaults` now
   subscribes to the `Microsoft.EntityFrameworkCore` and `Npgsql` meters — they never
   reached the collector before, whatever the RFC note said.
+- **Mutation gates for the three thin floor suites** — `Goldpath.Console` (75%),
+  `Goldpath.Messaging` (80%) and `Goldpath.ServiceDefaults` (70%) join the nightly matrix
+  with the family thresholds (break 70); the corners the first runs left alive got tests
+  (the sampler ladder, the correlation id's exact boundary, live/ready tag split, the
+  guard's queue, the framework's own Fault messages passing the boundary guard, options
+  binding).
 - **Worker template concept parity** (open-threads T25, decided 2026-09-03) — `goldpath new
   worker` gains `--auth openid|apikey|none` for the MANAGEMENT head (the jobs admin surface
   and the console now sit behind the ops floor, or carry the visible `exposeUnsecured`
@@ -54,6 +60,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   equivalent `goldpath new worker` command printed and delegated to.
 
 ### Fixed
+- **Messaging: the correlation header was never stamped from inside a real request.** The
+  publish filter read `goldpath.correlation_id` off `Activity.Current`, but by the time it
+  runs MassTransit has started its own child activity for the send, so the tag (on the
+  request activity) was one level up and the header stayed empty. The filter now walks the
+  activity chain. Found by the new Messaging mutation gate.
 - **`goldpath new` without `-o`** resolves the app root to the template's name directory,
   so the post-generation `db init` and the first-contract commit run instead of silently
   skipping (they searched `<cwd>/src` before).
