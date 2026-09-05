@@ -237,9 +237,11 @@ public class AddWorkerTests
         // The fleet shares the app database's jobs tables, which the Api's context owns —
         // without a rider there is nothing to share (GmWorkerInSolution, 2026-09-05).
         using var app = new FakeApp();   // no AddGoldpathJobs in the composition root
-        var refusal = Assert.Throws<CliFailureException>(() => Add("eod", "jobs", app, new FakeProcessRunner()));
-        Assert.Contains("jobs rider", refusal.Message, StringComparison.Ordinal);
-        Assert.Contains("goldpath new worker --trigger jobs", refusal.Message, StringComparison.Ordinal);
+        var error = new StringWriter();
+        var exit = CliRunner.Run(["add", "worker", "eod", "--trigger", "jobs", "--path", app.Root], new FakeProcessRunner(), TextWriter.Null, error);
+        Assert.NotEqual(0, exit);
+        Assert.Contains("jobs rider", error.ToString(), StringComparison.Ordinal);
+        Assert.Contains("goldpath new worker --trigger jobs", error.ToString(), StringComparison.Ordinal);
         Assert.False(Directory.Exists(Path.Combine(app.Root, "src", "Shop.EodWorker")));
     }
 }
