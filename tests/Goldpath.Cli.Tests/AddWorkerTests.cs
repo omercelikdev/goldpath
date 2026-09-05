@@ -131,4 +131,103 @@ public class AddWorkerTests
         Assert.Contains("options.UseSqlServer(workDbConnection);", program, StringComparison.Ordinal);
         Assert.Contains("outbox.UseSqlServer()", program, StringComparison.Ordinal);
     }
+
+    [Fact]
+    public void An_authed_solution_gets_an_authed_worker_head()
+    {
+        using var app = new FakeApp(authWired: true);
+        Assert.Equal(0, Add("eod-report", "jobs", app, new FakeProcessRunner()));
+
+        var projectDir = Path.Combine(app.Root, "src", "Shop.EodReportWorker");
+        var program = File.ReadAllText(Path.Combine(projectDir, "Program.cs"));
+        Assert.Contains("builder.AddGoldpathAuth();", program, StringComparison.Ordinal);
+        Assert.Contains("app.UseGoldpathAuth();", program, StringComparison.Ordinal);
+        // The floor is UP: no visible opt-out on the fleet's admin surface.
+        Assert.Contains("app.MapGoldpathJobsAdmin<ReportsDbContext>();", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("exposeUnsecured", program, StringComparison.Ordinal);
+        Assert.Contains("<PackageReference Include=\"Goldpath.Auth\" />", File.ReadAllText(Path.Combine(projectDir, "Shop.EodReportWorker.csproj")), StringComparison.Ordinal);
+        // Middleware order: auth AFTER build, BEFORE the probes are mapped.
+        Assert.True(program.IndexOf("app.UseGoldpathAuth();", StringComparison.Ordinal) < program.IndexOf("app.MapGoldpathDefaultEndpoints();", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void An_api_key_solution_gives_the_worker_the_api_key_strategy()
+    {
+        using var app = new FakeApp(authWired: true, apiKey: true);
+        Assert.Equal(0, Add("eod-report", "jobs", app, new FakeProcessRunner()));
+        var program = File.ReadAllText(Path.Combine(app.Root, "src", "Shop.EodReportWorker", "Program.cs"));
+        Assert.Contains("builder.AddGoldpathAuth(o => o.Strategy = GoldpathAuthStrategy.ApiKey);", program, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void The_solutions_features_ride_along_on_the_workers_own_context()
+    {
+        using var app = new FakeApp(messagingWired: true, auditTrailWired: true, softDeleteWired: true, multiTenancyWired: true, dataProtectionWired: true, lockingWired: true);
+        Assert.Equal(0, Add("ingest", "queue", app, new FakeProcessRunner()));
+
+        var projectDir = Path.Combine(app.Root, "src", "Shop.IngestWorker");
+        var program = File.ReadAllText(Path.Combine(projectDir, "Program.cs"));
+        Assert.Contains("builder.AddGoldpathMultiTenancy();", program, StringComparison.Ordinal);
+        Assert.Contains("builder.AddGoldpathAuditTrail<WebApplicationBuilder, WorkDbContext>();", program, StringComparison.Ordinal);
+        Assert.Contains("builder.AddGoldpathSoftDelete();", program, StringComparison.Ordinal);
+        Assert.Contains("builder.AddGoldpathDataProtection();", program, StringComparison.Ordinal);
+        Assert.Contains("o.Provider = GoldpathLockProvider.Postgres;", program, StringComparison.Ordinal);
+        Assert.Contains("app.UseGoldpathMultiTenancy();", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("UseGoldpathAuth", program, StringComparison.Ordinal);   // no floor on this solution
+
+        var model = File.ReadAllText(Path.Combine(projectDir, "WorkItems", "WorkDbContext.cs"));
+        Assert.Contains("modelBuilder.AddGoldpathAuditLog();", model, StringComparison.Ordinal);
+        Assert.Contains("modelBuilder.ApplyGoldpathSoftDelete();", model, StringComparison.Ordinal);
+        Assert.Contains("modelBuilder.ApplyGoldpathMultiTenancy(this);", model, StringComparison.Ordinal);
+
+        var csproj = File.ReadAllText(Path.Combine(projectDir, "Shop.IngestWorker.csproj"));
+        foreach (var package in new[] { "Goldpath.MultiTenancy", "Goldpath.AuditTrail", "Goldpath.SoftDelete", "Goldpath.DataProtection", "Goldpath.Locking" })
+        {
+            Assert.Contains($"<PackageReference Include=\"{package}\" />", csproj, StringComparison.Ordinal);
+        }
+    }
+
+    [Fact]
+    public void A_schedule_worker_takes_only_the_process_wide_features()
+    {
+        // No context of its own: audit/soft-delete/locking own tables and stay out; tenancy
+        // and data protection are process-wide and ride along.
+        using var app = new FakeApp(auditTrailWired: true, softDeleteWired: true, multiTenancyWired: true, dataProtectionWired: true, lockingWired: true);
+        Assert.Equal(0, Add("tick", "schedule", app, new FakeProcessRunner()));
+
+        var projectDir = Path.Combine(app.Root, "src", "Shop.TickWorker");
+        var program = File.ReadAllText(Path.Combine(projectDir, "Program.cs"));
+        Assert.Contains("builder.AddGoldpathMultiTenancy();", program, StringComparison.Ordinal);
+        Assert.Contains("builder.AddGoldpathDataProtection();", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddGoldpathAuditTrail", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddGoldpathSoftDelete", program, StringComparison.Ordinal);
+        Assert.DoesNotContain("AddGoldpathLocking", program, StringComparison.Ordinal);
+        var csproj = File.ReadAllText(Path.Combine(projectDir, "Shop.TickWorker.csproj"));
+        Assert.DoesNotContain("Goldpath.AuditTrail", csproj, StringComparison.Ordinal);
+        Assert.Contains("Goldpath.MultiTenancy", csproj, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void Sqlserver_solutions_give_the_worker_the_sqlserver_lock_provider()
+    {
+        using var app = new FakeApp(sqlServer: true, lockingWired: true);
+        Assert.Equal(0, Add("eod", "jobs", app, new FakeProcessRunner()));
+        var projectDir = Path.Combine(app.Root, "src", "Shop.EodWorker");
+        Assert.Contains("builder.AddGoldpathSqlServerLocking(o => o.ConnectionName = \"shopdb\");", File.ReadAllText(Path.Combine(projectDir, "Program.cs")), StringComparison.Ordinal);
+        Assert.Contains("Goldpath.Locking.SqlServer", File.ReadAllText(Path.Combine(projectDir, "Shop.EodWorker.csproj")), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_second_verb_after_a_worker_still_finds_the_primary_head()
+    {
+        // The worker is a web host too; without its marker the next add verb saw two web
+        // projects and refused (GmWorkerInSolution, 2026-09-05).
+        using var app = new FakeApp(messagingWired: true);
+        var runner = new FakeProcessRunner();
+        Assert.Equal(0, Add("eod", "jobs", app, runner));
+        Assert.Equal(0, Add("ingest", "queue", app, runner));
+        Assert.True(Directory.Exists(Path.Combine(app.Root, "src", "Shop.IngestWorker")));
+        Assert.Equal(0, CliRunner.Run(["add", "feature", "softdelete", "--path", app.Root], runner, TextWriter.Null, TextWriter.Null));
+        Assert.Contains("builder.AddGoldpathSoftDelete();", app.Read(app.Program), StringComparison.Ordinal);
+    }
 }

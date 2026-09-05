@@ -106,6 +106,16 @@ public static class AddWorkerCommand
             output.WriteLine($"  → {step}");
         }
 
+        if (facts.AuthWired)
+        {
+            output.WriteLine("  → the worker's head is behind the SAME floor as the Api: copy the Goldpath:Auth section (Authority + Audience, or ApiKeys) into this project's appsettings — Aspire does not share configuration across projects");
+        }
+
+        if (facts.AuditTrailWired || facts.SoftDeleteWired || facts.MultiTenancyWired || facts.DataProtectionWired || facts.LockingWired)
+        {
+            output.WriteLine("  → the worker composes the solution's cross-cutting features on its OWN context (audit rows, soft-delete filter, tenant isolation, locks) — nothing to declare, the manifest already says so; the table-owning ones ride `goldpath db add add-worker`");
+        }
+
         return 0;
     }
 
@@ -205,6 +215,7 @@ public static class AddWorkerCommand
         ],
         _ => [
             "replace NightlyReportJob's body with the real aggregation; review the cron and the Deadline (every job has an SLA — GP1302)",
+            "if the solution enables no jobs rider (archival/bulk/notification/campaign/approvals/fileexchange), `specdrift drift` WARNs SPEC0203 on Goldpath.Jobs — the fleet is a capability the manifest cannot declare yet (open-threads T26); a `--fail-on warn` hook needs that rider or the thread's fix",
             "the worker runs its OWN fleet (SchedulerName) against the app database — the Api's scheduler is untouched; both consoles ride MapGoldpathJobsAdmin",
             "the shared jobs tables stay the API context's migrations (the D3 exclusion is generated); run `goldpath db add add-worker` for the worker's PRIVATE tables",
         ],
@@ -217,9 +228,9 @@ public static class AddWorkerCommand
             ? ("Microsoft.EntityFrameworkCore.SqlServer", "UseSqlServer")
             : ("Npgsql.EntityFrameworkCore.PostgreSQL", "UseNpgsql");
 
-        File.WriteAllText(Path.Combine(projectDir, $"{projectName}.csproj"), Csproj(trigger, provider.Item1));
+        File.WriteAllText(Path.Combine(projectDir, $"{projectName}.csproj"), Csproj(trigger, provider.Item1, facts));
         File.WriteAllText(Path.Combine(projectDir, "GlobalUsings.cs"), "global using Goldpath;\n");
-        File.WriteAllText(Path.Combine(projectDir, "Program.cs"), Program(projectName, trigger, facts.ConnectionName, provider.Item2));
+        File.WriteAllText(Path.Combine(projectDir, "Program.cs"), Inherit(Program(projectName, trigger, facts.ConnectionName, provider.Item2), trigger, facts));
 
         // Aspire infers the worker's HTTP endpoint FROM launchSettings — without this file
         // the AppHost's WithHttpHealthCheck finds no endpoint and the whole app refuses to
@@ -252,7 +263,7 @@ public static class AddWorkerCommand
                 Directory.CreateDirectory(work);
                 File.WriteAllText(Path.Combine(work, "ProcessedWorkItem.cs"), ProcessedWorkItem(projectName));
                 File.WriteAllText(Path.Combine(work, "WorkItemQueued.cs"), WorkItemQueued(projectName));
-                File.WriteAllText(Path.Combine(work, "WorkDbContext.cs"), WorkDbContext(projectName));
+                File.WriteAllText(Path.Combine(work, "WorkDbContext.cs"), InheritModel(WorkDbContext(projectName), facts));
                 File.WriteAllText(Path.Combine(work, "WorkItemQueuedConsumer.cs"), Consumer(projectName));
                 break;
             case "schedule":
@@ -264,16 +275,17 @@ public static class AddWorkerCommand
                 var reports = Path.Combine(projectDir, "Reports");
                 Directory.CreateDirectory(reports);
                 File.WriteAllText(Path.Combine(reports, "DailyReportRow.cs"), DailyReportRow(projectName));
-                File.WriteAllText(Path.Combine(reports, "ReportsDbContext.cs"), ReportsDbContext(projectName));
+                File.WriteAllText(Path.Combine(reports, "ReportsDbContext.cs"), InheritModel(ReportsDbContext(projectName), facts));
                 File.WriteAllText(Path.Combine(reports, "NightlyReportJob.cs"), NightlyReportJob(projectName));
                 break;
         }
     }
 
-    private static string Csproj(string trigger, string providerPackage)
+    private static string Csproj(string trigger, string providerPackage, AppFacts facts)
     {
         var builder = new StringBuilder("""
             <Project Sdk="Microsoft.NET.Sdk.Web">
+              <!-- goldpath:worker-head — a web host for probes and the fleet console, never the Api (goldpath add worker) -->
 
               <PropertyGroup>
                 <TargetFramework>net10.0</TargetFramework>
@@ -302,6 +314,44 @@ public static class AddWorkerCommand
             builder.AppendLine("""    <PackageReference Include="Goldpath.Jobs" />""");
         }
 
+        // Inherited from the solution (T25 concept parity for the in-solution worker): the
+        // head's floor, and the cross-cutting features whose concept exists in a process
+        // without business HTTP. Table-owning features need the worker's own context.
+        if (facts.AuthWired)
+        {
+            builder.AppendLine("""    <PackageReference Include="Goldpath.Auth" />""");
+        }
+
+        if (facts.MultiTenancyWired)
+        {
+            builder.AppendLine("""    <PackageReference Include="Goldpath.MultiTenancy" />""");
+        }
+
+        if (facts.DataProtectionWired)
+        {
+            builder.AppendLine("""    <PackageReference Include="Goldpath.DataProtection" />""");
+        }
+
+        if (trigger is "queue" or "jobs")
+        {
+            if (facts.AuditTrailWired)
+            {
+                builder.AppendLine("""    <PackageReference Include="Goldpath.AuditTrail" />""");
+            }
+
+            if (facts.SoftDeleteWired)
+            {
+                builder.AppendLine("""    <PackageReference Include="Goldpath.SoftDelete" />""");
+            }
+
+            if (facts.LockingWired)
+            {
+                builder.AppendLine(facts.DatabaseProvider == "sqlserver"
+                    ? """    <PackageReference Include="Goldpath.Locking.SqlServer" />"""
+                    : """    <PackageReference Include="Goldpath.Locking" />""");
+            }
+        }
+
         builder.Append("""
                 <PackageReference Include="Goldpath.Analyzers" PrivateAssets="all" />
               </ItemGroup>
@@ -310,6 +360,110 @@ public static class AddWorkerCommand
 
             """);
         return builder.ToString();
+    }
+
+    /// <summary>
+    /// Splices the solution's floor and features into the generated Program: a worker added to
+    /// an authed solution is authed (its admin surface sits behind the SAME ops floor), and it
+    /// composes the cross-cutting features the solution declares — on its own context for the
+    /// table-owning ones (queue/jobs), process-wide for tenancy and data protection.
+    /// </summary>
+    internal static string Inherit(string program, string trigger, AppFacts facts)
+    {
+        var context = trigger == "queue" ? "WorkDbContext" : "ReportsDbContext";
+        var hasContext = trigger is "queue" or "jobs";
+        var registrations = new StringBuilder();
+        if (facts.AuthWired)
+        {
+            registrations.AppendLine(facts.AuthApiKey
+                ? "builder.AddGoldpathAuth(o => o.Strategy = GoldpathAuthStrategy.ApiKey);   // the solution's floor — copy its Goldpath:Auth section into THIS project's configuration"
+                : "builder.AddGoldpathAuth();   // the solution's floor — copy its Goldpath:Auth section (Authority + Audience) into THIS project's configuration");
+        }
+
+        if (facts.MultiTenancyWired)
+        {
+            registrations.AppendLine("builder.AddGoldpathMultiTenancy();                  // the head resolves the tenant; consumers restore it from message headers");
+        }
+
+        if (hasContext && facts.AuditTrailWired)
+        {
+            registrations.AppendLine($"builder.AddGoldpathAuditTrail<WebApplicationBuilder, {context}>();");
+        }
+
+        if (hasContext && facts.SoftDeleteWired)
+        {
+            registrations.AppendLine("builder.AddGoldpathSoftDelete();");
+        }
+
+        if (facts.DataProtectionWired)
+        {
+            registrations.AppendLine("builder.AddGoldpathDataProtection();");
+        }
+
+        if (hasContext && facts.LockingWired)
+        {
+            registrations.AppendLine(facts.DatabaseProvider == "sqlserver"
+                ? $"builder.AddGoldpathSqlServerLocking(o => o.ConnectionName = \"{facts.ConnectionName}\");"
+                : $"builder.AddGoldpathLocking(o =>\n{{\n    o.Provider = GoldpathLockProvider.Postgres;     // the lock lives in the app database — zero new infra\n    o.ConnectionName = \"{facts.ConnectionName}\";\n}});");
+        }
+
+        if (registrations.Length > 0)
+        {
+            program = program.Replace(
+                "builder.AddGoldpathServiceDefaults();\n",
+                "builder.AddGoldpathServiceDefaults();\n// Inherited from the solution (goldpath add worker): the same floor, the same features.\n" + registrations,
+                StringComparison.Ordinal);
+        }
+
+        var middleware = new StringBuilder();
+        if (facts.MultiTenancyWired)
+        {
+            middleware.AppendLine("app.UseGoldpathMultiTenancy();                      // resolve the tenant BEFORE auth binds to it");
+        }
+
+        if (facts.AuthWired)
+        {
+            middleware.AppendLine("app.UseGoldpathAuth();");
+        }
+
+        if (middleware.Length > 0)
+        {
+            program = program.Replace("var app = builder.Build();\n\n", "var app = builder.Build();\n\n" + middleware, StringComparison.Ordinal);
+        }
+
+        if (facts.AuthWired)
+        {
+            program = program.Replace(
+                "app.MapGoldpathJobsAdmin<ReportsDbContext>(exposeUnsecured: true);   // internal fleet console — keep it behind the cluster boundary (H2 opt-out, visible)",
+                "app.MapGoldpathJobsAdmin<ReportsDbContext>();   // this worker's fleet, behind the SAME ops floor as the Api (H2)",
+                StringComparison.Ordinal);
+        }
+
+        return program;
+    }
+
+    /// <summary>The model calls the inherited features need on the worker's own context.</summary>
+    internal static string InheritModel(string model, AppFacts facts)
+    {
+        var calls = new StringBuilder();
+        if (facts.AuditTrailWired)
+        {
+            calls.AppendLine("        modelBuilder.AddGoldpathAuditLog();");
+        }
+
+        if (facts.SoftDeleteWired)
+        {
+            calls.AppendLine("        modelBuilder.ApplyGoldpathSoftDelete();");
+        }
+
+        if (facts.MultiTenancyWired)
+        {
+            calls.AppendLine("        modelBuilder.ApplyGoldpathMultiTenancy(this);   // context-rooted ON PURPOSE — keeps the filter live");
+        }
+
+        return calls.Length == 0
+            ? model
+            : model.Replace("        modelBuilder.ApplyGoldpathModelDefaults();\n", "        modelBuilder.ApplyGoldpathModelDefaults();\n        // Inherited from the solution (goldpath add worker): the same rows on this context.\n" + calls, StringComparison.Ordinal);
     }
 
     private static string Program(string ns, string trigger, string? connection, string useProvider) => trigger switch

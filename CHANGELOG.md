@@ -11,6 +11,13 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   in August under the old window. Same change in mockifyr's copy.
 
 ### Added
+- **`goldpath add worker` inherits the solution's floor and features** (the in-solution
+  half of T25's worker parity): a worker added to an authed solution is authed — its fleet's
+  admin surface sits behind the SAME ops policy instead of the hard-coded `exposeUnsecured`
+  — and it composes the solution's cross-cutting features on its own context (audit rows,
+  soft-delete filter, tenant isolation, data protection, the app-database lock; table-owning
+  ones only where the trigger owns a context). The `GmWorkerInSolution` nightly shape proves
+  it with an authed, three-feature solution growing a jobs worker and a queue worker.
 - **The `GmGrown` nightly shape** — a lean app (`--auth none --broker none`) grown by five
   `goldpath add feature` recipes (audittrail, softdelete, locking, bulk, outbox), then
   built, drift-checked and smoked: the CLI verb's end-to-end proof (it had shipped
