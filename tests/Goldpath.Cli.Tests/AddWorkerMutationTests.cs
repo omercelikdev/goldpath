@@ -266,14 +266,13 @@ public class AddWorkerMutationTests
     [Fact]
     public void Jobs_success_prints_the_jobs_decisions()
     {
-        using var app = new FakeApp();
+        using var app = new FakeApp(jobsWired: true);
         var result = Add(app, new FakeProcessRunner(), "eod-report", "jobs");
         Assert.Equal(0, result.Code);
         Assert.Equal(
             Line("goldpath: worker 'Shop.EodReportWorker' (jobs) wired — running the engine (specdrift validate + drift)")
             + Line("goldpath: worker 'Shop.EodReportWorker' added as resource 'eod-report-worker' — engine clean. Your decisions (goldpath never guesses domain opt-ins):")
             + Line("  → replace NightlyReportJob's body with the real aggregation; review the cron and the Deadline (every job has an SLA — GP1302)")
-            + Line("  → if the solution enables no jobs rider (archival/bulk/notification/campaign/approvals/fileexchange), `specdrift drift` WARNs SPEC0203 on Goldpath.Jobs — the fleet is a capability the manifest cannot declare yet (open-threads T26); a `--fail-on warn` hook needs that rider or the thread's fix")
             + Line("  → the worker runs its OWN fleet (SchedulerName) against the app database — the Api's scheduler is untouched; both consoles ride MapGoldpathJobsAdmin")
             + Line("  → the shared jobs tables stay the API context's migrations (the D3 exclusion is generated); run `goldpath db add add-worker` for the worker's PRIVATE tables"),
             result.Output);
@@ -318,7 +317,7 @@ public class AddWorkerMutationTests
     [Fact]
     public void Jobs_apphost_chains_database_then_probe()
     {
-        using var app = new FakeApp();
+        using var app = new FakeApp(jobsWired: true);
         Assert.Equal(0, Add(app, new FakeProcessRunner(), "eod-report", "jobs").Code);
         Assert.Equal(
             AppHostHead
@@ -380,7 +379,7 @@ public class AddWorkerMutationTests
     [Fact]
     public void A_short_name_yields_a_short_kebab_resource()
     {
-        using var app = new FakeApp();
+        using var app = new FakeApp(jobsWired: true);
         Assert.Equal(0, Add(app, new FakeProcessRunner(), "eod", "jobs").Code);
         Assert.True(Directory.Exists(ProjectDir(app, "Shop.EodWorker")));
         Assert.Contains("builder.AddProject<Projects.Shop_EodWorker>(\"eod-worker\")", app.Read(app.AppHost), StringComparison.Ordinal);
@@ -418,7 +417,7 @@ public class AddWorkerMutationTests
     [Fact]
     public void The_jobs_skeleton_is_exactly_the_golden_one()
     {
-        using var app = new FakeApp();
+        using var app = new FakeApp(jobsWired: true);
         Assert.Equal(0, Add(app, new FakeProcessRunner(), "eod-report", "jobs").Code);
         AssertProjectIsExactly(ProjectDir(app, "Shop.EodReportWorker"), JobsFiles);
     }
@@ -426,7 +425,7 @@ public class AddWorkerMutationTests
     [Fact]
     public void Sqlserver_swaps_exactly_the_provider_package()
     {
-        using var app = new FakeApp(sqlServer: true);
+        using var app = new FakeApp(jobsWired: true, sqlServer: true);
         Assert.Equal(0, Add(app, new FakeProcessRunner(), "eod-report", "jobs").Code);
         var csproj = Normalize(File.ReadAllText(Path.Combine(ProjectDir(app, "Shop.EodReportWorker"), "Shop.EodReportWorker.csproj")));
         Assert.Equal(

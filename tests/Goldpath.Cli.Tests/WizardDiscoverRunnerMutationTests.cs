@@ -619,7 +619,7 @@ public class CliRunnerMutationTests
     [Fact]
     public void Add_worker_reads_trigger_and_path_in_either_order()
     {
-        using var app = new FakeApp();
+        using var app = new FakeApp(jobsWired: true);
 
         var (exit, _, error) = Run("add", "worker", "eod-report", "--path", app.Root, "--trigger", "jobs");
 

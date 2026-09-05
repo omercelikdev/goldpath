@@ -11,6 +11,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   in August under the old window. Same change in mockifyr's copy.
 
 ### Added
+- **`goldpath add worker --trigger jobs` refuses a solution without a jobs rider** — the
+  in-solution fleet shares the app database's jobs tables, which the Api's context owns;
+  without a rider it booted against nothing (found by the `GmWorkerInSolution` nightly).
+  The refusal names the alternatives. The nightly shapes that grow an app by verbs now run
+  `goldpath db add` after the recipes, as the verbs' next steps tell an adopter — the
+  `GmGrown` shape's first nightly hung on a model without its migration.
 - **`goldpath add worker` inherits the solution's floor and features** (the in-solution
   half of T25's worker parity): a worker added to an authed solution is authed — its fleet's
   admin surface sits behind the SAME ops policy instead of the hard-coded `exposeUnsecured`

@@ -102,7 +102,11 @@ Home: the goldpath repo (`tools/Goldpath.Cli`), packaged like the rest; same gat
   filter, tenant isolation, data protection, the app-database lock — table-owning ones only
   where the trigger owns a context). Nothing to declare: the solution's manifest already
   says it. Proven by `GmWorkerInSolution` (authed + three features + a jobs and a queue
-  worker by the verb) and eight CLI facts.
+  worker by the verb) and eight CLI facts. A jobs worker REQUIRES a jobs rider on the
+  solution (its fleet shares the Api context's tables); the verb refuses without one.
+  Open idea for the schema's next revision: a `workers:` inventory on the solution manifest,
+  so the manifest knows the solution has workers (ADR-0001) — today `add worker` writes
+  nothing into it.
 - [x] C: `goldpath new/add/check` against a generated app end to end; `add feature` proven by
   specdrift before/after (engine-red → byte-identical rollback, tested); packaged with the
   standard gates (tools/Goldpath.Cli, PackAsTool `goldpath`, mutation gate ≥70 with the IO shells
