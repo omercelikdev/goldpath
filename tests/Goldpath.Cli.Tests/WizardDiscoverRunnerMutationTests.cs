@@ -602,7 +602,7 @@ public class CliRunnerMutationTests
 
         Assert.Equal(0, exit);
         Assert.Empty(error);
-        Assert.True(File.Exists(Path.Combine(app.Root, "src", "Shop.PaymentsWorker", "WorkItems", "WorkItemQueuedConsumer.cs")));
+        Assert.True(File.Exists(Path.Combine(app.Root, "src", "Shop.PaymentsWorker", "WorkItems", "WorkItemQueuedHandler.cs")));
     }
 
     [Fact]

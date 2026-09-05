@@ -14,7 +14,7 @@
     <!-- DbSet/keyset queries compile against EF Core + the page contract via Goldpath.Data. -->
     <PackageReference Include="Goldpath.Data" />
     <!--#if (UseBroker) -->
-    <PackageReference Include="MassTransit" />
+    <PackageReference Include="Goldpath.Messaging" />
     <!--#endif -->
     <!--#if (UseBulk) -->
     <PackageReference Include="Goldpath.Bulk" />

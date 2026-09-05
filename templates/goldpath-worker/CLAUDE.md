@@ -7,7 +7,8 @@ contains no messaging code at all, a worker without `features.auditTrail` has no
 ## Rules
 - Conventions: `.claude/conventions.md`. Constitution and rationale: the Goldpath repo (`docs/adr`).
 - Queue workers: broker-bound contracts implement `IIntegrationEvent` (GP0401/0402);
-  consumers are inbox-guarded — processing is exactly-once, write handlers idempotently anyway.
+  handlers implement `IIntegrationEventHandler<T>` (the seam, ADR-0013 — no bus type; GP0405) and
+  are inbox-guarded — processing is exactly-once, write handlers idempotently anyway.
 - Schedule workers: the tick body (`IntervalJob.RunTickAsync`) is the unit — keep the
   timer loop free of business logic; upgrade to `--trigger jobs` when you need clustering,
   checkpoints or the admin verbs.

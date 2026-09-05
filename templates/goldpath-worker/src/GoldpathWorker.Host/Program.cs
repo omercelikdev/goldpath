@@ -61,7 +61,7 @@ builder.AddGoldpathData<WebApplicationBuilder, WorkDbContext>(options =>
 
 builder.AddGoldpathMessaging(bus =>
 {
-    bus.AddConsumer<WorkItemQueuedConsumer>();
+    bus.AddGoldpathHandler<WorkItemQueued, WorkItemQueuedHandler>();   // the consume seam (ADR-0013): no bus type in the handler
     // Consumer-side INBOX: every receive endpoint dedups on MessageId — exactly-once processing.
     bus.AddGoldpathOutbox<WorkDbContext>(outbox =>
     {
@@ -264,6 +264,15 @@ app.MapGoldpathNotificationAdmin<WorkerDbContext>();   // read-only evidence vie
 // No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
 // visible — acceptable only behind an authenticating boundary (mTLS/gateway/cluster).
 app.MapGoldpathNotificationAdmin<WorkerDbContext>(exposeUnsecured: true);   // read-only evidence views (recipients masked)
+#endif
+//#endif
+//#if (UseFileExchange)
+#if (UseAuth)
+app.MapGoldpathFileExchangeAdmin();                    // read-only: rails, files, quarantine with reasons — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway/cluster).
+app.MapGoldpathFileExchangeAdmin(exposeUnsecured: true);                    // read-only: rails, files, quarantine with reasons
 #endif
 //#endif
 //#if (UseOps)

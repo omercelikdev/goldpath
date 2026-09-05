@@ -25,6 +25,13 @@ jobs:
           # projects, the packages anchor riding Infrastructure, migrations owned there.
           - name: GmFourClean
             args: "--db sqlserver --broker none --auth none --layout clean-architecture"
+          # The clean layout on the DEFAULT providers (postgres + broker + auth) with a
+          # module that maps an authed admin surface: the Application project consumes
+          # through the seam (ADR-0013), and Infrastructure lifts EF Design's vulnerable
+          # transitive on every provider — the preview.8 release found NU1903 here because
+          # no shape combined clean + postgres (2026-09-05).
+          - name: GmOneClean
+            args: "--layout clean-architecture --features fileexchange"
           # GM-6's realizable half: a service head (own db, own manifest) + the YARP
           # gateway — built by the SAME verbs an adopter runs, with the ROUTED probe in
           # the generated smoke (gateway /api/health/ready answers through the chain).

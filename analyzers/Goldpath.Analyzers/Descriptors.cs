@@ -161,12 +161,12 @@ public static class Descriptors
         "Consume through the Goldpath seam, not the transport type",
         "'{0}' implements MassTransit's IConsumer<T>; implement IIntegrationEventHandler<T> and register it with AddGoldpathHandler so a transport change never edits this file",
         Category,
-        DiagnosticSeverity.Info,
+        DiagnosticSeverity.Warning,
         isEnabledByDefault: true,
         description: "The consume seam (ADR-0013, docs/rfc/goldpath-messaging-exit.md §5) is the other half of the "
-                   + "publish seam GP0404 guards. Info until the templates adopt the seam at the next train "
-                   + "boundary; Warning from then on. Goldpath's own packages are exempt — the adapter behind "
-                   + "the seam is a consumer by construction.",
+                   + "publish seam GP0404 guards. Warning since 0.1.0-preview.8, when the templates adopted the "
+                   + "seam. Goldpath's own packages are exempt — the adapter behind the seam is a consumer by "
+                   + "construction.",
         helpLinkUri: HelpBase + "goldpath-messaging-exit.md");
 
     /// <summary>GP0402: a type in both event worlds.</summary>

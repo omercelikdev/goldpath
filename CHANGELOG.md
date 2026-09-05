@@ -5,6 +5,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [0.1.0-preview.8] - 2026-09-05
+
+### Changed (this train, at the boundary)
+- **The templates, the worker template and `goldpath add worker` consume through the seam** —
+  `OrderPlacedHandler` / `WorkItemQueuedHandler : IIntegrationEventHandler<T>` registered with
+  `bus.AddGoldpathHandler<TEvent, THandler>()`; queue names unchanged. **GP0405 is a Warning**
+  from this train (was Info). Both templates and `goldpath add feature fileexchange` map
+  `MapGoldpathFileExchangeAdmin()` behind the auth floor. CorPay moves its three consumers
+  when it takes this train (it binds to the published packages).
+- **Clean layout on postgres built red (NU1903)** — the Infrastructure class library lifted
+  EF Design's vulnerable `System.Security.Cryptography.Xml` only under the SqlServer
+  provider; the lift is now unconditional and the nightly gains `GmOneClean` (clean layout
+  on the default providers + fileexchange), the shape that was missing.
+
 ### Changed
 - **Kit-freshness gate tightened** — the console may now lag `@qorpe/ui` by at most ONE minor
   or 14 days (was two minors / 30 days); the three consumers had drifted three minors apart

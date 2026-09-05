@@ -441,6 +441,7 @@ public static class FeatureRecipes
                     var plan = new RecipePlan { ManifestKey = "fileExchange" };
                     plan.ApiPackages.Add("Goldpath.FileExchange");
                     plan.ApiPackages.Add("Goldpath.Jobs");
+                    plan.Endpoints.Add($"app.MapGoldpathFileExchangeAdmin({(app.AuthWired ? "" : "exposeUnsecured: true")});   // read-only: rails, files, quarantine with reasons");
                     if (app.JobsWired)
                     {
                         // ONE scheduler per app: compose into the existing AddGoldpathJobs block.

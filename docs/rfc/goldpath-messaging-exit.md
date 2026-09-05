@@ -112,7 +112,7 @@ necessary. **Shipped 2026-09-05:** `IIntegrationEventHandler<TEvent>` +
 `IntegrationEventContext` (message id, correlation, tenant, retry attempt, headers) +
 `AddGoldpathHandler`/`AddGoldpathHandlers`, adapted onto ONE library consumer per pair;
 the handler's queue is named exactly as the consumer's was (S4: no wire change). Analyzer
-GP0405 steers adopters (Info now, Warning at the next train boundary, when the templates,
+GP0405 steers adopters (Info on preview.7; Warning since preview.8, when the templates,
 the CLI's worker skeleton and CorPay move their consumers — the published-API rule keeps
 them on preview.7 until then; the release checklist carries the lines). The honest promise
 is now: *if the engine changes, neither your command handlers nor your handlers move; your
@@ -193,10 +193,11 @@ where that watching lives; if it goes stale, this decision has quietly expired.
 lines, open until each proof runs:
 
 - [x] The consume seam ships — handler contract, context, registration (2026-09-05, this
-      repo's `Goldpath.Messaging`) with analyzer GP0405 (Info → Warning at the boundary).
-- [ ] The two template layouts, the worker template, the CLI's worker skeleton and CorPay
-      consume through it — at the preview.8 boundary (release checklist: next-train
-      adoptions), with the upgrade guide. api-portal has no consumers of its own.
+      repo's `Goldpath.Messaging`) with analyzer GP0405 (Info → Warning at the preview.8 boundary, done).
+- [x] The two template layouts, the worker template and the CLI's worker skeleton consume
+      through it (preview.8, with the upgrade guide; GP0405 is a Warning from that train).
+- [ ] CorPay consumes through it — when it takes preview.8 (it binds to nuget).
+      api-portal has no consumers of its own.
 - [ ] The outbox/inbox configuration and the test harness in Goldpath vocabulary (today
       `AddGoldpathOutbox` takes the library's configurator; the smoke tests publish with a
       raw bus) — the conformance suite's work.
