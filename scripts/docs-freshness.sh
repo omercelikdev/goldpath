@@ -102,6 +102,18 @@ verbs = set()
 for m in re.finditer(r'\["([a-z]+)"(?:, "([a-z]+)")?', dispatch):
     verbs.add(m.group(1) if not m.group(2) else f"{m.group(1)} {m.group(2)}")
 verbs -= {"new"} if "new " in " ".join(verbs) else set()
+# The dispatcher hands `new <kind>` and `db <verb>` to their commands as VARIABLES, so the
+# regex above never saw the kinds and the sub-verbs — a new kind or a new db verb could
+# ship undocumented (closure audit 2026-09-05). Read them where they are decided.
+new_command = read("tools", "Goldpath.Cli", "NewCommand.cs")
+for kind in re.findall(r'(?:kind is|") ?"([a-z]+)"(?: =>)', new_command):
+    verbs.add(f"new {kind}")
+for kind in re.findall(r'kind is "([a-z]+)"', new_command):
+    verbs.add(f"new {kind}")
+db_command = read("tools", "Goldpath.Cli", "DbCommand.cs")
+for verb in re.findall(r'^\s+"([a-z]+)" => ', db_command, re.M):
+    verbs.add(f"db {verb}")
+verbs.discard("db")   # the bare dispatcher entry — its sub-verbs are the documented surface
 reference = read("docs", "guide", "cli-reference.md")
 for verb in sorted(verbs):
     if f"goldpath {verb}" not in reference:
