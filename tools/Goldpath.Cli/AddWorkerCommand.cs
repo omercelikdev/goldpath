@@ -48,6 +48,17 @@ public static class AddWorkerCommand
                 "no GetConnectionString(...) found in the composition root — this worker persists into the app database and needs its connection name.");
         }
 
+        if (trigger == "jobs" && !facts.JobsWired)
+        {
+            // The in-solution fleet SHARES the app database's jobs tables, which the Api's
+            // context owns (migrations RFC D3: the worker maps them excludeFromMigrations).
+            // Without a rider on the Api there are no tables to share — the fleet would boot
+            // against nothing (found by the GmWorkerInSolution shape, 2026-09-05), and the
+            // manifest would wire no Goldpath.Jobs (the T26 warning). Refuse in words.
+            throw new CliFailureException(
+                "a jobs worker shares the app database's jobs tables, which the Api's context owns — no AddGoldpathJobs(...) found in the composition root. Enable a jobs rider first (goldpath add feature archival|bulk|notification|campaign|approvals|fileexchange), or generate a STANDALONE worker with its own store (goldpath new worker --trigger jobs).");
+        }
+
         var prefix = ApiPrefix(files.ApiProject);
         var pascal = Pascal(name);
         var projectName = $"{prefix}.{pascal}Worker";
@@ -215,7 +226,6 @@ public static class AddWorkerCommand
         ],
         _ => [
             "replace NightlyReportJob's body with the real aggregation; review the cron and the Deadline (every job has an SLA — GP1302)",
-            "if the solution enables no jobs rider (archival/bulk/notification/campaign/approvals/fileexchange), `specdrift drift` WARNs SPEC0203 on Goldpath.Jobs — the fleet is a capability the manifest cannot declare yet (open-threads T26); a `--fail-on warn` hook needs that rider or the thread's fix",
             "the worker runs its OWN fleet (SchedulerName) against the app database — the Api's scheduler is untouched; both consoles ride MapGoldpathJobsAdmin",
             "the shared jobs tables stay the API context's migrations (the D3 exclusion is generated); run `goldpath db add add-worker` for the worker's PRIVATE tables",
         ],

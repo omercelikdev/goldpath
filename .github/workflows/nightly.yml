@@ -36,15 +36,18 @@ jobs:
           # UNPROVEN). Five recipes cover the three recipe shapes: a plain registration
           # (audittrail, softdelete), a provider-gated one (locking), a jobs rider that brings
           # the console (bulk), and the one that births the bus + its broker resource (outbox).
+          # Then `db add`, as the verbs' next steps tell an adopter: the recipes grow the
+          # model, and a model without its migration boots against missing tables — the
+          # shape's first nightly (2026-09-05) hung on exactly that.
           - name: GmGrown
             args: "--auth none --broker none"
-            post: "add feature audittrail;add feature softdelete;add feature locking;add feature bulk;add feature outbox"
+            post: "add feature audittrail;add feature softdelete;add feature locking;add feature bulk;add feature outbox;db add Grown"
           # The in-solution worker's parity proof (T25's last gap, 2026-09-05): an AUTHED,
           # feature-bearing solution gains a jobs worker and a queue worker by the adopter's
           # own verb — both inherit the floor and the features, both boot behind the AppHost.
           - name: GmWorkerInSolution
-            args: "--features audittrail --features softdelete --features multitenancy"
-            post: "add worker eod --trigger jobs;add worker ingest --trigger queue"
+            args: "--features audittrail --features softdelete --features multitenancy --features bulk"
+            post: "add worker eod --trigger jobs;add worker ingest --trigger queue;db add Workers"
           # The bulk-only customer: bulk (jobs + console riding along) with ONLY the app
           # database — no broker, no Redis. The module×infrastructure matrix's proof row.
           - name: GmBulkOnly

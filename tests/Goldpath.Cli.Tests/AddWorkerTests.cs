@@ -43,7 +43,7 @@ public class AddWorkerTests
     [Fact]
     public void Jobs_worker_runs_its_own_fleet_against_the_app_database()
     {
-        using var app = new FakeApp();
+        using var app = new FakeApp(jobsWired: true);
         Assert.Equal(0, Add("eod-report", "jobs", app, new FakeProcessRunner()));
 
         var projectDir = Path.Combine(app.Root, "src", "Shop.EodReportWorker");
@@ -135,7 +135,7 @@ public class AddWorkerTests
     [Fact]
     public void An_authed_solution_gets_an_authed_worker_head()
     {
-        using var app = new FakeApp(authWired: true);
+        using var app = new FakeApp(jobsWired: true, authWired: true);
         Assert.Equal(0, Add("eod-report", "jobs", app, new FakeProcessRunner()));
 
         var projectDir = Path.Combine(app.Root, "src", "Shop.EodReportWorker");
@@ -153,7 +153,7 @@ public class AddWorkerTests
     [Fact]
     public void An_api_key_solution_gives_the_worker_the_api_key_strategy()
     {
-        using var app = new FakeApp(authWired: true, apiKey: true);
+        using var app = new FakeApp(jobsWired: true, authWired: true, apiKey: true);
         Assert.Equal(0, Add("eod-report", "jobs", app, new FakeProcessRunner()));
         var program = File.ReadAllText(Path.Combine(app.Root, "src", "Shop.EodReportWorker", "Program.cs"));
         Assert.Contains("builder.AddGoldpathAuth(o => o.Strategy = GoldpathAuthStrategy.ApiKey);", program, StringComparison.Ordinal);
@@ -210,7 +210,7 @@ public class AddWorkerTests
     [Fact]
     public void Sqlserver_solutions_give_the_worker_the_sqlserver_lock_provider()
     {
-        using var app = new FakeApp(sqlServer: true, lockingWired: true);
+        using var app = new FakeApp(jobsWired: true, sqlServer: true, lockingWired: true);
         Assert.Equal(0, Add("eod", "jobs", app, new FakeProcessRunner()));
         var projectDir = Path.Combine(app.Root, "src", "Shop.EodWorker");
         Assert.Contains("builder.AddGoldpathSqlServerLocking(o => o.ConnectionName = \"shopdb\");", File.ReadAllText(Path.Combine(projectDir, "Program.cs")), StringComparison.Ordinal);
@@ -222,12 +222,24 @@ public class AddWorkerTests
     {
         // The worker is a web host too; without its marker the next add verb saw two web
         // projects and refused (GmWorkerInSolution, 2026-09-05).
-        using var app = new FakeApp(messagingWired: true);
+        using var app = new FakeApp(jobsWired: true, messagingWired: true);
         var runner = new FakeProcessRunner();
         Assert.Equal(0, Add("eod", "jobs", app, runner));
         Assert.Equal(0, Add("ingest", "queue", app, runner));
         Assert.True(Directory.Exists(Path.Combine(app.Root, "src", "Shop.IngestWorker")));
         Assert.Equal(0, CliRunner.Run(["add", "feature", "softdelete", "--path", app.Root], runner, TextWriter.Null, TextWriter.Null));
         Assert.Contains("builder.AddGoldpathSoftDelete();", app.Read(app.Program), StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_jobs_worker_without_a_jobs_rider_is_refused_before_anything_is_written()
+    {
+        // The fleet shares the app database's jobs tables, which the Api's context owns —
+        // without a rider there is nothing to share (GmWorkerInSolution, 2026-09-05).
+        using var app = new FakeApp();   // no AddGoldpathJobs in the composition root
+        var refusal = Assert.Throws<CliFailureException>(() => Add("eod", "jobs", app, new FakeProcessRunner()));
+        Assert.Contains("jobs rider", refusal.Message, StringComparison.Ordinal);
+        Assert.Contains("goldpath new worker --trigger jobs", refusal.Message, StringComparison.Ordinal);
+        Assert.False(Directory.Exists(Path.Combine(app.Root, "src", "Shop.EodWorker")));
     }
 }
