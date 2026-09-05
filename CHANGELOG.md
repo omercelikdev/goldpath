@@ -11,6 +11,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   in August under the old window. Same change in mockifyr's copy.
 
 ### Added
+- **The bus conformance suite** (ADR-0013 §3) — `tests/Goldpath.Messaging.Conformance`: eight
+  facts a bus must hold for Goldpath, proven on real RabbitMQ + PostgreSQL through the seam
+  (exactly-once on a re-delivered id, tenant + correlation across the broker, the poison
+  ladder then the fault, a 1 MiB payload, version tolerance, the crash between commit and
+  publish, a broker outage, a graceful stop draining across processes). The oracle is
+  MassTransit 8.5.10; a second engine runs the same class. In the CI integration job.
 - **`goldpath add worker --trigger jobs` refuses a solution without a jobs rider** — the
   in-solution fleet shares the app database's jobs tables, which the Api's context owns;
   without a rider it booted against nothing (found by the `GmWorkerInSolution` nightly).
