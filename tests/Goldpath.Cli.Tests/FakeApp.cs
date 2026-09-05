@@ -87,6 +87,14 @@ public sealed class FakeApp : IDisposable
             """);
 
         File.WriteAllText(Path.Combine(Root, "Shop.sln"), "");
+        File.WriteAllText(Path.Combine(Root, "Directory.Packages.props"), """
+            <Project>
+              <ItemGroup>
+                <PackageVersion Include="Aspire.Hosting.AppHost" Version="13.4.6" />
+                <PackageVersion Include="Goldpath.Abstractions" Version="0.1.0-preview.7" />
+              </ItemGroup>
+            </Project>
+            """);
 
         var auth = authWired ? "\nbuilder.AddGoldpathAuth();\n" : string.Empty;
         var caching = cachingWired ? "\nbuilder.AddGoldpathCaching();\n" : string.Empty;

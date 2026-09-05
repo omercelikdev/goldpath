@@ -6,6 +6,10 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 ## [Unreleased]
 
 ### Added
+- **The `GmGrown` nightly shape** — a lean app (`--auth none --broker none`) grown by five
+  `goldpath add feature` recipes (audittrail, softdelete, locking, bulk, outbox), then
+  built, drift-checked and smoked: the CLI verb's end-to-end proof (it had shipped
+  UNPROVEN). Its first local runs found FOUR recipe bugs, fixed below.
 - **`Goldpath.FileExchange` admin surface + the console's seventh module** (open-threads T22)
   — `MapGoldpathFileExchangeAdmin()` mounts `/goldpath/admin/fileexchange` (contract §7.1,
   READ-ONLY: `/rails` with live counts, `/files` newest-archive-first, `/quarantine` with each
@@ -65,6 +69,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   runs MassTransit has started its own child activity for the send, so the tag (on the
   request activity) was one level up and the header stayed empty. The filter now walks the
   activity chain. Found by the new Messaging mutation gate.
+- **`goldpath add feature outbox` on a `--broker none` app** — two bugs the GmGrown shape
+  found: the recipe left `providers.broker: none` in the manifest, so the engine's own
+  SPEC0101 refused the result it had just produced (the recipe now flips the broker, and
+  `ManifestEditor.SetProviderScalar` exists for the next recipe that births infrastructure);
+  and the born bus brought `PackageReference`s for packages the template pins only under
+  `UseBroker`, so the restore failed with NU1010 (the recipe now adds the central pins —
+  `Goldpath.Messaging` on the app's train, `Aspire.Hosting.RabbitMQ` on its Aspire line,
+  `MassTransit.RabbitMQ` from `KnownVersions`, which a test keeps equal to the repo pin).
+- **`goldpath add feature` wrote `using MassTransit;` into a method body** — `EnsureUsing`
+  took `using var scope = …` (the template's migration block) for a using directive and
+  inserted after it (CS1001). It now recognises directives only: column 0, a namespace,
+  a semicolon.
+- **The outbox recipe's model calls arrived without their using** — the three MassTransit
+  table calls landed in `OnModelCreating` while the model file's `using MassTransit;`
+  sits behind `UseBroker` in the template (CS1061). Recipes now carry model usings.
 - **`goldpath new` without `-o`** resolves the app root to the template's name directory,
   so the post-generation `db init` and the first-contract commit run instead of silently
   skipping (they searched `<cwd>/src` before).

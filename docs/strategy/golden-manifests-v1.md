@@ -101,6 +101,7 @@ drift apart; the gate fails on either direction.
 | GmFourSimple | `--db sqlserver --broker none --auth none` | the SqlServer/no-broker quadrant |
 | GmFourClean | `--layout clean-architecture …` | four-project split, migrations in Infrastructure |
 | GmSixGateway | `--auth none` + `new service` + `new gateway` | multi-head by the adopter's own verbs; routed probe |
+| GmGrown | `--auth none --broker none` + `add feature audittrail;softdelete;locking;bulk;outbox` | born lean, grown by the CLI's own recipes — the `goldpath add feature` verb proven end to end (plain, provider-gated, jobs-rider-with-console, and the bus-birthing outbox recipe) |
 | GmBulkOnly | `--features bulk --broker none --auth none` | operational module with ONLY the app database |
 | Gm.Dotted | `--broker none --auth none` | dotted solution names (issue #24 regression) |
 | GmConsole | `--features bulk --auth none` | the console SERVES with its own bundle |

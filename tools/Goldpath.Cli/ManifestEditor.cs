@@ -37,6 +37,38 @@ public static class ManifestEditor
     }
 
     /// <summary>
+    /// Sets one scalar under <c>providers:</c> (<c>  broker: rabbitmq</c>), replacing the
+    /// existing line or adding it to the block; a manifest without a providers block gains
+    /// one before <c>features:</c> (or at the end). Same string surgery as the rest — the
+    /// engine judges the result.
+    /// </summary>
+    public static string SetProviderScalar(string manifestText, string key, string value)
+    {
+        var lines = manifestText.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n').ToList();
+        var blockIndex = lines.FindIndex(line => line.TrimEnd() == "providers:");
+        var newLine = $"  {key}: {value}";
+        if (blockIndex >= 0)
+        {
+            for (var i = blockIndex + 1; i < lines.Count && lines[i].StartsWith("  ", StringComparison.Ordinal); i++)
+            {
+                if (lines[i].TrimStart().StartsWith($"{key}:", StringComparison.Ordinal))
+                {
+                    lines[i] = newLine;
+                    return string.Join('\n', lines);
+                }
+            }
+
+            lines.Insert(blockIndex + 1, newLine);
+            return string.Join('\n', lines);
+        }
+
+        var featuresIndex = lines.FindIndex(line => line.TrimEnd() == "features:");
+        var insertAt = featuresIndex >= 0 ? featuresIndex : lines.FindLastIndex(line => line.Length > 0) + 1;
+        lines.InsertRange(insertAt, ["providers:", newLine]);
+        return string.Join('\n', lines);
+    }
+
+    /// <summary>
     /// Adds pre-indented feature lines under <c>features:</c>, creating the block at the end
     /// of the file when it does not exist yet (mirrors the template's layout).
     /// </summary>

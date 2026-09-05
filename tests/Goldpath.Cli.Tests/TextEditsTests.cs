@@ -23,6 +23,18 @@ public class TextEditsTests
     }
 
     [Fact]
+    public void EnsureUsing_never_mistakes_a_using_declaration_for_a_directive()
+    {
+        // The template's migration block has `using var scope = …` INSIDE a method body; the
+        // GmGrown shape found `using MassTransit;` written right after it (CS1001).
+        var program = "using A;\n\nvar app = builder.Build();\nif (x)\n{\n    using var scope = app.Services.CreateScope();\n    var db = scope.ServiceProvider.GetRequiredService<Db>();\n}\n";
+        var expected = "using A;\nusing MassTransit;\n\nvar app = builder.Build();\nif (x)\n{\n    using var scope = app.Services.CreateScope();\n    var db = scope.ServiceProvider.GetRequiredService<Db>();\n}\n";
+        Assert.Equal(expected, TextEdits.EnsureUsing(program, "MassTransit"));
+        // `using static` and indented-but-real directives inside #if blocks still count as directives.
+        Assert.Equal("using static System.Math;\nusing MassTransit;\nvar x = 1;", TextEdits.EnsureUsing("using static System.Math;\nvar x = 1;", "MassTransit"));
+    }
+
+    [Fact]
     public void Insert_is_idempotent_at_block_level()
     {
         var once = TextEdits.InsertAfterAnchor("// a\n", "// a", ["x", "y"]);

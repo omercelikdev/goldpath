@@ -20,6 +20,8 @@ public class OutboxRecipeTests
         MessagingWired = messaging,
         AuthWired = true,
         ConsoleWired = console,
+        AspireVersion = "13.4.6",
+        TrainVersion = "0.1.0-preview.7",
     };
 
     [Fact]
@@ -48,6 +50,12 @@ public class OutboxRecipeTests
             ],
             plan.ModelCalls);
         Assert.Equal(["  outbox: true"], plan.ManifestLines);
+        Assert.Equal(["MassTransit"], plan.ModelUsings);
+        // The manifest must say broker: rabbitmq too, or SPEC0101 refuses the recipe's own
+        // result (found by the GmGrown shape, 2026-09-04).
+        Assert.Equal([("broker", "rabbitmq")], plan.ProviderEdits);
+        // ...and the pins the template only writes under UseBroker (NU1010 otherwise).
+        Assert.Equal([("Goldpath.Messaging", "0.1.0-preview.7"), ("MassTransit.RabbitMQ", KnownVersions.MassTransitRabbitMq), ("Aspire.Hosting.RabbitMQ", "13.4.6")], plan.PackageVersions);
         Assert.Equal(3, plan.NextSteps.Count);
     }
 
@@ -90,10 +98,17 @@ public class OutboxRecipeTests
         Assert.Contains("builder.AddGoldpathMessaging(bus =>", program, StringComparison.Ordinal);
         Assert.Contains("bus.AddGoldpathOutbox<ShopDbContext>(outbox =>", program, StringComparison.Ordinal);
         Assert.Contains("modelBuilder.AddOutboxMessageEntity();", app.Read(app.Model), StringComparison.Ordinal);
+        // The model file needs the using too — the template's sits behind UseBroker (CS1061 otherwise).
+        Assert.StartsWith("using MassTransit;", app.Read(app.Model), StringComparison.Ordinal);
         Assert.Contains("var messaging = builder.AddRabbitMQ(\"messaging\");", app.Read(app.AppHost), StringComparison.Ordinal);
         Assert.Contains(".WithReference(messaging).WaitFor(messaging)", app.Read(app.AppHost), StringComparison.Ordinal);
         Assert.Contains("<PackageReference Include=\"Aspire.Hosting.RabbitMQ\" />", app.Read(app.AppHostProject), StringComparison.Ordinal);
         Assert.Contains("  outbox: true", app.Read(app.Manifest), StringComparison.Ordinal);
+        Assert.Contains("  broker: rabbitmq", app.Read(app.Manifest), StringComparison.Ordinal);
+        var props = File.ReadAllText(Path.Combine(app.Root, "Directory.Packages.props"));
+        Assert.Contains("<PackageVersion Include=\"MassTransit.RabbitMQ\" Version=\"8.5.10\" />", props, StringComparison.Ordinal);
+        Assert.Contains("<PackageVersion Include=\"Goldpath.Messaging\" Version=\"0.1.0-preview.7\" />", props, StringComparison.Ordinal);
+        Assert.Contains("<PackageVersion Include=\"Aspire.Hosting.RabbitMQ\" Version=\"13.4.6\" />", props, StringComparison.Ordinal);
 
         // Idempotent: a second run writes nothing twice — one using, one bus.
         Assert.Equal(0, CliRunner.Run(["add", "feature", "outbox", "--path", app.Root], runner, TextWriter.Null, TextWriter.Null));
@@ -134,5 +149,55 @@ public class OutboxRecipeTests
         var plan = FeatureRecipes.Build("audittrail", Facts(messaging: true));
         Assert.DoesNotContain("Goldpath.Console", plan.ApiPackages);
         Assert.Empty(plan.Endpoints);
+    }
+
+    [Theory]
+    [InlineData("kind: solution\nproviders:\n  db: postgresql\n  broker: none\n  auth: none\nfeatures:\n  outbox: true\n", "kind: solution\nproviders:\n  db: postgresql\n  broker: rabbitmq\n  auth: none\nfeatures:\n  outbox: true\n")]
+    [InlineData("kind: solution\nproviders:\n  db: postgresql\nfeatures:\n  outbox: true\n", "kind: solution\nproviders:\n  broker: rabbitmq\n  db: postgresql\nfeatures:\n  outbox: true\n")]
+    [InlineData("kind: solution\nname: X\nfeatures:\n  outbox: true\n", "kind: solution\nname: X\nproviders:\n  broker: rabbitmq\nfeatures:\n  outbox: true\n")]
+    [InlineData("kind: solution\nname: X", "kind: solution\nname: X\nproviders:\n  broker: rabbitmq")]
+    public void The_manifest_editor_sets_a_provider_scalar_in_every_shape_a_manifest_can_have(string before, string after)
+        => Assert.Equal(after, ManifestEditor.SetProviderScalar(before, "broker", "rabbitmq"));
+
+    [Fact]
+    public void With_a_bus_the_outbox_recipe_flips_no_provider()
+    {
+        var plan = FeatureRecipes.Build("outbox", Facts(messaging: true, provider: "sqlserver"));
+        Assert.Empty(plan.ProviderEdits);
+    }
+
+    [Fact]
+    public void The_known_MassTransit_version_matches_the_repo_pin()
+    {
+        var dir = new DirectoryInfo(AppContext.BaseDirectory);
+        while (dir is not null && !File.Exists(Path.Combine(dir.FullName, "Goldpath.sln")))
+        {
+            dir = dir.Parent;
+        }
+
+        Assert.NotNull(dir);
+        var props = File.ReadAllText(Path.Combine(dir!.FullName, "Directory.Packages.props"));
+        Assert.Contains("<PackageVersion Include=\"MassTransit.RabbitMQ\" Version=\"" + KnownVersions.MassTransitRabbitMq + "\" />", props, StringComparison.Ordinal);
+    }
+
+    [Fact]
+    public void A_second_run_pins_nothing_twice()
+    {
+        using var app = new FakeApp();
+        var runner = new FakeProcessRunner();
+        Assert.Equal(0, CliRunner.Run(["add", "feature", "outbox", "--path", app.Root], runner, TextWriter.Null, TextWriter.Null));
+        Assert.Equal(0, CliRunner.Run(["add", "feature", "outbox", "--path", app.Root], runner, TextWriter.Null, TextWriter.Null));
+        var props = File.ReadAllText(Path.Combine(app.Root, "Directory.Packages.props"));
+        Assert.Equal(1, props.Split("Include=\"MassTransit.RabbitMQ\"").Length - 1);
+    }
+
+    [Fact]
+    public void Without_central_pins_the_born_bus_refuses_in_words()
+    {
+        using var app = new FakeApp();
+        File.Delete(Path.Combine(app.Root, "Directory.Packages.props"));
+        var files = AppFiles.Locate(app.Root);
+        var refusal = Assert.Throws<CliFailureException>(() => FeatureRecipes.Build("outbox", AppFacts.Read(files)));
+        Assert.Contains("Directory.Packages.props", refusal.Message, StringComparison.Ordinal);
     }
 }
