@@ -155,6 +155,20 @@ public static class Descriptors
                    + "and are not flagged; only injecting the publisher is.",
         helpLinkUri: HelpBase + "goldpath-messaging-exit.md");
 
+    /// <summary>GP0405: application code implementing the transport's consumer contract directly.</summary>
+    public static readonly DiagnosticDescriptor ConsumerImplemented = new(
+        "GP0405",
+        "Consume through the Goldpath seam, not the transport type",
+        "'{0}' implements MassTransit's IConsumer<T>; implement IIntegrationEventHandler<T> and register it with AddGoldpathHandler so a transport change never edits this file",
+        Category,
+        DiagnosticSeverity.Info,
+        isEnabledByDefault: true,
+        description: "The consume seam (ADR-0013, docs/rfc/goldpath-messaging-exit.md §5) is the other half of the "
+                   + "publish seam GP0404 guards. Info until the templates adopt the seam at the next train "
+                   + "boundary; Warning from then on. Goldpath's own packages are exempt — the adapter behind "
+                   + "the seam is a consumer by construction.",
+        helpLinkUri: HelpBase + "goldpath-messaging-exit.md");
+
     /// <summary>GP0402: a type in both event worlds.</summary>
     public static readonly DiagnosticDescriptor NotificationCrossMarked = new(
         "GP0402",

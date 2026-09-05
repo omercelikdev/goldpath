@@ -50,6 +50,16 @@ AuditTrail, SoftDelete, DataProtection, Auth publish NO integration events: thei
 outcomes are rows, metrics and admin verbs (the frozen admin contract), by design — a
 scheduler tick or an archived row is state, not news.
 
+## Consuming
+
+An adopter handles an event through the consume seam — `IIntegrationEventHandler<TEvent>`
+registered with `bus.AddGoldpathHandler<TEvent, THandler>()` (or `AddGoldpathHandlers`
+over an assembly). The handler receives the event and an `IntegrationEventContext`
+(message id, correlation, tenant, retry attempt, headers) and names no bus type; its queue
+is named after it exactly as a consumer's would be, so the wire is the same (ADR-0013;
+messaging-exit RFC §5). The packages' own consumers (campaign) stay on the library — they
+ARE the engine's side of the seam.
+
 ## Keeping this true
 
 The catalog is verified against the source: every `IIntegrationEvent` record under

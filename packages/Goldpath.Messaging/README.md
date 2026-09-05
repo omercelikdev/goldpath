@@ -20,6 +20,31 @@ builder.AddGoldpathMessaging(bus =>
 });
 ```
 
+## Consuming through the seam (ADR-0013)
+
+```csharp
+public sealed class OrderConfirmedHandler(OrdersDbContext db) : IIntegrationEventHandler<OrderConfirmed>
+{
+    public async Task HandleAsync(OrderConfirmed e, IntegrationEventContext context, CancellationToken ct)
+    {
+        // context: MessageId (the inbox key), CorrelationId, Tenant, RetryAttempt, Headers — no library type.
+        ...
+    }
+}
+
+builder.AddGoldpathMessaging(bus =>
+{
+    bus.AddGoldpathHandler<OrderConfirmed, OrderConfirmedHandler>();   // or bus.AddGoldpathHandlers(typeof(Program).Assembly)
+    ...
+});
+```
+
+A handler drains the SAME queue the consumer of that name drained (`OrderConfirmedHandler`
+and `OrderConfirmedConsumer` → `order-confirmed`), so moving to the seam changes no wire.
+Retry, redelivery, the inbox and tenant restoration are the pipeline's — a throw is a
+retry, then the error queue. `IConsumer<T>` still works (analyzer GP0405 says so, Info
+until the templates adopt the seam at the next train; Warning from then on).
+
 ## Configuration
 
 Bound from `Goldpath:Messaging`:
