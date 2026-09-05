@@ -31,6 +31,14 @@ jobs:
           - name: GmSixGateway
             args: "--auth none"
             post: "new service Billing;new gateway"
+          # The GROWN app: born lean, then grown by the adopter's own `goldpath add feature`
+          # verbs — the CLI recipe path proven end to end (ai-sdlc-status: the verb had shipped
+          # UNPROVEN). Five recipes cover the three recipe shapes: a plain registration
+          # (audittrail, softdelete), a provider-gated one (locking), a jobs rider that brings
+          # the console (bulk), and the one that births the bus + its broker resource (outbox).
+          - name: GmGrown
+            args: "--auth none --broker none"
+            post: "add feature audittrail;add feature softdelete;add feature locking;add feature bulk;add feature outbox"
           # The bulk-only customer: bulk (jobs + console riding along) with ONLY the app
           # database — no broker, no Redis. The module×infrastructure matrix's proof row.
           - name: GmBulkOnly

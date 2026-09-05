@@ -32,6 +32,12 @@ public sealed class AppFiles
     /// <summary>The manifest (single source of truth).</summary>
     public required string ManifestFile { get; init; }
 
+    /// <summary>
+    /// The central package-version file (<c>Directory.Packages.props</c>) at the app root, or
+    /// null when the app does not use central package management (see <see cref="PackagePins"/>).
+    /// </summary>
+    public string? PackagesProps { get; init; }
+
     /// <summary>Scans the app root and resolves every anchored file.</summary>
     public static AppFiles Locate(string appRoot)
     {
@@ -68,6 +74,7 @@ public sealed class AppFiles
             ModelFile = Single(models, "DbContext", Anchors.Model),
             AppHostFile = Single(hosts, "AppHost.cs", Anchors.Resources),
             ManifestFile = manifest,
+            PackagesProps = File.Exists(Path.Combine(appRoot, "Directory.Packages.props")) ? Path.Combine(appRoot, "Directory.Packages.props") : null,
         };
     }
 

@@ -35,6 +35,26 @@ public sealed class RecipePlan
     /// </summary>
     public List<string> BusLines { get; } = [];
 
+    /// <summary>
+    /// Scalars to set under <c>providers:</c> — a recipe that births infrastructure must say
+    /// so in the manifest too (the outbox that brings the broker flips <c>broker: none</c>),
+    /// or the engine's own rule (SPEC0101) refuses the result it just produced.
+    /// </summary>
+    public List<(string Key, string Value)> ProviderEdits { get; } = [];
+
+    /// <summary>
+    /// Central pins (<c>Directory.Packages.props</c>) a recipe must add for packages the
+    /// template pins only under a symbol the app lacks — see <see cref="PackagePins"/>.
+    /// </summary>
+    public List<(string Package, string Version)> PackageVersions { get; } = [];
+
+    /// <summary>
+    /// Usings the MODEL file needs for the model calls (the outbox tables are MassTransit
+    /// extension methods; the template's own using sits behind UseBroker). Found by the
+    /// GmGrown shape (2026-09-04): the calls landed, the using did not — CS1061.
+    /// </summary>
+    public List<string> ModelUsings { get; } = [];
+
     /// <summary>Model calls (OnModelCreating, model anchor; pre-indented).</summary>
     public List<string> ModelCalls { get; } = [];
 
@@ -87,9 +107,16 @@ public sealed class AppFacts
     /// </summary>
     public bool ConsoleWired { get; init; }
 
+    /// <summary>The Aspire hosting version the app pins (from <c>Aspire.Hosting.AppHost</c>), or null without central pins.</summary>
+    public string? AspireVersion { get; init; }
+
+    /// <summary>The Goldpath train the app pins (from <c>Goldpath.Abstractions</c>), or null without central pins.</summary>
+    public string? TrainVersion { get; init; }
+
     /// <summary>Reads the context facts from the located files.</summary>
     public static AppFacts Read(AppFiles files)
     {
+        var props = files.PackagesProps is { } propsPath ? File.ReadAllText(propsPath) : "";
         var model = File.ReadAllText(files.ModelFile);
         var program = File.ReadAllText(files.ProgramFile);
         var apiProject = File.ReadAllText(files.PackagesProject);
@@ -116,6 +143,8 @@ public sealed class AppFacts
             MessagingWired = program.Contains("builder.AddGoldpathMessaging(", StringComparison.Ordinal),
             AuthWired = program.Contains("builder.AddGoldpathAuth(", StringComparison.Ordinal),
             ConsoleWired = program.Contains("app.MapGoldpathConsole(", StringComparison.Ordinal),
+            AspireVersion = PackagePins.Read(props, "Aspire.Hosting.AppHost"),
+            TrainVersion = PackagePins.Read(props, "Goldpath.Abstractions"),
         };
     }
 }
@@ -188,6 +217,20 @@ public static class FeatureRecipes
                     {
                         plan.ApiPackages.Add("MassTransit.RabbitMQ");
                         plan.AppHostPackages.Add("Aspire.Hosting.RabbitMQ");
+                        // The manifest must tell the same story as the AppHost: a bus born here
+                        // is a broker the app now depends on. Found by the GmGrown shape
+                        // (2026-09-04): with `broker: none` left in place the engine's SPEC0101
+                        // refused the recipe's own result and rolled everything back.
+                        plan.ProviderEdits.Add(("broker", "rabbitmq"));
+                        // A `--broker none` app pins none of the bus packages (the template
+                        // pins them under UseBroker), so the born bus brings its pins.
+                        var train = app.TrainVersion
+                            ?? throw new CliFailureException("no central pin for Goldpath.Abstractions found in Directory.Packages.props — the born bus must pin Goldpath.Messaging on the app's train, and the CLI reads the train from that line.");
+                        var aspire = app.AspireVersion
+                            ?? throw new CliFailureException("no central pin for Aspire.Hosting.AppHost found in Directory.Packages.props — the broker resource needs Aspire.Hosting.RabbitMQ on the same Aspire line.");
+                        plan.PackageVersions.Add(("Goldpath.Messaging", train));
+                        plan.PackageVersions.Add(("MassTransit.RabbitMQ", KnownVersions.MassTransitRabbitMq));
+                        plan.PackageVersions.Add(("Aspire.Hosting.RabbitMQ", aspire));
                         plan.Resources.Add("var messaging = builder.AddRabbitMQ(\"messaging\");");
                         plan.References.Add("    .WithReference(messaging).WaitFor(messaging)");
                         plan.Registrations.Add("builder.AddGoldpathMessaging(bus =>");
@@ -209,6 +252,7 @@ public static class FeatureRecipes
                         plan.Registrations.Add("});");
                     }
 
+                    plan.ModelUsings.Add("MassTransit");
                     plan.ModelCalls.Add("        // Transactional outbox/inbox tables (features.outbox in the manifest).");
                     plan.ModelCalls.Add("        modelBuilder.AddInboxStateEntity();");
                     plan.ModelCalls.Add("        modelBuilder.AddOutboxMessageEntity();");

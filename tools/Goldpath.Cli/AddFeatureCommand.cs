@@ -39,7 +39,7 @@ public static class AddFeatureCommand
         // engine means the app must come back byte-identical.
         // Deduped once here: ApiProject and PackagesProject are the SAME file in the
         // vertical-slice layout, two files in clean-architecture.
-        var touched = new[] { files.ManifestFile, files.ApiProject, files.PackagesProject, files.AppHostProject, files.ProgramFile, files.ModelFile, files.AppHostFile }.Distinct(StringComparer.Ordinal).ToArray();
+        var touched = new[] { files.ManifestFile, files.ApiProject, files.PackagesProject, files.AppHostProject, files.ProgramFile, files.ModelFile, files.AppHostFile, files.PackagesProps ?? files.ManifestFile }.Distinct(StringComparer.Ordinal).ToArray();
         var snapshot = touched.ToDictionary(path => path, File.ReadAllText, StringComparer.Ordinal);
 
         try
@@ -82,7 +82,18 @@ public static class AddFeatureCommand
 
     private static void Apply(RecipePlan plan, AppFiles files, string manifest)
     {
-        File.WriteAllText(files.ManifestFile, ManifestEditor.AddFeatureLines(manifest, plan.ManifestLines));
+        var manifestText = ManifestEditor.AddFeatureLines(manifest, plan.ManifestLines);
+        foreach (var (key, value) in plan.ProviderEdits)
+        {
+            manifestText = ManifestEditor.SetProviderScalar(manifestText, key, value);
+        }
+
+        File.WriteAllText(files.ManifestFile, manifestText);
+
+        if (plan.PackageVersions.Count > 0 && files.PackagesProps is { } propsPath)
+        {
+            File.WriteAllText(propsPath, PackagePins.AddMissing(File.ReadAllText(propsPath), plan.PackageVersions));
+        }
 
         if (plan.ApiPackages.Count > 0)
         {
@@ -143,6 +154,11 @@ public static class AddFeatureCommand
             // Same per-line rule as the endpoints: AddGoldpathJobs() is shared by every
             // jobs-riding feature and must land exactly once.
             var model = File.ReadAllText(files.ModelFile);
+            foreach (var ns in plan.ModelUsings)
+            {
+                model = TextEdits.EnsureUsing(model, ns);
+            }
+
             foreach (var call in plan.ModelCalls.AsEnumerable().Reverse())   // each lands at anchor+1 — reverse keeps the declared order
             {
                 model = TextEdits.InsertAfterAnchor(model, Anchors.Model, [call]);

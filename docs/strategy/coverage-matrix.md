@@ -50,7 +50,7 @@ for planning · — deliberately absent (the card does not trigger it).
 | Tool | CorPay | Plan |
 |---|---|---|
 | goldpath new (+first contract) | ✅ | every sample starts with it |
-| add feature | 🟡 NEVER driven in a sample | Insurance generates LEAN, then `add feature notification` — the verb proven in anger |
+| add feature | 🟢 driven nightly by the `GmGrown` shape (five recipes on a lean app, 2026-09-04) — not yet in a SAMPLE | Insurance generates LEAN, then `add feature notification` — the verb proven in anger |
 | add worker (queue/jobs) | ✅ both | FNOL / CDR workers |
 | db init/add/status | ✅ | — |
 | db bundle (prod story) | 🟡 no sample story | Telco: bundle-first deploy slice with runbook |

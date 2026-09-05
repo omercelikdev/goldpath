@@ -64,10 +64,17 @@ public static class TextEdits
             return string.Join('\n', lines);
         }
 
-        var lastUsing = lines.FindLastIndex(line => line.TrimStart().StartsWith("using ", StringComparison.Ordinal) && line.TrimEnd().EndsWith(';'));
+        // A using DIRECTIVE, not a using DECLARATION: `using var scope = …` deep in the
+        // migration block also starts with "using " — the GmGrown shape (2026-09-04) got
+        // `using MassTransit;` written into the middle of a method body that way. Column 0,
+        // a namespace, a semicolon; nothing else qualifies.
+        var lastUsing = lines.FindLastIndex(IsUsingDirective);
         lines.Insert(lastUsing + 1, wanted);
         return string.Join('\n', lines);
     }
+
+    private static bool IsUsingDirective(string line)
+        => System.Text.RegularExpressions.Regex.IsMatch(line, @"^(global\s+)?using\s+(static\s+)?[A-Za-z_][\w.]*\s*;\s*$");
 
     private static List<string> SplitLines(string text)
         => [.. text.Replace("\r\n", "\n", StringComparison.Ordinal).Split('\n')];
