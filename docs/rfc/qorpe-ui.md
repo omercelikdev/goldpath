@@ -116,7 +116,8 @@ No Roslyn here; the same "executable standards" idea lands as kit-repo CI:
   promoted mockifyr components too (their first tests ever).
 - **G6 pin gate** — no caret/tilde in dependencies (the repo rule, mechanized).
 - **Consumer-side: freshness gate** — each consumer CI goes red when its pinned
-  @qorpe/ui falls >2 minor versions or >30 days behind the latest release (same
+  @qorpe/ui falls >1 minor version or >14 days behind the latest release (tightened
+  2026-09-05 from 2/30 after the three consumers drifted three minors apart in August; same
   discipline as the pilot's NuGet train-freshness step; one idea, two package worlds).
 
 ## 6. Ops Package (living docs — "no runbook = no module" becomes "no docs = no export")
