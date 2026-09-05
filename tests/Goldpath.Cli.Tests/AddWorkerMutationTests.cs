@@ -273,6 +273,7 @@ public class AddWorkerMutationTests
             Line("goldpath: worker 'Shop.EodReportWorker' (jobs) wired — running the engine (specdrift validate + drift)")
             + Line("goldpath: worker 'Shop.EodReportWorker' added as resource 'eod-report-worker' — engine clean. Your decisions (goldpath never guesses domain opt-ins):")
             + Line("  → replace NightlyReportJob's body with the real aggregation; review the cron and the Deadline (every job has an SLA — GP1302)")
+            + Line("  → if the solution enables no jobs rider (archival/bulk/notification/campaign/approvals/fileexchange), `specdrift drift` WARNs SPEC0203 on Goldpath.Jobs — the fleet is a capability the manifest cannot declare yet (open-threads T26); a `--fail-on warn` hook needs that rider or the thread's fix")
             + Line("  → the worker runs its OWN fleet (SchedulerName) against the app database — the Api's scheduler is untouched; both consoles ride MapGoldpathJobsAdmin")
             + Line("  → the shared jobs tables stay the API context's migrations (the D3 exclusion is generated); run `goldpath db add add-worker` for the worker's PRIVATE tables"),
             result.Output);
