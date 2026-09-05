@@ -105,11 +105,18 @@ What shipped:
   Goldpath namespace that owns the delegation — the seam has an enforcing mechanism, per
   ADR-0005, so it cannot erode by habit.
 
-**The consume side deliberately stays on the library's types.** A consumer genuinely uses the
-pipeline (headers, retry, redelivery, tenant restore); wrapping that would be a leaky
-abstraction costing more than the migration it saves. So the honest promise to an adopter is
-bounded and true: *if the transport changes, your command handlers do not move; your
-consumers do.*
+**The consume side deliberately stayed on the library's types until 2026-09-05.** A consumer
+genuinely uses the pipeline (headers, retry, redelivery, tenant restore); wrapping that was
+judged a leaky abstraction — until ADR-0013 made the engine swappable and the seam
+necessary. **Shipped 2026-09-05:** `IIntegrationEventHandler<TEvent>` +
+`IntegrationEventContext` (message id, correlation, tenant, retry attempt, headers) +
+`AddGoldpathHandler`/`AddGoldpathHandlers`, adapted onto ONE library consumer per pair;
+the handler's queue is named exactly as the consumer's was (S4: no wire change). Analyzer
+GP0405 steers adopters (Info now, Warning at the next train boundary, when the templates,
+the CLI's worker skeleton and CorPay move their consumers — the published-API rule keeps
+them on preview.7 until then; the release checklist carries the lines). The honest promise
+is now: *if the engine changes, neither your command handlers nor your handlers move; your
+Program.cs transport block does — once, in the upgrade guide.*
 
 **Sequencing, learned by building it:** CorPay binds to the PUBLISHED train, so it cannot
 take the seam until preview.7 carries it — the attempt failed to compile against preview.6,
@@ -171,10 +178,14 @@ where that watching lives; if it goes stale, this decision has quietly expired.
 **2026-09-03 addendum — the watch became a plan.** Option F chosen (ADR-0013). New DoD
 lines, open until each proof runs:
 
-- [ ] The consume seam ships (handler contract, registration, outbox/inbox configuration,
-      test harness — all Goldpath types) with the namespace-ban analyzer; the two template
-      layouts, CorPay and api-portal consume through it. A MAJOR train boundary with an
-      upgrade guide.
+- [x] The consume seam ships — handler contract, context, registration (2026-09-05, this
+      repo's `Goldpath.Messaging`) with analyzer GP0405 (Info → Warning at the boundary).
+- [ ] The two template layouts, the worker template, the CLI's worker skeleton and CorPay
+      consume through it — at the preview.8 boundary (release checklist: next-train
+      adoptions), with the upgrade guide. api-portal has no consumers of its own.
+- [ ] The outbox/inbox configuration and the test harness in Goldpath vocabulary (today
+      `AddGoldpathOutbox` takes the library's configurator; the smoke tests publish with a
+      raw bus) — the conformance suite's work.
 - [ ] The bus conformance suite exists in this repo, transport-agnostic, green against the
       MassTransit 8.5.10 adapter, its scenario list reviewed by the owner.
 - [ ] The family bus has its own RFC and repository (qorpe organisation, open source,

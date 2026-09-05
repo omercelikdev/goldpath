@@ -25,6 +25,11 @@ public class AnalyzerTests
             {
                 System.Threading.Tasks.Task Publish<T>(T message) where T : class;
             }
+            public interface IConsumer<in T> where T : class { }
+        }
+        namespace Goldpath
+        {
+            public interface IIntegrationEventHandler<in T> where T : class, IIntegrationEvent { }
         }
         namespace Microsoft.EntityFrameworkCore
         {
@@ -204,6 +209,43 @@ public class AnalyzerTests
         => Verify<NotificationCrossMarkedAnalyzer>("""
             public record DomainEvent(string Id) : Mediant.INotification;
             public record IntegrationEvent(string Id) : Goldpath.IIntegrationEvent;
+            """);
+
+    [Fact]
+    public Task GOLDPATH0405_flags_an_adopter_consumer()
+        => Verify<ConsumerImplementedAnalyzer>("""
+            namespace Shop.Orders
+            {
+                public record OrderPlaced(string Id) : Goldpath.IIntegrationEvent;
+                public class {|#0:OrderPlacedConsumer|} : MassTransit.IConsumer<OrderPlaced> { }
+            }
+            """,
+            new DiagnosticResult(Descriptors.ConsumerImplemented).WithLocation(0).WithArguments("OrderPlacedConsumer"));
+
+    [Fact]
+    public Task GOLDPATH0405_still_fires_when_the_adopter_namespace_merely_STARTS_with_Goldpath()
+        => Verify<ConsumerImplementedAnalyzer>("""
+            namespace GoldpathTemplate.Api.Orders
+            {
+                public record OrderPlaced(string Id) : Goldpath.IIntegrationEvent;
+                public class {|#0:OrderPlacedConsumer|} : MassTransit.IConsumer<OrderPlaced> { }
+            }
+            """,
+            new DiagnosticResult(Descriptors.ConsumerImplemented).WithLocation(0).WithArguments("OrderPlacedConsumer"));
+
+    [Fact]
+    public Task GOLDPATH0405_exempts_the_packages_and_says_nothing_about_the_seam_itself()
+        => Verify<ConsumerImplementedAnalyzer>("""
+            namespace Goldpath.Campaign
+            {
+                public record Item(string Id) : Goldpath.IIntegrationEvent;
+                public class ItemConsumer : MassTransit.IConsumer<Item> { }
+            }
+            namespace Shop.Orders
+            {
+                public record OrderPlaced(string Id) : Goldpath.IIntegrationEvent;
+                public class OrderPlacedHandler : Goldpath.IIntegrationEventHandler<OrderPlaced> { }
+            }
             """);
 
     [Fact]

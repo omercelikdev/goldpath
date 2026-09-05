@@ -18,6 +18,15 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   soft-delete filter, tenant isolation, data protection, the app-database lock; table-owning
   ones only where the trigger owns a context). The `GmWorkerInSolution` nightly shape proves
   it with an authed, three-feature solution growing a jobs worker and a queue worker.
+- **The consume seam** (ADR-0013, messaging-exit RFC §5) — `IIntegrationEventHandler<TEvent>`,
+  `IntegrationEventContext` (message id, correlation, tenant, retry attempt, headers) and
+  `bus.AddGoldpathHandler<TEvent, THandler>()` / `AddGoldpathHandlers(assembly)`: an adopter's
+  handler names no bus type, drains the SAME queue the consumer of that name drained, and
+  rides the pipeline's retry, inbox and tenant restoration. Analyzer **GP0405** steers
+  `IConsumer<T>` implementations toward it — Info in this train; Warning at the next boundary,
+  when the templates, the CLI's worker skeleton and CorPay move (release checklist). With the
+  publish seam of preview.7 this completes the application-side vocabulary the swappable
+  engine needs.
 - **The `GmGrown` nightly shape** — a lean app (`--auth none --broker none`) grown by five
   `goldpath add feature` recipes (audittrail, softdelete, locking, bulk, outbox), then
   built, drift-checked and smoked: the CLI verb's end-to-end proof (it had shipped
