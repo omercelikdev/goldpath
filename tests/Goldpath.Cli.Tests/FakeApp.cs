@@ -39,7 +39,7 @@ public sealed class FakeApp : IDisposable
     public string Root { get; }
 
     /// <summary>Creates the fixture; flags mirror common generation shapes.</summary>
-    public FakeApp(bool sqlServer = false, bool cachingWired = false, string kind = "solution", bool jobsWired = false, bool messagingWired = false, bool authWired = false)
+    public FakeApp(bool sqlServer = false, bool cachingWired = false, string kind = "solution", bool jobsWired = false, bool messagingWired = false, bool authWired = false, bool apiKey = false, bool auditTrailWired = false, bool softDeleteWired = false, bool multiTenancyWired = false, bool dataProtectionWired = false, bool lockingWired = false)
     {
         Root = Path.Combine(Path.GetTempPath(), $"goldpath-cli-test-{Guid.NewGuid():N}");
         Directory.CreateDirectory(Path.Combine(Root, ".goldpath"));
@@ -96,7 +96,13 @@ public sealed class FakeApp : IDisposable
             </Project>
             """);
 
-        var auth = authWired ? "\nbuilder.AddGoldpathAuth();\n" : string.Empty;
+        var auth = authWired ? (apiKey ? "\nbuilder.AddGoldpathAuth(o => o.Strategy = GoldpathAuthStrategy.ApiKey);\n" : "\nbuilder.AddGoldpathAuth();\n") : string.Empty;
+        var features = string.Concat(
+            multiTenancyWired ? "builder.AddGoldpathMultiTenancy();\n" : "",
+            auditTrailWired ? "builder.AddGoldpathAuditTrail<WebApplicationBuilder, ShopDbContext>();\n" : "",
+            softDeleteWired ? "builder.AddGoldpathSoftDelete();\n" : "",
+            dataProtectionWired ? "builder.AddGoldpathDataProtection();\n" : "",
+            lockingWired ? (sqlServer ? "builder.AddGoldpathSqlServerLocking(o => o.ConnectionName = \"shopdb\");\n" : "builder.AddGoldpathLocking(o => { o.Provider = GoldpathLockProvider.Postgres; o.ConnectionName = \"shopdb\"; });\n") : "");
         var caching = cachingWired ? "\nbuilder.AddGoldpathCaching();\n" : string.Empty;
         var messaging = messagingWired
             ? """
@@ -124,7 +130,7 @@ public sealed class FakeApp : IDisposable
             var builder = WebApplication.CreateBuilder(args);
             builder.AddGoldpathServiceDefaults();
             // goldpath:features registrations — the drift profile is the source of these rows
-            {auth}{caching}{jobs}{messaging}
+            {auth}{features}{caching}{jobs}{messaging}
             var shopDbConnection = builder.Configuration.GetConnectionString("shopdb");
 
             var app = builder.Build();

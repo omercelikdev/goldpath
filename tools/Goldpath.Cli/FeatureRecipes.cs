@@ -107,6 +107,24 @@ public sealed class AppFacts
     /// </summary>
     public bool ConsoleWired { get; init; }
 
+    /// <summary>Whether the auth floor is the API-key strategy (the worker's head mirrors it).</summary>
+    public bool AuthApiKey { get; init; }
+
+    /// <summary>The solution's cross-cutting features an added worker INHERITS on its own context (open-threads T25 → add-worker parity, 2026-09-05).</summary>
+    public bool AuditTrailWired { get; init; }
+
+    /// <inheritdoc cref="AuditTrailWired"/>
+    public bool SoftDeleteWired { get; init; }
+
+    /// <inheritdoc cref="AuditTrailWired"/>
+    public bool MultiTenancyWired { get; init; }
+
+    /// <inheritdoc cref="AuditTrailWired"/>
+    public bool DataProtectionWired { get; init; }
+
+    /// <inheritdoc cref="AuditTrailWired"/>
+    public bool LockingWired { get; init; }
+
     /// <summary>The Aspire hosting version the app pins (from <c>Aspire.Hosting.AppHost</c>), or null without central pins.</summary>
     public string? AspireVersion { get; init; }
 
@@ -143,6 +161,12 @@ public sealed class AppFacts
             MessagingWired = program.Contains("builder.AddGoldpathMessaging(", StringComparison.Ordinal),
             AuthWired = program.Contains("builder.AddGoldpathAuth(", StringComparison.Ordinal),
             ConsoleWired = program.Contains("app.MapGoldpathConsole(", StringComparison.Ordinal),
+            AuthApiKey = program.Contains("GoldpathAuthStrategy.ApiKey", StringComparison.Ordinal),
+            AuditTrailWired = program.Contains("builder.AddGoldpathAuditTrail<", StringComparison.Ordinal),
+            SoftDeleteWired = program.Contains("builder.AddGoldpathSoftDelete(", StringComparison.Ordinal),
+            MultiTenancyWired = program.Contains("builder.AddGoldpathMultiTenancy(", StringComparison.Ordinal),
+            DataProtectionWired = program.Contains("builder.AddGoldpathDataProtection(", StringComparison.Ordinal),
+            LockingWired = program.Contains("builder.AddGoldpathLocking(", StringComparison.Ordinal) || program.Contains("builder.AddGoldpathSqlServerLocking(", StringComparison.Ordinal),
             AspireVersion = PackagePins.Read(props, "Aspire.Hosting.AppHost"),
             TrainVersion = PackagePins.Read(props, "Goldpath.Abstractions"),
         };

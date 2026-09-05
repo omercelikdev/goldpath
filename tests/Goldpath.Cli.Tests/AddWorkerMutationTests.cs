@@ -512,6 +512,7 @@ public class AddWorkerMutationTests
             """,
         ["Shop.PaymentsWorker.csproj"] = """
             <Project Sdk="Microsoft.NET.Sdk.Web">
+              <!-- goldpath:worker-head — a web host for probes and the fleet console, never the Api (goldpath add worker) -->
 
               <PropertyGroup>
                 <TargetFramework>net10.0</TargetFramework>
@@ -690,6 +691,7 @@ public class AddWorkerMutationTests
             """,
         ["Shop.CleanupWorker.csproj"] = """
             <Project Sdk="Microsoft.NET.Sdk.Web">
+              <!-- goldpath:worker-head — a web host for probes and the fleet console, never the Api (goldpath add worker) -->
 
               <PropertyGroup>
                 <TargetFramework>net10.0</TargetFramework>
@@ -857,6 +859,7 @@ public class AddWorkerMutationTests
             """,
         ["Shop.EodReportWorker.csproj"] = """
             <Project Sdk="Microsoft.NET.Sdk.Web">
+              <!-- goldpath:worker-head — a web host for probes and the fleet console, never the Api (goldpath add worker) -->
 
               <PropertyGroup>
                 <TargetFramework>net10.0</TargetFramework>

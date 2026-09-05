@@ -63,10 +63,14 @@ public sealed class AppFiles
             ApiProject = Single(webProjects.Where(p =>
             {
                 var text = File.ReadAllText(p);
-                // Additional heads (goldpath new service|gateway) are web projects too —
-                // the marker keeps the PRIMARY head unambiguous for naming and features.
+                // Additional heads (goldpath new service|gateway) and workers (goldpath add
+                // worker — a web host for probes) are web projects too — the markers keep
+                // the PRIMARY head unambiguous for naming and features. Found by the
+                // GmWorkerInSolution shape (2026-09-05): the SECOND add verb after a worker
+                // saw two web projects and refused.
                 return !text.Contains("IsAspireHost", StringComparison.Ordinal)
-                    && !text.Contains("goldpath:service-head", StringComparison.Ordinal);
+                    && !text.Contains("goldpath:service-head", StringComparison.Ordinal)
+                    && !text.Contains("goldpath:worker-head", StringComparison.Ordinal);
             }), "Api csproj", "Microsoft.NET.Sdk.Web"),
             PackagesProject = Single(projects.Where(p => !File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "packages csproj", Anchors.Packages),
             AppHostProject = Single(projects.Where(p => File.ReadAllText(p).Contains("IsAspireHost", StringComparison.Ordinal)), "AppHost csproj", Anchors.Packages),
