@@ -5,6 +5,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **Kit-freshness gate tightened** — the console may now lag `@qorpe/ui` by at most ONE minor
+  or 14 days (was two minors / 30 days); the three consumers had drifted three minors apart
+  in August under the old window. Same change in mockifyr's copy.
+
 ### Added
 - **The `GmGrown` nightly shape** — a lean app (`--auth none --broker none`) grown by five
   `goldpath add feature` recipes (audittrail, softdelete, locking, bulk, outbox), then
