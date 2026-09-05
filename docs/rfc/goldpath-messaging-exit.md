@@ -161,6 +161,20 @@ The owner's question was *"will the switch really be a flip, with nothing breaki
 The seam (S1) and the suite (S2/S3) are September 2026 work on the accelerator; S4–S6 are
 the library's own DoD and cannot start before it exists.
 
+**2026-09-05 — the suite exists:** `tests/Goldpath.Messaging.Conformance` runs in the CI
+integration job on real RabbitMQ + PostgreSQL, THROUGH the seam (handlers, the publisher,
+the context — no engine type in a scenario). First eight facts, numbered after the S2
+list: exactly-once on a re-delivered message id (S2.1), tenant + correlation across the
+broker into the context (S2.2), the poison ladder then the fault (S2.3), a 1 MiB payload
+(S2.4), a wider producer tolerated and a narrower one defaulted (S2.5), a commit before
+the bus exists delivered once it starts — the crash between commit and publish (S2.6), a
+paused broker delaying but losing nothing (S2.7), a graceful stop mid-stream draining
+across two processes without duplicates (S2.8). Not yet in the suite, said plainly:
+delayed redelivery (needs the scheduler plugin the in-memory ladder skips), per-queue
+ordering (the seam promises none; a second engine may), OTel spans (needs an exporter
+in the harness), consumer concurrency/prefetch limits. Every fact is written against the
+seam, so S3 is "register a second engine's adapter in the harness and run the class".
+
 ## 8. DoD — closed 2026-08-10
 
 - [x] Owner decides A–E → **A** (stay pinned on 8.x), fallback **D**. Decided 2026-08-10.
@@ -186,8 +200,9 @@ lines, open until each proof runs:
 - [ ] The outbox/inbox configuration and the test harness in Goldpath vocabulary (today
       `AddGoldpathOutbox` takes the library's configurator; the smoke tests publish with a
       raw bus) — the conformance suite's work.
-- [ ] The bus conformance suite exists in this repo, transport-agnostic, green against the
-      MassTransit 8.5.10 adapter, its scenario list reviewed by the owner.
+- [x] The bus conformance suite exists in this repo (2026-09-05, `tests/Goldpath.Messaging.Conformance`,
+      eight facts through the seam, green against MassTransit 8.5.10 on real containers, in the
+      CI integration job) — its scenario list grows with §7.1's gaps; owner review pending.
 - [ ] The family bus has its own RFC and repository (qorpe organisation, open source,
       clean-room per ADR-0013); its adapter enters the suite.
 - [ ] §7.1 S1–S6 pass; the default flips at a train boundary; T18 closes.

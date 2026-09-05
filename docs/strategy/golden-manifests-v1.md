@@ -102,7 +102,7 @@ drift apart; the gate fails on either direction.
 | GmFourClean | `--layout clean-architecture …` | four-project split, migrations in Infrastructure |
 | GmSixGateway | `--auth none` + `new service` + `new gateway` | multi-head by the adopter's own verbs; routed probe |
 | GmWorkerInSolution | `--features audittrail,softdelete,multitenancy,bulk` (auth openid) + `add worker eod --trigger jobs;add worker ingest --trigger queue;db add Workers` | the in-solution worker inherits the solution's auth floor and features (T25 parity by inheritance): both workers build, migrate, boot behind the AppHost and pass drift; bulk is the jobs rider whose tables the jobs worker's fleet shares (the verb refuses a jobs worker without one) |
-| GmGrown | `--auth none --broker none` + `add feature audittrail;softdelete;locking;bulk;outbox` + `db add Grown` | born lean, grown by the CLI's own recipes — the `goldpath add feature` verb proven end to end (plain, provider-gated, jobs-rider-with-console, and the bus-birthing outbox recipe) |
+| GmGrown | `--auth none --broker none` + `add feature audittrail;softdelete;locking;bulk;outbox` + `db add Grown` (green 2026-09-05) | born lean, grown by the CLI's own recipes — the `goldpath add feature` verb proven end to end (plain, provider-gated, jobs-rider-with-console, and the bus-birthing outbox recipe) |
 | GmBulkOnly | `--features bulk --broker none --auth none` | operational module with ONLY the app database |
 | Gm.Dotted | `--broker none --auth none` | dotted solution names (issue #24 regression) |
 | GmConsole | `--features bulk --auth none` | the console SERVES with its own bundle |

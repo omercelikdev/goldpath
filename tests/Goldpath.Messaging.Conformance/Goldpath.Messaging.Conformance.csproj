@@ -1,0 +1,26 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>net10.0</TargetFramework>
+    <IsPackable>false</IsPackable>
+    <!-- The bus conformance suite (ADR-0013 §3, messaging-exit RFC §7.1 S2/S3): what a bus
+         must do for Goldpath, proven on real RabbitMQ + PostgreSQL through the seam. The
+         oracle today is MassTransit 8.5.10; a second engine runs the SAME facts. -->
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="MassTransit.RabbitMQ" />
+    <PackageReference Include="Npgsql.EntityFrameworkCore.PostgreSQL" />
+    <PackageReference Include="Testcontainers.PostgreSql" />
+    <PackageReference Include="Testcontainers.RabbitMq" />
+    <PackageReference Include="Microsoft.NET.Test.Sdk" />
+    <PackageReference Include="xunit" />
+    <PackageReference Include="xunit.runner.visualstudio" PrivateAssets="all" />
+  </ItemGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="../../packages/Goldpath.Data/Goldpath.Data.csproj" />
+    <ProjectReference Include="../../packages/Goldpath.Messaging/Goldpath.Messaging.csproj" />
+  </ItemGroup>
+
+</Project>
