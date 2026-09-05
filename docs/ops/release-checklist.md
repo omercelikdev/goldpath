@@ -37,18 +37,11 @@ only after that PR merges green.
       templates and CLI recipes may only consume once the pins move (the templates must
       generate apps on the PUBLISHED train, `template-pins.sh`; a CLI recipe writes into an
       adopter's app on that train too). Wire each in the release PR, then delete its line:
-      - **The consume seam** (landed 2026-09-05, ADR-0013): every adopter-side consumer moves
-        to `IIntegrationEventHandler<T>` + `AddGoldpathHandler` — the solution template's
-        `OrderPlacedConsumer` (BOTH layouts), the worker template's `WorkItemQueuedConsumer`,
-        the CLI's `add worker` queue skeleton (+ its golden tests) and CorPay's three consumers
-        (`OrderPlacedConsumer`, `PaymentExecutedConsumer`, `WorkItemQueuedConsumer`); the
-        worker manifest comment ("consumer name minus Consumer") reads "handler name minus
-        Handler"; GP0405 goes from Info to Warning in the same PR; the upgrade guide carries
-        the before/after. Queue names do not change (the seam names them the same way).
-      - `MapGoldpathFileExchangeAdmin()` (landed 2026-09-03, T22): the `UseFileExchange`
-        endpoint block in BOTH templates' Program.cs (auth branch like the other admin
-        surfaces), and `plan.Endpoints` in the CLI's `fileexchange` recipe (+ its exact-plan
-        test) — the console smoke host already proves the surface against source.
+      - **CorPay takes preview.8** (after the publish, as it binds to nuget): its three
+        consumers move to the seam (`OrderPlacedConsumer`, `PaymentExecutedConsumer`,
+        `WorkItemQueuedConsumer` → handlers, GP0405), its pins move, and it maps
+        `MapGoldpathFileExchangeAdmin` if it ever composes the module. The templates and the
+        CLI took both adoptions in the preview.8 release PR.
 
 ## After the merge
 

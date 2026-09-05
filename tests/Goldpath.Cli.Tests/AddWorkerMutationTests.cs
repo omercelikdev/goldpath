@@ -469,7 +469,7 @@ public class AddWorkerMutationTests
 
             builder.AddGoldpathMessaging(bus =>
             {
-                bus.AddConsumer<WorkItemQueuedConsumer>();
+                bus.AddGoldpathHandler<WorkItemQueued, WorkItemQueuedHandler>();   // the consume seam (ADR-0013): no bus type in the handler
                 // Consumer-side INBOX: every receive endpoint dedups on MessageId — exactly-once processing.
                 bus.AddGoldpathOutbox<WorkDbContext>(outbox => outbox.UsePostgres());
                 bus.UsingRabbitMq((context, cfg) =>
@@ -584,27 +584,27 @@ public class AddWorkerMutationTests
             public record WorkItemQueued(Guid WorkItemId, string Payload) : IIntegrationEvent;
 
             """,
-        ["WorkItems/WorkItemQueuedConsumer.cs"] = """
-            using MassTransit;
-
+        ["WorkItems/WorkItemQueuedHandler.cs"] = """
             namespace Shop.PaymentsWorker.WorkItems;
 
             /// <summary>
-            /// The walking-skeleton consumer: inbox-guarded (exactly-once), commits its result in the
-            /// same transaction as the dedup bookkeeping. Replace the body with the real work.
+            /// The walking-skeleton handler: inbox-guarded (exactly-once), commits its result in the
+            /// same transaction as the dedup bookkeeping. Through the seam (ADR-0013): no bus type
+            /// here; the queue is named after the handler (work-item-queued). Replace the body with
+            /// the real work.
             /// </summary>
-            public class WorkItemQueuedConsumer(WorkDbContext db) : IConsumer<WorkItemQueued>
+            public class WorkItemQueuedHandler(WorkDbContext db) : IIntegrationEventHandler<WorkItemQueued>
             {
                 /// <inheritdoc />
-                public async Task Consume(ConsumeContext<WorkItemQueued> context)
+                public async Task HandleAsync(WorkItemQueued integrationEvent, IntegrationEventContext context, CancellationToken cancellationToken = default)
                 {
                     db.ProcessedWorkItems.Add(new ProcessedWorkItem
                     {
-                        Id = context.Message.WorkItemId,
-                        Payload = context.Message.Payload,
+                        Id = integrationEvent.WorkItemId,
+                        Payload = integrationEvent.Payload,
                         ProcessedAt = DateTimeOffset.UtcNow,
                     });
-                    await db.SaveChangesAsync(context.CancellationToken);
+                    await db.SaveChangesAsync(cancellationToken);
                 }
             }
 

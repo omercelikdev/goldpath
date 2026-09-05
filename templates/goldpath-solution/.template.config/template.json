@@ -248,7 +248,7 @@
           "exclude": [
             "src/GoldpathTemplate.Api/Orders/OrderConfirmed.cs",
             "src/GoldpathTemplate.Domain/Orders/OrderPlaced.cs",
-            "src/GoldpathTemplate.Application/Orders/OrderPlacedConsumer.cs"
+            "src/GoldpathTemplate.Application/Orders/OrderPlacedHandler.cs"
           ]
         },
         {
