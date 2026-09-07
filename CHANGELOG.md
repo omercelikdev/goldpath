@@ -5,6 +5,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **Ledger honesty pass** (the coverage audit's fourth finding). Five claims the ledgers
+  could not support are corrected in place, each saying what was wrong and when:
+  the two registers disagreed about T1 (the CorPay nightly asserts the console is SERVED
+  and inherits the floor; it does not DRIVE it, so the thread stays open and the
+  overstating row is withdrawn); T7's trigger has fired and the thread now reads as
+  unscheduled rather than blocked; the golden-manifest coverage table listed GM coverage
+  for `ldap` and `saml`, values the manifest schema does not accept, so it now carries a
+  third column saying what actually runs; an RFC row called `Goldpath.Sdk` unpublished
+  though it shipped on preview.7; and a specanchor DoD box sat unchecked with all three
+  of its sub-clauses satisfied.
+- **Mutation scores are recorded.** The release checklist asked for "current" scores and
+  nothing wrote one down, so the gate could be audited only by whoever ran it.
+  `stryker/README.md` gains a measured-scores table and the checklist gains the line that
+  fills it.
+
+
 ### Fixed
 - **The wizard offered a module the template cannot take.** `goldpath new`'s module menu was
   the recipe list, which carries `outbox` — a recipe with no `--features` value, so choosing

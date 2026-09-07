@@ -78,7 +78,7 @@ Discovery Zero playbook, which is written from the rehearsal's diary (D4) — no
 ## 8. DoD
 
 - [x] This RFC accepted by the owner (merged as #165, accepted 2026-08-16).
-- [ ] foundation §9 carries the mapping paragraph; master-plan records the early firing of the
+- [x] foundation §9 carries the mapping paragraph; master-plan records the early firing of the  <!-- checked 2026-09-05: foundation §9 carries the paragraph, master-plan-2026-08 records the early firing, and T20 is in open-threads. The coverage audit found all three satisfied under an unchecked box. -->
       Phase 3 park as an owner decision; open-threads gains T20 with its trigger and proof.
 - [ ] The rehearsal has run end to end and its diary produced the Discovery Zero playbook — only
       then does the Goldpath profile work (domain-memory translation, Spec Engine feed) get designed,

@@ -9,6 +9,19 @@ exclusion without a row below is a finding.
 
 ## Excluded files
 
+## Measured scores
+
+The release checklist requires "mutation scores current for every package whose engine
+paths changed"; until 2026-09-05 no score was written down anywhere, so the gate could be
+checked only by the person who ran it. This table is that record. A score here is a FULL
+run (`scripts/mutation-gate.sh <Package>`), never a `--since` diff run.
+
+<!-- GOLDPATH_SCORES -->
+
+The six long-running packages (Jobs, Archival, Bulk, Notification, Campaign, Caching) run
+in `mutation-heavy.yml` (dispatch-only) and are measured locally before a release; their
+rows carry the date of that run.
+
 | Package | Excluded file | Why it is not scored |
 |---|---|---|
 | Jobs | `GoldpathJobsExtensions.cs` | DI composition — registrations and option binding; behavior lives in the registered types, which ARE scored. |
