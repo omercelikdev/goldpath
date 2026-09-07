@@ -16,8 +16,8 @@ paths changed"; until 2026-09-05 no score was written down anywhere, so the gate
 checked only by the person who ran it. This table is that record. A score here is a FULL
 run (`scripts/mutation-gate.sh <Package>`), never a `--since` diff run.
 
-**Measured 2026-09-05**, full runs on the hosted-fit fifteen (macOS, 10 cores; the last
-seven at `GOLDPATH_MUTATION_CONCURRENCY=9`, which roughly halved their wall clock).
+**Measured 2026-09-05**, full runs on the hosted-fit sixteen (macOS, 10 cores; the last
+eight at `GOLDPATH_MUTATION_CONCURRENCY=9`, which roughly halved their wall clock).
 
 | Package | Score | Margin over break (70) |
 |---|---:|---:|
@@ -34,12 +34,13 @@ seven at `GOLDPATH_MUTATION_CONCURRENCY=9`, which roughly halved their wall cloc
 | Console | 75.00 % | 5.00 |
 | MultiTenancy | 74.42 % | 4.42 |
 | Idempotency | 73.58 % | 3.58 |
+| Analyzers | 72.67 % | 2.67 |
 | ServiceDefaults | 72.15 % | 2.15 |
 | Auth | 70.65 % | **0.65** |
 
-Read the margin column, not the score. Three packages clear the break by less than four
-points — **Auth by 0.65**, ServiceDefaults by 2.15 and Idempotency by 3.58 — so in those
-three a single deleted or weakened test turns the gate red. That fact was invisible until
+Read the margin column, not the score. Four packages clear the break by less than four
+points — **Auth by 0.65**, ServiceDefaults by 2.15, Analyzers by 2.67 and Idempotency by
+3.58 — so in those four a single deleted or weakened test turns the gate red. That fact was invisible until
 this table existed: the checklist asked for scores and nothing recorded one. Treat a
 margin under 2 as a standing invitation to add facts, not as a passing grade.
 
@@ -65,6 +66,7 @@ rows join this table at the next such run.
 | Bulk | `GoldpathBulkMetrics.cs` | Meter declarations. |
 | Cli | `Program.cs` | The process entry point — three lines that hand argv to `CliRunner.Run`, which IS scored end to end. |
 | Cli | `ConsoleProcessRunner.cs` | The real `IProcessRunner` — it starts `dotnet`/`specdrift` and returns the exit code; every command under test drives the fake, and the real one is exercised by the nightly golden-manifest shapes and `validate-migrations.sh`. |
+| Analyzers | `Descriptors.cs` | 49 `DiagnosticDescriptor` initialisers — id, title, message format, severity and help link, with no branching. A mutant here changes a STRING, and the strings are pinned where they are read: every rule's id and message are asserted by `Goldpath.Analyzers.Tests`, and the release-tracking analyzer (RS2000/RS2007) fails the build if an id leaves the release files. Mutating them would only manufacture survivors the tests already cover from the other side. |
 | Cli | `Prompter.cs` | The interactive shell (`Console.ReadLine` + menu rendering) behind `IPrompter` — a unit loop cannot answer a prompt. The wizard's QUESTIONS, defaults and multi-select parsing are pinned against a recording fake in `WizardDiscoverRunnerMutationTests`; the derivation it feeds is a pure function under full mutation. **Weakest exclusion in this ledger** (open-threads: no e2e run drives the real prompter either). |
 | Campaign | `GoldpathCampaignExtensions.cs` | DI composition (see Jobs). |
 | Campaign | `GoldpathCampaignMetrics.cs` | Meter/counter declarations — names are pinned by the dashboard's queries, not by mutants. |
