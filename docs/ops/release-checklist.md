@@ -33,6 +33,9 @@ only after that PR merges green.
       line "No breaking changes — take it blind."
 - [ ] Admin contract check: if any route/envelope changed, `goldpath-admin-contract.md`
       was updated in the SAME PR that changed it (the route-freeze test forces this).
+- [ ] **Mutation scores recorded** — every score you ran goes in `stryker/README.md`'s
+      measured-scores table with its date. Before 2026-09-05 the checklist asked for
+      "current" scores and nothing wrote one down, so the line could not be audited.
 - [ ] **Next-train adoptions** — API that landed on main AFTER the last train and that the
       templates and CLI recipes may only consume once the pins move (the templates must
       generate apps on the PUBLISHED train, `template-pins.sh`; a CLI recipe writes into an

@@ -9,6 +9,44 @@ exclusion without a row below is a finding.
 
 ## Excluded files
 
+## Measured scores
+
+The release checklist requires "mutation scores current for every package whose engine
+paths changed"; until 2026-09-05 no score was written down anywhere, so the gate could be
+checked only by the person who ran it. This table is that record. A score here is a FULL
+run (`scripts/mutation-gate.sh <Package>`), never a `--since` diff run.
+
+**Measured 2026-09-05**, full runs on the hosted-fit fifteen (macOS, 10 cores; the last
+seven at `GOLDPATH_MUTATION_CONCURRENCY=9`, which roughly halved their wall clock).
+
+| Package | Score | Margin over break (70) |
+|---|---:|---:|
+| Abstractions | 95.24 % | 25.24 |
+| Cli | 93.19 % | 23.19 |
+| SoftDelete | 91.67 % | 21.67 |
+| Locking | 91.67 % | 21.67 |
+| Messaging | 84.34 % | 14.34 |
+| AuditTrail | 81.97 % | 11.97 |
+| DataProtection | 78.95 % | 8.95 |
+| Data | 77.38 % | 7.38 |
+| FileExchange | 76.92 % | 6.92 |
+| Approvals | 75.82 % | 5.82 |
+| Console | 75.00 % | 5.00 |
+| MultiTenancy | 74.42 % | 4.42 |
+| Idempotency | 73.58 % | 3.58 |
+| ServiceDefaults | 72.15 % | 2.15 |
+| Auth | 70.65 % | **0.65** |
+
+Read the margin column, not the score. Three packages clear the break by less than four
+points — **Auth by 0.65**, ServiceDefaults by 2.15 and Idempotency by 3.58 — so in those
+three a single deleted or weakened test turns the gate red. That fact was invisible until
+this table existed: the checklist asked for scores and nothing recorded one. Treat a
+margin under 2 as a standing invitation to add facts, not as a passing grade.
+
+The six long-running packages (Jobs, Archival, Bulk, Notification, Campaign, Caching) run
+in `mutation-heavy.yml` (dispatch-only) and are measured locally before a release; their
+rows join this table at the next such run.
+
 | Package | Excluded file | Why it is not scored |
 |---|---|---|
 | Jobs | `GoldpathJobsExtensions.cs` | DI composition — registrations and option binding; behavior lives in the registered types, which ARE scored. |

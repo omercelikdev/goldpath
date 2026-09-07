@@ -48,17 +48,23 @@
 > 2026-08-05: GmBulkOnly proves bulk + jobs + console on NOTHING but the app database
 > (`docs/guide/modules-and-infrastructure.md` is the adopter-facing matrix).
 
-| Dimension | Value → GM |
-|---|---|
-| deploymentModel | monolith→4 · modular-monolith→1,3,5 · microservice→2,6 |
-| codeOrg | clean→2,4 · vertical-slice→1,3,5,6 |
-| db | postgres→1,5,6 · sqlserver→3,4 · oracle→2 |
-| cache | redis→1,2,3,5,6 · inmemory→4 |
-| broker | rabbitmq→1,3 · kafka→2,5 · none→4 · inmemory→6 |
-| auth | openid→1,3,5 · ldap→2 · apikey→4 · saml→6 |
-| features (Ring B) | idempotency→2,3,5,6 · outbox→2,5 · auditTrail→2 · softDelete→2 · multiTenancy→3 · dataProtection→2 · distributedLocking→2 · distributedCaching→3 |
-| worker | consumer-rabbitmq→3 · scheduler-quartz→5 · consumer-kafka→5 · batch→5 |
-| gateway / externalSystems / nfr | 6 / 2(soap,record-replay)+6(rest,stub) / 2 |
+**Read the third column first.** The GM numbers in the middle column are the WRITTEN
+personas; they say which persona would exercise a value, not that anything runs. The
+2026-09-05 coverage audit found the table read as coverage, and two of its rows named
+values (`ldap`, `saml`) the manifest schema does not even accept — so the invariant in the
+heading was inverted. The third column is the only column that is a fact.
+
+| Dimension | Value → GM (the written personas) | Actually proven, by a nightly shape |
+|---|---|---|
+| deploymentModel | monolith→4 · modular-monolith→1,3,5 · microservice→2,6 | monolith, modular-monolith (most shapes) · microservice (GmSixGateway) |
+| codeOrg | clean→2,4 · vertical-slice→1,3,5,6 | both (GmFourClean, GmOneClean · every other shape) |
+| db | postgres→1,5,6 · sqlserver→3,4 · oracle→2 | postgres, sqlserver. **oracle is SCHEMA-ONLY** — in the enum, no EF provider, no Quartz store, no keyset translation (T16) |
+| cache | redis→1,2,3,5,6 · inmemory→4 | both (GmEverything composes redis through the caching recipe; inmemory is the default) |
+| broker | rabbitmq→1,3 · kafka→2,5 · none→4 · inmemory→6 | rabbitmq, none. **kafka is SCHEMA-ONLY** — in the enum, no rider |
+| auth | openid→1,3,5 · ldap→2 · apikey→4 · saml→6 | openid, apikey (GmApiKey, 2026-09-05), none. **ldap and saml are NOT IN THE SCHEMA AT ALL** — the auth enum is `openid \| apikey \| none`; these two rows describe personas, not gaps in coverage (issue #11) |
+| features (Ring B) | idempotency→2,3,5,6 · outbox→2,5 · auditTrail→2 · softDelete→2 · multiTenancy→3 · dataProtection→2 · distributedLocking→2 · distributedCaching→3 | all thirteen as template flags (GmEverything) and all fourteen recipes as `add feature` (GmGrown + GmGrownRest, 2026-09-05) |
+| worker | consumer-rabbitmq→3 · scheduler-quartz→5 · consumer-kafka→5 · batch→5 | consumer-rabbitmq (GmWorkerQueue), scheduler-quartz (GmWorkerJobs), batch (GmWorkerSchedule). **consumer-kafka is unbuildable** while kafka is schema-only |
+| gateway / externalSystems / nfr | 6 / 2(soap,record-replay)+6(rest,stub) / 2 | gateway (GmSixGateway). **externalSystems and nfr are proven by no shape** |
 
 ## 3. Execution Model
 
