@@ -16,7 +16,7 @@
     <PackageLicenseExpression>Apache-2.0</PackageLicenseExpression>
     <Company>Omer Celik</Company>
     <Product>Goldpath Enterprise .NET Asset</Product>
-    <RepositoryUrl>https://github.com/omercelikdev/goldpath</RepositoryUrl>
+    <RepositoryUrl>https://github.com/qorpe/goldpath</RepositoryUrl>
     <RepositoryType>git</RepositoryType>
   </PropertyGroup>
 

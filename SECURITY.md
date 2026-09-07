@@ -3,7 +3,7 @@
 ## Reporting a vulnerability
 
 **Do not open a public issue for a security problem.** Use GitHub's private reporting —
-[Security → Report a vulnerability](https://github.com/omercelikdev/goldpath/security/advisories/new)
+[Security → Report a vulnerability](https://github.com/qorpe/goldpath/security/advisories/new)
 — which opens a private advisory only the maintainer can see.
 
 If that path is unavailable to you, write to **omer@omercelik.dev** with `GOLDPATH-SECURITY`
@@ -53,11 +53,14 @@ decision we can make, but not one we can guess.
   which commit, which workflow and which run produced the package. Verify with:
 
   ```bash
-  gh attestation verify Goldpath.Data.0.1.0-preview.6.nupkg --repo omercelikdev/goldpath
+  gh attestation verify Goldpath.Data.0.1.0-preview.6.nupkg --repo qorpe/goldpath
   ```
 
   A package that fails this check did not come from this pipeline, whatever the registry
-  says.
+  says. **Packages published before the repository moved to the `qorpe` organisation carry
+  the old source in their attestation** — verify those with `--repo omercelikdev/goldpath`.
+  The move happened between 0.1.0-preview.8 and the train after it; an attestation names
+  the repository that built it, and that is a fact about the past, not a mistake to correct.
 - **Publishing without a long-lived key**: the train is pushed through NuGet Trusted
   Publishing (OIDC), so there is no API key in this repository to leak. The same is true of
   the family UI kit on npm.

@@ -4,7 +4,7 @@
   with **D** as the named fallback and the triggers below as the only things that move us
 - Date: 2026-08-09 (decided and §5 implemented 2026-08-10)
 - Supersedes the recommendation in [goldpath-messaging](goldpath-messaging.md) §9 D1
-- Ledger: issue [#11](https://github.com/omercelikdev/goldpath/issues/11) (owner-prioritized),
+- Ledger: issue [#11](https://github.com/qorpe/goldpath/issues/11) (owner-prioritized),
   master plan "Open, with an owner" item 10
 
 ## 1. Scope / Non-Goals
