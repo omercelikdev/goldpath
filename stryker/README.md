@@ -19,6 +19,15 @@ exclusion without a row below is a finding.
 | Jobs | `GoldpathJobsAdminEndpoints.cs` | Minimal-API route table over the admin service; the contract is pinned by the route-freeze test and the console smoke. |
 | Jobs | `GoldpathJobsAdminService.cs` | The admin verbs (trigger/pause/reschedule/calendars/rerun/replay) run through the LIVE scheduler and the fleet registry — the same dependency that excludes the adapter and the registry. MEASURED 2026-09-03: scoring it drops the package below the break (the unit loop cannot host the scheduler, so its 738 lines survive by construction). It is proven where the scheduler exists: `JobsClusterTests`, `JobsRunListTests`, `BulkClusterTests` and the console smoke's 29 journeys drive every verb against real Postgres + Quartz. |
 | FileExchange | `GoldpathFileExchangeMetrics.cs` | Meter declarations (see Campaign/Notification); joined 2026-09-03 with the admin surface. |
+| Archival | `GoldpathArchivalExtensions.cs` | DI composition (see Jobs) — the archival engine, policy and store ARE scored. |
+| Archival | `GoldpathArchivalAdminEndpoints.cs` | Route table (see Jobs); the contract is pinned by the admin-contract check and the console smoke. |
+| Archival | `GoldpathArchivalMetrics.cs` | Meter declarations — names pinned by the dashboard's queries, not by mutants. |
+| Bulk | `GoldpathBulkExtensions.cs` | DI composition (see Jobs) — the batch engine, row handlers and approval gate ARE scored. |
+| Bulk | `GoldpathBulkAdminEndpoints.cs` | Route table (see Jobs). |
+| Bulk | `GoldpathBulkMetrics.cs` | Meter declarations. |
+| Cli | `Program.cs` | The process entry point — three lines that hand argv to `CliRunner.Run`, which IS scored end to end. |
+| Cli | `ConsoleProcessRunner.cs` | The real `IProcessRunner` — it starts `dotnet`/`specdrift` and returns the exit code; every command under test drives the fake, and the real one is exercised by the nightly golden-manifest shapes and `validate-migrations.sh`. |
+| Cli | `Prompter.cs` | The interactive shell (`Console.ReadLine` + menu rendering) behind `IPrompter` — a unit loop cannot answer a prompt. The wizard's QUESTIONS, defaults and multi-select parsing are pinned against a recording fake in `WizardDiscoverRunnerMutationTests`; the derivation it feeds is a pure function under full mutation. **Weakest exclusion in this ledger** (open-threads: no e2e run drives the real prompter either). |
 | Campaign | `GoldpathCampaignExtensions.cs` | DI composition (see Jobs). |
 | Campaign | `GoldpathCampaignMetrics.cs` | Meter/counter declarations — names are pinned by the dashboard's queries, not by mutants. |
 | Campaign | `GoldpathCampaignConsumers.cs` | MassTransit consumers — exercised against a real broker in the integration suite. |
@@ -36,7 +45,7 @@ Jobs admin service is the exception above, and the reason is measured, not assum
 
 | Package | Method pattern | Why |
 |---|---|---|
-| all | `Log*` | Logging calls carry no behavior a test can observe; mutating them only manufactures survivors. |
+| all | `Log*` | Logging calls carry no behavior a test can observe; mutating them only manufactures survivors. Declared in EVERY config since 2026-09-05 — eleven of them carried the ledger's word without the setting until the preview.8 coverage audit. |
 | Locking | `CreateRedisProvider` | Builds the Redis lock provider — needs a live Redis, which the unit loop does not host; the Redis path is proven by the integration suite. |
 
 ## Packages without a gate

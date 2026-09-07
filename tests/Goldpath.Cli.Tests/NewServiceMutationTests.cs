@@ -22,6 +22,49 @@ public class NewServiceMutationTests
         return new Outcome(exit, output.ToString(), error.ToString());
     }
 
+    [Theory]
+    [InlineData("--db", "sqlserver")]
+    [InlineData("--auth", "none")]
+    [InlineData("--broker", "none")]
+    [InlineData("--features", "bulk")]
+    [InlineData("--layout", "clean-architecture")]
+    public void New_service_refuses_a_flag_it_would_otherwise_swallow(string flag, string value)
+    {
+        // A head follows the SOLUTION's shape; these flags belong to `new solution`. They used
+        // to be dropped silently, generating a head on the wrong shape without a word
+        // (preview.8 coverage audit, 2026-09-05).
+        using var app = new FakeApp();
+        var outcome = Run(app, new FakeProcessRunner(), "new", "service", "Billing", flag, value);
+
+        Assert.Equal(2, outcome.ExitCode);
+        Assert.Equal(
+            $"goldpath: goldpath new service does not take '{flag}' — a head follows the SOLUTION's shape (database, broker, auth); the only flag is --path <dir>.\n",
+            outcome.Error);
+    }
+
+    [Fact]
+    public void New_gateway_refuses_a_flag_it_would_otherwise_swallow()
+    {
+        using var app = new FakeApp();
+        var outcome = Run(app, new FakeProcessRunner(), "new", "gateway", "--auth", "openid");
+
+        Assert.Equal(2, outcome.ExitCode);
+        Assert.Equal(
+            "goldpath: goldpath new gateway does not take '--auth' — a head follows the SOLUTION's shape (database, broker, auth); the only flag is --path <dir>.\n",
+            outcome.Error);
+    }
+
+    [Fact]
+    public void New_service_still_takes_its_one_flag_and_its_name_in_either_order()
+    {
+        using var app = new FakeApp();
+        GiveSmokeAnchor(app);
+        var outcome = Run(app, new FakeProcessRunner(), "new", "service", "Billing");
+
+        Assert.Equal(0, outcome.ExitCode);
+        Assert.Empty(outcome.Error);
+    }
+
     private static string SmokePath(FakeApp app) => Path.Combine(app.Root, "tests", "SmokeTests.cs");
 
     private static void GiveSmokeAnchor(FakeApp app)

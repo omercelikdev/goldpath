@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Xunit;
 
 namespace Goldpath.Cli.Tests;
@@ -150,9 +151,49 @@ public class WizardMutationTests
     }
 
     [Fact]
-    public void The_module_menu_is_the_canonical_recipe_list()
+    public void The_module_menu_is_the_canonical_recipe_list_minus_the_one_the_template_cannot_take()
     {
-        Assert.Equal(FeatureRecipes.Names, WizardCommand.Modules);
+        Assert.Equal(FeatureRecipes.TemplateFeatures, WizardCommand.Modules);
+        Assert.Equal(FeatureRecipes.Names.Where(n => n != "outbox"), WizardCommand.Modules);
+        Assert.DoesNotContain("outbox", WizardCommand.Modules);
+    }
+
+    [Fact]
+    public void The_module_menu_is_exactly_the_solution_templates_features_choice_list()
+    {
+        // The menu's values become `dotnet new goldpath-solution --features <value>`. A value
+        // the template's choice list does not carry generates a command that cannot run —
+        // the wizard offered `outbox` until the preview.8 coverage audit (2026-09-05).
+        var templateJson = File.ReadAllText(Path.Combine(RepoRoot(), "templates", "goldpath-solution", ".template.config", "template.json"));
+        using var document = JsonDocument.Parse(templateJson);
+        var choices = document.RootElement
+            .GetProperty("symbols").GetProperty("features").GetProperty("choices")
+            .EnumerateArray().Select(c => c.GetProperty("choice").GetString()!).ToList();
+
+        Assert.Equal(choices.OrderBy(c => c, StringComparer.Ordinal), WizardCommand.Modules.OrderBy(m => m, StringComparer.Ordinal));
+    }
+
+    [Fact]
+    public void A_module_the_template_cannot_take_never_reaches_the_generated_command()
+    {
+        // Defence in depth: even handed `outbox` directly, Derive filters it out rather than
+        // emitting `--features outbox`.
+        var plan = WizardCommand.Derive(new WizardCommand.Answers(
+            "Shop", "postgresql", "none", "vertical-slice", ["audittrail", "outbox"], PublishesIntegrationEvents: false));
+
+        Assert.DoesNotContain("outbox", plan.Arguments);
+        Assert.Contains("audittrail", plan.Arguments);
+    }
+
+    private static string RepoRoot()
+    {
+        var directory = new DirectoryInfo(AppContext.BaseDirectory);
+        while (directory is not null && !Directory.Exists(Path.Combine(directory.FullName, "templates")))
+        {
+            directory = directory.Parent;
+        }
+
+        return directory?.FullName ?? throw new InvalidOperationException("repo root not found from " + AppContext.BaseDirectory);
     }
 
     [Fact]
@@ -422,7 +463,12 @@ public class CliRunnerMutationTests
         Assert.StartsWith("goldpath — the Goldpath golden-path CLI (thin and deterministic)\n", output, StringComparison.Ordinal);
         Assert.Contains("  goldpath add feature <name> [--path <dir>]          wire a Ring B feature into an existing app\n", output, StringComparison.Ordinal);
         Assert.Contains("  goldpath --help | --version\n", output, StringComparison.Ordinal);
-        Assert.EndsWith("features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals, fileexchange, archival, bulk, notification, campaign\n", output, StringComparison.Ordinal);
+        Assert.EndsWith("features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals, fileexchange, archival, bulk, notification, campaign\nadd feature also accepts: outbox (births the bus in an app generated without one)\n", output, StringComparison.Ordinal);
+        // Every name the verb accepts is named in the usage — the 13 template features plus outbox.
+        foreach (var feature in FeatureRecipes.Names)
+        {
+            Assert.Contains(feature, output, StringComparison.Ordinal);
+        }
     }
 
     [Theory]

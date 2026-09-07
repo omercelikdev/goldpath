@@ -170,6 +170,40 @@ for template in sorted(d for d in os.listdir(os.path.join(root, "templates"))
     if template not in templates_doc:
         fail.append(f"template {template} missing from templates/README.md")
 
+# 7. The mutation ledgers agree on HOW MANY packages the hosted matrix scores. Three places
+#    said ten, thirteen and fifteen at once (preview.8 coverage audit, 2026-09-05): the
+#    nightly's own comment, the release checklist's parenthetical, and the matrix itself.
+WORDS = {10: "ten", 11: "eleven", 12: "twelve", 13: "thirteen", 14: "fourteen", 15: "fifteen",
+         16: "sixteen", 17: "seventeen", 18: "eighteen", 19: "nineteen", 20: "twenty"}
+nightly_text = read(".github", "workflows", "nightly.yml")
+matrix = re.search(r"package: \[(.*?)\]", nightly_text, re.S)
+if matrix:
+    scored = [p.strip() for p in matrix.group(1).split(",") if p.strip()]
+    spelled = WORDS.get(len(scored))
+    if spelled is None:
+        fail.append(f"mutation matrix has {len(scored)} packages — teach docs-freshness that number word")
+    else:
+        if f"hosted-fit {spelled}" not in nightly_text:
+            fail.append(f"nightly.yml scores {len(scored)} packages but its comment does not say 'hosted-fit {spelled}'")
+        checklist = read("docs", "ops", "release-checklist.md")
+        if f"{spelled} packages" not in checklist:
+            fail.append(f"the mutation matrix scores {len(scored)} packages; release-checklist.md does not say '{spelled} packages'")
+else:
+    fail.append("nightly.yml has no mutation package matrix — docs-freshness cannot check the count")
+
+# 8. Every stryker exclusion carries a row in the exclusion ledger (stryker/README.md's own
+#    rule: "An exclusion without a row below is a finding"). Nine were unrowed until 2026-09-05.
+stryker_doc = read("stryker", "README.md")
+for config in sorted(n for n in os.listdir(os.path.join(root, "stryker")) if n.endswith(".json")):
+    package = config[:-5].replace("Goldpath.", "")
+    for line in read("stryker", config).splitlines():
+        line = line.strip().strip(",").strip('"')
+        if not line.startswith("!"):
+            continue
+        excluded = line.rsplit("/", 1)[-1]
+        if f"`{excluded}`" not in stryker_doc:
+            fail.append(f"stryker/{config} excludes {excluded} with no row in stryker/README.md")
+
 if fail:
     print("── inventory sync: the docs stopped telling the truth:")
     for f in fail:

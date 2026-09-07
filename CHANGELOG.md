@@ -5,6 +5,29 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Fixed
+- **The wizard offered a module the template cannot take.** `goldpath new`'s module menu was
+  the recipe list, which carries `outbox` — a recipe with no `--features` value, so choosing
+  it printed and ran `dotnet new goldpath-solution --features outbox` and the template refused.
+  The menu is now the template's own choice list, pinned against `template.json` by a test.
+- **`goldpath add feature approvals` left the console rail over nothing.** The recipe wired the
+  module and the jobs block but never emitted `app.MapGoldpathApprovalsAdmin(...)`, so a
+  CLI-grown app showed an Approvals section with no endpoint behind it. Every admin-bearing
+  recipe now has that invariant under test.
+- **`goldpath new service|gateway` swallowed flags in silence.** `new service Billing --db
+  sqlserver` ignored `--db` and generated a head on the solution's shape without a word; the
+  two verbs now refuse any flag but `--path`, naming it.
+- The usage text names `outbox` as an `add feature`-only recipe (it listed thirteen of fourteen).
+
+### Changed
+- Mutation ledger honesty: the nine unrowed exclusions (Archival, Bulk and CLI) now carry their
+  justification in `stryker/README.md`, and `ignore-methods: Log*` — which the ledger claimed
+  for every package — is declared in all twenty-one configs instead of ten.
+- The hosted-fit mutation matrix is called fifteen packages everywhere (it was ten, thirteen and
+  fifteen in three places). `docs-freshness.sh` gained two gates: the spelled-out count must
+  match the matrix, and every stryker exclusion must have a ledger row.
+
+
 ## [0.1.0-preview.8] - 2026-09-05
 
 ### Changed (this train, at the boundary)
