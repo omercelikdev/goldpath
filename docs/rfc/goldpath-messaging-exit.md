@@ -196,7 +196,8 @@ lines, open until each proof runs:
       repo's `Goldpath.Messaging`) with analyzer GP0405 (Info → Warning at the preview.8 boundary, done).
 - [x] The two template layouts, the worker template and the CLI's worker skeleton consume
       through it (preview.8, with the upgrade guide; GP0405 is a Warning from that train).
-- [ ] CorPay consumes through it — when it takes preview.8 (it binds to nuget).
+- [x] CorPay consumes through it (2026-09-07, on the day preview.8 published: three
+      handlers, same queue names, smoke green on real containers).
       api-portal has no consumers of its own.
 - [ ] The outbox/inbox configuration and the test harness in Goldpath vocabulary (today
       `AddGoldpathOutbox` takes the library's configurator; the smoke tests publish with a

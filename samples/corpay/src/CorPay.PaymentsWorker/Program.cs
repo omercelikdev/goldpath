@@ -25,7 +25,7 @@ builder.AddGoldpathData<WebApplicationBuilder, WorkDbContext>(options =>
 
 builder.AddGoldpathMessaging(bus =>
 {
-    bus.AddConsumer<WorkItemQueuedConsumer>();
+    bus.AddGoldpathHandler<WorkItemQueued, WorkItemQueuedHandler>();   // the consume seam (ADR-0013)
     // Consumer-side INBOX: every receive endpoint dedups on MessageId — exactly-once processing.
     bus.AddGoldpathOutbox<WorkDbContext>(outbox => outbox.UsePostgres());
     bus.UsingRabbitMq((context, cfg) =>
