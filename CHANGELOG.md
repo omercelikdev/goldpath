@@ -16,6 +16,11 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   third column saying what actually runs; an RFC row called `Goldpath.Sdk` unpublished
   though it shipped on preview.7; and a specanchor DoD box sat unchecked with all three
   of its sub-clauses satisfied.
+- **`Goldpath.Analyzers` has a mutation gate.** The package that enforces forty-nine
+  executable standards was the one with no ungameable metric over it, and the exclusion
+  ledger carried no row explaining why. It scores 72.67 % and joins the nightly matrix,
+  which is sixteen packages now. Its single exclusion (`Descriptors.cs`, forty-nine
+  descriptor initialisers with no branching) is justified in the ledger.
 - **Mutation scores are recorded.** The release checklist asked for "current" scores and
   nothing wrote one down, so the gate could be audited only by whoever ran it.
   `stryker/README.md` gains a measured-scores table and the checklist gains the line that
