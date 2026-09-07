@@ -104,6 +104,10 @@ drift apart; the gate fails on either direction.
 | GmSixGateway | `--auth none` + `new service` + `new gateway` | multi-head by the adopter's own verbs; routed probe |
 | GmWorkerInSolution | `--features audittrail,softdelete,multitenancy,bulk` (auth openid) + `add worker eod --trigger jobs;add worker ingest --trigger queue;db add Workers` | the in-solution worker inherits the solution's auth floor and features (T25 parity by inheritance): both workers build, migrate, boot behind the AppHost and pass drift; bulk is the jobs rider whose tables the jobs worker's fleet shares (the verb refuses a jobs worker without one) |
 | GmGrown | `--auth none --broker none` + `add feature audittrail;softdelete;locking;bulk;outbox` + `db add Grown` (green 2026-09-05) | born lean, grown by the CLI's own recipes — the `goldpath add feature` verb proven end to end (plain, provider-gated, jobs-rider-with-console, and the bus-birthing outbox recipe) |
+| GmOneViaCli | `goldpath new solution` (defaults) | the CLI's OWN generation verb end to end — every other shape calls `dotnet new`, so the command the guides teach had no e2e proof until the preview.8 coverage audit (2026-09-05) |
+| GmWorkerViaCli | `goldpath new worker --trigger schedule` | the worker generation verb, same reason |
+| GmApiKey | `--auth apikey --features bulk` | the api-key floor: in the template's choices, the CLI's flag and the wizard, and in no shape until 2026-09-05 |
+| GmGrownRest | `--auth openid` + `add feature multitenancy;idempotency;dataprotection;caching;archival;approvals;fileexchange;campaign` + `db add GrownRest` | the eight recipes GmGrown does not run, grown on ONE app BEHIND an auth floor — `add feature` had fourteen recipes and six e2e proofs |
 | GmBulkOnly | `--features bulk --broker none --auth none` | operational module with ONLY the app database |
 | Gm.Dotted | `--broker none --auth none` | dotted solution names (issue #24 regression) |
 | GmConsole | `--features bulk --auth none` | the console SERVES with its own bundle |
