@@ -5,6 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [0.1.0-preview.8] - 2026-09-07
+
+The seam-and-proof train. The consume seam reaches the generated apps, and a coverage
+audit of every CLI verb, flag value and feature against what proves it closes four real
+defects, gives six verbs their first end-to-end proof, gives the two newest modules the
+analyzer rules and console journey they shipped without, and makes five ledger claims
+true. Adopters: read the upgrade guide first — GP0405 becomes a Warning and GP1901 is a
+new ERROR.
+
+### Closed by the coverage audit (2026-09-05)
+
 ### Changed
 - **Ledger honesty pass** (the coverage audit's fourth finding). Five claims the ledgers
   could not support are corrected in place, each saying what was wrong and when:
@@ -25,8 +36,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   nothing wrote one down, so the gate could be audited only by whoever ran it.
   `stryker/README.md` gains a measured-scores table and the checklist gains the line that
   fills it.
-
-
 ### Fixed
 - **The wizard offered a module the template cannot take.** `goldpath new`'s module menu was
   the recipe list, which carries `outbox` — a recipe with no `--features` value, so choosing
@@ -40,7 +49,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   sqlserver` ignored `--db` and generated a head on the solution's shape without a word; the
   two verbs now refuse any flag but `--path`, naming it.
 - The usage text names `outbox` as an `add feature`-only recipe (it listed thirteen of fourteen).
-
 ### Added
 - **The CLI has its own proof lane** (`scripts/validate-cli.sh`, nightly job `cli-proofs`).
   The golden-manifest lane proves the TEMPLATES — it calls `dotnet new` directly — so six
@@ -55,7 +63,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   the template's choices, the CLI's flag and the wizard and in no shape; `GmGrownRest` runs
   the eight `add feature` recipes `GmGrown` does not, behind an auth floor. The in-solution
   fleet gains a third worker so `add worker --trigger schedule` is proven too.
-
 ### Changed
 - Mutation ledger honesty: the nine unrowed exclusions (Archival, Bulk and CLI) now carry their
   justification in `stryker/README.md`, and `ignore-methods: Log*` — which the ledger claimed
@@ -64,8 +71,6 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   fifteen in three places). `docs-freshness.sh` gained two gates: the spelled-out count must
   match the matrix, and every stryker exclusion must have a ledger row.
 
-
-## [0.1.0-preview.8] - 2026-09-05
 
 ### Changed (this train, at the boundary)
 - **The templates, the worker template and `goldpath add worker` consume through the seam** —
