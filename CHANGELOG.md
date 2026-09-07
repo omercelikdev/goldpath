@@ -5,6 +5,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **CorPay consumes through the seam.** The sample took 0.1.0-preview.8 the day it
+  published: three handlers instead of `IConsumer<T>` (`OrderPlacedHandler`,
+  `PaymentExecutedHandler`, `WorkItemQueuedHandler`), twenty-one pins moved, queue names
+  unchanged. It was the last line under the release checklist's next-train adoptions, and
+  the messaging-exit RFC's CorPay box closes with it.
+
+
 ## [0.1.0-preview.8] - 2026-09-07
 
 The seam-and-proof train. The consume seam reaches the generated apps, and a coverage

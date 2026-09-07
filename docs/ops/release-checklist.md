@@ -40,11 +40,8 @@ only after that PR merges green.
       templates and CLI recipes may only consume once the pins move (the templates must
       generate apps on the PUBLISHED train, `template-pins.sh`; a CLI recipe writes into an
       adopter's app on that train too). Wire each in the release PR, then delete its line:
-      - **CorPay takes preview.8** (after the publish, as it binds to nuget): its three
-        consumers move to the seam (`OrderPlacedConsumer`, `PaymentExecutedConsumer`,
-        `WorkItemQueuedConsumer` → handlers, GP0405), its pins move, and it maps
-        `MapGoldpathFileExchangeAdmin` if it ever composes the module. The templates and the
-        CLI took both adoptions in the preview.8 release PR.
+      - *(none open — preview.8's two adoptions are wired; CorPay took the seam and the pins
+        on 2026-09-07, the day the train published.)*
 
 ## After the merge
 

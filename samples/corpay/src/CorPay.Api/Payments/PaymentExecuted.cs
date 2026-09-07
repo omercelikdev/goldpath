@@ -1,5 +1,3 @@
-using MassTransit;
-
 namespace CorPay.Api.Payments;
 
 /// <summary>Broker-bound (outboxed) — the ledger feed's input (GP0401).</summary>
@@ -7,22 +5,23 @@ public record PaymentExecuted(long InstructionId, string Reference, decimal Amou
 
 /// <summary>
 /// Feeds the ledger from the outboxed event — one row per executed payment, written by
-/// the consumer so the feed survives an API crash after execution (the outbox guarantees
+/// the handler so the feed survives an API crash after execution (the outbox guarantees
 /// the event; the inbox guarantees once).
 /// </summary>
-public class PaymentExecutedConsumer(Orders.OrdersDbContext db) : IConsumer<PaymentExecuted>
+public class PaymentExecutedHandler(Orders.OrdersDbContext db) : IIntegrationEventHandler<PaymentExecuted>
 {
-    public async Task Consume(ConsumeContext<PaymentExecuted> context)
+    /// <inheritdoc />
+    public async Task HandleAsync(PaymentExecuted integrationEvent, IntegrationEventContext context, CancellationToken cancellationToken = default)
     {
         db.Set<LedgerFeedEntry>().Add(new LedgerFeedEntry
         {
-            InstructionId = context.Message.InstructionId,
-            Reference = context.Message.Reference,
-            Amount = context.Message.Amount,
-            Currency = context.Message.Currency,
+            InstructionId = integrationEvent.InstructionId,
+            Reference = integrationEvent.Reference,
+            Amount = integrationEvent.Amount,
+            Currency = integrationEvent.Currency,
             FedAt = DateTimeOffset.UtcNow,
         });
-        await db.SaveChangesAsync(context.CancellationToken);
+        await db.SaveChangesAsync(cancellationToken);
     }
 }
 

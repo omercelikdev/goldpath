@@ -96,8 +96,8 @@ builder.Services.AddSingleton<CorPay.Api.Payments.ICoreBankingClient, CorPay.Api
 builder.AddGoldpathMessaging(bus =>
 {
     // goldpath:features consumers — bus-riding features register here
-    bus.AddConsumer<OrderPlacedConsumer>();
-    bus.AddConsumer<CorPay.Api.Payments.PaymentExecutedConsumer>();
+    bus.AddGoldpathHandler<OrderPlaced, OrderPlacedHandler>();                                            // the consume seam (ADR-0013)
+    bus.AddGoldpathHandler<CorPay.Api.Payments.PaymentExecuted, CorPay.Api.Payments.PaymentExecutedHandler>();
     bus.AddGoldpathOutbox<OrdersDbContext>(outbox =>
     {
         outbox.UsePostgres();
