@@ -184,9 +184,23 @@ public sealed class AppFacts
 /// </summary>
 public static class FeatureRecipes
 {
+    /// <summary>The one recipe that is not a template <c>--features</c> choice.</summary>
+    public const string OutboxRecipe = "outbox";
+
     /// <summary>The feature names <c>goldpath add feature</c> understands.</summary>
     public static readonly IReadOnlyList<string> Names =
         ["multitenancy", "audittrail", "softdelete", "idempotency", "dataprotection", "caching", "locking", "approvals", "fileexchange", "archival", "bulk", "notification", "campaign", "outbox"];
+
+    /// <summary>
+    /// The features the SOLUTION TEMPLATE's <c>--features</c> choice list accepts — every
+    /// recipe except <c>outbox</c>, which no template flag can express (a generated app is
+    /// born with the bus through <c>--broker rabbitmq</c>, and the recipe BIRTHS one in an
+    /// app that has none). The wizard's menu is this list, not <see cref="Names"/>: a menu
+    /// offering outbox produced <c>dotnet new goldpath-solution --features outbox</c>, which
+    /// the template rejects (found by the preview.8 coverage audit, 2026-09-05).
+    /// </summary>
+    public static IReadOnlyList<string> TemplateFeatures { get; } =
+        Names.Where(n => n != OutboxRecipe).ToList();
 
     /// <summary>The jobs-riding features — the ones that bring the operations console with them.</summary>
     private static readonly HashSet<string> JobsRiders = new(StringComparer.Ordinal)
@@ -426,6 +440,7 @@ public static class FeatureRecipes
                     plan.Registrations.Add("    //     .Rung(\"manager\", 5_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)   // quorum is a rung property");
                     plan.Registrations.Add("    //     .TopRung(\"general-manager\", TimeSpan.FromHours(24)));");
                     plan.Registrations.Add("});");
+                    plan.Endpoints.Add($"app.MapGoldpathApprovalsAdmin({(app.AuthWired ? "" : "exposeUnsecured: true")});      // worklist + decide verbs through the ENGINE (four eyes holds)");
                     plan.Endpoints.Add($"app.MapGoldpathJobsAdmin<{app.DbContextName}>({(app.AuthWired ? "" : "exposeUnsecured: true")});        // run console API: trigger/pause/reschedule/audit");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathApprovalModel();      // approvals + delegations + signatures (worklist survives restarts)");
                     plan.ModelCalls.Add("        modelBuilder.AddGoldpathJobs();           // run model + clustered Quartz store (same database)");

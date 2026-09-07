@@ -58,7 +58,13 @@ public class FeatureRecipesMutationTests
             plan.ModelCalls);
         Assert.Equal(["  approvals: true"], plan.ManifestLines);
         Assert.Equal(["declare ladders in AddGoldpathApprovals — the escalation sweep is already scheduled (AddGoldpathApprovalsJobs, five-minute cron)"], plan.NextSteps);
-        Assert.Equal(["app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit", "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces"], plan.Endpoints);
+        Assert.Equal(
+            [
+                "app.MapGoldpathApprovalsAdmin();      // worklist + decide verbs through the ENGINE (four eyes holds)",
+                "app.MapGoldpathJobsAdmin<ShopDbContext>();        // run console API: trigger/pause/reschedule/audit",
+                "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces",
+            ],
+            plan.Endpoints);
         Assert.Empty(plan.JobsOptionsLines);
         Assert.Empty(plan.BusLines);
     }

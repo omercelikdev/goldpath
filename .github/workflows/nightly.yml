@@ -138,7 +138,7 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The hosted-fit ten (issue #20): the six long-running packages OOM the 16 GB
+        # The hosted-fit fifteen (issue #20): the six long-running packages OOM the 16 GB
         # runners even at concurrency 2 — they live in mutation-heavy.yml (dispatch-only)
         # and in the release checklist's local cadence.
         package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,

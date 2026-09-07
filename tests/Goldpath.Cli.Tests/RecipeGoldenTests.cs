@@ -374,6 +374,52 @@ public class RecipeGoldenTests
         Assert.Contains(plan.Registrations, r => r.Contains("AddGoldpathApprovalsJobs()"));
         Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathApprovalModel"));
         Assert.Contains(plan.ModelCalls, m => m.Contains("AddGoldpathJobs()"));
+        // The module's OWN admin surface — without it the console shows an Approvals rail
+        // over an endpoint that is not there (preview.8 coverage audit, 2026-09-05).
+        Assert.Equal(
+            [
+                "app.MapGoldpathApprovalsAdmin(exposeUnsecured: true);      // worklist + decide verbs through the ENGINE (four eyes holds)",
+                "app.MapGoldpathJobsAdmin<X>(exposeUnsecured: true);        // run console API: trigger/pause/reschedule/audit",
+                "app.MapGoldpathConsole(exposeUnsecured: true);      // the console over the surfaces above — visible opt-out, acceptable only behind an authenticating boundary",
+            ],
+            plan.Endpoints);
+    }
+
+    [Fact]
+    public void Approvals_on_an_authed_app_maps_its_admin_surface_behind_the_auth_floor()
+    {
+        var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = false, AuthWired = true };
+        var plan = FeatureRecipes.Build("approvals", facts);
+        Assert.Equal(
+            [
+                "app.MapGoldpathApprovalsAdmin();      // worklist + decide verbs through the ENGINE (four eyes holds)",
+                "app.MapGoldpathJobsAdmin<X>();        // run console API: trigger/pause/reschedule/audit",
+                "app.MapGoldpathConsole();                           // behind the SAME ops floor as the surfaces",
+            ],
+            plan.Endpoints);
+    }
+
+    [Fact]
+    public void Every_admin_bearing_recipe_maps_its_own_admin_surface()
+    {
+        // The invariant the approvals gap broke: a recipe that brings a console MODULE must
+        // emit that module's admin endpoint, or the rail discovers nothing.
+        var surfaces = new Dictionary<string, string>(StringComparer.Ordinal)
+        {
+            ["approvals"] = "MapGoldpathApprovalsAdmin",
+            ["fileexchange"] = "MapGoldpathFileExchangeAdmin",
+            ["archival"] = "MapGoldpathArchivalAdmin",
+            ["bulk"] = "MapGoldpathBulkAdmin",
+            ["notification"] = "MapGoldpathNotificationAdmin",
+            ["campaign"] = "MapGoldpathCampaignAdmin",
+        };
+
+        foreach (var (feature, surface) in surfaces)
+        {
+            var facts = new AppFacts { DbContextName = "X", DatabaseProvider = "postgres", ConnectionName = "shopdb", CachingWired = false, JobsWired = false, MessagingWired = feature == "campaign", AuthWired = false };
+            var plan = FeatureRecipes.Build(feature, facts);
+            Assert.Contains(plan.Endpoints, e => e.Contains(surface, StringComparison.Ordinal));
+        }
     }
 
     [Fact]
