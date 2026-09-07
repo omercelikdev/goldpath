@@ -19,6 +19,21 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
   two verbs now refuse any flag but `--path`, naming it.
 - The usage text names `outbox` as an `add feature`-only recipe (it listed thirteen of fourteen).
 
+### Added
+- **The CLI has its own proof lane** (`scripts/validate-cli.sh`, nightly job `cli-proofs`).
+  The golden-manifest lane proves the TEMPLATES — it calls `dotnet new` directly — so six
+  verbs an adopter types had unit tests and nothing else: the wizard, `init`, `export
+  compose`, `discover`, `db status` and `check` (which ran only in the CorPay job, against
+  the PUBLISHED tool, never the working tree). The lane drives every one of them on a real
+  generated app and asserts what each must produce, including `docker compose config`
+  accepting the exported file and `check` naming each of its four steps.
+- **Four nightly shapes for values that had none**: `GmOneViaCli` and `GmWorkerViaCli`
+  generate through `goldpath new solution|worker` instead of `dotnet new` (the verb the
+  guides teach had no end-to-end proof); `GmApiKey` proves the api-key floor, which was in
+  the template's choices, the CLI's flag and the wizard and in no shape; `GmGrownRest` runs
+  the eight `add feature` recipes `GmGrown` does not, behind an auth floor. The in-solution
+  fleet gains a third worker so `add worker --trigger schedule` is proven too.
+
 ### Changed
 - Mutation ledger honesty: the nine unrowed exclusions (Archival, Bulk and CLI) now carry their
   justification in `stryker/README.md`, and `ignore-methods: Log*` — which the ledger claimed
