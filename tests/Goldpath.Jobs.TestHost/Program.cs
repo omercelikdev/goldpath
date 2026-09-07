@@ -175,6 +175,17 @@ static async Task RunConsoleHostAsync(
             .ValidateRow(row => row.Amount > 0 ? null : "non-positive amount")
             .Handle((_, _) => Task.CompletedTask)));
 
+    // Approvals joins too. It was the ONLY console module with no Playwright journey and
+    // no axe scan, because this host never composed it (preview.8 coverage audit,
+    // 2026-09-05): the panel had unit tests over a mock and nothing that proved the rail,
+    // the worklist and the decide verbs against the ENGINE. One real ladder, one real
+    // request; the four-eyes refusal below is the engine's, not a fixture's.
+    web.AddGoldpathApprovals<WebApplicationBuilder, ClusterDb>(approvals => approvals
+        .AddLadder("credit-limit", ladder => ladder
+            .Rung("expert", 1_000_000m, TimeSpan.FromHours(8))
+            .Rung("manager", 5_000_000m, TimeSpan.FromHours(8), requiredApprovals: 2)
+            .TopRung("general-manager", TimeSpan.FromHours(24))));
+
     // Erasure REFUSES without DataProtection — classification is what tells the archive
     // which fields to redact (GP1401), so the smoke composes it and marks the holder's
     // name as personal data.
@@ -293,6 +304,7 @@ static async Task RunConsoleHostAsync(
     app.MapGoldpathNotificationAdmin<ClusterDb>(exposeUnsecured: unsecured);
     app.MapGoldpathArchivalAdmin<ClusterDb>(exposeUnsecured: unsecured);
     app.MapGoldpathFileExchangeAdmin(exposeUnsecured: unsecured);
+    app.MapGoldpathApprovalsAdmin(exposeUnsecured: unsecured);
     // The console SERVED BY THE APP — the shape adopters actually deploy (console RFC D1).
     // Same origin as the admin surfaces, so no CORS is involved in this path at all.
     // The console IS this host's home: whoever lands on the bare port goes there.
@@ -325,6 +337,16 @@ static async Task RunConsoleHostAsync(
             "welcome", "webhook", "blocked@example.com", "", new Dictionary<string, string> { ["Name"] = "Blocked" }, "smoke:welcome:blocked"), CancellationToken.None);
         await notifier.RequestAsync(new GoldpathNotificationRequest(
             "ops-alert", "email", "ops@example.com", "", new Dictionary<string, string> { ["Text"] = "the night is quiet" }, "smoke:alert:1"), CancellationToken.None);
+    }
+
+    // One real approval request, routed by AMOUNT: 2.5M lands on the manager rung, whose
+    // quorum is two. The panel must show the rung, the quorum and the trail — and the
+    // engine must refuse the same person's second signature (four eyes), which is what the
+    // journey drives.
+    using (var scope = app.Services.CreateScope())
+    {
+        var approvals = scope.ServiceProvider.GetRequiredService<GoldpathApprovalEngine>();
+        await approvals.RequestAsync("credit-limit", "Limit raise for ACME", 2_500_000m, "analyst@example.com", CancellationToken.None);
     }
 
     // One real file through the rail: two rows apply, one quarantines with its reason —
@@ -360,6 +382,7 @@ namespace Goldpath.Jobs.TestHost
             modelBuilder.AddGoldpathNotification();
             modelBuilder.AddGoldpathArchiveModel();
             modelBuilder.AddGoldpathFileExchangeModel();
+            modelBuilder.AddGoldpathApprovalModel();
         }
     }
 

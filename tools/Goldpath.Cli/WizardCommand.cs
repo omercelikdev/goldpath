@@ -11,11 +11,14 @@ namespace Goldpath.Cli;
 public static class WizardCommand
 {
     /// <summary>
-    /// The module menu — the CANONICAL feature list `goldpath add feature` understands
-    /// (review R6: one list, referenced, so the menu and the unknown-module filter can
-    /// never desync from what the recipes actually wire).
+    /// The module menu — the feature list the SOLUTION TEMPLATE accepts, referenced from
+    /// the recipes so the menu and the unknown-module filter can never desync from what
+    /// the recipes wire (review R6). It is <see cref="FeatureRecipes.Names"/> MINUS
+    /// <c>outbox</c>: the wizard asks about the bus with its own question, and the template
+    /// has no --features value for it, so offering it here generated a command the template
+    /// rejects (preview.8 coverage audit, 2026-09-05).
     /// </summary>
-    public static IReadOnlyList<string> Modules => FeatureRecipes.Names;
+    public static IReadOnlyList<string> Modules => FeatureRecipes.TemplateFeatures;
 
     /// <summary>
     /// The WORKER's feature menu — the features whose concept exists in a process without

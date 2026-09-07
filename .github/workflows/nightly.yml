@@ -25,6 +25,13 @@ jobs:
           # projects, the packages anchor riding Infrastructure, migrations owned there.
           - name: GmFourClean
             args: "--db sqlserver --broker none --auth none --layout clean-architecture"
+          # The clean layout on the DEFAULT providers (postgres + broker + auth) with a
+          # module that maps an authed admin surface: the Application project consumes
+          # through the seam (ADR-0013), and Infrastructure lifts EF Design's vulnerable
+          # transitive on every provider — the preview.8 release found NU1903 here because
+          # no shape combined clean + postgres (2026-09-05).
+          - name: GmOneClean
+            args: "--layout clean-architecture --features fileexchange"
           # GM-6's realizable half: a service head (own db, own manifest) + the YARP
           # gateway — built by the SAME verbs an adopter runs, with the ROUTED probe in
           # the generated smoke (gateway /api/health/ready answers through the chain).
@@ -47,9 +54,33 @@ jobs:
           # own verb — both inherit the floor and the features, both boot behind the AppHost.
           - name: GmWorkerInSolution
             args: "--features audittrail --features softdelete --features multitenancy --features bulk"
-            post: "add worker eod --trigger jobs;add worker ingest --trigger queue;db add Workers"
+            post: "add worker eod --trigger jobs;add worker ingest --trigger queue;add worker tick --trigger schedule;db add Workers"
           # The bulk-only customer: bulk (jobs + console riding along) with ONLY the app
           # database — no broker, no Redis. The module×infrastructure matrix's proof row.
+          # The CLI's OWN generation verb (preview.8 coverage audit): every other shape calls
+          # dotnet new directly, so `goldpath new solution` — the command the guides teach —
+          # had unit tests and no end-to-end proof. Same shape as GmOneAuthDefault, born by
+          # the verb instead of the template invocation.
+          - name: GmOneViaCli
+            args: ""
+            viaCli: "1"
+          # The worker's generation verb, for the same reason.
+          - name: GmWorkerViaCli
+            args: "--trigger schedule"
+            template: goldpath-worker
+            viaCli: "1"
+          # The api-key auth floor: it was in the template's choice list, in the CLI's flag
+          # and in the wizard, and in NO shape — openid and none were both proven, apikey
+          # never (preview.8 coverage audit).
+          - name: GmApiKey
+            args: "--auth apikey --features bulk"
+          # The eight recipes GmGrown does not run. `goldpath add feature` had fourteen
+          # recipes and six end-to-end proofs; these are the other eight, grown on ONE app
+          # behind an auth floor (GmEverything proves the feature set, but only as template
+          # flags and only with --auth none).
+          - name: GmGrownRest
+            args: "--auth openid"
+            post: "add feature multitenancy;add feature idempotency;add feature dataprotection;add feature caching;add feature archival;add feature approvals;add feature fileexchange;add feature campaign;db add GrownRest"
           - name: GmBulkOnly
             args: "--features bulk --broker none --auth none"
           # Dotted solution names are the .NET norm (Company.Product) — issue #24's regression shape.
@@ -110,7 +141,31 @@ jobs:
         env:
           GOLDPATH_GM_TEMPLATE: ${{ matrix.template || 'goldpath-solution' }}
           GOLDPATH_GM_POST: ${{ matrix.post || '' }}
+          GOLDPATH_GM_VIA_CLI: ${{ matrix.viaCli || '' }}
         run: ./scripts/validate-gm.sh "${{ matrix.name }}" ${{ matrix.args }}
+
+  cli-proofs:
+    # The verbs the golden-manifest lane never runs: the wizard, init, export compose,
+    # discover, db status and check — against the tool built HERE, not the published one.
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: |
+            8.0.x
+            10.0.x
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: pnpm
+          cache-dependency-path: ui/console/pnpm-lock.yaml
+      - name: every CLI verb, on a real generated app
+        run: ./scripts/validate-cli.sh
 
   migrations-proofs:
     runs-on: ubuntu-latest
@@ -131,13 +186,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The hosted-fit ten (issue #20): the six long-running packages OOM the 16 GB
+        # The hosted-fit sixteen (issue #20): the six long-running packages OOM the 16 GB
         # runners even at concurrency 2 — they live in mutation-heavy.yml (dispatch-only)
         # and in the release checklist's local cadence.
         package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,
                   Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.MultiTenancy,
                   Goldpath.Locking, Goldpath.Auth, Goldpath.Cli, Goldpath.Approvals, Goldpath.FileExchange,
-                  Goldpath.Console, Goldpath.Messaging, Goldpath.ServiceDefaults]
+                  Goldpath.Console, Goldpath.Messaging, Goldpath.ServiceDefaults,
+                  Goldpath.Analyzers]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6

@@ -15,6 +15,9 @@
       "break": 70
     },
     "mutation-level": "Standard",
+    "ignore-methods": [
+      "Log*"
+    ],
     "mutate": [
       "!**/Program.cs",
       "!**/ConsoleProcessRunner.cs",

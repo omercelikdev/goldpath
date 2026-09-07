@@ -9,6 +9,45 @@ exclusion without a row below is a finding.
 
 ## Excluded files
 
+## Measured scores
+
+The release checklist requires "mutation scores current for every package whose engine
+paths changed"; until 2026-09-05 no score was written down anywhere, so the gate could be
+checked only by the person who ran it. This table is that record. A score here is a FULL
+run (`scripts/mutation-gate.sh <Package>`), never a `--since` diff run.
+
+**Measured 2026-09-05**, full runs on the hosted-fit sixteen (macOS, 10 cores; the last
+eight at `GOLDPATH_MUTATION_CONCURRENCY=9`, which roughly halved their wall clock).
+
+| Package | Score | Margin over break (70) |
+|---|---:|---:|
+| Abstractions | 95.24 % | 25.24 |
+| Cli | 93.19 % | 23.19 |
+| SoftDelete | 91.67 % | 21.67 |
+| Locking | 91.67 % | 21.67 |
+| Messaging | 84.34 % | 14.34 |
+| AuditTrail | 81.97 % | 11.97 |
+| DataProtection | 78.95 % | 8.95 |
+| Data | 77.38 % | 7.38 |
+| FileExchange | 76.92 % | 6.92 |
+| Approvals | 75.82 % | 5.82 |
+| Console | 75.00 % | 5.00 |
+| MultiTenancy | 74.42 % | 4.42 |
+| Idempotency | 73.58 % | 3.58 |
+| Analyzers | 72.67 % | 2.67 |
+| ServiceDefaults | 72.15 % | 2.15 |
+| Auth | 70.65 % | **0.65** |
+
+Read the margin column, not the score. Four packages clear the break by less than four
+points — **Auth by 0.65**, ServiceDefaults by 2.15, Analyzers by 2.67 and Idempotency by
+3.58 — so in those four a single deleted or weakened test turns the gate red. That fact was invisible until
+this table existed: the checklist asked for scores and nothing recorded one. Treat a
+margin under 2 as a standing invitation to add facts, not as a passing grade.
+
+The six long-running packages (Jobs, Archival, Bulk, Notification, Campaign, Caching) run
+in `mutation-heavy.yml` (dispatch-only) and are measured locally before a release; their
+rows join this table at the next such run.
+
 | Package | Excluded file | Why it is not scored |
 |---|---|---|
 | Jobs | `GoldpathJobsExtensions.cs` | DI composition — registrations and option binding; behavior lives in the registered types, which ARE scored. |
@@ -17,8 +56,18 @@ exclusion without a row below is a finding.
 | Jobs | `GoldpathJobHistoryListener.cs` | Quartz listener callbacks — same live-scheduler dependency. |
 | Jobs | `GoldpathJobsFleetRegistry.cs` | Cluster-member registry over Quartz metadata — live-scheduler dependency. |
 | Jobs | `GoldpathJobsAdminEndpoints.cs` | Minimal-API route table over the admin service; the contract is pinned by the route-freeze test and the console smoke. |
-| Jobs | `GoldpathJobsAdminService.cs` | The admin verbs (trigger/pause/reschedule/calendars/rerun/replay) run through the LIVE scheduler and the fleet registry — the same dependency that excludes the adapter and the registry. MEASURED 2026-09-03: scoring it drops the package below the break (the unit loop cannot host the scheduler, so its 738 lines survive by construction). It is proven where the scheduler exists: `JobsClusterTests`, `JobsRunListTests`, `BulkClusterTests` and the console smoke's 29 journeys drive every verb against real Postgres + Quartz. |
+| Jobs | `GoldpathJobsAdminService.cs` | The admin verbs (trigger/pause/reschedule/calendars/rerun/replay) run through the LIVE scheduler and the fleet registry — the same dependency that excludes the adapter and the registry. MEASURED 2026-09-03: scoring it drops the package below the break (the unit loop cannot host the scheduler, so its 738 lines survive by construction). It is proven where the scheduler exists: `JobsClusterTests`, `JobsRunListTests`, `BulkClusterTests` and the console smoke's journeys drive every verb against real Postgres + Quartz. |
 | FileExchange | `GoldpathFileExchangeMetrics.cs` | Meter declarations (see Campaign/Notification); joined 2026-09-03 with the admin surface. |
+| Archival | `GoldpathArchivalExtensions.cs` | DI composition (see Jobs) — the archival engine, policy and store ARE scored. |
+| Archival | `GoldpathArchivalAdminEndpoints.cs` | Route table (see Jobs); the contract is pinned by the admin-contract check and the console smoke. |
+| Archival | `GoldpathArchivalMetrics.cs` | Meter declarations — names pinned by the dashboard's queries, not by mutants. |
+| Bulk | `GoldpathBulkExtensions.cs` | DI composition (see Jobs) — the batch engine, row handlers and approval gate ARE scored. |
+| Bulk | `GoldpathBulkAdminEndpoints.cs` | Route table (see Jobs). |
+| Bulk | `GoldpathBulkMetrics.cs` | Meter declarations. |
+| Cli | `Program.cs` | The process entry point — three lines that hand argv to `CliRunner.Run`, which IS scored end to end. |
+| Cli | `ConsoleProcessRunner.cs` | The real `IProcessRunner` — it starts `dotnet`/`specdrift` and returns the exit code; every command under test drives the fake, and the real one is exercised by the nightly golden-manifest shapes and `validate-migrations.sh`. |
+| Analyzers | `Descriptors.cs` | 49 `DiagnosticDescriptor` initialisers — id, title, message format, severity and help link, with no branching. A mutant here changes a STRING, and the strings are pinned where they are read: every rule's id and message are asserted by `Goldpath.Analyzers.Tests`, and the release-tracking analyzer (RS2000/RS2007) fails the build if an id leaves the release files. Mutating them would only manufacture survivors the tests already cover from the other side. |
+| Cli | `Prompter.cs` | The interactive shell (`Console.ReadLine` + menu rendering) behind `IPrompter` — a unit loop cannot answer a prompt. The wizard's QUESTIONS, defaults and multi-select parsing are pinned against a recording fake in `WizardDiscoverRunnerMutationTests`; the derivation it feeds is a pure function under full mutation. **Weakest exclusion in this ledger** (open-threads: no e2e run drives the real prompter either). |
 | Campaign | `GoldpathCampaignExtensions.cs` | DI composition (see Jobs). |
 | Campaign | `GoldpathCampaignMetrics.cs` | Meter/counter declarations — names are pinned by the dashboard's queries, not by mutants. |
 | Campaign | `GoldpathCampaignConsumers.cs` | MassTransit consumers — exercised against a real broker in the integration suite. |
@@ -36,7 +85,7 @@ Jobs admin service is the exception above, and the reason is measured, not assum
 
 | Package | Method pattern | Why |
 |---|---|---|
-| all | `Log*` | Logging calls carry no behavior a test can observe; mutating them only manufactures survivors. |
+| all | `Log*` | Logging calls carry no behavior a test can observe; mutating them only manufactures survivors. Declared in EVERY config since 2026-09-05 — eleven of them carried the ledger's word without the setting until the preview.8 coverage audit. |
 | Locking | `CreateRedisProvider` | Builds the Redis lock provider — needs a live Redis, which the unit loop does not host; the Redis path is proven by the integration suite. |
 
 ## Packages without a gate

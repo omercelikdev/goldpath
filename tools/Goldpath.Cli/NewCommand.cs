@@ -10,6 +10,14 @@ public static class NewCommand
     /// <summary>Maps the kind to its template and delegates to dotnet new.</summary>
     public static int Run(string kind, IReadOnlyList<string> rest, IProcessRunner runner, TextWriter output, TextWriter error)
     {
+        if (kind is "service" or "gateway")
+        {
+            // Every other verb errors on a flag it does not know; these two took --path and
+            // dropped the rest silently, so `goldpath new service Billing --db sqlserver`
+            // generated a head on the WRONG database without a word (preview.8 audit).
+            RejectUnknownFlags(kind, rest);
+        }
+
         if (kind is "service")
         {
             var serviceName = FirstBareToken(rest)
@@ -76,6 +84,31 @@ public static class NewCommand
         }
 
         return currentDirectory;
+    }
+
+    /// <summary>
+    /// A service/gateway head takes ONE flag. Anything else is a typo or a template argument
+    /// that does not apply to a head, and silence about it is a lie about what was generated.
+    /// </summary>
+    private static void RejectUnknownFlags(string kind, IReadOnlyList<string> rest)
+    {
+        for (var i = 0; i < rest.Count; i++)
+        {
+            var token = rest[i];
+            if (!token.StartsWith("-", StringComparison.Ordinal))
+            {
+                continue;
+            }
+
+            if (token is "--path")
+            {
+                i++;   // its value rides with it
+                continue;
+            }
+
+            throw new CliUsageException(
+                $"goldpath new {kind} does not take '{token}' — a head follows the SOLUTION's shape (database, broker, auth); the only flag is --path <dir>.");
+        }
     }
 
     /// <summary>The value following the first matching flag, or null.</summary>

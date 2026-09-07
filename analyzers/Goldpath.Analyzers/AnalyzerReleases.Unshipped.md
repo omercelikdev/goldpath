@@ -5,6 +5,7 @@
 
 Rule ID | Category | Severity | Notes
 --------|----------|----------|-------
-GP0404 | Goldpath | Warning | Publish through IIntegrationEventPublisher, not MassTransit's IPublishEndpoint
-GP0405 | Goldpath | Info | Consume through IIntegrationEventHandler + AddGoldpathHandler, not MassTransit's IConsumer (Warning at the next train boundary)
-GP2001 | Goldpath | Warning | ProductDeclaresGoldpathNamespaceAnalyzer, [Documentation](https://github.com/omercelikdev/goldpath/blob/main/docs/rfc/goldpath-platform-sdk.md)
+GP1901 | Goldpath | Error | Approval ladder without an unbounded top rung
+GP1902 | Goldpath | Warning | Approvals composed without the escalation sweep
+GP2101 | Goldpath | Warning | File rail without a row contract (ValidateRow)
+GP2102 | Goldpath | Warning | File exchange composed without a rail

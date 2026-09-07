@@ -197,7 +197,7 @@ builder.Services.AddScoped<IOrdersDbContext>(sp => sp.GetRequiredService<OrdersD
 builder.AddGoldpathMessaging(bus =>
 {
     // goldpath:features consumers — bus-riding features register here
-    bus.AddConsumer<OrderPlacedConsumer>();
+    bus.AddGoldpathHandler<OrderPlaced, OrderPlacedHandler>();   // the consume seam (ADR-0013): no bus type in the handler
 //#if (UseCampaign)
     bus.AddGoldpathCampaignConsumers<OrdersDbContext>();    // claim-before-execute item consumer + batching outcome sink
 //#endif
@@ -290,6 +290,15 @@ app.MapGoldpathApprovalsAdmin();                       // decide verbs through t
 // No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
 // visible — acceptable only behind an authenticating boundary (mTLS/gateway).
 app.MapGoldpathApprovalsAdmin(exposeUnsecured: true);                       // decide verbs through the ENGINE (four eyes holds)
+#endif
+//#endif
+//#if (UseFileExchange)
+#if (UseAuth)
+app.MapGoldpathFileExchangeAdmin();                    // read-only: rails, files, quarantine with reasons — ops policy REQUIRED (H2)
+#else
+// No auth strategy in this shape: the opt-out is WRITTEN HERE so the decision stays
+// visible — acceptable only behind an authenticating boundary (mTLS/gateway).
+app.MapGoldpathFileExchangeAdmin(exposeUnsecured: true);                    // read-only: rails, files, quarantine with reasons
 #endif
 //#endif
 

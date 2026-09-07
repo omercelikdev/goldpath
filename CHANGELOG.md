@@ -5,6 +5,85 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [0.1.0-preview.8] - 2026-09-07
+
+The seam-and-proof train. The consume seam reaches the generated apps, and a coverage
+audit of every CLI verb, flag value and feature against what proves it closes four real
+defects, gives six verbs their first end-to-end proof, gives the two newest modules the
+analyzer rules and console journey they shipped without, and makes five ledger claims
+true. Adopters: read the upgrade guide first — GP0405 becomes a Warning and GP1901 is a
+new ERROR.
+
+### Closed by the coverage audit (2026-09-05)
+
+### Changed
+- **Ledger honesty pass** (the coverage audit's fourth finding). Five claims the ledgers
+  could not support are corrected in place, each saying what was wrong and when:
+  the two registers disagreed about T1 (the CorPay nightly asserts the console is SERVED
+  and inherits the floor; it does not DRIVE it, so the thread stays open and the
+  overstating row is withdrawn); T7's trigger has fired and the thread now reads as
+  unscheduled rather than blocked; the golden-manifest coverage table listed GM coverage
+  for `ldap` and `saml`, values the manifest schema does not accept, so it now carries a
+  third column saying what actually runs; an RFC row called `Goldpath.Sdk` unpublished
+  though it shipped on preview.7; and a specanchor DoD box sat unchecked with all three
+  of its sub-clauses satisfied.
+- **`Goldpath.Analyzers` has a mutation gate.** The package that enforces forty-nine
+  executable standards was the one with no ungameable metric over it, and the exclusion
+  ledger carried no row explaining why. It scores 72.67 % and joins the nightly matrix,
+  which is sixteen packages now. Its single exclusion (`Descriptors.cs`, forty-nine
+  descriptor initialisers with no branching) is justified in the ledger.
+- **Mutation scores are recorded.** The release checklist asked for "current" scores and
+  nothing wrote one down, so the gate could be audited only by whoever ran it.
+  `stryker/README.md` gains a measured-scores table and the checklist gains the line that
+  fills it.
+### Fixed
+- **The wizard offered a module the template cannot take.** `goldpath new`'s module menu was
+  the recipe list, which carries `outbox` — a recipe with no `--features` value, so choosing
+  it printed and ran `dotnet new goldpath-solution --features outbox` and the template refused.
+  The menu is now the template's own choice list, pinned against `template.json` by a test.
+- **`goldpath add feature approvals` left the console rail over nothing.** The recipe wired the
+  module and the jobs block but never emitted `app.MapGoldpathApprovalsAdmin(...)`, so a
+  CLI-grown app showed an Approvals section with no endpoint behind it. Every admin-bearing
+  recipe now has that invariant under test.
+- **`goldpath new service|gateway` swallowed flags in silence.** `new service Billing --db
+  sqlserver` ignored `--db` and generated a head on the solution's shape without a word; the
+  two verbs now refuse any flag but `--path`, naming it.
+- The usage text names `outbox` as an `add feature`-only recipe (it listed thirteen of fourteen).
+### Added
+- **The CLI has its own proof lane** (`scripts/validate-cli.sh`, nightly job `cli-proofs`).
+  The golden-manifest lane proves the TEMPLATES — it calls `dotnet new` directly — so six
+  verbs an adopter types had unit tests and nothing else: the wizard, `init`, `export
+  compose`, `discover`, `db status` and `check` (which ran only in the CorPay job, against
+  the PUBLISHED tool, never the working tree). The lane drives every one of them on a real
+  generated app and asserts what each must produce, including `docker compose config`
+  accepting the exported file and `check` naming each of its four steps.
+- **Four nightly shapes for values that had none**: `GmOneViaCli` and `GmWorkerViaCli`
+  generate through `goldpath new solution|worker` instead of `dotnet new` (the verb the
+  guides teach had no end-to-end proof); `GmApiKey` proves the api-key floor, which was in
+  the template's choices, the CLI's flag and the wizard and in no shape; `GmGrownRest` runs
+  the eight `add feature` recipes `GmGrown` does not, behind an auth floor. The in-solution
+  fleet gains a third worker so `add worker --trigger schedule` is proven too.
+### Changed
+- Mutation ledger honesty: the nine unrowed exclusions (Archival, Bulk and CLI) now carry their
+  justification in `stryker/README.md`, and `ignore-methods: Log*` — which the ledger claimed
+  for every package — is declared in all twenty-one configs instead of ten.
+- The hosted-fit mutation matrix is called fifteen packages everywhere (it was ten, thirteen and
+  fifteen in three places). `docs-freshness.sh` gained two gates: the spelled-out count must
+  match the matrix, and every stryker exclusion must have a ledger row.
+
+
+### Changed (this train, at the boundary)
+- **The templates, the worker template and `goldpath add worker` consume through the seam** —
+  `OrderPlacedHandler` / `WorkItemQueuedHandler : IIntegrationEventHandler<T>` registered with
+  `bus.AddGoldpathHandler<TEvent, THandler>()`; queue names unchanged. **GP0405 is a Warning**
+  from this train (was Info). Both templates and `goldpath add feature fileexchange` map
+  `MapGoldpathFileExchangeAdmin()` behind the auth floor. CorPay moves its three consumers
+  when it takes this train (it binds to the published packages).
+- **Clean layout on postgres built red (NU1903)** — the Infrastructure class library lifted
+  EF Design's vulnerable `System.Security.Cryptography.Xml` only under the SqlServer
+  provider; the lift is now unconditional and the nightly gains `GmOneClean` (clean layout
+  on the default providers + fileexchange), the shape that was missing.
+
 ### Changed
 - **Kit-freshness gate tightened** — the console may now lag `@qorpe/ui` by at most ONE minor
   or 14 days (was two minors / 30 days); the three consumers had drifted three minors apart

@@ -48,17 +48,23 @@
 > 2026-08-05: GmBulkOnly proves bulk + jobs + console on NOTHING but the app database
 > (`docs/guide/modules-and-infrastructure.md` is the adopter-facing matrix).
 
-| Dimension | Value → GM |
-|---|---|
-| deploymentModel | monolith→4 · modular-monolith→1,3,5 · microservice→2,6 |
-| codeOrg | clean→2,4 · vertical-slice→1,3,5,6 |
-| db | postgres→1,5,6 · sqlserver→3,4 · oracle→2 |
-| cache | redis→1,2,3,5,6 · inmemory→4 |
-| broker | rabbitmq→1,3 · kafka→2,5 · none→4 · inmemory→6 |
-| auth | openid→1,3,5 · ldap→2 · apikey→4 · saml→6 |
-| features (Ring B) | idempotency→2,3,5,6 · outbox→2,5 · auditTrail→2 · softDelete→2 · multiTenancy→3 · dataProtection→2 · distributedLocking→2 · distributedCaching→3 |
-| worker | consumer-rabbitmq→3 · scheduler-quartz→5 · consumer-kafka→5 · batch→5 |
-| gateway / externalSystems / nfr | 6 / 2(soap,record-replay)+6(rest,stub) / 2 |
+**Read the third column first.** The GM numbers in the middle column are the WRITTEN
+personas; they say which persona would exercise a value, not that anything runs. The
+2026-09-05 coverage audit found the table read as coverage, and two of its rows named
+values (`ldap`, `saml`) the manifest schema does not even accept — so the invariant in the
+heading was inverted. The third column is the only column that is a fact.
+
+| Dimension | Value → GM (the written personas) | Actually proven, by a nightly shape |
+|---|---|---|
+| deploymentModel | monolith→4 · modular-monolith→1,3,5 · microservice→2,6 | monolith, modular-monolith (most shapes) · microservice (GmSixGateway) |
+| codeOrg | clean→2,4 · vertical-slice→1,3,5,6 | both (GmFourClean, GmOneClean · every other shape) |
+| db | postgres→1,5,6 · sqlserver→3,4 · oracle→2 | postgres, sqlserver. **oracle is SCHEMA-ONLY** — in the enum, no EF provider, no Quartz store, no keyset translation (T16) |
+| cache | redis→1,2,3,5,6 · inmemory→4 | both (GmEverything composes redis through the caching recipe; inmemory is the default) |
+| broker | rabbitmq→1,3 · kafka→2,5 · none→4 · inmemory→6 | rabbitmq, none. **kafka is SCHEMA-ONLY** — in the enum, no rider |
+| auth | openid→1,3,5 · ldap→2 · apikey→4 · saml→6 | openid, apikey (GmApiKey, 2026-09-05), none. **ldap and saml are NOT IN THE SCHEMA AT ALL** — the auth enum is `openid \| apikey \| none`; these two rows describe personas, not gaps in coverage (issue #11) |
+| features (Ring B) | idempotency→2,3,5,6 · outbox→2,5 · auditTrail→2 · softDelete→2 · multiTenancy→3 · dataProtection→2 · distributedLocking→2 · distributedCaching→3 | all thirteen as template flags (GmEverything) and all fourteen recipes as `add feature` (GmGrown + GmGrownRest, 2026-09-05) |
+| worker | consumer-rabbitmq→3 · scheduler-quartz→5 · consumer-kafka→5 · batch→5 | consumer-rabbitmq (GmWorkerQueue), scheduler-quartz (GmWorkerJobs), batch (GmWorkerSchedule). **consumer-kafka is unbuildable** while kafka is schema-only |
+| gateway / externalSystems / nfr | 6 / 2(soap,record-replay)+6(rest,stub) / 2 | gateway (GmSixGateway). **externalSystems and nfr are proven by no shape** |
 
 ## 3. Execution Model
 
@@ -100,9 +106,14 @@ drift apart; the gate fails on either direction.
 | GmOneOpenFlow | `--auth none` | open shape drives the full order flow |
 | GmFourSimple | `--db sqlserver --broker none --auth none` | the SqlServer/no-broker quadrant |
 | GmFourClean | `--layout clean-architecture …` | four-project split, migrations in Infrastructure |
+| GmOneClean | `--layout clean-architecture --features fileexchange` (defaults: postgres, broker, auth) | the clean layout on the default providers: the seam-consuming handler lives in Application, the authed FileExchange admin surface, and the NU1903 lift on postgres (found by the preview.8 release, 2026-09-05) |
 | GmSixGateway | `--auth none` + `new service` + `new gateway` | multi-head by the adopter's own verbs; routed probe |
 | GmWorkerInSolution | `--features audittrail,softdelete,multitenancy,bulk` (auth openid) + `add worker eod --trigger jobs;add worker ingest --trigger queue;db add Workers` | the in-solution worker inherits the solution's auth floor and features (T25 parity by inheritance): both workers build, migrate, boot behind the AppHost and pass drift; bulk is the jobs rider whose tables the jobs worker's fleet shares (the verb refuses a jobs worker without one) |
 | GmGrown | `--auth none --broker none` + `add feature audittrail;softdelete;locking;bulk;outbox` + `db add Grown` (green 2026-09-05) | born lean, grown by the CLI's own recipes — the `goldpath add feature` verb proven end to end (plain, provider-gated, jobs-rider-with-console, and the bus-birthing outbox recipe) |
+| GmOneViaCli | `goldpath new solution` (defaults) | the CLI's OWN generation verb end to end — every other shape calls `dotnet new`, so the command the guides teach had no e2e proof until the preview.8 coverage audit (2026-09-05) |
+| GmWorkerViaCli | `goldpath new worker --trigger schedule` | the worker generation verb, same reason |
+| GmApiKey | `--auth apikey --features bulk` | the api-key floor: in the template's choices, the CLI's flag and the wizard, and in no shape until 2026-09-05 |
+| GmGrownRest | `--auth openid` + `add feature multitenancy;idempotency;dataprotection;caching;archival;approvals;fileexchange;campaign` + `db add GrownRest` | the eight recipes GmGrown does not run, grown on ONE app BEHIND an auth floor — `add feature` had fourteen recipes and six e2e proofs |
 | GmBulkOnly | `--features bulk --broker none --auth none` | operational module with ONLY the app database |
 | Gm.Dotted | `--broker none --auth none` | dotted solution names (issue #24 regression) |
 | GmConsole | `--features bulk --auth none` | the console SERVES with its own bundle |

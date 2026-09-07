@@ -20,7 +20,7 @@ public class AddWorkerTests
         Assert.True(File.Exists(Path.Combine(projectDir, "Program.cs")));
         // Aspire endpoint inference: no launchSettings means WithHttpHealthCheck kills the AppHost.
         Assert.Contains("applicationUrl", File.ReadAllText(Path.Combine(projectDir, "Properties", "launchSettings.json")));
-        Assert.True(File.Exists(Path.Combine(projectDir, "WorkItems", "WorkItemQueuedConsumer.cs")));
+        Assert.True(File.Exists(Path.Combine(projectDir, "WorkItems", "WorkItemQueuedHandler.cs")));
         Assert.Equal("global using Goldpath;\n", File.ReadAllText(Path.Combine(projectDir, "GlobalUsings.cs")));   // Goldpath types resolve
 
         var program = File.ReadAllText(Path.Combine(projectDir, "Program.cs"));

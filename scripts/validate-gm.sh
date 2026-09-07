@@ -54,9 +54,21 @@ fi
 dotnet new uninstall "$ROOT/templates/$TEMPLATE" >/dev/null 2>&1 || true
 dotnet new install "$ROOT/templates/$TEMPLATE" --force >/dev/null
 
-echo "── generate ($TEMPLATE)"
 rm -rf "$APP"
-dotnet new "$TEMPLATE" -n "$NAME" -o "$APP" "$@" >/dev/null
+if [ "${GOLDPATH_GM_VIA_CLI:-}" = "1" ]; then
+  # The CLI's own generation verb, not dotnet new. Every shape used to bypass it, so
+  # `goldpath new solution|worker` — the command the guides tell adopters to type — had
+  # no end-to-end proof at all (preview.8 coverage audit, 2026-09-05). Its implicit
+  # `db init` runs BEFORE the feed is wired below and is expected to report the migration
+  # as pending; the explicit `db init` further down is what must succeed.
+  KIND=${TEMPLATE#goldpath-}
+  echo "── generate (goldpath new $KIND — the VERB, not dotnet new)"
+  dotnet run --project "$ROOT/tools/Goldpath.Cli" -- new "$KIND" -n "$NAME" -o "$APP" "$@"
+  test -f "$APP/.goldpath/manifest.yaml" || { echo "── THE VERB GENERATED NO APP"; exit 1; }
+else
+  echo "── generate ($TEMPLATE)"
+  dotnet new "$TEMPLATE" -n "$NAME" -o "$APP" "$@" >/dev/null
+fi
 python3 - "$APP/nuget.config" "$FEED" <<'PY'
 import sys
 path, feed = sys.argv[1], sys.argv[2]

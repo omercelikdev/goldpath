@@ -10,7 +10,7 @@ owner: team-GoldpathWkrOwner
 #if (UseQueue)
 workerType: consumer-rabbitmq
 trigger:
-  queue: work-item-queued   # MassTransit kebab-case endpoint (consumer name minus "Consumer")
+  queue: work-item-queued   # kebab-case endpoint (handler name minus "Handler" — the seam names it as a consumer's was)
 #endif
 #if (UseJobs)
 workerType: scheduler-quartz

@@ -10,7 +10,7 @@ only after that PR merges green.
 - [ ] Golden-manifest matrix green (nightly or a fresh dispatch — ADR-0008: no release
       while GM is red).
 - [ ] Mutation scores current for every package whose engine paths changed since the
-      last release. The hosted-fit set (nightly matrix — thirteen packages since 2026-09-04): nightly. The big six (Jobs, Archival, Bulk,
+      last release. The hosted-fit set (nightly matrix — sixteen packages since 2026-09-05): nightly. The big six (Jobs, Archival, Bulk,
       Notification, Campaign, Caching): `mutation-heavy.yml` dispatch when time allows,
       otherwise the LOCAL run is authoritative (`scripts/mutation-gate.sh Goldpath.<Package>` —
       the FULL config name; the script now refuses a name that matches no config, because
@@ -33,22 +33,18 @@ only after that PR merges green.
       line "No breaking changes — take it blind."
 - [ ] Admin contract check: if any route/envelope changed, `goldpath-admin-contract.md`
       was updated in the SAME PR that changed it (the route-freeze test forces this).
+- [ ] **Mutation scores recorded** — every score you ran goes in `stryker/README.md`'s
+      measured-scores table with its date. Before 2026-09-05 the checklist asked for
+      "current" scores and nothing wrote one down, so the line could not be audited.
 - [ ] **Next-train adoptions** — API that landed on main AFTER the last train and that the
       templates and CLI recipes may only consume once the pins move (the templates must
       generate apps on the PUBLISHED train, `template-pins.sh`; a CLI recipe writes into an
       adopter's app on that train too). Wire each in the release PR, then delete its line:
-      - **The consume seam** (landed 2026-09-05, ADR-0013): every adopter-side consumer moves
-        to `IIntegrationEventHandler<T>` + `AddGoldpathHandler` — the solution template's
-        `OrderPlacedConsumer` (BOTH layouts), the worker template's `WorkItemQueuedConsumer`,
-        the CLI's `add worker` queue skeleton (+ its golden tests) and CorPay's three consumers
-        (`OrderPlacedConsumer`, `PaymentExecutedConsumer`, `WorkItemQueuedConsumer`); the
-        worker manifest comment ("consumer name minus Consumer") reads "handler name minus
-        Handler"; GP0405 goes from Info to Warning in the same PR; the upgrade guide carries
-        the before/after. Queue names do not change (the seam names them the same way).
-      - `MapGoldpathFileExchangeAdmin()` (landed 2026-09-03, T22): the `UseFileExchange`
-        endpoint block in BOTH templates' Program.cs (auth branch like the other admin
-        surfaces), and `plan.Endpoints` in the CLI's `fileexchange` recipe (+ its exact-plan
-        test) — the console smoke host already proves the surface against source.
+      - **CorPay takes preview.8** (after the publish, as it binds to nuget): its three
+        consumers move to the seam (`OrderPlacedConsumer`, `PaymentExecutedConsumer`,
+        `WorkItemQueuedConsumer` → handlers, GP0405), its pins move, and it maps
+        `MapGoldpathFileExchangeAdmin` if it ever composes the module. The templates and the
+        CLI took both adoptions in the preview.8 release PR.
 
 ## After the merge
 

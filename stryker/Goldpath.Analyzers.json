@@ -1,13 +1,14 @@
 {
   "stryker-config": {
-    "project": "Goldpath.MultiTenancy.csproj",
+    "project": "Goldpath.Analyzers.csproj",
     "test-projects": [
-      "tests/Goldpath.MultiTenancy.Tests/Goldpath.MultiTenancy.Tests.csproj"
+      "../../tests/Goldpath.Analyzers.Tests/Goldpath.Analyzers.Tests.csproj"
     ],
-    "target-framework": "net10.0",
+    "target-framework": "netstandard2.0",
     "reporters": [
       "progress",
-      "markdown"
+      "markdown",
+      "json"
     ],
     "thresholds": {
       "high": 85,
@@ -17,6 +18,9 @@
     "mutation-level": "Standard",
     "ignore-methods": [
       "Log*"
+    ],
+    "mutate": [
+      "!**/Descriptors.cs"
     ]
   }
 }

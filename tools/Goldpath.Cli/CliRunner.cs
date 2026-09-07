@@ -22,6 +22,7 @@ public static class CliRunner
           goldpath --help | --version
 
         features: multitenancy, audittrail, softdelete, idempotency, dataprotection, caching, locking, approvals, fileexchange, archival, bulk, notification, campaign
+        add feature also accepts: outbox (births the bus in an app generated without one)
         """;
 
     /// <summary>
