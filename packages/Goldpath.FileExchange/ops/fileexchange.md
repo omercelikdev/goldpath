@@ -43,3 +43,19 @@ is format drift (call the counterparty); a rejected file is a whole-file contrac
 The in-memory ledger loses state on restart — tests and single-node demos only. Compose a
 database-backed `IGoldpathFileLedger` before production; the idempotency guarantee is
 only as durable as the ledger under it.
+
+## Alerts (the thresholds this module is worth waking someone for)
+
+Written 2026-09-05: the runbook told an operator what to DO and never what should page
+them. Rates are over five minutes unless stated; every series carries a `rail` tag, so
+alert per rail — one counterparty's bad day is not an outage.
+
+| alert | expression (Prometheus shape) | why this and not a lower bar |
+|---|---|---|
+| Rail silent | `increase(goldpath_fileexchange_files_received_total[<window>]) == 0` where `<window>` is the rail's arrival window plus one hour | A rail that receives nothing looks identical to a healthy rail on every other panel. This is the only alert that catches a counterparty who stopped sending. |
+| Quarantine rate | `rate(goldpath_fileexchange_rows_quarantined_total[5m]) / rate(goldpath_fileexchange_rows_processed_total[5m]) > 0.05` for 15m | A few bad rows are the counterparty's normal. One row in twenty means their format changed, and applying the other nineteen is the damage. |
+| File rejected | `increase(goldpath_fileexchange_files_rejected_total[15m]) > 0` | A file-level refusal ingests NOTHING, so nobody notices until the business does. Page on the first one. |
+| Duplicate storm | `rate(goldpath_fileexchange_rows_duplicate_total[5m]) > rate(goldpath_fileexchange_rows_processed_total[5m])` for 15m | More re-delivery than new work: the counterparty is retrying a file we already applied, usually because their acknowledgement path broke. |
+
+Do NOT alert on quarantine DEPTH alone: the depth is a worklist, and a rail whose
+quarantine is being worked drains it on human time, not on a five-minute rate.

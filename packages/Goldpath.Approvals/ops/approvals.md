@@ -38,3 +38,18 @@ The meter `Goldpath.Approvals` counts requested/granted/rejected/escalated/expir
 withdrawn per ladder; `grafana-approvals-dashboard.json` beside this file reads them.
 §2 rule of thumb: alert on the escalated/expired pair, not on queue length — the queue is
 the console's job, the PAIR is the staffing signal.
+
+## Alerts (the thresholds this module is worth waking someone for)
+
+Written 2026-09-05, for the same reason as the FileExchange table: the runbook decoded
+outcomes and named no threshold. Every series carries a `ladder` tag — alert per ladder,
+because a ladder's deadlines are the SLA that ladder declared.
+
+| alert | expression (Prometheus shape) | why this and not a lower bar |
+|---|---|---|
+| Expiries at the top rung | `increase(goldpath_approvals_expired_total[1h]) > 0` | An expiry means the whole authority chain ran out of time. There is no rung above it, so nothing else will catch this. Page on the first one. |
+| Escalation storm | `increase(goldpath_approvals_escalated_total[1h]) > 3 * <ladder's normal hourly rate>` | A rung stopped deciding (vacation, role change, unwatched worklist). Escalation is working as designed and the staffing is not. |
+| Sweep stopped | `increase(goldpath_approvals_escalated_total[6h]) == 0` while requests are pending | Deadlines are enforced by a scheduled job, not by the read path (GP1902). A dead sweep looks exactly like a quiet day. Cross-check the Jobs console before paging. |
+| Decision drought | `rate(goldpath_approvals_granted_total[1h]) + rate(goldpath_approvals_rejected_total[1h]) == 0` while requested > 0 for 4h | Requests arriving and nothing being decided: the worklist is not being watched, and escalation will start firing in an hour anyway. |
+
+Do NOT alert on rejection RATE: a ladder that rejects is a ladder that works.

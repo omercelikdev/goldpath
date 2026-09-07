@@ -99,7 +99,7 @@ window — the incident file rails actually have.
       reprocess).
 - [x] Admin surface federates in the family console against a real app — 2026-09-03:
       `MapGoldpathFileExchangeAdmin` (read-only, contract §7.1) + the console's seventh
-      module; the console smoke host ingests a planted file at startup and the 29th journey
+      module; the console smoke host ingests a planted file at startup and its journey
       reads the rail, the file and the quarantined row's reason through the real surface.
 - [x] Runbook ships (`packages/Goldpath.FileExchange/ops/fileexchange.md`); dashboard JSON
       landed 2026-09-03 (`grafana-fileexchange-dashboard.json` over the `Goldpath.FileExchange`
