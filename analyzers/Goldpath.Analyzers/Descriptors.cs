@@ -459,6 +459,60 @@ public static class Descriptors
         isEnabledByDefault: true,
         helpLinkUri: HelpBase + "goldpath-platform-sdk.md");
 
+    /// <summary>GP1901: a ladder whose top rung is bounded leaves the largest amounts with no authority.</summary>
+    public static readonly DiagnosticDescriptor ApprovalLadderWithoutTopRung = new(
+        "GP1901",
+        "Approval ladder without an unbounded top rung",
+        "The ladder '{0}' declares no TopRung — every rung carries a ceiling, so an amount above the highest one routes to a rung that does not cover it; the top of an authority chain is unbounded by construction",
+        Category,
+        DiagnosticSeverity.Error,
+        isEnabledByDefault: true,
+        description: "Rung(role, upToInclusive, ...) bounds a rung; TopRung(role, ...) is the one that covers "
+                   + "everything above. A ladder built only from bounded rungs silently routes the largest "
+                   + "amounts to its last bounded rung — the ceiling that was supposed to stop them.",
+        helpLinkUri: HelpBase + "goldpath-approvals.md");
+
+    /// <summary>GP1902: approvals composed without its escalation sweep stall silently at the first overdue rung.</summary>
+    public static readonly DiagnosticDescriptor ApprovalsWithoutEscalationSweep = new(
+        "GP1902",
+        "Approvals composed without the escalation sweep",
+        "This composition calls AddGoldpathApprovals but never AddGoldpathApprovalsJobs — the deadlines on every rung are decoration: nothing moves an overdue request up, and nothing expires it at the top",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "The ladder's TimeSpan arguments are enforced by a scheduled sweep, not by the engine's "
+                   + "read path. Without AddGoldpathApprovalsJobs() inside the jobs block, an unattended "
+                   + "request waits forever at the rung it reached.",
+        helpLinkUri: HelpBase + "goldpath-approvals.md",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
+
+    /// <summary>GP2101: a rail with no row contract can quarantine nothing.</summary>
+    public static readonly DiagnosticDescriptor FileRailWithoutRowContract = new(
+        "GP2101",
+        "File rail without a row contract (ValidateRow)",
+        "The rail '{0}' declares no ValidateRow — every parsed row is applied, so a counterparty's bad row lands in the database instead of the quarantine with a reason",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "The quarantine is the module's whole point: a row that fails its contract is held with "
+                   + "the REASON an operator reads. A rail without ValidateRow has an empty quarantine by "
+                   + "construction, which reads as a clean rail.",
+        helpLinkUri: HelpBase + "goldpath-fileexchange.md");
+
+    /// <summary>GP2102: the module composed with no rail is tables and an admin surface over nothing.</summary>
+    public static readonly DiagnosticDescriptor FileExchangeWithoutRail = new(
+        "GP2102",
+        "File exchange composed without a rail",
+        "AddGoldpathFileExchange is composed but declares no AddRail — the ledger tables and the admin surface exist over a module that can never ingest a file",
+        Category,
+        DiagnosticSeverity.Warning,
+        isEnabledByDefault: true,
+        description: "Goldpath never guesses a counterparty format, so a rail is always the adopter's to "
+                   + "declare. Composing the module and declaring none leaves an operator a File rails "
+                   + "screen that is empty for a reason no one can see.",
+        helpLinkUri: HelpBase + "goldpath-fileexchange.md",
+        customTags: WellKnownDiagnosticTags.CompilationEnd);
+
     /// <summary>GP1801: two contexts generating DDL for the same shared tables.</summary>
     public static readonly DiagnosticDescriptor SharedTablesDoubleOwnership = new(
         "GP1801",

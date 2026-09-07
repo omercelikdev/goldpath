@@ -529,6 +529,43 @@ test.describe("the run console against a real Goldpath app", () => {
     await expect(page.getByRole("button", { name: /resend|retry/i })).toHaveCount(0);
   });
 
+  test("works the approval worklist: the rung an amount routed to, the quorum, and the engine's four-eyes refusal", async ({ page }) => {
+    // Approvals was the only console MODULE with no journey, because the smoke host did
+    // not compose it (preview.8 coverage audit, 2026-09-05). The host now declares one
+    // real ladder and requests one real approval for 2.5M, which the ENGINE routes to the
+    // manager rung — quorum two. Nothing below is a fixture.
+    await page.goto(`/?base=${encodeURIComponent(service)}`);
+    await page.getByTestId("shell-rail").getByRole("button", { name: "Approvals", exact: true }).click();
+    await expect(page.getByTestId("approvals-panel")).toBeVisible();
+
+    // The worklist: the amount decided the rung, and the quorum is the rung's property.
+    const queue = page.getByTestId("approvals-queue");
+    const row = queue.getByRole("row", { name: /Limit raise for ACME/ });
+    await expect(row).toContainText("credit-limit");
+    await expect(row).toContainText("manager");
+    await expect(row).toContainText("0/2");
+
+    // The sheet tells the request's story: routing, the trail the engine appended.
+    await row.getByRole("button", { name: "Limit raise for ACME" }).click();
+    const detail = page.getByTestId("approval-detail");
+    await expect(detail).toContainText("analyst@example.com");
+    await expect(detail).toContainText("Trail");
+
+    // One signature: the quorum moves, the request stays pending — two eyes are not four.
+    await detail.getByLabel("Decider role").fill("manager");
+    await detail.getByRole("button", { name: "Approve", exact: true }).click();
+    await expect(page.getByTestId("verb-message")).toHaveText("Applied");
+    await expect(detail).toContainText("1/2");
+
+    // The SAME decider again: the engine refuses in its own words, and the panel shows
+    // the refusal rather than a generic error. This is the rule the module exists for.
+    await detail.getByRole("button", { name: "Approve", exact: true }).click();
+    const refusal = page.getByTestId("verb-message");
+    await expect(refusal).not.toHaveText("Applied");
+    await expect(refusal).toContainText(/eyes|already|distinct|same/i);
+    await page.keyboard.press("Escape");
+  });
+
   test("reads the file rails: a file the engine ingested, its quarantine with the reason and the age", async ({ page }) => {
     await page.goto(`/?base=${encodeURIComponent(service)}`);
     await page.getByTestId("shell-rail").getByRole("button", { name: "File rails", exact: true }).click();

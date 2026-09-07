@@ -20,6 +20,10 @@ const PANELS = [
   { nav: "Campaigns", ready: "campaign-panel" },
   { nav: "Notifications", ready: "notification-panel" },
   { nav: "Archival", ready: "archival-panel" },
+  // The two newest modules were never scanned — both panels shipped without an axe run
+  // (preview.8 coverage audit, 2026-09-05).
+  { nav: "Approvals", ready: "approvals-panel" },
+  { nav: "File rails", ready: "fileexchange-panel" },
 ] as const;
 
 async function violations(page: import("@playwright/test").Page) {
