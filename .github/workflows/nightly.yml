@@ -186,13 +186,14 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The hosted-fit fifteen (issue #20): the six long-running packages OOM the 16 GB
+        # The hosted-fit sixteen (issue #20): the six long-running packages OOM the 16 GB
         # runners even at concurrency 2 — they live in mutation-heavy.yml (dispatch-only)
         # and in the release checklist's local cadence.
         package: [Goldpath.Abstractions, Goldpath.Data, Goldpath.Idempotency, Goldpath.AuditTrail,
                   Goldpath.SoftDelete, Goldpath.DataProtection, Goldpath.MultiTenancy,
                   Goldpath.Locking, Goldpath.Auth, Goldpath.Cli, Goldpath.Approvals, Goldpath.FileExchange,
-                  Goldpath.Console, Goldpath.Messaging, Goldpath.ServiceDefaults]
+                  Goldpath.Console, Goldpath.Messaging, Goldpath.ServiceDefaults,
+                  Goldpath.Analyzers]
     steps:
       - uses: actions/checkout@v7
       - uses: actions/setup-dotnet@v6

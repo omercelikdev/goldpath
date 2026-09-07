@@ -1,0 +1,26 @@
+{
+  "stryker-config": {
+    "project": "Goldpath.Analyzers.csproj",
+    "test-projects": [
+      "../../tests/Goldpath.Analyzers.Tests/Goldpath.Analyzers.Tests.csproj"
+    ],
+    "target-framework": "netstandard2.0",
+    "reporters": [
+      "progress",
+      "markdown",
+      "json"
+    ],
+    "thresholds": {
+      "high": 85,
+      "low": 75,
+      "break": 70
+    },
+    "mutation-level": "Standard",
+    "ignore-methods": [
+      "Log*"
+    ],
+    "mutate": [
+      "!**/Descriptors.cs"
+    ]
+  }
+}
