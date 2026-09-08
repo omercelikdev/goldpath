@@ -94,18 +94,60 @@ step 6 names them so "consult the engine" is concrete rather than a slogan.
 The symmetry is the point: a library's public surface IS its contract, and it already fails a
 build when it drifts. What was missing is a cycle that tells the maintainer to look.
 
-## 5. Domain knowledge is part of the layer
+## 5. Three specifications, and the one we do not have
 
-A cycle that does not know what must not break can only protect syntax. Every repository in the
-family gains one short document that names its invariants with stable identifiers, and step 3
-makes reading it mandatory before behaviour changes.
+"Spec-driven" is used for three different artefacts in this family, and conflating them is how
+the tester ends up with nothing to read.
 
-- For a generated application this is the manifest plus the business rules the app itself
-  declares; the template ships the file with the walking skeleton's invariants as worked
-  examples, so an adopter fills a shape rather than inventing one.
-- For a library it is the guarantees its public surface makes.
-- The identifier matters: an invariant with an id can be cited by the test that proves it, and
-  a test that names an invariant explains itself to the next reader.
+| Layer | The question it answers | Gate today |
+|---|---|---|
+| Manifest | what the application IS — providers, features, architecture | `spec_validate` + `spec_drift` |
+| OpenAPI (`specs/`) | how you TALK to it — endpoints, status codes, error shapes | SPEC0212: committed contract equals built contract |
+| **Rule / term / spec** | what the business MEANS and the system must DO | **none in goldpath** |
+
+The third is what spec-driven development actually means, and it is the one we lack. An OpenAPI
+document cannot express "a seat is consumed only by a participant who is Confirmed and holds
+both approvals". That is why `goldpath-test-gen` so often reaches its own honest dead end —
+it may read the contract and not the implementation, the contract cannot state the business
+rule, and there is nowhere to write the gap it correctly reports.
+
+**We are not inventing a format. [specanchor](https://github.com/qorpe) already has one**, in
+`core/schemas/`, and it is better than anything this RFC would have produced:
+
+- **`ledger-term`** — the glossary: term, bounded context, a two-sentence definition, the
+  identifiers it wears IN CODE, and what it must not be confused with across contexts.
+- **`rule`** — one sentence in DOMAIN language with no code identifiers, checked against the
+  ledger's aliases; a `rule_id` that is immutable and "travels to spec, test, commit"; a
+  `source_ref` whose absence REJECTS the rule rather than flagging it; `open_questions`, which
+  the schema itself calls the most valuable field; and a `disposition` a human sets and a tool
+  never does.
+- **`spec`** — acceptance criteria against `rule_ids`, one screen maximum, with a count of
+  unresolved `[OPEN]` placeholders that must reach zero before release and an `approved_by`
+  that is the first human gate.
+
+Uncertainty is a first-class field in all three. That is the same discipline as our ledgers,
+one level further down.
+
+**The adaptation this RFC must state, because taking the format silently would misuse it.**
+specanchor's chain is shaped for REVERSE engineering: `source_ref` points into a legacy system
+and `confidence: evidenced` means a characterization test proved the rule against the running
+original. Forward development has no original. So for greenfield work `source_ref` points at
+the decision that CREATED the rule — an RFC section, an ADR, a recorded workshop outcome — and
+`evidence` is the test that pins the rule rather than the one that discovered it. Everything
+else transfers unchanged.
+
+**How the cycle uses it.** Step 3 reads the rules by id before behaviour changes. Step 4's
+failing test cites the `rule_id` it proves, which is what makes a test explain itself to the
+next reader. Step 9's commit carries the same id, so the chain from business sentence to merged
+change is one identifier long.
+
+**The gate**, in the shape this family already uses: a rule no test cites, or a test citing a
+rule that does not exist, is red. A rule whose `statement` changed without its tests being
+touched is red — the freshness contract, applied to behaviour instead of prose.
+
+**Distribution.** The schemas are specanchor's; goldpath pins them and a freshness gate keeps
+the pin honest, exactly as `kit-freshness` and `train-freshness` already do for the UI kit and
+the package train. One rule, learned once.
 
 ## 6. What ships, and where
 
@@ -120,7 +162,7 @@ the library repositories — and a gate that keeps the copies honest.
 | `goldpath-test-gen` | unchanged (its context diet is already the strongest rule we have) | adopted as-is |
 | `breaker` agent | unchanged | adopted |
 | hooks (`stop-gate`, `format-touched`) | unchanged | **adopted — the libraries do not run them today** |
-| invariants document | template ships the shape | per repository |
+| rule / term / spec artefacts (§5) | template ships the shape with the walking skeleton's rules as worked examples | per repository |
 
 The test-layer table the cycle's step 5 refers to:
 
@@ -164,7 +206,9 @@ The test-layer table the cycle's step 5 refers to:
       matching.
 - [ ] goldpath, mockifyr, qorpe/ui and mediant carry the maintainer layer, including the hooks
       they currently ship to others and do not run themselves.
-- [ ] Every repository names its invariants with identifiers, and the cycle's step 3 cites them.
+- [ ] The rule/term/spec artefacts are adopted from specanchor with the forward-development
+      adaptation written down, and the traceability gate (every rule cited by a test, every
+      cited rule existing) runs.
 - [ ] The CHANGELOG and the upgrade guide carry it, because the templates change is a train
       decision.
 
@@ -181,3 +225,6 @@ The test-layer table the cycle's step 5 refers to:
 - **D4 — The libraries adopt what they ship.** Including the stop gate. An accelerator that
   exempts itself from its own discipline is making an argument against that discipline.
 - **D5 — Parity is a gate, not a convention.** Copies that must be identical are checked.
+- **D6 — The behavioural specification is specanchor's, not a new one.** We pin its schemas and
+  state the one adaptation forward development needs (§5). Inventing a fourth spec format in a
+  family that already has one is how a family stops being one.
