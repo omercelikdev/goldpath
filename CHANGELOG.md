@@ -5,6 +5,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Fixed
+- **`docs-freshness.sh` reported two of its three checks and then forgave them.** The script
+  had `set -uo pipefail` but no `-e` and two separate blocks, so only the LAST block's exit
+  code survived: a broken relative link and a retired tool name were printed and the gate
+  exited 0 — while the file's own header claimed a broken link fails CI. Both checks now
+  gate, and both were verified to fail on planted drift. Found by the maintainer stop-gate on
+  the day it was written, which is the argument for the hook in one sentence.
+
+### Added
+- **goldpath runs the discipline it ships** (delivery-cycle RFC D4). The repository carries
+  `.claude/cycle.md` byte-identical to the templates', a `goldpath-change` skill for the
+  maintainer's path, and a MAINTAINER-shaped stop gate: it builds only the projects whose
+  files changed and runs this repository's own gates in place of the drift check an app would
+  run. Copying the app-shaped hook would have meant a 23-package build on every turn end,
+  which is slow enough that the hook would be deleted — and a deleted gate is worse than an
+  absent one.
+
+
 ### Added
 - **One delivery cycle, shipped with the templates** ([RFC](docs/rfc/goldpath-delivery-cycle-v1.md)).
   `.claude/cycle.md` carries nine steps in which a defect and a feature differ only in the
