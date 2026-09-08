@@ -51,7 +51,7 @@ The v1 schema is closed by design: `features` enumerates exactly 12 keys,
 which is correct for CATALOG modules and wrong for products.
 
 **Decision:** a new top-level `products` surface with NAMESPACED ids
-(`^[a-z][a-z0-9-]*\.[a-zA-Z][a-zA-Z0-9]*$` — `qorpe.sync`, `qorpe.apiPortal`), each
+(`^[a-z][a-z0-9-]*\.[a-zA-Z][a-zA-Z0-9]*$` — `qorpe.coexist`, `qorpe.apiPortal`), each
 entry a toggle-plus-options object the product's own RFC schema-fragments into place.
 (Implementation note, 2026-08-05: shipped as an ARRAY of `{name, enabled, …}` entries
 rather than a map — the engine's never-guess schema vocabulary has no

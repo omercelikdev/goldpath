@@ -41,5 +41,5 @@ as its seventh module. Behind the ops floor by default; `exposeUnsecured: true` 
 visible opt-out. There are no verbs: re-delivering a file IS the reprocess. The reads need
 a ledger that implements `IGoldpathFileLedgerQueries` (both shipped ledgers do).
 
-Boundary with qorpe.sync: Sync migrates and reconciles STORES during a transformation;
+Boundary with qorpe.coexist: Sync migrates and reconciles STORES during a transformation;
 FileExchange is the PERMANENT integration surface with counterparties (RFC D4).

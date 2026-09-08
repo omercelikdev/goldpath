@@ -1,6 +1,6 @@
 # RFC: Goldpath.Approvals — Human Approval Workflows
 
-**Status:** accepted (owner, 2026-08-18) — the owner pulled the Ring B trigger the same day ("nothing left incomplete"); recorded as an explicit owner ordering decision, mirroring qorpe-sync D5
+**Status:** accepted (owner, 2026-08-18) — the owner pulled the Ring B trigger the same day ("nothing left incomplete"); recorded as an explicit owner ordering decision, mirroring qorpe-coexist D5
 **Date:** 2026-08-18
 **Constitution grounding:** ADR-0003 (compose, don't rewrite — this module orchestrates PEOPLE'S
 decisions, not systems; process orchestration remains the decided non-goal the closed T19 thread

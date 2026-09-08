@@ -6,7 +6,7 @@
   "owner": "team-orders",
   "products": [
     {
-      "name": "qorpe.sync",
+      "name": "qorpe.coexist",
       "enabled": true,
       "mode": "two-way"
     }

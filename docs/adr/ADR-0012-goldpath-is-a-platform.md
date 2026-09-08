@@ -16,7 +16,7 @@ dependencies; the `packages/shared` compile-link seam is an internal privilege t
 does not leave the monorepo. A product
 module stands up STANDALONE (its own solution, its own deployment shape — clean or
 vertical, chosen like any generated app), declares itself in the manifest under a
-NAMESPACED product key (`qorpe.sync` — the core `features` enumeration stays closed),
+NAMESPACED product key (`qorpe.coexist` — the core `features` enumeration stays closed),
 and wears the ONE console family: its console is its own app composed from the kit,
 joining operators' view through the cross-service registry — never a runtime plugin
 (§5.0's toggle rule stands: composition is compile-time, Program.cs stays the honest

@@ -42,7 +42,7 @@ hooks, one of which refuses to let an agent end its turn on a red build.
 
 So the accelerator holds its customers to a discipline it does not run on itself. That is the
 gap, and it is also why the cycle has drifted into three different shapes: the goldpath
-template's, praxis's, and one hand-written for qorpe.sync.
+template's, praxis's, and one hand-written for qorpe.coexist.
 
 ## 3. The cycle
 

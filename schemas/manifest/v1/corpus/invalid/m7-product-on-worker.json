@@ -7,7 +7,7 @@
   "workerType": "consumer-rabbitmq",
   "products": [
     {
-      "name": "qorpe.sync"
+      "name": "qorpe.coexist"
     }
   ]
 }

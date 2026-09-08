@@ -81,7 +81,7 @@ modules: [yarpGateway]                 # what exists in v1; the catalog is the v
 ### 2.5 `products` — first-party product modules (ADR-0012; platform RFC D2)
 ```yaml
 products:                              # solution/service only — never a worker (lean rule)
-  - name: qorpe.sync                   # NAMESPACED vendor.product; pattern-enforced
+  - name: qorpe.coexist                   # NAMESPACED vendor.product; pattern-enforced
     enabled: true                      # ADR-0001 toggle semantics: false = absent
     mode: two-way                      # product-specific options — the product's RFC refines them
 ```
