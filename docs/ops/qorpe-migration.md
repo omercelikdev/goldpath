@@ -52,6 +52,9 @@ link and `git fetch` keeps working after the move. Three things do not:
   the nuget profile name in `release.yml` all contain it and none of them moves.
 
 **Verify**
-- `grep -rIn 'omercelikdev/goldpath'` returns nothing.
+- `grep -rIn 'omercelikdev/goldpath'` returns only this file and `SECURITY.md`'s
+  attestation note. Both mention the old slug ON PURPOSE — one describes the move, the
+  other tells a verifier which repository signed the packages published before it. A
+  greedy substitution would have broken the security instruction it was meant to fix.
 - `./scripts/ledger-check.sh` still resolves issue states.
 - On the next release, watch the `trusted-publishing login` step. It is the canary.
