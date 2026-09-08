@@ -51,4 +51,4 @@ GP1002 | Goldpath | Error | Broker consumer composed without the EF inbox (AddGo
 GP1004 | Goldpath | Warning | [Idempotent] with no key expression and no detectable natural key
 GP0404 | Goldpath | Warning | Publish through IIntegrationEventPublisher, not MassTransit's IPublishEndpoint
 GP0405 | Goldpath | Warning | Consume through IIntegrationEventHandler + AddGoldpathHandler, not MassTransit's IConsumer
-GP2001 | Goldpath | Warning | ProductDeclaresGoldpathNamespaceAnalyzer, [Documentation](https://github.com/omercelikdev/goldpath/blob/main/docs/rfc/goldpath-platform-sdk.md)
+GP2001 | Goldpath | Warning | ProductDeclaresGoldpathNamespaceAnalyzer, [Documentation](https://github.com/qorpe/goldpath/blob/main/docs/rfc/goldpath-platform-sdk.md)

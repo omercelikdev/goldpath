@@ -6,7 +6,7 @@ namespace Goldpath.Analyzers;
 public static class Descriptors
 {
     private const string Category = "Goldpath";
-    private const string HelpBase = "https://github.com/omercelikdev/goldpath/blob/main/docs/rfc/";
+    private const string HelpBase = "https://github.com/qorpe/goldpath/blob/main/docs/rfc/";
 
     /// <summary>GP0102: new HttpClient() bypasses the resilience/discovery defaults.</summary>
     public static readonly DiagnosticDescriptor NewHttpClient = new(
