@@ -46,7 +46,10 @@ OUTCOMES are.
 
 ## 3. Decision Points (Ömer)
 
-- **D1 — v1 set = the four above.** The review-agent (MR reviewer) and analyst-authoring
+- **D1 — v1 set = the four above.** **Widened 2026-09-08** by
+  [goldpath-delivery-cycle-v1](goldpath-delivery-cycle-v1.md): a fifth skill (`goldpath-defect`)
+  and a per-repository change skill join the set, and the layer reaches the LIBRARY repositories
+  as well as generated apps. The four below are unchanged; the set is no longer closed. The review-agent (MR reviewer) and analyst-authoring
   skills are their own tracks (review-agent-v1.md already exists as strategy).
   **Recommendation: these four.**
 - **D2 — Home = the template** (`.claude/skills/`, `.claude/agents/breaker.md`, `.mcp.json`).
