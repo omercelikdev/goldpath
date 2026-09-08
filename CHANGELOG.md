@@ -6,6 +6,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 ## [Unreleased]
 
 ### Changed
+- **The cycle's sixth step is stack-neutral**, because it was not. It named `spec_validate`,
+  `spec_drift` and `specs/` — true for a generated .NET application and meaningless for an npm
+  library, which is the next repository due to carry this text. The step now says: run THIS
+  repository's own contract check, whatever proves that what is committed still equals what is
+  built, and get it clean. Each repository's skill names its own; the sequence does not change
+  between them. `skills-parity.sh` now also holds goldpath's own copy of `cycle.md` identical
+  to the one the templates ship, while leaving its maintainer-shaped skills and hook alone.
+
+
+### Changed
 - **The migration product module is `qorpe.coexist`, not `qorpe.sync`.** Two reasons, and the
   first decided it: an internal asset of the same name was under review in the same week by the
   same reviewer who owns this module, and a module sharing its name would have been read as a
