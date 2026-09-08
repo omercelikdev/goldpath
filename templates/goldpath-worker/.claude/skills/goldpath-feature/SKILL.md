@@ -20,13 +20,15 @@ fails** (§4) and **running it for real and measuring** (§7).
    locking, auth strategy). Compose accordingly: e.g. a state-changing command in an
    idempotency-enabled app carries `[Idempotent]`; an auth-enabled app needs roles/policy
    decisions made explicit.
-2. **Contract before code.** A new or changed endpoint is FIRST reflected in the committed
-   OpenAPI document (`specs/`), then implemented to match. If the contract question is
-   ambiguous (status codes, error shapes), decide from `.claude/conventions.md`, not taste.
-3. **The slice shape is fixed**: one file per feature under `<Area>/Features/` holding the
-   Mediant command/query record (`[HttpEndpoint]`, `Result<T>` responses) + handler
-   (+ validator). Look at an existing feature file and match it exactly — style drift is a
-   defect.
+2. **Contract before code.** A worker has no business HTTP surface — probes are not contracts,
+   and there is no OpenAPI artefact to commit. Its contracts are the `IIntegrationEvent`
+   records it consumes or publishes, and the manifest's trigger. Change the record FIRST,
+   deliberately, because a consumer somewhere binds to its shape; then implement to match. If
+   the question is ambiguous, decide from `.claude/conventions.md`, not taste.
+3. **The shape is fixed**: the handler lives next to the contract it serves, under the area
+   that owns it, and implements `IIntegrationEventHandler<T>` for a queue trigger or
+   `IGoldpathJob` for a scheduled one — never a bus type directly (GP0405). Look at an
+   existing handler and match it exactly; style drift is a defect.
 4. **Compose, never rebuild**: pagination is `ToPageAsync` (keyset), events crossing the
    broker implement `IIntegrationEvent` and go through the outbox, timestamps are
    `DateTimeOffset`, headers come from `GoldpathHeaders`. The analyzers enforce most of this at
@@ -40,8 +42,8 @@ fails** (§4) and **running it for real and measuring** (§7).
    test that can catch it.
 6. **Ask the engine before declaring done** (MCP server `specdrift`):
    - `spec_validate` on `.goldpath/manifest.yaml` (schema + `.specdrift/rules.yaml`) — clean.
-   - `spec_drift` on the repo — clean. If you changed the contract, re-export the built
-     OpenAPI (build does it) and update the committed copy; SPEC0212 means you forgot.
+   - `spec_drift` on the repo — clean. A worker exports no OpenAPI, so the drift that matters
+     here is between the manifest's trigger and features and what the host actually composes.
 7. **Full local gate** before offering the change: `dotnet build` (analyzers + PublicAPI
    ride the compiler), `dotnet test`, `dotnet format --verify-no-changes`.
 8. **Run it for real** (`cycle.md` §7): bring the stack up and use the feature. If it has a

@@ -8,6 +8,11 @@ description: Turn a business sentence into a merge-ready vertical slice — endp
 You are working in a manifest-driven golden path. The manifest is the single source of
 truth; your job is to COMPOSE what it enables, never to invent infrastructure.
 
+The SEQUENCE is `.claude/cycle.md` — nine steps, and this skill is the feature-shaped path
+through them. The steps below are what "compose the golden path" means at steps 3 through 6;
+`cycle.md` owns everything else, including the two that are easiest to skip: **proving the test
+fails** (§4) and **running it for real and measuring** (§7).
+
 ## Hard steps — skipping any of these means the work is NOT done
 
 1. **Read the manifest first** (`.goldpath/manifest.yaml`). It tells you which cross-cutting
@@ -26,15 +31,25 @@ truth; your job is to COMPOSE what it enables, never to invent infrastructure.
    broker implement `IIntegrationEvent` and go through the outbox, timestamps are
    `DateTimeOffset`, headers come from `GoldpathHeaders`. The analyzers enforce most of this at
    build time — treat every GOLDPATH diagnostic as a design instruction, not noise.
-5. **Tests ride along**: unit tests for the handler's business rules; extend the smoke test
-   only when the happy path changes shape. Derive cases from the contract, and hand the
-   spec to `goldpath-test-gen` when the surface is more than trivial.
+5. **Tests ride along, and the test is PROVEN**: unit tests for the handler's business rules;
+   extend the smoke test only when the happy path changes shape. Derive cases from the
+   contract, and hand the spec to `goldpath-test-gen` when the surface is more than trivial.
+   Then `cycle.md` §4: break the behaviour deliberately and confirm the new test goes red. A
+   test that passes with the feature removed is not testing the feature.
+   Pick the layer that can fail (`cycle.md` §5) — a rule the database enforces has no unit
+   test that can catch it.
 6. **Ask the engine before declaring done** (MCP server `specdrift`):
    - `spec_validate` on `.goldpath/manifest.yaml` (schema + `.specdrift/rules.yaml`) — clean.
    - `spec_drift` on the repo — clean. If you changed the contract, re-export the built
      OpenAPI (build does it) and update the committed copy; SPEC0212 means you forgot.
 7. **Full local gate** before offering the change: `dotnet build` (analyzers + PublicAPI
    ride the compiler), `dotnet test`, `dotnet format --verify-no-changes`.
+8. **Run it for real** (`cycle.md` §7): bring the stack up and use the feature. If it has a
+   screen, open it and sign in if it asks; if it does not, call the endpoint or trigger the job.
+   Read the row, the payload, the computed value — "it looks right" is not a result.
+9. **Watch the as-is** (`cycle.md` §8): does an existing test encode the old contract, did a
+   field's meaning change while its name did not, is there a screen or job left behind? Update
+   every document this change made untrue, here, not later.
 
 ## What NOT to do
 

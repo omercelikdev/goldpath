@@ -27,6 +27,11 @@ contains no messaging code at all, a worker without `features.auditTrail` has no
 - The deterministic engine is registered in `.mcp.json` (`specdrift mcp`); "done" without a
   clean `spec_validate` + `spec_drift` is not done.
 
+## The cycle
+`.claude/cycle.md` — nine steps, and a defect differs from a feature only in the first. The two
+that get skipped are proving the test actually fails (§4) and running it for real and measuring
+(§7); both are gates, not suggestions.
+
 ## Skills (agent workflows)
 - `goldpath-manifest` — enable/disable capabilities; manifest + wiring change together, engine-checked.
 - `breaker` agent — adversarial scenarios as executable tests against the worker's contracts

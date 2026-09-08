@@ -5,6 +5,23 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Added
+- **One delivery cycle, shipped with the templates** ([RFC](docs/rfc/goldpath-delivery-cycle-v1.md)).
+  `.claude/cycle.md` carries nine steps in which a defect and a feature differ only in the
+  first, and it deliberately holds no rules of its own — every rule stays in the document that
+  owns it. New skill `goldpath-defect` (prove the cause with evidence, then prove the test
+  fails before fixing); `goldpath-feature` gains the three steps it never had: proving the test
+  goes red, running it for real and measuring, and watching the as-is.
+- **The worker template gains the skills it was missing.** A worker was born with ONE skill;
+  it now carries the same set in its own shape — no OpenAPI artefact, contracts are its
+  integration events, and drift is between the manifest's trigger and what the host composes.
+- **`scripts/skills-parity.sh`** — the agent layer is copied to three places and the claim that
+  the copies match had nothing behind it. Five deliberate divergences are listed with their
+  reason; anything else is red. Verified against a planted drift.
+- The `goldpath-defect` eval, whose acceptance **reverts the fix and requires the new test to
+  go red** — the cycle's own rule, checked rather than trusted.
+
+
 ### Changed
 - **CorPay consumes through the seam.** The sample took 0.1.0-preview.8 the day it
   published: three handlers instead of `IConsumer<T>` (`OrderPlacedHandler`,

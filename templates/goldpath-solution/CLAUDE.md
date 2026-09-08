@@ -12,7 +12,13 @@ a disabled feature does not exist in this codebase (compile-time composition).
 - Entities use `DateTimeOffset` (UTC policy); schema changes go through migrations
   (Development auto-creates; production applies the CI bundle).
 
+## The cycle
+`.claude/cycle.md` — nine steps, and a defect differs from a feature only in the first. The two
+that get skipped are proving the test actually fails (§4) and running it for real and measuring
+(§7); both are gates, not suggestions.
+
 ## Skills (agent workflows)
+- `goldpath-defect` — a fault proven with evidence before it is fixed; the failing test is proven to fail.
 - `goldpath-feature` — business sentence → merge-ready vertical slice (contract-first, engine-checked).
 - `goldpath-manifest` — enable/disable capabilities; manifest + wiring change together, engine-checked.
 - `goldpath-test-gen` — spec-derived tests; NEVER reads `Features/` implementations (foundation §8.2).
