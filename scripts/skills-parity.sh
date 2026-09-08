@@ -16,7 +16,14 @@ SOLUTION = "templates/goldpath-solution/.claude"
 COPIES = {
     "worker template": "templates/goldpath-worker/.claude",
     "CorPay": "samples/corpay/.claude",
+    # goldpath's own maintainer layer shares the CYCLE with what it ships; its skills and
+    # hooks are deliberately different shapes (D2 and D4), so only the shared files are
+    # compared — see SHARED_ONLY below.
+    "goldpath itself": ".claude",
 }
+# The root layer is the MAINTAINER shape: same nine steps, different skills and a different
+# hook. Only the files that are supposed to be identical everywhere are compared for it.
+SHARED_ONLY = {"goldpath itself": {"cycle.md"}}
 
 # Deliberate divergences, each with the reason it is not a defect. A file listed here is NOT
 # compared; a file NOT listed here must be byte-identical wherever it exists.
@@ -50,6 +57,8 @@ for label, copy in COPIES.items():
         fail.append(f"{label}: {copy} is missing entirely")
         continue
     for rel, want in sources.items():
+        if label in SHARED_ONLY and rel not in SHARED_ONLY[label]:
+            continue
         if (label, rel) in EXCEPTIONS:
             excused += 1
             target = os.path.join(copy_root, rel)

@@ -52,14 +52,18 @@ A unique-index collision cannot be reproduced in memory. Clipped text cannot be 
 without layout. Pick the layer that can fail; a test in the wrong layer passes for the wrong
 reason.
 
-## 6 — Implement, then ask the engine
+## 6 — Implement, then ask the machine
 
-The smallest change that makes the test pass. Then: `spec_validate` on the manifest and
-`spec_drift` on the repository, both clean. **"Done" without a clean engine run is not done.**
-If the change touches a committed contract, the committed copy changes with it in the same
-commit — the OpenAPI document in `specs/` where the app has an HTTP surface, the
-`IIntegrationEvent` records where it is a worker. SPEC0212 exists because that is the one
-people forget.
+The smallest change that makes the test pass. Then run **this repository's own contract check**
+— whatever proves that what is committed still equals what is built — and get it clean.
+**"Done" without that run is not done.**
+
+Every repository has one, and its skill names it, because the check is stack-specific while
+this step is not: a generated application asks the engine (`spec_validate` on the manifest,
+`spec_drift` on the repository, and the committed OpenAPI in `specs/` re-exported rather than
+hand-edited — SPEC0212 exists because that is the one people forget); a library asks its
+public-surface files and its own gates. If the change touches a committed contract, the
+committed copy changes with it **in the same commit**, never in a follow-up.
 
 ## 7 — Run it for real and measure
 
