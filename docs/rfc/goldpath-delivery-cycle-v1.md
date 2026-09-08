@@ -1,6 +1,6 @@
 # RFC: the delivery cycle — one flow, two audiences
 
-**Status:** proposed
+**Status:** ACCEPTED (owner, 2026-09-08)
 **Date:** 2026-09-08
 **Supersedes:** the D1 decision of [goldpath-skills-v1](goldpath-skills-v1.md) ("v1 set = the four
 above"), which this RFC widens rather than replaces.
@@ -207,8 +207,8 @@ The test-layer table the cycle's step 5 refers to:
 - [ ] goldpath, mockifyr, qorpe/ui and mediant carry the maintainer layer, including the hooks
       they currently ship to others and do not run themselves.
 - [ ] The rule/term/spec artefacts are adopted from specanchor with the forward-development
-      adaptation written down, and the traceability gate (every rule cited by a test, every
-      cited rule existing) runs.
+      adaptation written down, and the traceability gate runs FOR NEW RULES (D6's staging);
+      retroactive coverage is its own ledgered thread.
 - [ ] The CHANGELOG and the upgrade guide carry it, because the templates change is a train
       decision.
 
@@ -218,13 +218,28 @@ The test-layer table the cycle's step 5 refers to:
   first differs between a defect and a feature.
 - **D2 — The skill enforces the sequence and carries no rules of its own.** Rules live in the
   documents that own them. This is the anti-drift rule praxis proved: a skill that restates a
-  rule is a second source of truth waiting to disagree.
+  rule is a second source of truth waiting to disagree. **Refinement:** a skill defers to the
+  documents that EXIST in its repository. A library repository has ADRs, ledgers and a
+  contributing document to defer to; a generated application has almost none, so there the
+  rules live in `.claude/conventions.md` and the skill points at that. Deferring to nothing is
+  not deference.
 - **D3 — Step 7 is conditional by surface, not optional.** Where there is a user-facing
   surface, driving it is mandatory. Where there is none, calling the real thing and reading its
   output is mandatory. What is never acceptable is asserting that it works.
 - **D4 — The libraries adopt what they ship.** Including the stop gate. An accelerator that
   exempts itself from its own discipline is making an argument against that discipline.
+  **Refinement: the hook is adapted per audience, not copied.** The application-shaped gate
+  builds the app and runs `specdrift drift` against its manifest. A library repository has no
+  manifest, and a full solution build on every turn end is slow enough that the hook would be
+  deleted — and a deleted gate is worse than an absent one, because it is evidence the
+  discipline does not work. The maintainer-shaped gate builds what changed and runs the
+  repository's OWN gates in place of the drift check.
 - **D5 — Parity is a gate, not a convention.** Copies that must be identical are checked.
 - **D6 — The behavioural specification is specanchor's, not a new one.** We pin its schemas and
   state the one adaptation forward development needs (§5). Inventing a fourth spec format in a
-  family that already has one is how a family stops being one.
+  family that already has one is how a family stops being one. **Refinement: staged, because a
+  gate that is red everywhere on day one gets switched off.** The schemas and the cycle steps
+  land now; the traceability gate applies to NEW rules only. Making it total is a programme
+  with its own ledger row and trigger, not a line in this RFC — somebody has to write rules for
+  behaviour that already exists, and pretending that is free is how the whole layer becomes
+  shelfware.
