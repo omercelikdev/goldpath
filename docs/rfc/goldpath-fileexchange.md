@@ -1,6 +1,6 @@
 # RFC: Goldpath.FileExchange — File-Based Integration Rails
 
-**Status:** accepted (owner, 2026-08-18) — the owner pulled the Ring B trigger the same day ("nothing left incomplete"); recorded as an explicit owner ordering decision, mirroring qorpe-sync D5
+**Status:** accepted (owner, 2026-08-18) — the owner pulled the Ring B trigger the same day ("nothing left incomplete"); recorded as an explicit owner ordering decision, mirroring qorpe-coexist D5
 **Date:** 2026-08-18
 **Constitution grounding:** ADR-0003 (compose transports and parsers, don't rewrite),
 foundation §5.1 (by-product timing rule), §6.2 Ring B criteria, open-threads **T22**
@@ -26,7 +26,7 @@ ingestion) but an adopter still hand-writes the rail around them every time:
 - **Archival** — processed files retained per rail policy, composing the Archival module.
 - **Outbound** — generated files with delivery confirmation and the same archival discipline.
 
-**Non-goals.** Not ETL/BI; not the CDC/streaming leg (that is qorpe.sync's Capture — Sync
+**Non-goals.** Not ETL/BI; not the CDC/streaming leg (that is qorpe.coexist's Capture — Sync
 moves STORES, FileExchange integrates COUNTERPARTIES); no format libraries rewritten (parsers
 are composed); no domain knowledge — rail definitions are adopter data.
 
@@ -118,6 +118,6 @@ window — the incident file rails actually have.
   the module.
 - **D3 — Rail definitions are data** — versioned, schema-validated; a new counterparty is a
   new definition, not new code.
-- **D4 — Boundary with qorpe.sync:** Sync migrates and reconciles STORES during a
+- **D4 — Boundary with qorpe.coexist:** Coexist migrates and reconciles STORES during a
   transformation; FileExchange is the PERMANENT integration surface with counterparties.
   A transformation may use both; neither absorbs the other.

@@ -5,6 +5,17 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.0.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Changed
+- **The migration product module is `qorpe.coexist`, not `qorpe.sync`.** Two reasons, and the
+  first decided it: an internal asset of the same name was under review in the same week by the
+  same reviewer who owns this module, and a module sharing its name would have been read as a
+  rename of it. The second is that "sync" named the MECHANISM — keeping two stores equal is how
+  this works, not what it is for. The new name says the one thing true of every engagement, that
+  both systems are live at once; the migration frame and the source's eventual retirement, usual
+  but not guaranteed, live in the description. Thirteen documents, the manifest schema's example
+  and two corpus fixtures moved; nothing had been published under the old name, so this is the
+  cheapest the rename would ever have been.
+
 ### Fixed
 - **`docs-freshness.sh` reported two of its three checks and then forgave them.** The script
   had `set -uo pipefail` but no `-e` and two separate blocks, so only the LAST block's exit

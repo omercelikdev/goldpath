@@ -1,9 +1,17 @@
-# RFC: qorpe.sync — the Migration & Co-existence Product Module
+# RFC: qorpe.coexist — the Migration & Co-existence Product Module
 
-**Status:** accepted (owner, 2026-08-18)
+**Status:** accepted (owner, 2026-08-18) · **renamed 2026-09-08** from `qorpe.sync`
+(owner decision). Two reasons. An internal asset of the same name was under review in the same
+week by the same reviewer who owns this module, and a module sharing its name would have been
+read as a rename of it. And `sync` named the MECHANISM: keeping two stores equal is how this
+works, not what it is for. The name now says the one thing that is true of every engagement —
+both systems live at once — while the migration frame and the source's eventual retirement,
+which is usual but not guaranteed, live in the description: *run both, prove they agree, retire
+the source when you choose.* Nothing had been published under the old name, so the rename cost
+thirteen documents and two schema fixtures.
 **Date:** 2026-08-18
-**Constitution grounding:** ADR-0012 (product modules on the platform — Sync is one of the two
-first-party examples the ADR itself names), ADR-0003 (compose, don't rewrite), foundation §9
+**Constitution grounding:** ADR-0012 (product modules on the platform — this module is one of the
+two first-party examples the ADR itself names, under its former name), ADR-0003 (compose, don't rewrite), foundation §9
 step 5 (data migration reconciliation as a cutover-gate input), §5.1 (by-product timing rule).
 
 ---
@@ -12,7 +20,7 @@ step 5 (data migration reconciliation as a cutover-gate input), §5.1 (by-produc
 
 **Scope.** Productize the migration & co-existence machinery every legacy transformation needs,
 as a first-party PRODUCT MODULE per ADR-0012: own (private) repo, binds to the published
-Goldpath train like an adopter, declares under a namespaced `products.qorpe.sync` key, may be
+Goldpath train like an adopter, declares under a namespaced `products.qorpe.coexist` key, may be
 closed on the open core. Four components:
 
 1. **Capture** — CDC from the legacy store (Debezium-class) plus file/CSV extraction contracts
@@ -34,12 +42,12 @@ the module — mappings are customer data.
 Product-module seams per ADR-0012: binds `Goldpath.Sdk` + published packages (never source);
 its reconciliation reports feed the cutover evidence bundle (specanchor-composition RFC seam
 map row "Reconciliation"); Mockifyr stubs stand in for unreachable sources in tests; the
-transformation method (specanchor) treats Sync as the K5 layer of its coverage model.
+transformation method (specanchor) treats Coexist as the K5 layer of its coverage model.
 
 ## 3. Manifest Surface
 
-`products.qorpe.sync` (namespaced per ADR-0012 D2). The HOST app's manifest is untouched;
-Sync ships its own manifest and stands up standalone (product-module rule).
+`products.qorpe.coexist` (namespaced per ADR-0012 D2). The HOST app's manifest is untouched;
+Coexist ships its own manifest and stands up standalone (product-module rule).
 
 ## 4. API Surface
 
@@ -65,7 +73,7 @@ count, replay depth, difference-list age). "No runbook = no module" applies unch
   reconcile component must catch every planted difference.
 - The Kafka-transport compatibility spike (MassTransit rider vs the streaming leg) runs HERE,
   closing the verification item the factoring-class gap analysis recorded.
-- Composition proof: the specanchor rehearsal (open-threads T20) uses Sync for its
+- Composition proof: the specanchor rehearsal (open-threads T20) uses Coexist for its
   reconciliation leg once the module reaches demo grade — one rehearsal, two proofs.
 
 ## 8. DoD (v0 — engagement-shaped)
@@ -82,7 +90,7 @@ count, replay depth, difference-list age). "No runbook = no module" applies unch
 ### Decisions
 
 - **D1 — Product module, not Ring B:** migration machinery is horizontal but heavyweight and
-  commercially separable — exactly the ADR-0012 shelf, and Sync is the ADR's own named example.
+  commercially separable — exactly the ADR-0012 shelf, and this module is the ADR's own named example.
 - **D2 — Adapters + versioned mapping data:** per-source/per-target adapters; mappings are
   DATA (versioned, schema-validated), so a new engagement is a new mapping set, not a fork.
 - **D3 — Reconcile composes db-compare;** transports are composed (Kafka-class for the
@@ -91,5 +99,5 @@ count, replay depth, difference-list age). "No runbook = no module" applies unch
   engagement's migration needs; generalization beyond that waits for the second consumer.
 - **D5 — Ordering recorded:** this opens a second product repo alongside the API Portal
   pilot. That is an explicit owner reordering decision, recorded here and in the master plan —
-  not a silent third front. The API Portal keeps its pilot slot; Sync's v0 rides the
+  not a silent third front. The API Portal keeps its pilot slot; Coexist's v0 rides the
   engagement's own timeline.
