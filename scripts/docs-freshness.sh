@@ -4,6 +4,12 @@
 # of rot — a doc may not reference what is not there.
 set -uo pipefail
 ROOT=$(cd "$(dirname "$0")/.." && pwd)
+# Both checks run so a contributor sees everything wrong in one pass, and EITHER failing
+# fails the gate. Until 2026-09-08 there was no `set -e` and no status collection, so only
+# the LAST block's exit code survived: broken links and retired names were printed and then
+# silently forgiven — while this file's own header claimed a broken link fails CI. Found by
+# the maintainer stop-gate on the day it was written.
+STATUS=0
 python3 - "$ROOT" <<'PY'
 import os, re, sys
 root = sys.argv[1]
@@ -65,6 +71,7 @@ if offences:
     sys.exit(1)
 print("── retired names: none of the retired tools are mentioned")
 PY
+STATUS=$(( STATUS + $? ))
 
 # ── INVENTORY SYNC (#174): every public surface is NAMED where readers look for it, and
 #    every numeric claim about a surface matches reality. Same contract as the tests:
@@ -211,3 +218,5 @@ if fail:
     sys.exit(1)
 print(f"── inventory sync: {len(packages)} packages, {len(verbs)} CLI verbs, nightly shapes, scripts and templates all documented")
 PY
+STATUS=$(( STATUS + $? ))
+exit $(( STATUS > 0 ? 1 : 0 ))

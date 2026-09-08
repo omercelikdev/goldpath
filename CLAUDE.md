@@ -10,6 +10,13 @@ Goldpath-owned seam).
 ## Language rule
 - Docs, code, identifiers, XML docs, commits, PRs: ENGLISH
 
+## Working in this repository
+The maintainer's path through the cycle is `.claude/skills/goldpath-change`; the nine steps
+themselves are `.claude/cycle.md`, byte-identical to the one the templates ship. The stop hook
+here is the MAINTAINER shape (delivery-cycle RFC D4): it builds only the projects whose files
+changed and runs this repository's own gates, because a full solution build on every turn end
+is slow enough that the hook would be deleted.
+
 ## Decision process
 1. New module/feature → RFC first (`docs/rfc/` — template: the 8 sections of goldpath-idempotency.md).
 2. Check for conflicts with the constitution (ADRs) and strategy documents; if there is a conflict, do not write code — discuss.
