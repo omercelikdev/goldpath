@@ -40,8 +40,13 @@ only after that PR merges green.
       templates and CLI recipes may only consume once the pins move (the templates must
       generate apps on the PUBLISHED train, `template-pins.sh`; a CLI recipe writes into an
       adopter's app on that train too). Wire each in the release PR, then delete its line:
-      - *(none open — preview.8's two adoptions are wired; CorPay took the seam and the pins
-        on 2026-09-07, the day the train published.)*
+      - **`GmCleanFeatures` gains `--features audittrail`** (`.github/workflows/nightly.yml`).
+        `IAuditLogged` moved from `Goldpath.AuditTrail` to `Goldpath.Abstractions` because
+        the clean-architecture layout puts the entity partial in `Domain`, and reaching the
+        marker meant referencing a package that pulls ASP.NET Core, EF and `Goldpath.Data` —
+        inverting the dependency direction that layout exists to teach. A generated app
+        consumes the PUBLISHED Abstractions, so the shape stays red until this train ships
+        the move. Add the flag in the release PR and delete this line.
 
 ## After the merge
 

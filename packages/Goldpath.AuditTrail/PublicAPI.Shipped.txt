@@ -41,6 +41,5 @@ Goldpath.GoldpathAuditTrailOptions.EntityValues.set -> void
 Goldpath.HttpClaimsUserContext
 Goldpath.HttpClaimsUserContext.HttpClaimsUserContext(Microsoft.AspNetCore.Http.IHttpContextAccessor! accessor) -> void
 Goldpath.HttpClaimsUserContext.UserId.get -> string?
-Goldpath.IAuditLogged
 static Goldpath.GoldpathAuditModelExtensions.AddGoldpathAuditLog(this Microsoft.EntityFrameworkCore.ModelBuilder! modelBuilder) -> Microsoft.EntityFrameworkCore.ModelBuilder!
 static Goldpath.GoldpathAuditTrailExtensions.AddGoldpathAuditTrail<TBuilder, TContext>(this TBuilder builder, System.Action<Goldpath.GoldpathAuditTrailOptions!>? configure = null) -> TBuilder
