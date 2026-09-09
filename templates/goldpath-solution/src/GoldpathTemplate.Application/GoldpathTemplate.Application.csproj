@@ -13,6 +13,13 @@
     <PackageReference Include="Mediant.AspNetCore" />
     <!-- DbSet/keyset queries compile against EF Core + the page contract via Goldpath.Data. -->
     <PackageReference Include="Goldpath.Data" />
+    <!--#if (UseIdempotency) -->
+    <!-- CreateOrder.cs carries [Mediant.Behaviors.Attributes.Idempotent] under this same
+         condition. In the vertical-slice layout that file lands in the Api project, which
+         reaches the attribute transitively through Goldpath.Idempotency; here it does not,
+         and the generated solution did not build. Found by qorpe/coexist, 2026-09-09. -->
+    <PackageReference Include="Mediant.Behaviors" />
+    <!--#endif -->
     <!--#if (UseBroker) -->
     <PackageReference Include="Goldpath.Messaging" />
     <!--#endif -->

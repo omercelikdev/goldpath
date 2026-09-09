@@ -1,5 +1,16 @@
 namespace Goldpath;
 
+/// <summary>Marks an entity whose row-level changes are recorded as audit-log rows (old → new
+/// per property, in the same transaction as the change). Stamp-only entities use
+/// <see cref="IAuditedEntity"/>; this marker adds full change history (RFC decision D2).</summary>
+/// <remarks>
+/// It lives HERE, not in Goldpath.AuditTrail, because a bare marker an entity implements has
+/// to be reachable from a domain project. Goldpath.AuditTrail pulls ASP.NET Core, EF Core and
+/// Goldpath.Data, so requiring it inverted the dependency direction of the clean-architecture
+/// layout the templates teach — a generated app in that layout did not build.
+/// </remarks>
+public interface IAuditLogged;
+
 /// <summary>
 /// Marks an entity whose creation/modification metadata is maintained automatically
 /// by the data-path interceptor of the AuditTrail module. Setters are for infrastructure;

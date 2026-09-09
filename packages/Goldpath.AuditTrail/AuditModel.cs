@@ -1,12 +1,13 @@
 using Mediant.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 
+// IAuditLogged moved to Goldpath.Abstractions on 2026-09-09, to sit with the five entity
+// markers it belongs beside. Source is unaffected — both are namespace Goldpath — so an
+// adopter recompiles and nothing else. A TypeForwardedTo was tried first and withdrawn:
+// PublicApiAnalyzers cannot reconcile a forwarded type, reporting RS0016 (not declared) and
+// RS0017 (declared but not found) for the same symbol at once. On a pre-1.0 preview train
+// the recompile is the cheaper honesty; the upgrade guide says so.
 namespace Goldpath;
-
-/// <summary>Marks an entity whose row-level changes are recorded as audit-log rows (old → new
-/// per property, in the same transaction as the change). Stamp-only entities use
-/// <see cref="IAuditedEntity"/>; this marker adds full change history (RFC decision D2).</summary>
-public interface IAuditLogged;
 
 /// <summary>One audited property change. Added: old is null; Deleted: new is null.</summary>
 public class GoldpathAuditLogEntry
